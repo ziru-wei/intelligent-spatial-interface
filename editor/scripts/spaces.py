@@ -61,8 +61,7 @@ def listing():
         if scan: scan = dict(scan, label=scan.get('label') or label(scan.get('source')))
         scans = [dict(id=x['id'], label=x['label'], registration=x.get('registration'), primary=bool(scan) and x['mesh'] == scan['mesh']) for x in m.get('scans', []) if not x.get('archived')]
         sem = json.loads((d/m['semantic']).read_text()) if m.get('semantic') and (d/m['semantic']).is_file() else None
-        layout_info = sem and dict(objects=len(sem.get('objects', [])), openings=len(sem.get('openings', [])), rooms=len(sem.get('rooms', [])), edited=bool(sem.get('edited')),
-            surfaces=surfaces_state(d, m))
+        layout_info = sem and dict(objects=len(sem.get('objects', [])), openings=len(sem.get('openings', [])), rooms=len(sem.get('rooms', [])), edited=bool(sem.get('edited')))
         out.append(dict(name=d.name, scan=scan, scans=scans, semantic=bool(sem), layout=layout_info, scenarios=scenarios))
     return out
 
@@ -196,7 +195,6 @@ def add_scan(space, path, sid=None, title=None, primary=False, source=None):
     chosen = primary or not (m.get('scan') or {}).get('mesh')
     if chosen: m['scan'] = dict(_chosen(entry), semantic=m.get('semantic'))
     write_manifest(d, m)
-    if chosen: segment(space)
     return entry
 
 STRUCTURE = ('rooms', 'walls', 'ceilings')
@@ -219,7 +217,7 @@ def add_layout(space, path, replace_boxes=False):
     work.write_text(json.dumps(dict(layout.relate(out), revision=old.get('revision', 0)+1), indent=1))
     m['semantic'] = 'scan/semantic.json'
     if m.get('scan'): m['scan']['semantic'] = m['semantic']
-    write_manifest(d, m); segment(space); return m['layout']
+    write_manifest(d, m); cut_openings(space); return m['layout']
 
 def _chosen(entry): return dict(id=entry['id'], mesh=entry['mesh'], source=entry['source'], label=entry['label'])
 
@@ -239,7 +237,7 @@ def set_primary(space, sid):
     """Choose the scan. Every scan is baked into the scene's coordinates, so the recordings' toSpace stays valid."""
     d = space_dir(space); m = manifest(d); entry = next((x for x in m.get('scans', []) if x['id'] == sid), None)
     if not entry or entry.get('archived'): raise ValueError('Unknown or archived scan: '+str(sid))
-    m['scan'] = dict(_chosen(entry), semantic=m.get('semantic')); write_manifest(d, m); segment(space); return m['scan']
+    m['scan'] = dict(_chosen(entry), semantic=m.get('semantic')); write_manifest(d, m); return m['scan']
 
 def add_zone(space, name, around, margin=.1):
     """A zone RoomPlan did not capture (a laundry closet, a storage room): the floor rectangle around the given boxes. Every box's zone
@@ -254,22 +252,15 @@ def add_zone(space, name, around, margin=.1):
     floor_y = min((r.get('floorY', 0) for r in sem.get('rooms', [])), default=0.0)
     sem['rooms'] = sem.get('rooms', [])+[layout.zone_around(zid, str(name).strip(), [boxes[i] for i in around], margin, floor_y)]
     for b in boxes.values(): b['room'] = layout.room_of(sem['rooms'], b['center'])
-    sem['revision'] = sem.get('revision', 0)+1; p.write_text(json.dumps(sem, indent=1)); segment(space)
+    sem['revision'] = sem.get('revision', 0)+1; p.write_text(json.dumps(sem, indent=1)); cut_openings(space)
     return dict(zone=zid, members=sorted(i for i, b in boxes.items() if b['room'] == zid))
 
-def segment(space):
-    """Split the chosen scan into the layout's surfaces (walls, ceilings, zone floors): scripts/segment_surfaces.py → scan/surfaces.glb
-    and scan/surfaces.json. Part of scene setup; rerun when the scan, the layout boxes or the zones change (surfaces_state says so)."""
+def cut_openings(space):
+    """Doors and windows cut into the layout's walls again (scripts/wall_openings.py), after the layout changed. Skipped without the
+    mesh environment (shapely): the walls then keep their last cut."""
     d = space_dir(space); m = manifest(d)
-    if not ((m.get('scan') or {}).get('mesh') and m.get('semantic')): return None
-    return _mesh([ROOT/'scripts'/'segment_surfaces.py', d])
-
-def surfaces_state(d, m):
-    """{count, stale} of the scene's segmentation, None if it was never run. Stale: made from another scan or an older layout."""
-    p = d/'scan'/'surfaces.json'
-    if not p.is_file(): return None
-    s = json.loads(p.read_text()); sem = json.loads((d/m['semantic']).read_text()) if m.get('semantic') and (d/m['semantic']).is_file() else {}
-    return dict(count=len(s.get('surfaces', [])), stale=s.get('scan') != (m.get('scan') or {}).get('mesh') or s.get('semanticRevision') != sem.get('revision', 0))
+    if not m.get('semantic') or not MESH_PYTHON.is_file(): return None
+    return _mesh([ROOT/'scripts'/'wall_openings.py', d])
 
 class Conflict(ValueError): pass
 
@@ -283,7 +274,11 @@ def save_layout(space, objects, openings, revision=None):
     p = d/m['semantic']; current = json.loads(p.read_text())
     if revision is not None and revision < current.get('boxesRevision', current.get('revision', 0)): raise Conflict('The layout was changed in another window. Reload to get it.')
     rev = current.get('revision', 0)+1; data = dict(layout.update(current, objects, openings), revision=rev, boxesRevision=rev); p.write_text(json.dumps(data, indent=1))
-    return dict(objects=len(data['objects']), openings=len(data['openings']), revision=data['revision'])
+    # Doors and windows moved: the walls' cut-outs follow (bumps `revision` only, so this save's boxesRevision stays valid).
+    try: cut_openings(space)
+    except ValueError: pass
+    data = json.loads(p.read_text())
+    return dict(objects=len(data['objects']), openings=len(data['openings']), revision=data['revision'], boxesRevision=data['boxesRevision'])
 
 def add_scenario(space, take):
     """Everything a recording needs to be used in the space: import, its own mesh, alignment to the scan (if there is one)."""
@@ -380,7 +375,7 @@ if __name__ == '__main__':
     c = sub.add_parser('align-all', help='align every recording of the scene again'); c.add_argument('scene')
     c = sub.add_parser('add-zone', help='a zone RoomPlan missed: the floor rectangle around some layout boxes'); c.add_argument('scene'); c.add_argument('name')
     c.add_argument('boxes', nargs='+', help='box ids'); c.add_argument('--margin', type=float, default=.1)
-    c = sub.add_parser('segment', help='split the chosen scan into walls, ceilings and zone floors (scan/surfaces.glb)'); c.add_argument('scene')
+    c = sub.add_parser('cut-openings', help='cut the doors and windows into the walls again (scripts/wall_openings.py)'); c.add_argument('scene')
     sub.add_parser('list', help='scenes as JSON')
     a = p.parse_args()
     try:
@@ -390,6 +385,6 @@ if __name__ == '__main__':
              'align': lambda: register(a.scene, a.take, json.loads(a.target) if a.target else None),
              'align-all': lambda: {s.name: register(a.scene, s.name) for s in sorted((space_dir(a.scene)/'scenarios').iterdir()) if (s/'session.json').is_file()},
              'archive-scan': lambda: archive_scan(a.scene, a.id), 'restore-scan': lambda: archive_scan(a.scene, a.id, True),
-             'add-zone': lambda: add_zone(a.scene, a.name, a.boxes, a.margin), 'segment': lambda: segment(a.scene), 'list': listing}[a.cmd]()
+             'add-zone': lambda: add_zone(a.scene, a.name, a.boxes, a.margin), 'cut-openings': lambda: cut_openings(a.scene), 'list': listing}[a.cmd]()
     except ValueError as e: sys.exit(f'error: {e}')
     print(json.dumps(r, indent=1, default=str))

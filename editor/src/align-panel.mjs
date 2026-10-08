@@ -1,26 +1,25 @@
 import * as THREE from 'three';
 
-// Aligning a recording to its scene from what it shows. The user ticks (in the list, or by clicking in the 3D view) the walls, ceiling
-// pieces, floors, doors and windows and the furniture the recording sees; scripts/align_recording.py then aligns its LiDAR depth to
-// those parts of the scan only (a recording covers a corner of the scene and adds clutter the scan never saw). The choice is kept with
-// the recording (alignTarget) and comes back the next time. While the panel is open the 3D view shows the segmented surfaces and the
-// boxes, the ticked ones highlighted.
+// Aligning a recording to its scene from what it shows. The user ticks (in the list, or by clicking in the 3D view) the layout's walls,
+// ceiling pieces and zone floors and the boxes (furniture, doors, windows) the recording sees; scripts/align_recording.py then aligns its
+// LiDAR depth to the scan's triangles on those parts only (a recording covers a corner of the scene and adds clutter the scan never
+// saw). The choice is kept with the recording (alignTarget) and comes back the next time. While the panel is open the 3D view shows the
+// layout's floors, walls, ceilings and boxes, the ticked ones highlighted.
 const CHECK='<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
 export function createAlignPanel({root,canvas,getCamera,structure,layout,onOpen,onClose,onAlign,onFineTune}){
   let open=false,picked={surfaces:new Set(),boxes:new Set()},groups=[],busy=false,result='';
   const ray=new THREE.Raycaster(),ndc=e=>{const r=canvas.getBoundingClientRect();return new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2);};
 
-  /** surfaces: segmentation list (scan/surfaces.json); boxes: top-level layout boxes with label and zone name; target: alignTarget. */
+  /** surfaces: the layout's walls, ceilings and zone floors ({id, kind, zones}); boxes: top-level layout boxes with label and zone name; target: alignTarget. */
   function show({title,surfaces,boxes,target}){
     picked={surfaces:new Set(target?.surfaces||[]),boxes:new Set(target?.boxes||[])};result='';
     const pretty=id=>id.replace(/^(Wall|Ceiling|Floor)_/,'').replace(/_/g,' ');
-    const of=kind=>surfaces.filter(s=>s.kind===kind&&!s.parent);
+    const of=kind=>surfaces.filter(s=>s.kind===kind);
     groups=[
       {title:'Floors',kind:'surfaces',items:of('floor').map(s=>({id:s.id,name:`${pretty(s.id)}`}))},
       {title:'Walls',kind:'surfaces',items:of('wall').map(s=>({id:s.id,name:`Wall ${pretty(s.id)}`,note:(s.zones||[]).join(' · ')}))},
       {title:'Ceilings',kind:'surfaces',items:of('ceiling').map(s=>({id:s.id,name:pretty(s.id),note:(s.zones||[]).join(' · ')}))},
-      {title:'Doors & windows',kind:'surfaces',items:[...of('door'),...of('window')].map(s=>({id:s.id,name:s.label||s.id,note:(s.zones||[]).join(' · ')}))},
       ...[...new Set(boxes.map(b=>b.zone))].map(z=>({title:`Furniture · ${z}`,kind:'boxes',items:boxes.filter(b=>b.zone===z).map(b=>({id:b.id,name:b.label}))}))
     ].filter(g=>g.items.length);
     open=true;root.hidden=false;root.dataset.title=title;onOpen?.();render();focus();

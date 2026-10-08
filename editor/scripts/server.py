@@ -11,7 +11,6 @@ POST /api/objects {space,name,kind,size?,src?}  a new opportunistic object in th
 POST /api/objects/update {space,id,name?,shape?,pose?}  rename, reshape (all recordings), or keep its pose for placing it elsewhere
 POST /api/objects/replace {space,id,src,size,pivot}  a box object becomes a .glb model in its place (every recording follows)
 POST /api/objects/delete {space,id}  remove one that no recording places
-POST /api/segment {space}        split the chosen scan into the layout's surfaces again (scripts/segment_surfaces.py)
 POST /api/layout {space,objects,openings}  the scene layout as edited (scan/semantic.json)
 POST /api/scan/primary {space,scan}  choose which of the space's scans is used (all are already in the space's coordinates)
 POST /api/register {space,take,target?}  align a recording again; target {surfaces, boxes}: what it shows (scripts/align_recording.py)
@@ -209,7 +208,7 @@ class Handler(SimpleHTTPRequestHandler):
             try: return self.reply(200, quick())
             except (spaces.Conflict, composition.Conflict) as e: return self.reply(409, dict(error=str(e)))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
-        action = {'/api/scenarios': spaces.add_scenario, '/api/register': lambda space, take: spaces.register(space, take, body.get('target')), '/api/segment': lambda space, take: spaces.segment(space)}.get(path)
+        action = {'/api/scenarios': spaces.add_scenario, '/api/register': lambda space, take: spaces.register(space, take, body.get('target'))}.get(path)
         if not action: return self.reply(404, dict(error='Not found'))
         if not busy.acquire(blocking=False): return self.reply(409, dict(error='Another job is running.'))
         try:

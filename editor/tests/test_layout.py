@@ -45,17 +45,3 @@ class RelateTest(unittest.TestCase):
                    ceilings=[dict(id='c', center=[2, 2.5, 1], outline=[[1, 2.5, 0], [3, 2.5, 0], [3, 2.5, 2], [1, 2.5, 2]])])
         layout.relate(sem)
         self.assertEqual(sem['objects'][0]['room'], 'b'); self.assertEqual(sem['walls'][0]['rooms'], ['a', 'b']); self.assertEqual(sem['ceilings'][0]['rooms'], ['a', 'b'])
-
-class SurfacesStateTest(unittest.TestCase):
-    def test_stale_after_layout_or_scan_change(self):
-        import json, tempfile, spaces
-        with tempfile.TemporaryDirectory() as tmp:
-            d = Path(tmp); (d/'scan').mkdir(); m = dict(scan=dict(mesh='scan/a.glb'), semantic='scan/semantic.json')
-            self.assertIsNone(spaces.surfaces_state(d, m))
-            (d/'scan'/'semantic.json').write_text(json.dumps(dict(revision=5)))
-            (d/'scan'/'surfaces.json').write_text(json.dumps(dict(scan='scan/a.glb', semanticRevision=5, surfaces=[{}, {}])))
-            self.assertEqual(spaces.surfaces_state(d, m), dict(count=2, stale=False))
-            (d/'scan'/'semantic.json').write_text(json.dumps(dict(revision=6)))                 # a box was edited
-            self.assertTrue(spaces.surfaces_state(d, m)['stale'])
-            (d/'scan'/'semantic.json').write_text(json.dumps(dict(revision=5)))
-            self.assertTrue(spaces.surfaces_state(d, dict(m, scan=dict(mesh='scan/b.glb')))['stale'])   # another scan chosen

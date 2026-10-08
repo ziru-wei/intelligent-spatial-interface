@@ -2,8 +2,9 @@
 """Align a recording to its scene from the parts of the scene it shows.
 
 A recording covers only part of the scene and adds what the scan never saw (clutter, people). So the reference is not the whole scan but
-what the user selected as seen in the recording (session.json `alignTarget`, or --target): surfaces (walls, ceiling pieces, zone floors,
-doors, windows: scan/surfaces.glb, scripts/segment_surfaces.py) and furniture boxes (the chosen scan's triangles inside each box).
+what the user selected as seen in the recording (session.json `alignTarget`, or --target): layout surfaces (walls, ceiling pieces, zone
+floors: the chosen scan's triangles on each, scripts/scan_geometry.py near) and boxes, doors and windows included (the scan's triangles
+inside each box).
 
   align_recording.py <scene dir> <recording dir> [--target target.json]      target: {"surfaces": [ids], "boxes": [ids]}
 
@@ -24,7 +25,7 @@ from pathlib import Path
 import numpy as np, open3d as o3d, trimesh
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from register_scenario import scenario_points, prepare, lock_gravity, rot_y, VOXEL
-from segment_surfaces import box_frame, scan_mesh
+from scan_geometry import box_frame, scan_mesh, layout_surfaces, near
 
 DENSITY = 600   # target samples per m² (about 4 cm apart)
 
@@ -32,18 +33,20 @@ def target_cloud(scene, target):
     """Points with normals on the selected surfaces and in the selected boxes, in scene coordinates, and for each point the index of
     the selected element it belongs to."""
     m = json.loads((scene/'space.json').read_text()); sem = json.loads((scene/m['semantic']).read_text()); parts = []
+    mesh = scan_mesh(scene/m['scan']['mesh']) if target.get('surfaces') or target.get('boxes') else None
     if target.get('surfaces'):
-        g = trimesh.load(scene/'scan'/'surfaces.glb', force='scene')
+        surfaces = {s['id']: s for s in layout_surfaces(sem)}
         for sid in target['surfaces']:
-            if sid in g.graph.nodes_geometry: T, geo = g.graph[sid]; parts.append(g.geometry[geo].copy().apply_transform(T))
+            s = surfaces.get(sid); idx = near(mesh, s, facing=.5 if s and s['kind'] == 'ceiling' else .8) if s else []
+            if len(idx): parts.append(mesh.submesh([idx], append=True))
     if target.get('boxes'):
-        mesh = scan_mesh(scene/m['scan']['mesh']); C = mesh.triangles_center; boxes = {b['id']: b for b in sem.get('objects', [])+sem.get('openings', [])}
+        C = mesh.triangles_center; boxes = {b['id']: b for b in sem.get('objects', [])+sem.get('openings', [])}
         for bid in target['boxes']:
             b = boxes.get(bid)
             if not b: continue
             inside = np.all(np.abs((C-np.array(b['center']))@box_frame(b).T) <= np.array(b['size'])/2+.03, 1)
             if inside.any(): parts.append(mesh.submesh([np.nonzero(inside)[0]], append=True))
-    if not parts: raise ValueError('Nothing selected to align to (or the scene is not segmented yet).')
+    if not parts: raise ValueError('Nothing selected to align to (or the scan has nothing there).')
     pts, nrm, lab = [], [], []
     for i, part in enumerate(parts):
         P, face = trimesh.sample.sample_surface(part, max(300, int(part.area*DENSITY))); pts.append(P); nrm.append(part.face_normals[face]); lab.append(np.full(len(P), i))

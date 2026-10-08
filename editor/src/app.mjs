@@ -619,8 +619,7 @@ function showSpace(){
   // Layout: labelled boxes over the scan (RoomPlan's first guess, corrected here). Editable for the scene that is open.
   const L=sp.layout;$('layout-count').textContent=L?`${L.objects+L.openings} boxes`:'None';$('layout-count').disabled=!(L&&here[0]===sp.name);if($('layout-count').disabled)$('layout-outline-wrap').hidden=true;
   $('layout-edit').disabled=!(L&&here[0]===sp.name&&layoutLoaded);
-  // Surfaces made from another scan or an older layout (or never made): offer to run the segmentation again.
-  $('surfaces-update').hidden=!(L&&here[0]===sp.name&&sp.scan&&(!L.surfaces||L.surfaces.stale));if($('layout-edit').disabled&&layout.enabled)editLayout(false);
+  if($('layout-edit').disabled&&layout.enabled)editLayout(false);
   // Recordings: click to open. State: aligned / aligning / not aligned (click the warning to try again).
   for(const sc of sp.scenarios){
     const aligning=busy&&busy.take===sc.name&&sp.scan,current=here[0]===sp.name&&here[1]===sc.name;
@@ -706,7 +705,10 @@ function pickRoom(ray){return room?ray.intersectObject(room,true).find(h=>!['pla
 const layout=createLayoutEditor({group:twin.semantic,getRooms:()=>layoutRooms,canvas:$('twin'),getCamera:()=>twin.camera,render:()=>twin.render(),pickScene:pickRoom,
   pickOther:ray=>{const hit=components.pick(ray,i=>groupOf(i)==='persistent'&&visibleInTwin(i)&&!outlineLocked.has(i.spec.id));if(hit)select(hit.instance.spec.id);else if(selected)select(null);return !!hit;},
     // Saves carry the revision this page loaded; one saved from another window since is refused (409) instead of overwritten.
-  onChange:data=>{showOutline();clearTimeout(layoutTimer);layoutTimer=setTimeout(async()=>{try{layoutRevision=(await api('/api/layout',{space:here[0],revision:layoutRevision,...data})).revision;$('take-status').textContent='';await loadSpaces();}catch(e){$('take-status').textContent=e.message;}},500);},
+  onChange:data=>{showOutline();clearTimeout(layoutTimer);layoutTimer=setTimeout(async()=>{try{const r=await api('/api/layout',{space:here[0],revision:layoutRevision,...data});
+    // The server cut the doors and windows into the walls again (bumping revision past boxesRevision): the walls follow.
+    if(r.revision!==r.boxesRevision){const sem=await(await fetch(new URL(space.scan.semantic,spaceURL),{cache:'no-store'})).json();structure.setData(sem);weatherScene.setLayout(sem);}
+    layoutRevision=r.revision;$('take-status').textContent='';await loadSpaces();}catch(e){$('take-status').textContent=e.message;}},500);},
   onHistory:h=>{$('layout-undo').disabled=!h.undo;$('layout-redo').disabled=!h.redo;},
   onSelect:b=>{if(b&&selected)select(null);outlineView?.setSelected(b?.id??null);for(const id of ['box-label','box-yaw','box-delete','box-duplicate'])$(id).disabled=!b;
     const kids=b?layout.children().length:0;$('box-arrange').disabled=!kids;$('box-arrange').title=kids?`Arrange ${kids} children: same rotation, centred, evenly spaced`:'Arrange children';
@@ -754,32 +756,23 @@ function editLayout(on){layout.setEnabled(on);outlineView?.setEditing(on);$('lay
   const inst=components.get(selected);if(inst&&(groupOf(inst)==='persistent')!==on)select(null);if(on){$('show-boxes').checked=true;twin.setDebug({semantic:true});}update();}
 $('layout-edit').onclick=()=>editLayout(!layout.enabled);
 // Layout layers in the 3D view (src/layout-structure.mjs): boxes, zones, walls, ceilings. Remembered in this browser.
-const structure=createStructure({group:twin.helper,twin});const LAYERS=['boxes','zones','walls','ceilings','surfaces'];
+const structure=createStructure({group:twin.helper,twin});const LAYERS=['boxes','zones','walls','ceilings'];
 try{const v=JSON.parse(localStorage.getItem('spatial-take:layout-layers')||'null');if(v)for(const k of LAYERS)if(k in v)$('show-'+k).checked=!!v[k];}catch{}
 function showLayers(){const v=Object.fromEntries(LAYERS.map(k=>[k,$('show-'+k).checked]));twin.setDebug({semantic:v.boxes});structure.setVisible(v);try{localStorage.setItem('spatial-take:layout-layers',JSON.stringify(v));}catch{}}
 for(const k of LAYERS)$('show-'+k).onchange=showLayers;showLayers();
-// The scene's segmented surfaces (scan/surfaces.glb), if it has been segmented; Update reruns the segmentation on the server.
-async function loadSurfaces(spaceURL,rooms){
-  try{const info=await(await fetch(new URL('scan/surfaces.json',spaceURL))).json();const g=(await loader.loadAsync(new URL('scan/surfaces.glb',spaceURL).href)).scene;
-    structure.setSurfaces(g,info.surfaces,rooms);surfacesInfo=info.surfaces;$('show-surfaces').disabled=false;}catch{structure.setSurfaces(null);surfacesInfo=[];$('show-surfaces').disabled=true;}}
 // Align panel (src/align-panel.mjs): pick what the open recording shows, then align it to those parts of the scan. While it is open the
 // 3D view shows surfaces and boxes; the layer switches come back as they were when it closes.
-let surfacesInfo=[],layersBeforeAlign=null;
+const ALIGN_LAYERS=['boxes','zones','walls','ceilings'];let layersBeforeAlign=null;
 const alignPanel=createAlignPanel({root:$('align-panel'),canvas:$('twin'),getCamera:()=>twin.camera,structure,layout,
-  onOpen(){layersBeforeAlign=Object.fromEntries(['boxes','surfaces'].map(k=>[k,$('show-'+k).checked]));for(const k of ['boxes','surfaces'])$('show-'+k).checked=true;showLayers();},
+  onOpen(){layersBeforeAlign=Object.fromEntries(ALIGN_LAYERS.map(k=>[k,$('show-'+k).checked]));for(const k of ALIGN_LAYERS)$('show-'+k).checked=true;showLayers();},
   onClose(){if(layersBeforeAlign)for(const [k,v] of Object.entries(layersBeforeAlign))$('show-'+k).checked=v;layersBeforeAlign=null;showLayers();},
   onFineTune:()=>startFineTune(),
   async onAlign(target){const r=await api('/api/register',{space:here[0],take:here[1],target});
     // The recording's frames move with the new alignment: reload to see it.
     setTimeout(()=>location.reload(),1200);return `Aligned: ${Math.round((r.explained??r.fitness)*100)}% of the picked parts explained, ${(r.rmse*100).toFixed(1)} cm, camera ${r.cameraHeight?.join('–')??'?'} m above the floor. Reloading…`;}});
 function openAlign(){const parents=new Map();for(const b of layout.boxes){const m=/^(.*)\/[^/]+$/.exec(b.label);if(m)parents.set(b.id,m[1]);}
-  const boxes=layout.boxes.filter(b=>!parents.has(b.id)&&!/^(Door|Window)_/.test(b.id)).map(b=>({id:b.id,label:b.label,zone:layoutRooms.find(r=>r.id===b.room)?.name||'No zone'}));
-  alignPanel.show({title:here[1],surfaces:surfacesInfo,boxes,target:session.alignTarget});}
-$('surfaces-update').onclick=async()=>{const b=$('surfaces-update');b.disabled=true;b.lastChild.textContent='Updating…';
-  try{await api('/api/segment',{space:here[0]});const su=new URL('../../space.json',sessionURL);
-    // Segmenting also re-cuts doors and windows into the walls (scripts/wall_openings.py): the structure layers follow.
-    const sem=await(await fetch(new URL('scan/semantic.json',su))).json();layoutRevision=sem.revision||0;layoutRooms=sem.rooms||[];structure.setData(sem);weatherScene.setLayout(sem);await loadSurfaces(su,layoutRooms);await loadSpaces();}catch(e){$('take-status').textContent=e.message;}
-  b.disabled=false;b.lastChild.textContent='Update surfaces';};
+  const boxes=layout.boxes.filter(b=>!parents.has(b.id)).map(b=>({id:b.id,label:b.label,zone:layoutRooms.find(r=>r.id===b.room)?.name||'No zone'}));
+  alignPanel.show({title:here[1],surfaces:structure.surfaces,boxes,target:session.alignTarget});}
 $('box-label').oninput=()=>layout.update({label:$('box-label').value});
 $('box-label').onchange=()=>layout.renumber();   // typed name committed: repeats get numbers
 $('box-yaw').oninput=()=>{const v=parseFloat($('box-yaw').value);if(Number.isFinite(v))layout.update({yaw:v});};
@@ -915,7 +908,7 @@ if(roomParts.children.length)setRoom(roomParts,null,null);
 const hasPart=k=>!!roomParts.userData.parts[k];$('debug-spaceScan').disabled=!hasPart('space');$('debug-recordingMesh').disabled=!hasPart('recording');
 $('debug-recordingMesh').checked=!hasPart('space');twin.setDebug({spaceScan:true,recordingMesh:!hasPart('space')});
 // Layout boxes (scan/semantic.json), shown and edited in the 3D view.
-if(space?.scan?.semantic&&toSpace){try{const sem=await(await fetch(new URL(space.scan.semantic,spaceURL))).json();layoutRevision=sem.revision||0;layoutRooms=sem.rooms||[];layout.setData(sem);structure.setData(sem);weatherScene.setLayout(sem);layoutLoaded=true;showOutline();await loadSurfaces(spaceURL,layoutRooms);showSpace();}catch(e){console.warn('layout',e);}}
+if(space?.scan?.semantic&&toSpace){try{const sem=await(await fetch(new URL(space.scan.semantic,spaceURL))).json();layoutRevision=sem.revision||0;layoutRooms=sem.rooms||[];layout.setData(sem);structure.setData(sem);weatherScene.setLayout(sem);layoutLoaded=true;showOutline();showSpace();}catch(e){console.warn('layout',e);}}
 if(!(session.depth&&session.frames.every(f=>f.depth)))$('depth-occlude').checked=false;
 else{$('depth-occlude').disabled=false;}
 await setFrame(0);
