@@ -13,7 +13,6 @@ cd editor
 npm ci
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt               # import + LiDAR depth
 python3 -m venv .venv-mesh && .venv-mesh/bin/pip install -r requirements-mesh.txt  # room mesh (open3d 0.18 needs numpy < 2)
-.venv/bin/python scripts/demo.py   # synthetic sample with exact depth, no phone needed
 npm start                          # http://localhost:8766
 ```
 
@@ -135,7 +134,6 @@ Lower-level scripts: `scripts/import_record3d.py private/<scene>/recordings/<tak
 - **LiDAR depth occlusion**: each frame's recorded depth (3 cm bias) hides objects behind real surfaces, including things that move. Depth is 192 × 256, so edges are blocky.
 - **Room wireframe overlay**: in the video's options button.
 - **Save / Load** (top right): a self-contained placement JSON (version 2: the components, with imported `.glb` files embedded, and the compositing settings). Version 1 files (one object) still load.
-- **Export MP4** (needs Google Chrome and ffmpeg): `npm run export -- spaces/<space>/scenarios/<take>/session.json exports/<take> placement.json`
 
 ## Agent: Jev routing and a spatial language assistant
 
@@ -211,7 +209,7 @@ Colour/backing are solved from the **current composed pixels** behind the answer
 
 The recorded-view render order is scene/weather → spatial response text and controls → FindMy → shared hand protection → fixed response text and controls → user-question caption. Fixed text and the caption therefore remain above hands. Each response pass samples its own composed background. Weather keeps its separate causal two-candidate placement cost in `src/placement-stability.mjs`; text uses the support search and anchor-retention rules above. BVH acceleration speeds mesh queries; placement time depends on the scene, candidate count and cached frame data.
 
-Verification sources: `tests/jev-pipeline.test.mjs`, `tests/mod-routing.test.mjs`, `tests/conversation-reference.test.mjs`, `tests/gemini-stream.test.mjs`, `tests/response-parts.test.mjs`, `tests/question-caption.test.mjs`, `tests/text-view.test.mjs`, `tests/surface-quality.test.mjs`, `tests/surface.test.mjs` and `tests/stream-placement.test.mjs`. These cover routing thresholds, branch independence, follow-ups, stream/replay ordering, reserved geometry and surface/quality constraints; browser smoke tests separately exercise composed rendering and hand protection.
+Verification sources: `tests/jev-pipeline.test.mjs`, `tests/mod-routing.test.mjs`, `tests/conversation-reference.test.mjs`, `tests/gemini-stream.test.mjs`, `tests/response-parts.test.mjs`, `tests/question-caption.test.mjs`, `tests/text-view.test.mjs`, `tests/surface-quality.test.mjs`, `tests/surface.test.mjs` and `tests/stream-placement.test.mjs`. These cover routing thresholds, branch independence, follow-ups, stream/replay ordering, reserved geometry and surface/quality constraints.
 
 ## Coordinates
 
@@ -221,10 +219,6 @@ Sessions use three.js conventions: right-handed, y up, meters, camera looking do
 
 ```sh
 npm test                    # JavaScript and Python suites: agent pipeline, replay, placement, scene data and import
-node scripts/smoke.mjs      # browser checks against the demo; needs npm start and Google Chrome
-node scripts/twin-smoke.mjs
-node scripts/agent-smoke.mjs     # MCP bridge end to end, using the MCP client instead of Codex
-node scripts/components-smoke.mjs  # component library, animation on the scenario clock, time spans, interaction, autosave
 ```
 
 Persistent and opportunistic objects have **Save object defaults**: save the selected object’s current position, rotation and scale as its Reset baseline. **Reset** restores those saved values, including after reload. Recorded camera → **Video options** → **Persistent objects** controls their visibility in the camera view independently of the 3D scene.
@@ -246,11 +240,7 @@ Clouds and fog use animated 3D density fields with ray marching, soft lighting a
 
 Rain/snow fall under world gravity, with static spawn-column collision rays against both scans and scene objects. Rain creates contact ripples and ballistic splash droplets; snow briefly lingers at impact points. Mod off, deleted answers or changed sessions clear the effects and preview controls. No GPU inference or external weather API is used; browser GPU rendering is required. Quest performance is not yet validated. Coverage follows the edited layout; placement accuracy still depends on recording-to-scan registration.
 
-Checks: `node --test tests/weather.test.mjs`, `.venv/bin/python -m unittest discover -s tests -p test_weather.py`, and `TEST_URL=http://127.0.0.1:8767 node scripts/weather-smoke.mjs` with a test editor server on that port. The browser check creates and removes its own temporary recording and exercises the real MCP tool protocol without running a model.
-
-`node scripts/weather-mod-smoke.mjs` checks structured component requests, autoplay controls, world-space input, live placement, composite-background legibility and controls inside the response.
-
-`node scripts/weather-scan-smoke.mjs` additionally checks the actual home recording against its parametric glass/ceiling surfaces, compiles the volume shaders in both views and saves screenshots under `/tmp/weather-layout-*.png`; it mocks agent APIs and does not modify saved conversations.
+Checks: `node --test tests/weather.test.mjs`, `.venv/bin/python -m unittest discover -s tests -p test_weather.py`.
 
 
 ## FindMy and shared hand protection
@@ -269,7 +259,7 @@ The separate Three.js adapter `src/hand-perception/compositor.mjs` draws after s
 
 Segmentation is an estimate, not hand ground truth: tiny, blurred, occluded or missed hands and similar-colored background regions can produce errors. GrabCut does not provide semantic certainty. Existing recording samples returned no detections; a MediaPipe official two-hand photo exercised the positive detection and segmentation path. This does not establish accuracy on future egocentric recordings. The first frame includes model startup; processing can reduce playback frame rate.
 
-Verification: `npm test`; `node scripts/findmy-hand-smoke.mjs` runs the real local hand model, canonical FindMy resolution, mod-specific controls, hand-approach removal/replay and global compositor pixel checks with deterministic Jev responses. `TEST_HAND_PHOTO=1 node scripts/findmy-hand-smoke.mjs` additionally fetches the [official MediaPipe sample photo](https://github.com/google-ai-edge/mediapipe-samples/blob/main/examples/hand_landmarker/python/hand_landmarker.ipynb) for a positive hand test. Neither smoke command calls Jev, Gemini or Luna. `node scripts/progressive-response-smoke.mjs` covers late text, weather controls and replay. Restart the editor server (`Ctrl+C`, then `npm --prefix editor start` from the repo root), refresh the browser, and restart the existing agent command to load pipeline changes.
+Verification: `npm test`. Restart the editor server (`Ctrl+C`, then `npm --prefix editor start` from the repo root), refresh the browser, and restart the existing agent command to load pipeline changes.
 
 
 Response surface placement targets the **recorded video canvas in CSS pixels** (`src/text-view.mjs`). Acquisition targets a 4.8 px glyph x-height (2.8–8 px), first searching parametric tabletop/furniture faces, walls, floors and windows. Polygon boundaries and openings are respected. Raw depth/scan fitting is a fallback, with a 1.2–4 cm normal lift; it does not float toward the viewer unless the separate surface-fallback option is enabled.
@@ -277,8 +267,6 @@ Response surface placement targets the **recorded video canvas in CSS pixels** (
 Once placed, text keeps its world position, orientation and size. Retention uses wider glyph limits (2.24–11.2 px), 80% view coverage and at least 80% clear footprint samples, tolerating small overlaps and 8 cm of depth discrepancy (12 cm for explicit layout faces). Hand pixels do not reject a text anchor. At maximum stability, a continuous 0.8 seconds of recorded-time readability loss is required before re-placement; lower stability shortens that interval. Search failure or a pending asynchronous search never overwrites the last valid anchor. Responses render after hand protection, so text and its controls may cover hands; weather/FindMy effects still render before hand protection. Static surfaces come from the shared layout geometry, independently of whether Weather is enabled.
 
 Video playback does not await surface searches. Searches are rate limited, expensive ray batches yield, and existing anchors remain rendered during asynchronous checks. Explicit fixed-text mode remains separate. Searches preserve the user's configured fallback policy.
-
-`node scripts/text-legibility-smoke.mjs` tests seven real home-recording frames, projected glyph size, surface attachment and visibility, unavailable-surface behavior, maximum stability, resizing and overlapping seeks, without touching saved conversations or calling an AI API. It writes `/tmp/text-legibility-video.png`.
 
 **Resume on first response** (Responses panel) is saved with the response settings and defaults to Off. Weather and FindMy each expose Default / On / Off overrides. On resumes video playback as soon as the first response is present, including when the question was asked while paused; weather resumes on its first UI without waiting for Luna or the five-second reading pause. Later parts still join the same container, and replay retains their individual arrival times. With Hide after 5 s enabled, the reading window continues while the video plays. Off preserves the existing full-answer + five-second hold.
 
@@ -289,8 +277,6 @@ Playback performance: scenario listings do not load other recordings into the re
 Hand data is now persisted per recording under `.hand-cache/<pipeline-version>/<source-fingerprint>/` (git-ignored). The Agent panel’s **Prepare offline hands** computes missing frames locally, can be stopped and resumed, and yields when video playback starts. Successful no-hand detections are explicit compact index entries: they skip both GrabCut and later mask reads/compositing. Hand frames store compressed binary masks and landmarks. Reloading the editor reuses the cache before creating a detector; changing source images or the segmentation version selects a fresh cache. Failed detections are not persisted as empty frames. Detection uses a 384-pixel image; positive frames use up to 768 pixels for GrabCut, independent foreground seeds, connected-component cleanup, and a one-pixel protective rim. The compositor uses a filtered edge rather than a hard nearest-neighbor cutout. This is still landmark-seeded RGB segmentation, not a dedicated hand semantic model.
 
 Adding a recording now includes offline hands after import/mesh/alignment. It does not report preparation complete until all frames have cached hand or no-hand results. Preparation uses a minimal local headless Chrome worker page, without the scene renderer or AI agents; existing frames are skipped, failed runs keep their completed work, and the recording stores the preparation state. The **Prepare offline hands** button remains available to fill/rebuild caches for existing recordings. The same worker can be run with `npm run prepare:hands -- ./spaces/<scene>/scenarios/<take>/session.json` from `editor/`. The UI shows progress while adding a recording. If a response's mod is disabled in the current browser, a notice under the video identifies it and offers an Enable button; settings remain per browser.
-
-`node editor/scripts/surface-anchor-smoke.mjs` (with the editor running on port 8766) verifies a real reco_reading response remains surface-attached with identical position, orientation and scale across 24 frames. Agent endpoints are mocked; saved conversations are untouched. Static-layout preference and the 0.8-second release rule are covered by placement unit tests.
 
 Surface stability also preserves surface identity: after a position loses readability, it searches nearby positions on the same layout face before considering another face. Same-face moves interpolate over 220 ms. Tabletop faces have a preference bonus. Panels may overhang an edge by up to 15% of their width (capped at 12 cm), provided at least 75% of footprint samples and the anchor center remain supported.
 
