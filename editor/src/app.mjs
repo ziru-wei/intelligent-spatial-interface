@@ -26,6 +26,7 @@ import {load as loadResponseSettings,resolve as resolveSettings,modOf,textRespon
 import {createComponentHost} from './components.mjs';
 import {createAgentLayer,READING,formatSpeed,stepsAt} from './agent.mjs';
 import {questionClock} from './question-caption.mjs';
+import {buildTextTargets,calibrate,applyOffsets} from './layout-surfaces.mjs';
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search);
 const sessionURL=new URL(params.get('session')||'./spaces/demo/scenarios/demo/session.json',location.href);
 const renderer=new THREE.WebGLRenderer({canvas:$('stage'),antialias:true,stencil:true,preserveDrawingBuffer:true});
@@ -207,7 +208,15 @@ function depthMap(i){
  if(!depthLoads.has(i))depthLoads.set(i,loadDepth(i).finally(()=>depthLoads.delete(i)));
  return depthLoads.get(i);
 }
-async function loadDepth(i){if(depths.has(i))return depths.get(i);const blob=await(await fetch(new URL(session.frames[i].depth,sessionURL))).blob();const bmp=await createImageBitmap(blob,{colorSpaceConversion:'none',premultiplyAlpha:'none'});const {width:w,height:h}=bmp;const ctx=new OffscreenCanvas(w,h).getContext('2d',{willReadFrequently:true});ctx.drawImage(bmp,0,0);bmp.close();const px=ctx.getImageData(0,0,w,h).data,m=new Float32Array(w*h);for(let k=0;k<w*h;k++)m[k]=(px[4*k]*256+px[4*k+1])/1000;const tx=new THREE.DataTexture(m,w,h,THREE.RedFormat,THREE.FloatType);tx.needsUpdate=true;depths.set(i,tx);while(depths.size>8){const key=depths.keys().next().value;if(key===i)break;depths.get(key).dispose();depths.delete(key);}return tx;}
+async function decodeDepth(i){const blob=await(await fetch(new URL(session.frames[i].depth,sessionURL))).blob();const bmp=await createImageBitmap(blob,{colorSpaceConversion:'none',premultiplyAlpha:'none'});const {width:w,height:h}=bmp;const ctx=new OffscreenCanvas(w,h).getContext('2d',{willReadFrequently:true});ctx.drawImage(bmp,0,0);bmp.close();const px=ctx.getImageData(0,0,w,h).data,m=new Float32Array(w*h);for(let k=0;k<w*h;k++)m[k]=(px[4*k]*256+px[4*k+1])/1000;return {data:m,width:w,height:h};}
+async function loadDepth(i){if(depths.has(i))return depths.get(i);const {data:m,width:w,height:h}=await decodeDepth(i);const tx=new THREE.DataTexture(m,w,h,THREE.RedFormat,THREE.FloatType);tx.needsUpdate=true;depths.set(i,tx);while(depths.size>8){const key=depths.keys().next().value;if(key===i)break;depths.get(key).dispose();depths.delete(key);}return tx;}
+// Agent text surfaces (src/layout-surfaces.mjs): the layout's faces, each moved to where this recording's LiDAR depth shows it.
+let textTargets=[],surfaceOffsets=null,textSurfaces=[],calibrationRun=0,calibrationTimer=null;
+function setTextLayout(sem){textTargets=buildTextTargets(sem);textSurfaces=applyOffsets(textTargets,surfaceOffsets);clearTimeout(calibrationTimer);calibrationTimer=setTimeout(calibrateSurfaces,300);}
+async function calibrateSurfaces(){
+  const run=++calibrationRun,frames=session?.frames.map((f,i)=>f.depth?i:-1).filter(i=>i>=0)||[];if(!frames.length||!toSpace||!textTargets.length)return;
+  try{const offsets=await calibrate(textTargets,{frames,readDepth:i=>decodeDepth(i).catch(()=>null),camera:frameCamera,intrinsics:session.intrinsics});
+    if(run!==calibrationRun)return;surfaceOffsets=offsets;textSurfaces=applyOffsets(textTargets,offsets);}catch(e){console.warn('surface calibration',e);}}
 async function setFrame(i,{realtime=false,preparedHands=null,generation=null}={}){
  if(realtime){
   if(i===index||preparingFrames.has(i))return;
@@ -670,6 +679,7 @@ function applyToSpace(M){toSpace=M.clone();
   for(const f of session.frames){const p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();
     new THREE.Matrix4().compose(new THREE.Vector3(...f.raw.position),new THREE.Quaternion(...f.raw.quaternion),new THREE.Vector3(1,1,1)).premultiply(M).decompose(p,q,sc);f.position=p.toArray();f.quaternion=q.toArray();}
   twin.trajectory.geometry.dispose();twin.trajectory.geometry=new THREE.BufferGeometry().setFromPoints(session.frames.map(f=>new THREE.Vector3(...f.position)));
+  clearTimeout(calibrationTimer);calibrationTimer=setTimeout(calibrateSurfaces,800);   // the frames moved: measure the surfaces again
   setFrame(index).catch(fail);}
 // The gizmo sits on a pivot at the centre of the recording's mesh (its own origin is where the recording started, often far off), the
 // mesh hanging under it; toSpace is the mesh's resulting world matrix.
@@ -706,8 +716,8 @@ const layout=createLayoutEditor({group:twin.semantic,getRooms:()=>layoutRooms,ca
   pickOther:ray=>{const hit=components.pick(ray,i=>groupOf(i)==='persistent'&&visibleInTwin(i)&&!outlineLocked.has(i.spec.id));if(hit)select(hit.instance.spec.id);else if(selected)select(null);return !!hit;},
     // Saves carry the revision this page loaded; one saved from another window since is refused (409) instead of overwritten.
   onChange:data=>{showOutline();clearTimeout(layoutTimer);layoutTimer=setTimeout(async()=>{try{const r=await api('/api/layout',{space:here[0],revision:layoutRevision,...data});
-    // The server cut the doors and windows into the walls again (bumping revision past boxesRevision): the walls follow.
-    if(r.revision!==r.boxesRevision){const sem=await(await fetch(new URL(space.scan.semantic,spaceURL),{cache:'no-store'})).json();structure.setData(sem);weatherScene.setLayout(sem);}
+    // The saved layout, with the doors and windows the server cut into the walls again: walls, effects and text surfaces follow.
+    const sem=await(await fetch(new URL(space.scan.semantic,spaceURL),{cache:'no-store'})).json();structure.setData(sem);weatherScene.setLayout(sem);setTextLayout(sem);
     layoutRevision=r.revision;$('take-status').textContent='';await loadSpaces();}catch(e){$('take-status').textContent=e.message;}},500);},
   onHistory:h=>{$('layout-undo').disabled=!h.undo;$('layout-redo').disabled=!h.redo;},
   onSelect:b=>{if(b&&selected)select(null);outlineView?.setSelected(b?.id??null);for(const id of ['box-label','box-yaw','box-delete','box-duplicate'])$(id).disabled=!b;
@@ -805,7 +815,7 @@ async function openConversation(id){if(agent.conversation!==id){pause();replayFr
 async function startAgent(){
   let command;try{const setup=await agentApi('/api/agent/command');command=setup.command;$('agent-command').textContent=command;$('agent-config-path').textContent=setup.config_path;$('editor-restart-command').textContent=setup.restart_command;$('gemini-setup-command').textContent=setup.gemini_setup_command||'';$('gemini-setup-copy').onclick=()=>navigator.clipboard.writeText(setup.gemini_setup_command||'');}catch{return;}
   agent=createAgentLayer({scene,getStyleRevision:()=>weatherScene.playback.state.entry?.id,getSettings:forResponse,frames:session.frames,sessionPath:sessionURL.pathname,intrinsics:session.intrinsics,frameCamera,viewport:()=>({width:$('stage').clientWidth,height:$('stage').clientHeight}),
-    surfaceAt:(i,u,v)=>surfaceAt(u,v,i),surfacePatch:(i,u,v,r,hit)=>surfacePatch(u,v,r,i,hit),visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>weatherScene.surfaceTargets,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
+    surfaceAt:(i,u,v)=>surfaceAt(u,v,i),surfacePatch:(i,u,v,r,hit)=>surfacePatch(u,v,r,i,hit),visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
     onChange:()=>update(),onAnimate:()=>update(),onStatus:showAgentStatus});
   $('agent-panel').hidden=false;$('ask').hidden=false;agentTab.disabled=false;agentTab.title='';showTab(store.get('spatialTake.sideTab')||'scene');
   let id=await showConversations(store.get(convKey));if(!id)id=await showConversations((await agentApi('/api/agent/conversations',{})).id);
@@ -908,7 +918,7 @@ if(roomParts.children.length)setRoom(roomParts,null,null);
 const hasPart=k=>!!roomParts.userData.parts[k];$('debug-spaceScan').disabled=!hasPart('space');$('debug-recordingMesh').disabled=!hasPart('recording');
 $('debug-recordingMesh').checked=!hasPart('space');twin.setDebug({spaceScan:true,recordingMesh:!hasPart('space')});
 // Layout boxes (scan/semantic.json), shown and edited in the 3D view.
-if(space?.scan?.semantic&&toSpace){try{const sem=await(await fetch(new URL(space.scan.semantic,spaceURL))).json();layoutRevision=sem.revision||0;layoutRooms=sem.rooms||[];layout.setData(sem);structure.setData(sem);weatherScene.setLayout(sem);layoutLoaded=true;showOutline();showSpace();}catch(e){console.warn('layout',e);}}
+if(space?.scan?.semantic&&toSpace){try{const sem=await(await fetch(new URL(space.scan.semantic,spaceURL))).json();layoutRevision=sem.revision||0;layoutRooms=sem.rooms||[];layout.setData(sem);structure.setData(sem);weatherScene.setLayout(sem);setTextLayout(sem);layoutLoaded=true;showOutline();showSpace();}catch(e){console.warn('layout',e);}}
 if(!(session.depth&&session.frames.every(f=>f.depth)))$('depth-occlude').checked=false;
 else{$('depth-occlude').disabled=false;}
 await setFrame(0);

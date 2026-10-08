@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {TEXT_VIEW,textViewMetrics,viewSizedWidth,footprintPoints,centeredPose} from './text-view.mjs';
+import {frontOnly} from './layout-surfaces.mjs';
 // Parametric room/furniture polygons are stable across recording frames. Respect
 // their actual triangles (including window/door holes), not just bounding boxes.
 export function containsSurfacePoint(target,point){
@@ -33,7 +34,7 @@ export async function staticTextPlacement(response,ctx,basis){
   if(performance.now()-sliceStart>8){await new Promise(r=>setTimeout(r,0));sliceStart=performance.now();}
   if(target.kind==='ceiling'||response.onlySurfaceId&&target.id!==response.onlySurfaceId)continue;
   const normal=target.n.clone(),toward=eye.clone().sub(target.origin);
-  if(normal.dot(toward)<0){if(target.surface==='box'||target.surface==='floor')continue;normal.negate();}
+  if(normal.dot(toward)<0){if(frontOnly(target))continue;normal.negate();}
   if(normal.dot(toward.clone().normalize())<.25)continue;
   const same=previous?.surfaceId===target.id;
   const centers=[target.origin];

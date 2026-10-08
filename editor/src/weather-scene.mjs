@@ -15,7 +15,7 @@ function basis(normal){
 }
 export const SURFACE_LIFT=.065,GLASS_INSET=.015;
 // All effect anchors come from layout geometry; scans only provide occlusion and particle contacts.
-function polygonTarget(id,kind,points,normal,room,holes=[]){
+export function polygonTarget(id,kind,points,normal,room,holes=[]){
  const origin=points.reduce((sum,p)=>sum.add(p),new THREE.Vector3()).divideScalar(points.length),b=basis(normal);
  const project=p=>{const d=p.clone().sub(origin);return new THREE.Vector2(d.dot(b.right),d.dot(b.up));};
  const local=points.map(project),rings=holes.map(r=>r.map(project));
