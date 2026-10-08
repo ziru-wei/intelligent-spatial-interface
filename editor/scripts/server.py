@@ -7,6 +7,10 @@ POST /api/scenarios {space,take} add a recording as a scenario: import, its own 
                                  in .venv-mesh; open3d needs numpy < 2)
 GET  /api/components?space=       the component library (components/<id>/, spaces/<space>/components/<id>/)
 POST /api/composition {session|space,scope,revision,components}  placed components of a recording, or of the scene (scope 'scene')
+POST /api/objects {space,name,kind,size?,src?}  a new opportunistic object in the scene's library (box, or .glb data URL)
+POST /api/objects/update {space,id,name?,shape?,pose?}  rename, reshape (all recordings), or keep its pose for placing it elsewhere
+POST /api/objects/replace {space,id,src,size,pivot}  a box object becomes a .glb model in its place (every recording follows)
+POST /api/objects/delete {space,id}  remove one that no recording places
 POST /api/segment {space}        split the chosen scan into the layout's surfaces again (scripts/segment_surfaces.py)
 POST /api/layout {space,objects,openings}  the scene layout as edited (scan/semantic.json)
 POST /api/scan/primary {space,scan}  choose which of the space's scans is used (all are already in the space's coordinates)
@@ -195,6 +199,10 @@ class Handler(SimpleHTTPRequestHandler):
             # A recording's own components, or (scope 'scene') the scene's, shared by all its recordings.
             '/api/composition': lambda: composition.save(spaces.space_dir(body.get('space')), body.get('components'), body.get('revision')) if body.get('scope') == 'scene'
                 else composition.save(session_dir(body.get('session')), body.get('components'), body.get('revision')),
+            '/api/objects': lambda: composition.add_object(spaces.space_dir(body.get('space')), body.get('name'), body.get('kind'), body.get('size'), body.get('src'), body.get('origin'), body.get('pose')),
+            '/api/objects/update': lambda: composition.update_object(spaces.space_dir(body.get('space')), body.get('id'), body.get('name'), body.get('shape'), body.get('pose'), body.get('origin')),
+            '/api/objects/replace': lambda: composition.replace_object(spaces.space_dir(body.get('space')), body.get('id'), body.get('src'), body.get('size'), body.get('pivot')),
+            '/api/objects/delete': lambda: composition.remove_object(spaces.space_dir(body.get('space')), body.get('id')),
             '/api/scan/primary': lambda: spaces.set_primary(body.get('space'), body.get('scan')),
             '/api/align-manual': lambda: spaces.align_manually(body.get('space'), body.get('take'), body.get('toSpace'), body.get('info'))}.get(path)
         if quick:

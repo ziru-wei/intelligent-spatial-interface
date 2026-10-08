@@ -16,9 +16,17 @@ const COLOR={object:0xffd27a,opening:0x8fc7ff,selected:0xffffff,child:0xd9a6ff},
 const unitEdges=new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),unitBox=new THREE.BoxGeometry(1,1,1),handleGeo=new THREE.SphereGeometry(1,16,12);
 const FACES=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]].map(a=>new THREE.Vector3(...a));
 
-export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onChange,onSelect,onHistory,getRooms=()=>[]}){
+/** Centre of a new box of this size where a ray meets the scan (hit, or null): resting on a floor or table it hits, against a wall it hits,
+ *  else 2 m along the ray. Layout boxes and opportunistic objects are added this way. */
+export function dropCenter(ray,hit,size){
+  const p=hit?hit.point.clone():ray.ray.at(2,new THREE.Vector3());
+  if(hit?.face&&hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y>.7)p.y+=size[1]/2;else p.addScaledVector(ray.ray.direction,-size[2]/2);
+  return p;
+}
+// pickOther(ray): something else under the pointer where there is no box (e.g. a persistent object); true if it took the click.
+export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onChange,onSelect,onHistory,getRooms=()=>[],pickOther=()=>false}){
   let parents=new Map();   // child id → parent box, refreshed after every change (labels: object or nested, and their zone)
-  let boxes=[],hiddenIds=new Set(),enabled=false,selected=null,drag=null,serial=0,undoStack=[],redoStack=[],lastKey=null;
+  let boxes=[],hiddenIds=new Set(),lockedIds=new Set(),enabled=false,selected=null,drag=null,serial=0,undoStack=[],redoStack=[],lastKey=null;
   const ray=new THREE.Raycaster(),handles=new THREE.Group();handles.renderOrder=20;
 
   function dispose(o){o.traverse(c=>{if(c.material){c.material.map?.dispose();c.material.dispose();}});}
@@ -82,15 +90,15 @@ export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onCh
 
   // Hidden boxes (the outline's eye toggles) are neither drawn nor picked.
   function setHidden(ids){hiddenIds=new Set(ids);for(const b of boxes)b.object.visible=!hiddenIds.has(b.id);if(selected&&hiddenIds.has(selected.id))select(null);else render();}
-  const pickable=()=>boxes.filter(b=>b.object.visible).map(b=>b.object.userData.fill);
+  const pickable=()=>boxes.filter(b=>b.object.visible&&!lockedIds.has(b.id)).map(b=>b.object.userData.fill);
+  // Locked boxes (the outline's locks) cannot be picked, moved or deleted.
+  function setLocked(ids){lockedIds=new Set(ids);if(selected&&lockedIds.has(selected.id))select(null);}
   function setEnabled(on){enabled=on;if(!on)selected=null;style();placeHandles();onSelect?.(selected);render();}
   function update(fields){if(!selected)return;remember(Object.keys(fields).join()+':'+selected.id);Object.assign(selected,fields);changed();onSelect?.(selected);}
   function remove(){if(!selected)return;remember();const b=selected;boxes=boxes.filter(x=>x!==b);group.remove(b.object);dispose(b.object);relabel();select(null);onChange?.(data());}
   // A new box where the middle of the view meets the scan, resting on what it hits; else 2 m ahead.
   function add(){
-    const cam=getCamera();ray.setFromCamera(new THREE.Vector2(0,0),cam);const hit=pickScene(ray),size=[.5,.5,.5];
-    const p=hit?hit.point.clone():ray.ray.at(2,new THREE.Vector3());
-    if(hit?.face&&hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y>.7)p.y+=size[1]/2;else p.addScaledVector(ray.ray.direction,-size[2]/2);
+    const cam=getCamera();ray.setFromCamera(new THREE.Vector2(0,0),cam);const size=[.5,.5,.5],p=dropCenter(ray,pickScene(ray),size);
     while(boxes.some(b=>b.id===`custom_${serial}`))serial++;
     remember();const b={id:`custom_${serial}`,label:'object',category:'custom',center:p.toArray().map(v=>+v.toFixed(3)),size,yaw:0,kind:'object'};
     boxes.push(b);build(b);numberLabels();relabel();select(b);onChange?.(data());return b;
@@ -115,7 +123,7 @@ export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onCh
     const h=selected&&ray.intersectObjects(grabbable(),false)[0];
     if(h){const axis=yawAxis(selected,FACES[h.object.userData.face]);
       drag={kind:'face',axis,origin:h.object.getWorldPosition(new THREE.Vector3()),center:new THREE.Vector3(...selected.center),size:[...selected.size],dim:Math.abs(FACES[h.object.userData.face].x)?0:Math.abs(FACES[h.object.userData.face].y)?1:2};}
-    else{const hit=ray.intersectObjects(pickable(),false)[0];if(!hit){if(selected)select(null);return;}
+    else{const hit=ray.intersectObjects(pickable(),false)[0];if(!hit){if(selected)select(null);pickOther(ray);return;}
       if(hit.object.userData.box!==selected)select(hit.object.userData.box);
       // Looking down: move on the floor plane. From the side: in the vertical plane facing the view (up and down too).
       const dir=getCamera().getWorldDirection(new THREE.Vector3()),normal=Math.abs(dir.y)>.5?new THREE.Vector3(0,1,0):new THREE.Vector3(dir.x,0,dir.z).normalize();
@@ -145,6 +153,6 @@ export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onCh
 
   return {setFocus(ids){focus=ids?new Set(ids):null;style();render();},
     /** The top-level box under a ray (visible boxes; a nested one counts as its outermost parent). */
-    pickBox(ray){const hit=ray.intersectObjects(pickable(),false)[0];let b=hit?.object.userData.box;while(b&&parents.has(b.id))b=parents.get(b.id);return b?.id??null;},
-    relabel,renumber,setData,setHidden,setEnabled,update,remove,add,duplicate,arrangeChildren,children,undo,redo,select,data,get history(){return history();},get boxes(){return boxes;},get selected(){return selected;},get enabled(){return enabled;}};
+    pickBox(ray){const hit=ray.intersectObjects(boxes.filter(b=>b.object.visible).map(b=>b.object.userData.fill),false)[0];let b=hit?.object.userData.box;while(b&&parents.has(b.id))b=parents.get(b.id);return b?.id??null;},
+    relabel,renumber,setData,setHidden,setLocked,setEnabled,update,remove,add,duplicate,arrangeChildren,children,undo,redo,select,data,get history(){return history();},get boxes(){return boxes;},get selected(){return selected;},get enabled(){return enabled;}};
 }

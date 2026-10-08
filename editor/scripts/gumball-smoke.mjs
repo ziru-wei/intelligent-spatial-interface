@@ -1,5 +1,6 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import {tmpdir} from 'node:os';import {join} from 'node:path';
 const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl']});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -29,9 +30,9 @@ try{
   await page.mouse.move(target.x+35,target.y-25,{steps:8});await page.mouse.up();const after=await state();
   const field={translate:'position',rotate:'rotation',scale:'scale'}[mode];assert.notDeepEqual(after.transform[field],initial.transform[field],`${mode} changes ${field}`);
   assert.deepEqual(after.camera,initial.camera,'drag does not orbit');assert.equal(after.selected,initial.selected);
-  await page.locator('#comp-withdraw').click();assert.deepEqual((await state()).transform,initial.transform,'one undo restores full drag');
+  await page.keyboard.press('Control+z');assert.deepEqual((await state()).transform,initial.transform,'one undo restores full drag');
  }
- await page.screenshot({path:'/tmp/gumball-smoke.png'});
- await page.evaluate(()=>window.replay.select(null));assert.equal(await page.evaluate(()=>window.replay.twin.gizmo.object??null),null);
+ await page.screenshot({path:join(tmpdir(),'gumball-smoke.png')});
+ await page.evaluate(()=>window.replay.select(null));assert.equal(await page.evaluate(()=>new Promise(f=>requestAnimationFrame(()=>requestAnimationFrame(()=>f(!!window.replay.twin.gizmo.object))))),false);
  assert.deepEqual(errors,[]);console.log('PASS: combined move/rotate/scale, pointer ownership, single-step undo, no video gizmo or click placement, deselection');
 }finally{await browser.close();}

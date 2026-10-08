@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {normalize,resolve,modOf,load,save,textResponses,resumeOnFirstResponse,disabledResponseMods} from '../src/response-settings.mjs';
 
 test('a mod follows the global settings unless it overrides one',()=>{
-  const s=normalize({global:{autoHide:true,stability:.4},mods:{weather:{enabled:true,overrides:{fixedText:true,stability:.9}}}});
+  const s=normalize({global:{autoHide:true,stability:.4},mods:{weather:{enabled:true,overrides:{fixedText:true,stability:.9}},findmy:{enabled:false}}});
   assert.deepEqual(resolve(s),{textResponse:true,resumeOnResponse:false,autoHide:true,surfaceFallback:false,fixedText:false,stability:.4});
   assert.deepEqual(resolve(s,'weather'),{textResponse:true,resumeOnResponse:false,autoHide:true,surfaceFallback:false,fixedText:true,stability:.9});
   delete s.mods.weather.overrides.stability;
@@ -60,8 +60,12 @@ test('surface fallback defaults off and persists independent mod overrides',()=>
  delete restored.mods.weather.overrides.surfaceFallback;assert.equal(resolve(restored,'weather').surfaceFallback,true);
 });
 
+test('mods are on unless switched off',()=>{
+ const s=normalize();assert.deepEqual(Object.values(s.mods).map(m=>m.enabled),Object.values(s.mods).map(()=>true));
+ assert.equal(normalize({mods:{weather:{enabled:false}}}).mods.weather.enabled,false);
+});
 test('disabled response mods are explained without enabling unrelated effects',()=>{
- const s=normalize();assert.deepEqual(disabledResponseMods(s,[{findmy:{target:{}}}]),['findmy']);
+ const s=normalize({mods:{weather:{enabled:false},findmy:{enabled:false}}});assert.deepEqual(disabledResponseMods(s,[{findmy:{target:{}}}]),['findmy']);
  s.mods.findmy.enabled=true;assert.deepEqual(disabledResponseMods(s,[{findmy:{}}]),[]);
  assert.deepEqual(disabledResponseMods(s,[{weather:{}}]),['weather']);assert.deepEqual(disabledResponseMods(s,[{body:'Words'}]),[]);
 });

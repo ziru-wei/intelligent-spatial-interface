@@ -17,9 +17,9 @@ import {setPose,frameAt} from './math.mjs';
 import {createWeatherPreview,createWeatherSurfacePreview} from './weather-preview.mjs';
 import {createWeatherScene} from './weather-scene.mjs';
 import {createTwin} from './twin.mjs';
-import {createLayoutEditor} from './layout-editor.mjs';
+import {createLayoutEditor,dropCenter} from './layout-editor.mjs';
 import {createOutline} from './layout-outline.mjs';
-import {outline as layoutOutline} from './layout-tree.mjs';
+import {outline as layoutOutline,roomOf} from './layout-tree.mjs';
 import {createStructure} from './layout-structure.mjs';
 import {createAlignPanel} from './align-panel.mjs';
 import {load as loadResponseSettings,resolve as resolveSettings,modOf,textResponses,disabledResponseMods,MODS,resumeOnFirstResponse,createResponseSettingsPanel} from './response-settings.mjs';
@@ -88,7 +88,7 @@ function showHandCache(){
 }
 $('prepare-hands').onclick=async()=>{
  if(preparingHands){cancelHandPreparation=true;return;}
- preparingHands=true;cancelHandPreparation=false;pause();$('prepare-hands').textContent='Stop preparation';
+ preparingHands=true;cancelHandPreparation=false;pause();$('prepare-hands').textContent='Stop';
  try{
   await recordingHands.ready;if(recordingHands.status.error)throw Error(recordingHands.status.error);
   for(let i=0;i<session.frames.length&&!cancelHandPreparation;i++){
@@ -102,7 +102,7 @@ $('prepare-hands').onclick=async()=>{
    await new Promise(r=>setTimeout(r,0));
   }
  }catch(e){$('hand-cache-status').textContent=`Offline cache: ${e.message}`;}
- finally{preparingHands=false;$('prepare-hands').textContent='Prepare offline hands';}
+ finally{preparingHands=false;$('prepare-hands').textContent='Prepare';}
 };
 async function perceiveHands(i){
  const cached=await recordingHands.read(i,handKey(i));if(cached)return cached;
@@ -134,9 +134,9 @@ createResponseSettingsPanel({root:$('response-settings'),settings:responseSettin
 $('enable-response-mod').onclick=()=>{const mod=$('enable-response-mod').dataset.mod;if(MODS[mod]&&!responseSettings.mods[mod].enabled)$(`${mod}-mod`).click();};
 weatherScene.setEnabled($('weather-mod').checked);
 twin.setOverlay(weatherScene);twin.setPresentation({get group(){return agent?.group;},get controls(){return weatherSurfacePreview?.mesh;},render:(r,c)=>{agent?.renderAfter(r,c,weatherSurfacePreview?.mesh,index,false);findmyScene.render(r,c);}});
-/** A gizmo moved, turned or scaled the selected component: its spec follows (scale stays one number while uniform). */
+/** A gizmo moved, turned or scaled the selected component: its spec follows (scale stays one number while uniform; a box's stays its size). */
 function fromGizmo(o){if(fine&&o===fine.object){fineMoved(o);return;}const r=v=>+v.toFixed(4),d=v=>+THREE.MathUtils.radToDeg(v).toFixed(2),sc=o.scale.toArray().map(r);
-  setSelected({position:o.position.toArray().map(r),rotation:[d(o.rotation.x),d(o.rotation.y),d(o.rotation.z)],scale:Math.abs(sc[0]-sc[1])<1e-4&&Math.abs(sc[1]-sc[2])<1e-4?sc[0]:sc},{history:false});}
+  setSelected({position:o.position.toArray().map(r),rotation:[d(o.rotation.x),d(o.rotation.y),d(o.rotation.z)],scale:!Array.isArray(components.get(selected)?.spec.scale)&&Math.abs(sc[0]-sc[1])<1e-4&&Math.abs(sc[1]-sc[2])<1e-4?sc[0]:sc},{history:false});}
 // The saved state (Save / Load, ?placement=): the components and the compositing switches. Version 1 (one object) still loads.
 function placement(){return {version:2,components:components.specs(),selected,room:roomName,roomData,occlude:$('occlude').checked,depthOcclude:$('depth-occlude').checked,shadows:$('shadows').checked,roomWireframe:$('room-wireframe').checked,videoTwins:$('video-twins').checked};}
 /** A transform for the selected component: {position, scale, yaw, visible} (the version-1 placement fields). */
@@ -188,9 +188,13 @@ function paint(){
   }finally{for(const i of hidden)i.root.visible=true;depthOccluder.visible=false;catchers.visible=false;}
   const now=performance.now();if(!playing||now-lastTwinPaint>=1000/15){lastTwinPaint=now;twin.render();}
 }
-function visibleInVideo(inst){return $('video-twins').checked||components.categoryOf(inst.spec)==='widget';}
-try{$('video-twins').checked=localStorage.getItem('spatial-take:video-twins')!=='false';}catch{}
-$('video-twins').onchange=()=>{try{localStorage.setItem('spatial-take:video-twins',$('video-twins').checked);}catch{}update();};
+// Persistent objects and Obj library objects can each be left out of the recorded camera and of the 3D view (remembered in this browser).
+const SHOW={video:{persistent:'video-twins',opportunistic:'video-objects'},twin:{persistent:'twin-persistent',opportunistic:'twin-objects'}};
+const shownIn=view=>inst=>{const id=SHOW[view][components.categoryOf(inst.spec)];return (!id||$(id).checked)&&!outlineHidden.has(inst.spec.id);};
+const visibleInVideo=shownIn('video'),visibleInTwin=shownIn('twin');
+twin.setHidden(()=>components.instances.filter(i=>!visibleInTwin(i)).map(i=>i.root));
+for(const id of Object.values(SHOW).flatMap(Object.values)){try{$(id).checked=localStorage.getItem('spatial-take:'+id)!=='false';}catch{}
+  $(id).onchange=()=>{try{localStorage.setItem('spatial-take:'+id,$(id).checked);}catch{}update();twin.render();};}
 function texture(i){
  if(textures.has(i))return Promise.resolve(textures.get(i));
  if(!textureLoads.has(i))textureLoads.set(i,loadTexture(i).finally(()=>textureLoads.delete(i)));
@@ -310,26 +314,31 @@ $('cut').oninput=()=>showCut(twin.setView({cut:Number($('cut').value)}));
 $('cut-flip').onchange=()=>showCut(twin.setView({flip:$('cut-flip').checked}));
 $('reset-view').onclick=()=>twin.resetView();
 $('timeline').oninput=()=>{pause();at(Number($('timeline').value)).catch(fail);};
-// Components panel, laid out like the layout's objects: the instances grouped by category above (digital twin objects of the scene,
-// widgets), the selected one's editor below. Time spans and parameters are in the specs (composition.json, component.json defaults),
-// not in the panel. Saved by scope: the scene's own components (spaces/<scene>/composition.json, in every recording) and this
-// recording's (scenarios/<take>/composition.json).
+// Components: what is placed in this recording besides the scan. Persistent objects (digital twins of the scene's furniture, scope
+// 'scene', in every recording) are listed in the Layout outline under their zone and moved there in Layout Edit mode. Obj library objects
+// (category opportunistic) and widgets are in the Objects section. The selected one gets the handles in the 3D view: move and turn (6DoF),
+// and scale, except persistent objects (their geometry is the real object's). Saved by scope: the scene's own components
+// (spaces/<scene>/composition.json) and this recording's (scenarios/<take>/composition.json).
 let fine=null;   // fine-tuning the open recording's alignment (see startFineTune)
 let selected=null,compositionRevision=0,sceneRevision=0,compositionTimer=null;
-function select(id){selected=components.get(id)?id:null;anchor=components.get(selected)?.root||noSelection;showComponents();update();}
-// The move gizmo only on a selected component that is showing (its eye on, inside its time span), and not while editing the layout.
-function syncGizmo(){const want=fine?fine.object:selected&&anchor.visible&&twin.gizmo.enabled?anchor:null;if(twin.gizmo.object!==want)twin.attach(want);}
-// Undo history of component transforms (Withdraw / ⌘Z): the transform before each change; typing in one field of one component is one
-// step, a gizmo drag is one step (its state at the press).
+const groupOf=inst=>components.categoryOf(inst.spec);
+function select(id){selected=components.get(id)?id:null;anchor=components.get(selected)?.root||noSelection;
+  if(selected&&layout.selected)layout.select(null);if(selected&&groupOf(components.get(selected))==='persistent')outlineView?.setSelected(OBJ+selected);showComponents();update();}
+// The handles only on a selected component that is showing (its eye on, inside its time span, its kind shown in the 3D view).
+function syncGizmo(){const inst=components.get(selected),want=fine?fine.object:inst&&anchor.visible&&twin.gizmo.enabled&&visibleInTwin(inst)?anchor:null;
+  const modes=!fine&&inst&&groupOf(inst)==='persistent'?['translate','rotate']:['translate','rotate','scale'];
+  if(String([...twin.gizmo.modes])!==String(modes)&&!twin.gizmo.dragging)twin.gizmo.setModes(modes);
+  if(twin.gizmo.object!==want)twin.attach(want);}
+// Undo history of component transforms (⌘Z): the transform before each change; a handle drag is one step (its state at the press).
 const compHistory=[];let lastEditKey=null,dragBefore=null;
 function remember(id,key=null){if(key&&key===lastEditKey)return;lastEditKey=key;const s=components.get(id)?.spec;if(!s)return;
-  compHistory.push({id,before:components.transform(s)});if(compHistory.length>200)compHistory.shift();$('comp-withdraw').disabled=false;}
-function withdraw(){const h=compHistory.pop();lastEditKey=null;$('comp-withdraw').disabled=!compHistory.length;if(!h||!components.get(h.id))return;
+  compHistory.push({id,before:components.transform(s)});if(compHistory.length>200)compHistory.shift();}
+function withdraw(){const h=compHistory.pop();lastEditKey=null;if(!h||!components.get(h.id))return;
   select(h.id);components.set(h.id,h.before);showComponents();update();saveComposition();}
 for(const g of [twin.gizmo]){g.addEventListener('mouseDown',()=>{dragBefore=selected&&components.transform(components.get(selected).spec);});
-  g.addEventListener('mouseUp',()=>{const s=selected&&components.get(selected)?.spec;if(dragBefore&&s&&JSON.stringify(dragBefore)!==JSON.stringify(components.transform(s))){compHistory.push({id:selected,before:dragBefore});lastEditKey=null;$('comp-withdraw').disabled=false;}dragBefore=null;});}
-/** Change the selected component (transform, visibility, mount, name, time span) and save; transform changes go into the undo history
- *  unless they come from a gizmo drag (recorded as one step at the press). */
+  g.addEventListener('mouseUp',()=>{const s=selected&&components.get(selected)?.spec;if(dragBefore&&s&&JSON.stringify(dragBefore)!==JSON.stringify(components.transform(s))){compHistory.push({id:selected,before:dragBefore});lastEditKey=null;}dragBefore=null;});}
+/** Change the selected component (transform, visibility, name) and save; transform changes go into the undo history unless they come
+ *  from a handle drag (recorded as one step at the press). */
 function setSelected(fields,{history=true,key=null}={}){if(!selected)return;
   if(history&&['position','rotation','yaw','scale'].some(k=>k in fields))remember(selected,key);
   components.set(selected,fields);showComponents();update();saveComposition();}
@@ -339,7 +348,7 @@ async function addComponent(spec){
   if(!position){const hit=session&&await surfaceAt(.5,.6).catch(()=>null);const p=hit?.point||new THREE.Vector3(0,0,-2).applyQuaternion(camera.quaternion).add(camera.position);position=p.toArray().map(v=>+v.toFixed(3));}
   const inst=await components.add({...spec,position});
   select(inst.spec.id);saveComposition();return inst;}
-async function setComposition(specs,sel){components.clear();for(const s of specs)await components.add(s);select(sel&&components.get(sel)?sel:null);}   // nothing selected unless asked: no gizmo until the user picks a component
+async function setComposition(specs,sel){components.clear();for(const s of specs)await components.add(s);select(sel&&components.get(sel)?sel:null);}   // nothing selected unless asked: no handles until the user picks a component
 let compositionSave=Promise.resolve();
 function saveComposition(immediate=false){
   if(!here[0])return Promise.resolve();clearTimeout(compositionTimer);
@@ -347,6 +356,7 @@ function saveComposition(immediate=false){
     const pending=compositionSave.catch(()=>{}).then(async()=>{
       const r=await api('/api/composition',{session:'./'+sessionURL.pathname.replace(/^\//,''),revision:compositionRevision,components:components.specs('recording')});compositionRevision=r.revision;
       for(const [id,src] of Object.entries(r.srcs||{}))if(components.get(id))components.get(id).spec.src=src;
+      keepObjectBaselines();
       if(components.specs('scene').length||sceneRevision)sceneRevision=(await api('/api/composition',{space:here[0],scope:'scene',revision:sceneRevision,components:components.specs('scene')})).revision;
       $('take-status').textContent='';
     });
@@ -356,60 +366,11 @@ function saveComposition(immediate=false){
   compositionTimer=setTimeout(()=>persist().catch(e=>{$('take-status').textContent=e.message;}),400);
 }
 const fmt=v=>String(+(+v).toFixed(3));
-// Groups (by the component's category) fold; the header button folds or unfolds all. Remembered in this browser.
-const folded=new Set((()=>{try{return JSON.parse(localStorage.getItem('spatial-take:comp-groups')||'[]');}catch{return [];}})());
-const keepFolded=()=>{try{localStorage.setItem('spatial-take:comp-groups',JSON.stringify([...folded]));}catch{}};
-const CHEVRON='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
 const EYES='<svg class="on" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
-const GROUPS=[['persistent','Persistent objects'],['opportunistic','Opportunistic objects'],['widget','Widgets']];
-const groupOf=inst=>components.categoryOf(inst.spec);
-if(folded.delete('digital twin'))folded.add('persistent');
-function eye(on,id){return `<label class="eye" aria-label="${on?'Hide':'Show'}"><input type="checkbox" ${id?`id="${id}"`:''} ${on?'checked':''}>${EYES}</label>`;}
-function showComponents(){
-  const list=$('component-list');list.replaceChildren();
-  for(const [key,title] of GROUPS){const members=components.instances.filter(i=>groupOf(i)===key);if(!members.length&&key==='widget')continue;
-    const open=!folded.has(key),allOn=members.every(i=>i.spec.visible),head=document.createElement('div');head.className='node zone';head.style.setProperty('--depth',0);
-    head.innerHTML=`<button class="twist" aria-label="${open?'Collapse':'Expand'}" aria-expanded="${open}">${CHEVRON}</button><span class="name"></span><span class="n">${members.length}</span>${eye(allOn)}`;
-    head.querySelector('.name').textContent=title;head.dataset.category=key;head.title=key==='persistent'?'Shared across recordings of this scene':key==='opportunistic'?'Objects specific to this recording':'';
-    if(!members.length)head.querySelector('.eye input').disabled=true;
-    head.onclick=e=>{if(e.target.closest('.eye'))return;open?folded.add(key):folded.delete(key);keepFolded();showComponents();};
-    head.querySelector('.eye input').onchange=e=>{for(const i of members)components.set(i.spec.id,{visible:e.target.checked});showComponents();update();saveComposition();};
-    list.append(head);if(!open)continue;
-    for(const inst of members){const s=inst.spec,on=s.id===selected,m=components.library.get(s.component),row=document.createElement('div');
-      row.className='node comp'+(s.visible?'':' off');row.style.setProperty('--depth',1);if(on)row.setAttribute('aria-current','true');
-      row.innerHTML=`<span class="twist"></span><span class="name"></span><span class="n">${s.component==='file'||m?.kind==='gltf'?'glb':'three'}${Number.isFinite(s.start)||Number.isFinite(s.end)?' · timed':''}</span>${eye(s.visible,on?'visible':null)}`;
-      row.querySelector('.name').textContent=s.name;row.title=m?.description||s.name;
-      row.onclick=e=>{if(e.target.closest('.eye'))return;if(!on)select(s.id);};
-      row.querySelector('.eye input').onchange=e=>{components.set(s.id,{visible:e.target.checked});showComponents();update();saveComposition();};
-      row.querySelector('.name').ondblclick=()=>{const name=prompt('Name',s.name);if(name?.trim()){select(s.id);setSelected({name:name.trim()});}};
-      list.append(row);}}
-  $('comp-fold').setAttribute('aria-label',GROUPS.every(([k])=>folded.has(k))?'Unfold all':'Fold all');$('comp-fold').title=$('comp-fold').getAttribute('aria-label');
-  // The editor below the list: the selected component's transform (fields being typed in keep their text).
-  const inst=components.get(selected);$('component-edit').hidden=!inst;if(!inst)return;const s=inst.spec;$('comp-name').textContent=s.name;
-  const sc=Array.isArray(s.scale)?s.scale:[s.scale,s.scale,s.scale];
-  for(const [k,[field,i]] of Object.entries(FIELDS))if(document.activeElement!==$(k))$(k).value=fmt(field==='scale'?sc[i]:s[field][i]);
-  $('comp-save').hidden=groupOf(inst)==='widget';
-  $('comp-reset').disabled=!s.initial||JSON.stringify(components.transform(s))===JSON.stringify(s.initial);
-}
-function value(s,k){return fmt(k==='scale'||k==='yaw'?s[k]:s.position['xyz'.indexOf(k)]);}
-// Fields: position X Y Z, rotation X Y Z (degrees; Y is the yaw), scale X Y Z (locked together unless the chain is off).
-const FIELDS={x:['position',0],y:['position',1],z:['position',2],rx:['rotation',0],yaw:['rotation',1],rz:['rotation',2],sx:['scale',0],sy:['scale',1],sz:['scale',2]};
-for(const [k,[field,i]] of Object.entries(FIELDS))$(k).oninput=()=>{const v=Number($(k).value);if(!Number.isFinite(v)||(field==='scale'&&v<=0))return;const s=components.get(selected)?.spec;if(!s)return;
-  let next;if(field==='scale'){const cur=Array.isArray(s.scale)?[...s.scale]:[s.scale,s.scale,s.scale];next=$('scale-lock').checked?v:(cur[i]=v,cur);}else{next=[...s[field]];next[i]=v;}
-  setSelected({[field]:next},{key:`${selected}:${k}`});};
-$('comp-withdraw').onclick=withdraw;
-$('comp-save').onclick=async()=>{
-  const inst=components.get(selected);if(!inst)return;const previous=inst.spec.initial;
-  inst.spec.initial=components.transform(inst.spec);$('comp-save').disabled=true;
-  try{await saveComposition(true);$('take-status').textContent=`Saved defaults for ${inst.spec.name}`;}
-  catch(e){inst.spec.initial=previous;$('take-status').textContent=e.message;}
-  finally{$('comp-save').disabled=false;showComponents();}
-};
-$('comp-reset').onclick=()=>{const s=components.get(selected)?.spec;if(!s?.initial)return;remember(selected);setSelected(structuredClone(s.initial),{history:false});};
-
+function eye(on){return `<label class="eye" aria-label="${on?'Hide':'Show'}"><input type="checkbox" ${on?'checked':''}>${EYES}</label>`;}
+// Lists that show components: the Objects section and (persistent objects) the Layout outline.
+function showComponents(){showObjects();showOutline();}
 addEventListener('keydown',e=>{if(e.key==='Escape'&&selected&&groupOf(components.get(selected))!=='widget'){e.preventDefault();select(null);return;}if(layout?.enabled||e.target.matches?.('input,select,textarea'))return;if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!e.shiftKey&&compHistory.length){e.preventDefault();withdraw();}});
-$('comp-delete').onclick=()=>{if(!selected)return;components.remove(selected);select(components.instances.at(-1)?.spec.id??null);saveComposition();};
-$('comp-fold').onclick=()=>{const all=GROUPS.every(([k])=>folded.has(k));for(const [k] of GROUPS)all?folded.delete(k):folded.add(k);keepFolded();showComponents();};
 // The recorded camera of any frame (the live camera for the frame on screen).
 function frameCamera(i){const snapshot=new THREE.PerspectiveCamera();setPose(snapshot,session.frames[i],session.intrinsics);return snapshot;}
 // Surface under (px,py) in frame i (default: the frame on screen), world space, normal facing the camera, with where it came from.
@@ -515,8 +476,10 @@ let twinDown=null;$('twin').addEventListener('pointerdown',e=>twinDown=[e.client
 $('twin').addEventListener('click',e=>{if(!twinDown||Math.hypot(e.clientX-twinDown[0],e.clientY-twinDown[1])>4)return;
   if(fine)return;const r=agent?.pick(ndcOf(e),twin.camera);if(r){goToResponse(r);return;}pickComponent(e,twin.camera);});
 // A click on a component selects it, and an interactive component gets the click.
-function pickComponent(e,cam){const ray=new THREE.Raycaster();ray.setFromCamera(ndcOf(e),cam);const hit=components.pick(ray,cam===camera?visibleInVideo:undefined);if(!hit)return false;
-  select(hit.instance.spec.id);hit.instance.runtime.onPointer?.({type:'click',point:hit.point,object:hit.object});update();return true;}
+// Objects and widgets are selected only while editing objects; persistent objects only in Layout Edit mode (src/layout-editor.mjs
+// pickOther). An interactive widget gets its click either way.
+function pickComponent(e,cam){const ray=new THREE.Raycaster();ray.setFromCamera(ndcOf(e),cam);const hit=components.pick(ray,i=>(cam===camera?visibleInVideo:visibleInTwin)(i)&&groupOf(i)!=='persistent');if(!hit)return false;
+  if(objectsEditing)select(hit.instance.spec.id);hit.instance.runtime.onPointer?.({type:'click',point:hit.point,object:hit.object});update();return true;}
 $('stage').onclick=async e=>{if(fine)return;pause();const hitResponse=agent?.pick(ndcOf(e),camera);if(hitResponse){goToResponse(hitResponse);return;}pickComponent(e,camera);};
 // Space: play/pause. Left/Right: one frame. Shift+Left/Right: one second. Ignored while typing in a field.
 document.addEventListener('keydown',e=>{
@@ -529,7 +492,96 @@ function setRoom(next,name,encoded){if(room)scene.remove(room);room=next;room?.t
 async function glb(file,isRoom,category='widget'){pause();const encoded=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
   if(isRoom){setRoom((await loader.parseAsync(await file.arrayBuffer(),'')).scene,file.name,encoded);update();return;}
   await addComponent({component:'file',name:file.name,src:encoded,category});}
-$('opportunistic-import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{await glb(file,false,'opportunistic');folded.delete('opportunistic');keepFolded();showComponents();}catch(err){fail(err);}};
+// Objects section: the scene's object library (opportunistic objects, digital twins of its small things: spaces/<scene>/components/<id>/,
+// a box or a .glb; scripts/composition.py) with a tick for each one placed in this recording, then any recording-only .glb files and the
+// widgets. A placed object is moved, turned and scaled with the handles, in this recording only. The library keeps a baseline (pose and
+// shape): as saved in the recording the object was made in; another recording starts from it when the object is ticked there.
+// New ones are added like layout boxes: where the middle of the 3D view meets the scan (src/layout-editor.mjs dropCenter).
+const sceneObjects=()=>[...components.library.values()].filter(m=>m.category==='opportunistic');
+const libraryObject=inst=>{const m=inst&&components.library.get(inst.spec.component);return m?.category==='opportunistic'?m:null;};
+const placedObject=id=>components.instances.find(i=>i.spec.component===id);
+function dropPose(size){const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(0,0),twin.camera);
+  return {position:dropCenter(ray,pickRoom(ray),size).toArray().map(v=>+v.toFixed(3)),rotation:[0,0,0]};}
+async function placeObject(id){const m=components.library.get(id);
+  const pose=m.pose&&m.origin!==here[1]?structuredClone(m.pose):dropPose(m.kind==='box'?m.defaultScale:[0,0,0]);
+  await addComponent({component:id,category:'opportunistic',...pose,scale:structuredClone(m.defaultScale)});openObjects(true);}
+async function newObject(kind,file){const fallback=kind==='box'?'Box':file.name.replace(/\.glb$/i,'');const name=$('object-name').value.trim()||fallback;
+  const src=file&&await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});
+  const size=[.2,.2,.2],pose=dropPose(kind==='box'?size:[0,0,0]);
+  const r=await api('/api/objects',{space:here[0],name,kind,origin:here[1],pose,...(kind==='box'?{size}:{src})});
+  await components.loadLibrary(here[0]);editObjects(true);await placeObject(r.id);}
+// A box object replaced by a .glb model in its place: its bounding box centre where the box's centre was, scaled to fit in the box (here
+// and, on the server, in every recording and the baseline: scripts/composition.py replace_object).
+async function replaceWithModel(m,file){
+  const scene3=(await loader.parseAsync(await file.arrayBuffer(),'')).scene,bounds=new THREE.Box3().setFromObject(scene3);
+  const size=bounds.getSize(new THREE.Vector3()).toArray().map(v=>+v.toFixed(5)),pivot=bounds.getCenter(new THREE.Vector3()).toArray().map(v=>+v.toFixed(5));
+  if(bounds.isEmpty()||size.some(v=>!(v>0)))throw Error('The model has no geometry.');
+  const src=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});
+  await saveComposition(true);const r=await api('/api/objects/replace',{space:here[0],id:m.id,src,size,pivot});await components.loadLibrary(here[0]);
+  const fit=sc=>Array.isArray(sc)?Math.max(.0001,+Math.min(...sc.map((v,i)=>v/size[i])).toFixed(4)):sc,was=selected;
+  for(const inst of components.instances.filter(i=>i.spec.component===m.id)){const spec=structuredClone(inst.spec);components.remove(spec.id);
+    spec.scale=fit(spec.scale);if(spec.initial)spec.initial.scale=fit(spec.initial.scale);await components.add(spec);}
+  if(r.revisions?.[here[1]])compositionRevision=r.revisions[here[1]];select(components.get(was)?was:null);}
+// The baseline follows the object as saved in the recording it was made in (one made before origins were kept: the first recording it is
+// saved in).
+function keepObjectBaselines(){for(const inst of components.instances){const m=libraryObject(inst);if(!m||(m.origin&&m.origin!==here[1]))continue;
+  const pose={position:inst.spec.position,rotation:inst.spec.rotation},shape=inst.spec.scale,adopt=!m.origin;
+  if(!adopt&&JSON.stringify(pose)===JSON.stringify(m.pose)&&JSON.stringify(shape)===JSON.stringify(m.defaultScale))continue;
+  if(m.kind==='box'&&!Array.isArray(shape))continue;   // a box's shape is its size
+  m.pose=structuredClone(pose);m.defaultScale=structuredClone(shape);m.origin=here[1];
+  api('/api/objects/update',{space:here[0],id:m.id,pose,shape,...(adopt?{origin:here[1]}:{})}).catch(e=>{$('take-status').textContent=e.message;});}}
+async function renameObject(id,name){const m=components.library.get(id);name=name.trim();if(!m||!name||name===m.name)return;
+  await api('/api/objects/update',{space:here[0],id,name});m.name=name;
+  for(const inst of components.instances)if(inst.spec.component===id)components.set(inst.spec.id,{name});showComponents();saveComposition();}
+// Double-click a name to rename it in place (Enter or leaving the field keeps it, Escape cancels).
+function editName(span,current,onDone){const input=document.createElement('input');input.className='rename';input.value=current;span.replaceWith(input);input.focus();input.select();
+  let done=false;const finish=save=>{if(done)return;done=true;input.replaceWith(span);if(save&&input.value.trim()&&input.value.trim()!==current)Promise.resolve(onDone(input.value.trim())).catch(e=>{$('take-status').textContent=e.message;});};
+  input.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();finish(true);}if(e.key==='Escape')finish(false);};input.onblur=()=>finish(true);input.onclick=e=>e.stopPropagation();}
+const TRASH='<svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg>';
+function unplace(inst){components.remove(inst.spec.id);if(selected===inst.spec.id)select(null);showComponents();update();saveComposition();}
+const MODEL='<svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12v9M4 7.5l8 4.5 8-4.5"/><path d="M17 1v4M15 3h4"/></svg>';
+// One row: [tick] name kind [eye] [model] [remove]. Only while editing objects (the Edit button): tick, rename, replace, remove, and
+// clicking a placed row to select it (handles in the 3D view).
+function objectRow({name,kind,inst,tick,onTick,onRename,onRemove,onModel}){const edit=objectsEditing;
+  const li=document.createElement('li');li.className='item obj'+(inst?' placed':'');if(inst&&inst.spec.id===selected)li.setAttribute('aria-current','true');
+  li.innerHTML=`${tick?`<input type="checkbox" class="here" title="Placed in this recording" ${inst?'checked':''} ${edit?'':'disabled'}>`:''}<span class="name"></span><span class="n">${kind}</span>${inst?eye(inst.spec.visible):''}`
+    +`${edit&&onModel?`<label class="swap" aria-label="Replace with a 3D model" title="Replace the box with a 3D model (.glb)">${MODEL}<input type="file" accept=".glb"></label>`:''}${edit&&onRemove?`<button class="del" aria-label="Remove" title="Remove from the scene's objects">${TRASH}</button>`:''}`;
+  li.querySelector('.name').textContent=name;
+  li.onclick=e=>{if(e.target.closest('label,button,input'))return;if(inst&&edit)select(inst.spec.id);};
+  if(onRename&&edit)li.querySelector('.name').ondblclick=e=>{e.stopPropagation();editName(e.target,name,onRename);};
+  li.querySelector('.swap input')?.addEventListener('change',e=>{const f=e.target.files[0];if(f)Promise.resolve(onModel(f)).catch(err=>{$('take-status').textContent=err.message;});});
+  li.querySelector('.here')?.addEventListener('change',e=>Promise.resolve(onTick(e.target.checked)).catch(err=>{$('take-status').textContent=err.message;}));
+  li.querySelector('.eye input')?.addEventListener('change',e=>{components.set(inst.spec.id,{visible:e.target.checked});showComponents();update();saveComposition();});
+  li.querySelector('.del')?.addEventListener('click',()=>Promise.resolve(onRemove()).catch(err=>{$('take-status').textContent=err.message;}));
+  return li;}
+function showObjects(){
+  const list=$('object-library'),all=sceneObjects(),loose=components.instances.filter(i=>groupOf(i)==='opportunistic'&&!libraryObject(i)),widgets=components.instances.filter(i=>groupOf(i)==='widget');
+  const n=all.length+loose.length;$('objects-count').textContent=`${n} object${n===1?'':'s'}`;$('objects-edit').hidden=$('object-add-menu').hidden=!here[0];
+  list.replaceChildren();
+  for(const m of all){const inst=placedObject(m.id);
+    list.append(objectRow({name:m.name,kind:m.kind==='box'?'box':'glb',inst,tick:true,onTick:on=>on?placeObject(m.id):unplace(inst),onRename:name=>renameObject(m.id,name),
+      onModel:m.kind==='box'?file=>replaceWithModel(m,file):null,
+      onRemove:async()=>{if(!confirm(`Remove ${m.name} from this scene?`))return;if(inst){unplace(inst);await saveComposition(true);}
+        await api('/api/objects/delete',{space:here[0],id:m.id});await components.loadLibrary(here[0]);showComponents();update();}}));}
+  // .glb files imported into this recording alone (before the library): untick to remove.
+  for(const inst of loose)list.append(objectRow({name:inst.spec.name,kind:'glb · here only',inst,tick:true,onTick:on=>{if(!on)unplace(inst);},onRename:name=>{select(inst.spec.id);setSelected({name});}}));
+  if(widgets.length){const h=document.createElement('li');h.className='item obj-group';h.textContent='Widgets';list.append(h);
+    for(const inst of widgets)list.append(objectRow({name:inst.spec.name,kind:components.library.get(inst.spec.component)?.kind==='gltf'||inst.spec.component==='file'?'glb':'three',inst,onRename:name=>{select(inst.spec.id);setSelected({name});}}));}
+}
+function openObjects(open){$('objects-wrap').hidden=!open;$('objects-count').setAttribute('aria-expanded',open);}
+$('objects-count').onclick=()=>openObjects($('objects-wrap').hidden);
+// Editing objects (the Edit button) and editing the layout take turns.
+let objectsEditing=false;
+function editObjects(on){objectsEditing=on;$('objects-edit').setAttribute('aria-pressed',on);if(on){if(layout.enabled)editLayout(false);openObjects(true);}
+  const inst=components.get(selected);if(!on&&inst&&groupOf(inst)!=='persistent')select(null);else showComponents();}
+$('objects-edit').onclick=()=>editObjects(!objectsEditing);
+// Add (a menu): name, type (a box, or a 3D model from a .glb), then Add to scene.
+let newType='box';const fileLabel=()=>{const f=$('opportunistic-import').files[0];$('object-file').querySelector('span').textContent=f?f.name:'Choose .glb';};
+for(const b of document.querySelectorAll('#object-add-menu [data-type]'))b.onclick=()=>{newType=b.dataset.type;for(const x of document.querySelectorAll('#object-add-menu [data-type]'))x.setAttribute('aria-pressed',x===b);$('object-file').hidden=newType!=='gltf';};
+$('opportunistic-import').onchange=fileLabel;
+$('object-add-menu').ontoggle=()=>{if($('object-add-menu').open)$('object-name').focus();};
+$('object-create').onclick=async()=>{const file=$('opportunistic-import').files[0];if(newType==='gltf'&&!file){$('opportunistic-import').click();return;}
+  try{await newObject(newType,file);$('object-name').value='';$('opportunistic-import').value='';fileLabel();$('object-add-menu').open=false;}catch(err){$('take-status').textContent=err.message;}};
 function occlusion(){if(!room)return;room.traverse(o=>{if(o.isMesh){
   // Keep a scan's texture for the 3D view before the occluder material replaces it.
   if(!('scanMap' in o.userData))o.userData.scanMap=o.material.map||null;o.material=new THREE.MeshBasicMaterial({color:0x888888,wireframe:!$('occlude').checked,colorWrite:!$('occlude').checked&&$('room-wireframe').checked,depthWrite:$('occlude').checked,side:THREE.DoubleSide});o.renderOrder=-1;}});update();}
@@ -649,23 +701,57 @@ $('fine-save').onclick=async()=>{const e=fineToSpace().elements,rowMajor=[e[0],e
 $('space').onchange=showSpace;
 // Layout editing (src/layout-editor.mjs). Saved half a second after the last change.
 let layoutLoaded=false,layoutTimer=null,layoutRevision=0,layoutRooms=[];
-const layout=createLayoutEditor({group:twin.semantic,getRooms:()=>layoutRooms,canvas:$('twin'),getCamera:()=>twin.camera,render:()=>twin.render(),
-  // In plan and elevation views, only what the section plane leaves visible.
-  pickScene:ray=>room?ray.intersectObject(room,true).find(h=>!['plan','elevation-x','elevation-z'].includes(twin.mode)||twin.clip.distanceToPoint(h.point)>=0):null,
+// The scan under a ray from the 3D view; in plan and elevation views, only what the section plane leaves visible.
+function pickRoom(ray){return room?ray.intersectObject(room,true).find(h=>!['plan','elevation-x','elevation-z'].includes(twin.mode)||twin.clip.distanceToPoint(h.point)>=0):null;}
+const layout=createLayoutEditor({group:twin.semantic,getRooms:()=>layoutRooms,canvas:$('twin'),getCamera:()=>twin.camera,render:()=>twin.render(),pickScene:pickRoom,
+  pickOther:ray=>{const hit=components.pick(ray,i=>groupOf(i)==='persistent'&&visibleInTwin(i)&&!outlineLocked.has(i.spec.id));if(hit)select(hit.instance.spec.id);else if(selected)select(null);return !!hit;},
     // Saves carry the revision this page loaded; one saved from another window since is refused (409) instead of overwritten.
   onChange:data=>{showOutline();clearTimeout(layoutTimer);layoutTimer=setTimeout(async()=>{try{layoutRevision=(await api('/api/layout',{space:here[0],revision:layoutRevision,...data})).revision;$('take-status').textContent='';await loadSpaces();}catch(e){$('take-status').textContent=e.message;}},500);},
   onHistory:h=>{$('layout-undo').disabled=!h.undo;$('layout-redo').disabled=!h.redo;},
-  onSelect:b=>{outlineView?.setSelected(b?.id??null);for(const id of ['box-label','box-yaw','box-delete','box-duplicate'])$(id).disabled=!b;
-    const kids=b?layout.children().length:0;$('box-arrange').disabled=!kids;$('box-arrange').querySelector('span').textContent=kids?`Arrange ${kids} children`:'Arrange children';
+  onSelect:b=>{if(b&&selected)select(null);outlineView?.setSelected(b?.id??null);for(const id of ['box-label','box-yaw','box-delete','box-duplicate'])$(id).disabled=!b;
+    const kids=b?layout.children().length:0;$('box-arrange').disabled=!kids;$('box-arrange').title=kids?`Arrange ${kids} children: same rotation, centred, evenly spaced`:'Arrange children';
     if(document.activeElement!==$('box-label'))$('box-label').value=b?.label||'';if(document.activeElement!==$('box-yaw'))$('box-yaw').value=b?Math.round(b.yaw||0):'';}});
-// The layout's outline (zones → boxes → nested boxes) with show/hide per row: src/layout-outline.mjs.
-const outlineView=here[0]?createOutline({root:$('layout-outline'),scene:here[0],onSelect:id=>layout.select(layout.boxes.find(b=>b.id===id)),onHidden:ids=>layout.setHidden(ids)}):null;
-function showOutline(){if(outlineView&&layoutLoaded){outlineView.setTree(layoutOutline(layout.boxes,layoutRooms));layout.setHidden(outlineView.hiddenBoxes());}}
+// The layout's outline (src/layout-outline.mjs), grouped by zone (the room each top-level box stands in) or by type (furniture, doors and
+// windows, objects): the seg control above it, remembered in this browser. Persistent objects are in it too (rows with an object icon,
+// ids OBJ + the component's): in Edit mode, selected there or clicked in the 3D view, they get the move and turn handles. Hidden rows are
+// left out of the 3D view (persistent objects: of both views); locked rows cannot be picked, moved or deleted.
+const OBJ='obj:';let outlineHidden=new Set(),outlineLocked=new Set();
+const isObj=id=>id.startsWith(OBJ),objId=id=>id.slice(OBJ.length);
+let groupBy=(()=>{try{return localStorage.getItem('spatial-take:layout-group')==='type'?'type':'zone';}catch{return 'zone';}})();
+const outlineView=here[0]?createOutline({root:$('layout-outline'),scene:here[0],
+  onSelect:(id,locked)=>{
+    if(isObj(id)&&layout.enabled&&!locked){select(objId(id));return;}
+    if(!isObj(id)&&!locked){layout.select(layout.boxes.find(b=>b.id===id));return;}
+    if(selected)select(null);layout.select(null);outlineView.setSelected(id);},   // highlighted only
+  onHidden:()=>applyOutline(),onLocked:()=>applyOutline(),
+  onDelete:id=>{if(isObj(id)){const inst=components.get(objId(id));if(!inst||!confirm(`Delete ${inst.spec.name} from this scene?`))return;
+      components.remove(inst.spec.id);if(selected===inst.spec.id)select(null);showComponents();update();saveComposition();return;}
+    const b=layout.boxes.find(x=>x.id===id);if(b){layout.select(b);layout.remove();}},
+  // A new name for a box: the last part of its label (a nested box keeps its parent path).
+  onRename:(id,name)=>{if(isObj(id)){components.set(objId(id),{name});showComponents();saveComposition();return;}const b=layout.boxes.find(x=>x.id===id);if(!b)return;const parts=String(b.label||'').split('/').map(x=>x.trim()).filter(Boolean);parts.splice(-1,1,name);layout.select(b);layout.update({label:parts.join('/')});layout.renumber();}}):null;
+const persistentNode=inst=>({box:{id:OBJ+inst.spec.id,label:inst.spec.name.replaceAll('/',' '),center:inst.spec.position,isObject:true},children:[]});
+const byName=(a,b)=>(a.box.label.split('/').at(-1)).localeCompare(b.box.label.split('/').at(-1));
+function byZone(){const groups=layoutOutline(layout.boxes,layoutRooms);
+  for(const inst of components.instances.filter(i=>groupOf(i)==='persistent')){const z=roomOf(layoutRooms,inst.spec.position);
+    let g=groups.find(x=>x.zone.id===z);if(!g){g={zone:{id:z,name:z==null?'No zone':layoutRooms.find(r=>r.id===z)?.name||z},nodes:[]};const none=groups.findIndex(x=>x.zone.id==null);groups.splice(z==null||none<0?groups.length:none,0,g);}
+    g.nodes.push(persistentNode(inst));}
+  for(const g of groups)g.nodes.sort(byName);return groups;}
+function byType(){const top=layoutOutline(layout.boxes,layoutRooms).flatMap(g=>g.nodes);
+  return [['furniture','Furniture',top.filter(n=>n.box.kind!=='opening')],['openings','Doors & windows',top.filter(n=>n.box.kind==='opening')],
+    ['objects','Objects',components.instances.filter(i=>groupOf(i)==='persistent').map(persistentNode)]]
+    .map(([id,name,nodes])=>({zone:{id:'type:'+id,name},nodes:nodes.sort(byName)})).filter(g=>g.nodes.length);}
+function applyOutline(){if(!outlineView)return;const hidden=[...outlineView.hiddenBoxes()],locked=[...outlineView.lockedBoxes()];
+  layout.setHidden(hidden.filter(i=>!isObj(i)));layout.setLocked(locked.filter(i=>!isObj(i)));
+  outlineHidden=new Set(hidden.filter(isObj).map(objId));outlineLocked=new Set(locked.filter(isObj).map(objId));
+  if(selected&&outlineLocked.has(selected))select(null);update();twin.render();}
+function showOutline(){if(!outlineView||!layoutLoaded)return;outlineView.setTree(groupBy==='type'?byType():byZone());applyOutline();}
+for(const b of document.querySelectorAll('.outline-group [data-group]')){b.setAttribute('aria-pressed',b.dataset.group===groupBy);
+  b.onclick=()=>{groupBy=b.dataset.group;try{localStorage.setItem('spatial-take:layout-group',groupBy);}catch{}for(const x of document.querySelectorAll('.outline-group [data-group]'))x.setAttribute('aria-pressed',x===b);showOutline();};}
 $('layout-count').onclick=()=>{const open=$('layout-outline-wrap').hidden;$('layout-outline-wrap').hidden=!open;$('layout-count').setAttribute('aria-expanded',open);};
-$('outline-expand').onclick=()=>outlineView?.expandAll();$('outline-collapse').onclick=()=>outlineView?.collapseAll();$('outline-show').onclick=()=>outlineView?.showAll();
-function editLayout(on){layout.setEnabled(on);$('layout-edit').setAttribute('aria-pressed',on);$('layout-tools').hidden=!on;
-  // The object's move gizmo would compete for the same drags.
-  twin.gizmo.enabled=!on;twin.gizmo.getHelper().visible=!on;if(on){$('show-boxes').checked=true;twin.setDebug({semantic:true});}update();}
+function editLayout(on){layout.setEnabled(on);outlineView?.setEditing(on);$('layout-edit').setAttribute('aria-pressed',on);$('layout-tools').hidden=!on;
+  // Edit mode edits the layout and the persistent objects; editing objects (the Objects section) the others.
+  if(on&&objectsEditing)editObjects(false);
+  const inst=components.get(selected);if(inst&&(groupOf(inst)==='persistent')!==on)select(null);if(on){$('show-boxes').checked=true;twin.setDebug({semantic:true});}update();}
 $('layout-edit').onclick=()=>editLayout(!layout.enabled);
 // Layout layers in the 3D view (src/layout-structure.mjs): boxes, zones, walls, ceilings. Remembered in this browser.
 const structure=createStructure({group:twin.helper,twin});const LAYERS=['boxes','zones','walls','ceilings','surfaces'];
@@ -709,6 +795,11 @@ $('space-create').onsubmit=async e=>{e.preventDefault();try{const r=await api('/
 loadSpaces();
 // Local coding agent as the spatial assistant (scripts/agent-bridge.mjs + scripts/mcp.mjs); only when served by scripts/server.py.
 // Questions and answers belong to a session of this scene (agent conversations, scripts/agent_store.py); each starts with an empty timeline.
+// Side panel: Scene (scene, its scan, layout, objects and recordings; the components placed here) or Agent, one at a time.
+const agentTab=document.querySelector('[data-tab=agent]');
+function showTab(tab){if(tab==='agent'&&agentTab.disabled)tab='scene';for(const b of document.querySelectorAll('[data-tab]'))b.setAttribute('aria-pressed',b.dataset.tab===tab);
+  $('tab-scene').hidden=tab!=='scene';$('tab-agent').hidden=tab!=='agent';store.set('spatialTake.sideTab',tab);}
+for(const b of document.querySelectorAll('[data-tab]'))b.onclick=()=>showTab(b.dataset.tab);
 const convKey='spatialTake.conversation:'+sessionURL.pathname,store={get:k=>{try{return localStorage.getItem(k);}catch{return null;}},set:(k,v)=>{try{localStorage.setItem(k,v);}catch{}}};
 const agentApi=async(path,body)=>{const u=new URL(path,location.href);u.searchParams.set('session',sessionURL.pathname);const r=await fetch(u,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:sessionURL.pathname,...body})}:{});const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;};
 const userState=()=>({conversation:agent?.conversation,frame:index,t:session.frames[index].t,position:session.frames[index].position,quaternion:session.frames[index].quaternion,weather_mod:$('weather-mod').checked,findmy_mod:$('findmy-mod').checked});
@@ -723,7 +814,7 @@ async function startAgent(){
   agent=createAgentLayer({scene,getStyleRevision:()=>weatherScene.playback.state.entry?.id,getSettings:forResponse,frames:session.frames,sessionPath:sessionURL.pathname,intrinsics:session.intrinsics,frameCamera,viewport:()=>({width:$('stage').clientWidth,height:$('stage').clientHeight}),
     surfaceAt:(i,u,v)=>surfaceAt(u,v,i),surfacePatch:(i,u,v,r,hit)=>surfacePatch(u,v,r,i,hit),visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>weatherScene.surfaceTargets,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
     onChange:()=>update(),onAnimate:()=>update(),onStatus:showAgentStatus});
-  $('agent-panel').hidden=false;$('ask').hidden=false;
+  $('agent-panel').hidden=false;$('ask').hidden=false;agentTab.disabled=false;agentTab.title='';showTab(store.get('spatialTake.sideTab')||'scene');
   let id=await showConversations(store.get(convKey));if(!id)id=await showConversations((await agentApi('/api/agent/conversations',{})).id);
   await openConversation(id);agent.start();
   $('agent-copy').onclick=async()=>{await navigator.clipboard.writeText(command);const label=$('agent-copy').querySelector('span');label.textContent='Copied';setTimeout(()=>label.textContent='Copy command',1500);};
@@ -835,9 +926,9 @@ const fetchJSON=async u=>{try{const r=await fetch(u);return r.ok?await r.json():
 const sceneSaved=here[0]?await fetchJSON(new URL('../../composition.json',sessionURL)):null,saved=here[0]?await fetchJSON(new URL('composition.json',sessionURL)):null;
 sceneRevision=sceneSaved?.revision||0;compositionRevision=saved?.revision||0;
 const sceneSpecs=(sceneSaved?.components||[]).map(c=>({...c,scope:'scene'})),takeSpecs=(saved?.components||[]).map(c=>({...c,scope:'recording'}));
-if(saved||sceneSpecs.length)await setComposition([...sceneSpecs,...takeSpecs],takeSpecs[0]?.id);
+if(saved||sceneSpecs.length)await setComposition([...sceneSpecs,...takeSpecs],null);
 // The calibration cube (a reference for checking placement, occlusion and shadows) only where there is no scene to check against: the demo.
 if(!saved&&!params.has('placement')&&!toSpace){await addComponent({component:'calibration-cube',position:[0,0,-2.5]});}
 if(params.has('placement')){const u=new URL(params.get('placement'),location.href);if(u.origin!==location.origin)throw Error('Placement URL must use this server');const response=await fetch(u);if(!response.ok)throw Error('Placement not found');await loadPlacement(await response.json());}
 weatherSurfacePreview=await createWeatherSurfacePreview(scene,weatherScene.playback,()=>update());weatherSurfacePreview.attach($('stage'),()=>camera);weatherSurfacePreview.attach($('twin'),()=>twin.camera);
-await startAgent();new ResizeObserver(()=>update()).observe($('stage'));window.replay={ready:true,agent,get handData(){return currentHandData;},handPerception,recordingHands,handCompositor,spatialHands,findmyApproach,findmyScene,weatherScene,weatherSurfacePreview,layout,editLayout,components,addComponent,loadGLB:glb,select,get selected(){return selected;},get anchor(){return anchor;},fineTune:{start:startFineTune,end:endFineTune,get state(){return fine;}},setFrame,at,placement,applyPlacement,loadPlacement,depthMap,surfaceAt,surfacePatch,visibleIn,session,renderer,camera,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}
+await startAgent();new ResizeObserver(()=>update()).observe($('stage'));window.replay={ready:true,agent,get handData(){return currentHandData;},handPerception,recordingHands,handCompositor,spatialHands,findmyApproach,findmyScene,weatherScene,weatherSurfacePreview,layout,editLayout,components,addComponent,loadGLB:glb,select,setSelected,editObjects,get selected(){return selected;},get anchor(){return anchor;},fineTune:{start:startFineTune,end:endFineTune,get state(){return fine;}},setFrame,at,placement,applyPlacement,loadPlacement,depthMap,surfaceAt,surfacePatch,visibleIn,session,renderer,camera,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}

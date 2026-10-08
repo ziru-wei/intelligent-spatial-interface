@@ -23,7 +23,7 @@ export function createTwin({canvas,scene,camera,anchor,onMove,getRoom}){
   gizmo.addEventListener('objectChange',()=>gizmo.object&&onMove(gizmo.object));gizmo.addEventListener('change',()=>render());
   orbit.addEventListener('change',()=>render());
   let loaded=false,mode='follow',cut=0,flip=false;
-  const viewCenter=new THREE.Vector3(),clip=new THREE.Plane(),renderHooks=[];
+  const viewCenter=new THREE.Vector3(),clip=new THREE.Plane(),renderHooks=[];let hidden=null;   // objects left out of this view (setHidden)
   const videoTexture=new THREE.CanvasTexture(document.getElementById('stage'));videoTexture.colorSpace=THREE.SRGBColorSpace;
   const videoPanel=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1),new THREE.MeshBasicMaterial({map:videoTexture,side:THREE.DoubleSide,toneMapped:false}));
   videoPanel.name='Recorded video preview';videoPanel.visible=false;helper.add(videoPanel);
@@ -168,7 +168,8 @@ export function createTwin({canvas,scene,camera,anchor,onMove,getRoom}){
     for(const hook of renderHooks)hook({mode,clip:SECTION[mode]?clip:null,camera:active()});
     const overlayVisible=overlay?.group.visible;if(overlay)overlay.group.visible=false;
     const textGroup=presentation?.group,controls=presentation?.controls,controlsVisible=controls?.visible;if(textGroup)textGroup.visible=false;if(controls)controls.visible=false;
-    renderer.render(scene,active());if(overlay){overlay.group.visible=overlayVisible;overlay.render(renderer,active());}
+    const hide=(hidden?.()||[]).filter(o=>o.visible);for(const o of hide)o.visible=false;
+    renderer.render(scene,active());for(const o of hide)o.visible=true;if(overlay){overlay.group.visible=overlayVisible;overlay.render(renderer,active());}
     if(controls)controls.visible=controlsVisible;presentation?.render(renderer,active());
     for(const [o,m] of swapped)o.material=m;
     if(parts.space)parts.space.visible=true;if(parts.recording)parts.recording.visible=true;
@@ -184,5 +185,5 @@ export function createTwin({canvas,scene,camera,anchor,onMove,getRoom}){
   /** Orbit view around a point, from far enough to see a sphere of the given radius (keeps the current viewing direction). */
   function focusOn(point,radius=1.5){if(mode!=='orbit')setView({mode:'orbit'});const dir=view.position.clone().sub(orbit.target);if(dir.lengthSq()<1e-6)dir.set(1,.8,1);
     dir.normalize().multiplyScalar(radius/Math.tan(THREE.MathUtils.degToRad(view.fov/2))*1.1);orbit.target.copy(point);view.position.copy(point).add(dir);orbit.update();render();}
-  return {focusOn,setPresentation:value=>{presentation=value;},setOverlay:value=>{overlay=value;},onRender:hook=>renderHooks.push(hook),attach,render,setSession,setDebug,setView,resetView,walkGrid,setLidar,setAlignScan,lidar,semantic,walker,walkKeys:walk.keys,videoPanel,trajectory,frustum,renderer,view,helper,gizmo,clip,get mode(){return mode;},get camera(){return active();}};
+  return {focusOn,setHidden:fn=>{hidden=fn;},setPresentation:value=>{presentation=value;},setOverlay:value=>{overlay=value;},onRender:hook=>renderHooks.push(hook),attach,render,setSession,setDebug,setView,resetView,walkGrid,setLidar,setAlignScan,lidar,semantic,walker,walkKeys:walk.keys,videoPanel,trajectory,frustum,renderer,view,helper,gizmo,clip,get mode(){return mode;},get camera(){return active();}};
 }

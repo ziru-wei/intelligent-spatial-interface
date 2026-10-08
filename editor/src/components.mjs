@@ -11,6 +11,7 @@ import * as THREE from 'three';
 //   scope: 'scene' (part of the place, in every recording: spaces/<scene>/composition.json; e.g. digital twin objects) or 'recording'
 //   (this recording only: scenarios/<take>/composition.json).
 // Libraries: components/<id>/ (everywhere) and spaces/<scene>/components/<id>/ (that scene's own, e.g. digital twins of its objects).
+// component.json kind: 'three' (entry module), 'gltf' (entry .glb) or 'box' (a unit box; defaultScale [w, h, d] is its size, color).
 // component.json may also give: category (grouping in the panel), defaultScale, pivot (the local point that sits at the instance's
 // position and is scaled and turned about; default the origin), nodes (a .glb's nodes to keep, by name; default all), scope.
 
@@ -32,6 +33,11 @@ export function createComponentHost({scene,loader,siteURL,assetBase,invalidate})
   async function instantiate(spec){
     const m=spec.component==='file'?{kind:'gltf'}:library.get(spec.component);
     if(!m)throw Error(`Unknown component: ${spec.component}`);
+    // An opportunistic object kept as a box (scene library, kind 'box'): a unit box about its centre, sized by the instance's scale.
+    if(m.kind==='box'){const color=new THREE.Color(m.color||'#7fd1b9'),g=new THREE.Group();
+      g.add(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color,transparent:true,opacity:.35,depthWrite:false})),
+        new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color})));
+      return {object:g,dispose(){g.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}};}
     if(m.kind==='three'){const mod=await import(new URL(m.entry,m.base).href);
       return mod.create({THREE,params:{...defaults(m),...spec.params},load:url=>loader.loadAsync(new URL(url,m.base).href),invalidate});}
     // An imported file: a data URL until the scenario saves it, then assets/<id>.glb next to the session.
@@ -52,7 +58,9 @@ export function createComponentHost({scene,loader,siteURL,assetBase,invalidate})
 
   async function add(spec){
     const m=library.get(spec.component),category=categoryOf(spec);
-    const s={id:spec.id||`c${serial++}`,component:spec.component,name:spec.name||m?.name||spec.component,position:spec.position||[0,0,-2.5],yaw:spec.yaw||0,scale:spec.scale||m?.defaultScale||1,
+    // An object of the scene's library (category opportunistic) has one name everywhere: the library's.
+    const own=m?.category==='opportunistic';
+    const s={id:spec.id||`c${serial++}`,component:spec.component,name:(own&&m.name)||spec.name||m?.name||spec.component,position:spec.position||[0,0,-2.5],yaw:spec.yaw||0,scale:spec.scale||structuredClone(m?.defaultScale)||1,
       category,scope:category==='persistent'?'scene':category==='opportunistic'?'recording':(spec.scope||m?.scope)==='scene'?'scene':'recording',visible:spec.visible!==false,mount:spec.mount==='wall'?'wall':'floor',params:{...defaults(m),...spec.params},...(spec.src?{src:spec.src}:{}),
       ...(Number.isFinite(spec.start)?{start:spec.start}:{}),...(Number.isFinite(spec.end)?{end:spec.end}:{})};
     s.rotation=Array.isArray(spec.rotation)&&spec.rotation.length===3?[...spec.rotation]:[0,s.yaw,0];s.yaw=s.rotation[1];

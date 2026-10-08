@@ -13,7 +13,8 @@ const widget=p=>p.evaluate(()=>{const w=[...window.replay.agent.widgets.values()
 try{
   const p=await b.newPage({viewport:{width:1280,height:900}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
   await p.goto(base+'/?session='+encodeURIComponent(session));await p.waitForFunction(()=>window.replay?.ready&&window.replay.agent?.conversation);
-  await p.locator('#visible').uncheck({force:true});
+  await p.evaluate(()=>{const r=window.replay;for(const i of r.components.instances)r.components.set(i.spec.id,{visible:false});});
+  await p.locator('[data-tab=agent]').click();   // the side panel's Agent tab   // nothing in front of the responses
   // A new session starts with an empty timeline.
   const before=await p.evaluate(()=>window.replay.agent.conversation);
   await p.locator('#conv-new').click();await p.waitForFunction(b=>window.replay.agent.conversation!==b,before);
@@ -66,7 +67,8 @@ try{
   await p.locator('#markers .marker').hover();assert.match(await p.locator('#tooltip').textContent(),/How many clothes do I need to wash\? → 14 items to wash · 2\.00 s/);
   await p.locator('#markers .marker').click();
   await p.waitForFunction(()=>document.getElementById('play').getAttribute('aria-label')==='Pause'&&document.getElementById('speed').textContent==='0×',null,{timeout:3000});
-  assert.equal(await p.evaluate(()=>window.replay.agent.caption),'How many clothes do I need to wash?');
+  // The caption follows at the next paint.
+  await p.waitForFunction(()=>window.replay.agent.caption==='How many clothes do I need to wash?',null,{timeout:3000});
   // The stored trace (with its duration) under the question box during the hold.
   await p.waitForFunction(()=>/→ I showed 14 items[\s\S]*12\.3 s/.test(document.getElementById('trace').innerText),null,{timeout:3000});
   await p.locator('#play').click();

@@ -48,4 +48,40 @@ class CompositionTest(unittest.TestCase):
                         [dict(id='a', component='calibration-cube', position=[0, 0, 0])]*2):
                 with self.assertRaises(ValueError): composition.save(Path(tmp), bad)
 
+    def test_scene_object_library_is_placed_per_recording(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scene = Path(tmp); take = scene/'scenarios'/'t1'; take.mkdir(parents=True); (scene/'space.json').write_text('{}')
+            box = composition.add_object(scene, 'Tea box', 'box', [.2, .1, .15])
+            self.assertEqual(box['id'], 'tea-box'); self.assertEqual(box['component']['defaultScale'], [.2, .1, .15])
+            self.assertEqual(composition.add_object(scene, 'Tea box', 'box', [.1, .1, .1])['id'], 'tea-box-2')
+            glb = 'data:model/gltf-binary;base64,'+base64.b64encode(b'glTF-test').decode()
+            cup = composition.add_object(scene, 'Cup', 'gltf', src=glb)
+            self.assertEqual((scene/'components'/cup['id']/'model.glb').read_bytes(), b'glTF-test')
+            with self.assertRaises(ValueError): composition.add_object(scene, 'Huge', 'box', [9, 1, 1])
+            composition.save(take, [dict(id='c1', component='tea-box', category='opportunistic', position=[0, 0, 0], scale=[.2, .1, .15])], 0)
+            with self.assertRaises(ValueError): composition.remove_object(scene, 'tea-box')   # placed in t1
+            composition.remove_object(scene, 'tea-box-2'); self.assertFalse((scene/'components'/'tea-box-2').exists())
+
+    def test_object_keeps_its_first_pose_and_one_shape(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scene = Path(tmp)
+            box = composition.add_object(scene, 'Mug', 'box', [.1, .1, .1], origin='t1', pose=dict(position=[1, 0, 2], rotation=[0, 30, 0]))
+            self.assertEqual(box['component']['origin'], 't1'); self.assertEqual(box['component']['pose']['rotation'], [0, 30, 0])
+            r = composition.update_object(scene, 'mug', name='Blue mug', shape=[.08, .12, .08])
+            self.assertEqual((r['component']['name'], r['component']['defaultScale']), ('Blue mug', [.08, .12, .08]))
+            with self.assertRaises(ValueError): composition.update_object(scene, 'mug', shape=1.5)   # a box's shape is a size
+            with self.assertRaises(ValueError): composition.update_object(scene, 'mug', name=' ')
+
+    def test_box_object_replaced_by_model_keeps_its_place(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scene = Path(tmp); take = scene/'scenarios'/'t1'; take.mkdir(parents=True); (scene/'space.json').write_text('{}')
+            composition.add_object(scene, 'Mug', 'box', [.1, .2, .1])
+            composition.save(take, [dict(id='c1', component='mug', category='opportunistic', position=[1, 0, 0], scale=[.1, .2, .1])], 0)
+            glb = 'data:model/gltf-binary;base64,'+base64.b64encode(b'glTF-mug').decode()
+            r = composition.replace_object(scene, 'mug', glb, [.5, .5, .5], [0, .25, 0])
+            self.assertEqual((r['component']['kind'], r['component']['defaultScale'], r['revisions']), ('gltf', .2, {'t1': 2}))
+            placed = json.loads((take/'composition.json').read_text())['components'][0]
+            self.assertEqual((placed['scale'], placed['position']), (.2, [1, 0, 0]))   # fits the 0.1 m side; same place
+            with self.assertRaises(ValueError): composition.replace_object(scene, 'mug', glb, [.5, .5, .5], [0, 0, 0])   # no longer a box
+
 if __name__ == '__main__': unittest.main()

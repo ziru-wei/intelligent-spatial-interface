@@ -1,6 +1,6 @@
 // How agent responses behave: global settings, which every mod (weather, …) can override one by one. An override left at "Default"
 // follows the global value. A response belongs to a mod when the mod is on and the response carries its data (r.weather).
-// Saved in localStorage ('spatial-take:response-settings'): {global:{textResponse, autoHide, fixedText, stability}, mods:{weather:{enabled, overrides}}}.
+// Mods are on unless switched off. Saved in localStorage ('spatial-take:response-settings'): {global:{textResponse, autoHide, fixedText, stability}, mods:{weather:{enabled, overrides}}}.
 // No dependencies: used by the editor (src/app.mjs) and tests.
 
 export const SETTINGS={
@@ -28,7 +28,7 @@ export const modOverrides=mod=>MODS[mod]?.overrides??Object.keys(SETTINGS);
 export function normalize(raw={}){
   const global=Object.fromEntries(Object.keys(SETTINGS).map(k=>[k,k in (raw.global||{})?clean(k,raw.global[k]):SETTINGS[k].default]));
   const mods=Object.fromEntries(Object.keys(MODS).map(m=>{const r=raw.mods?.[m]||{},o=r.overrides||{};
-    return [m,{enabled:!!r.enabled,overrides:Object.fromEntries(modOverrides(m).filter(k=>k in o&&o[k]!=null).map(k=>[k,clean(k,o[k])])),
+    return [m,{enabled:r.enabled!==false,overrides:Object.fromEntries(modOverrides(m).filter(k=>k in o&&o[k]!=null).map(k=>[k,clean(k,o[k])])),
       options:Object.fromEntries(Object.entries(MODS[m].options||{}).map(([k,s])=>[k,r.options?.[k]==null?s.default:cleanValue(s,r.options[k])]))}];}));
   return {global,mods};
 }
@@ -53,7 +53,7 @@ export const textResponses=s=>({default:resolve(s).textResponse,...Object.fromEn
 // Older keys (one global stability, a weather-only fixed text and the weather switch) carried over once.
 function legacy(store){const g=k=>store.getItem(`spatial-take:${k}`);const raw={global:{},mods:{weather:{overrides:{}}}};
   if(g('placement-stability')!=null)raw.global.stability=Number(g('placement-stability'));
-  raw.mods.weather.enabled=(g('weather-mod')??g('weather-mode'))==='true';
+  const w=g('weather-mod')??g('weather-mode');if(w!=null)raw.mods.weather.enabled=w==='true';
   if(g('weather-fixed-text')==='true')raw.mods.weather.overrides.fixedText=true;
   return raw;}
 export function load(store=globalThis.localStorage){
@@ -68,7 +68,7 @@ const pct=v=>`${Math.round(v*100)}%`,show=(key,v)=>SETTINGS[key].kind==='bool'?(
 export function createResponseSettingsPanel({root,settings,extra={},onChange}){
   const ids={surfaceFallback:'surface-fallback',resumeOnResponse:'resume-on-response',textResponse:'text-response',autoHide:'autohide',fixedText:'fixed-text',stability:'stability'},el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(tag),props);e.append(...kids);return e;};
   const changed=info=>{save(settings);sync();onChange?.(settings,info);};
-  const g=el('div',{className:'resp-settings'},el('div',{className:'resp-head',textContent:'Responses'}));
+  const g=el('div',{className:'resp-settings agent-sec'},el('h3',{textContent:'Responses'}));
   const globalId={surfaceFallback:'surface-fallback',resumeOnResponse:'resume-on-response',textResponse:'text-response',autoHide:'agent-autohide',fixedText:'fixed-text',stability:'placement-stability'};
   const slider=(id,get,set)=>{const out=el('output',{id:id+'-value'}),input=el('input',{id,type:'range',min:0,max:100,step:1});
     input.oninput=()=>{set(Number(input.value)/100);out.textContent=pct(Number(input.value)/100);};return {input,out,sync(){input.value=String(Math.round(get()*100));out.textContent=pct(get());}};};
@@ -77,12 +77,18 @@ export function createResponseSettingsPanel({root,settings,extra={},onChange}){
     if(s.kind==='bool'){const input=el('input',{id:globalId[k],className:'sw',type:'checkbox'});input.onchange=()=>{settings.global[k]=input.checked;changed({});};
       g.append(el('label',{className:'switch',title:s.title},s.label,input));syncs.push(()=>{input.checked=settings.global[k];});}
     else{const sl=slider(globalId[k],()=>settings.global[k],v=>{settings.global[k]=v;changed({});});sl.input.setAttribute('aria-label',s.label);
-      g.append(el('div',{className:'placement-stability'},el('label',{htmlFor:globalId[k]},s.label+' ',sl.out),sl.input,
-        el('div',{className:'range-ends'},el('span',{textContent:'Follow view'}),el('span',{textContent:'Hold position'})),el('p',{textContent:s.title})));syncs.push(sl.sync);}
+      g.append(el('div',{className:'placement-stability',title:s.title},el('label',{htmlFor:globalId[k]},s.label+' ',sl.out),sl.input,
+        el('div',{className:'range-ends'},el('span',{textContent:'Follow view'}),el('span',{textContent:'Hold position'}))));syncs.push(sl.sync);}
   }
   root.append(g);
+  // Mods: a seg control picks which mod's card is shown (remembered in this browser); each card has its own on/off switch.
+  const keyTab='spatial-take:agent-mod-tab',seg=el('div',{className:'seg mod-tabs'}),cards={};
+  let tab=(()=>{try{return localStorage.getItem(keyTab);}catch{return null;}})();if(!(tab in MODS))tab=Object.keys(MODS)[0];
+  const showTab=t=>{tab=t;try{localStorage.setItem(keyTab,t);}catch{}for(const b of seg.children)b.setAttribute('aria-pressed',b.dataset.mod===t);for(const [k,c] of Object.entries(cards))c.hidden=k!==t;};
+  for(const [m,mod] of Object.entries(MODS)){const b=el('button',{type:'button',textContent:mod.label.replace(/ mod$/i,''),title:mod.title});b.dataset.mod=m;b.onclick=()=>showTab(m);seg.append(b);}
+  const modsSec=el('div',{className:'agent-sec mods'},el('h3',{textContent:'Mods'}),seg);root.append(modsSec);
   for(const [m,mod] of Object.entries(MODS)){
-    const on=el('input',{id:`${m}-mod`,className:'sw',type:'checkbox'}),body=el('div',{className:'mod-body'}),card=el('div',{className:'mod-card'},el('label',{className:'switch mod-switch',title:mod.title},mod.label,on),body);
+    const on=el('input',{id:`${m}-mod`,className:'sw',type:'checkbox'}),body=el('div',{className:'mod-body'}),card=el('div',{className:'mod-card'},el('label',{className:'switch mod-switch',title:mod.title},mod.label,on),body);cards[m]=card;
     on.onchange=()=>{settings.mods[m].enabled=on.checked;changed({mod:m,enabled:on.checked});};
     body.append(el('div',{className:'mod-note',textContent:'Overrides for this mod’s responses'}));
     for(const k of modOverrides(m)){
@@ -113,9 +119,10 @@ export function createResponseSettingsPanel({root,settings,extra={},onChange}){
       }
     }
     for(const e of extra[m]||[])body.append(e);
-    syncs.push(()=>{on.checked=settings.mods[m].enabled;body.hidden=!on.checked;card.classList.toggle('on',on.checked);});
-    root.append(card);
+    syncs.push(()=>{on.checked=settings.mods[m].enabled;body.hidden=!on.checked;card.classList.toggle('on',on.checked);seg.querySelector(`[data-mod=${m}]`).classList.toggle('off',!on.checked);});
+    modsSec.append(card);
   }
+  showTab(tab);
   function sync(){for(const f of syncs)f();}
   sync();return {sync};
 }

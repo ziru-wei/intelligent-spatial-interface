@@ -9,9 +9,10 @@ try {
  await p.evaluate(()=>window.replay.at(5.1));
  assert.match(await p.locator('#time').textContent(),/^5\.\d\d s$/);
  const before=await p.locator('#stage').screenshot();
- // Test actual TransformControls object-change event propagation to the composite inputs.
+ // Test actual TransformControls object-change event propagation to the component's spec.
  await p.evaluate(()=>{const r=window.replay;r.anchor.position.set(.3,.8,-1.2);r.twin.gizmo.dispatchEvent({type:'objectChange'});});
- assert.equal(Number(await p.locator('#x').inputValue()),.3);assert.equal(Number(await p.locator('#y').inputValue()),.8);
+ assert.deepEqual(await p.evaluate(()=>{const r=window.replay;return r.components.get(r.selected).spec.position.slice(0,2);}),[.3,.8]);
+ await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
  assert.notDeepEqual(await p.locator('#stage').screenshot(),before,'Moving the object must change the composite pixels');
  // Default: the 3D view follows the recorded camera. Switching to orbit keeps that exact view (no jump).
  assert.equal(await p.locator('[data-mode=follow]').getAttribute('aria-pressed'),'true');assert.equal(await p.evaluate(()=>window.replay.twin.mode),'follow');
