@@ -1,0 +1,39 @@
+{
+  "calendar": [
+    {
+      "id": "badminton",
+      "what": "badminton",
+      "recurrence": {
+        "frequency": "weekly",
+        "weekdays": [
+          "Monday",
+          "Wednesday",
+          "Friday"
+        ]
+      },
+      "period": "afternoon"
+    },
+    {
+      "id": "group-meeting",
+      "what": "group meeting",
+      "recurrence": {
+        "frequency": "weekly",
+        "weekdays": [
+          "Monday"
+        ]
+      },
+      "period": "afternoon"
+    },
+    {
+      "id": "denver-hangout",
+      "what": "hangout in Denver",
+      "date": "2026-10-10",
+      "location": "Denver"
+    },
+    {
+      "id": "hiking",
+      "what": "hiking",
+      "date": "2026-10-11"
+    }
+  ]
+}

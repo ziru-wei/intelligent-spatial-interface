@@ -1,0 +1,49 @@
+{
+  "routines": {
+    "bedtime": "23:30",
+    "grocery_day": "Monday after work",
+    "laundry_day": "Sunday"
+  },
+  "preferences": {
+    "reading": {
+      "current_book": {
+        "title": "To the Lighthouse",
+        "author": "Virginia Woolf",
+        "format": "print book",
+        "progress": {
+          "page": 68,
+          "approximate": true
+        },
+        "location": "Inside the drawer of Table 2",
+        "stored_item_id": "to-the-lighthouse"
+      },
+      "story_checkpoint": {
+        "section": "The Window",
+        "approximate": true,
+        "page_mapping_note": "This is a fictional reading checkpoint for the prototype, not an edition-specific mapping to page 68.",
+        "summary": "The Ramsay family and their guests are at their summer house in the Hebrides. James longs to visit the lighthouse. Mrs. Ramsay keeps his hope alive, while Mr. Ramsay insists that the weather will prevent the trip. The visit has not happened yet. Lily Briscoe is working on a painting of Mrs. Ramsay and James and struggling to express what she sees. Attention moves between the characters' private thoughts: Mrs. Ramsay cares for the family and guests, and Mr. Ramsay's need for recognition strains their relationships.",
+        "source": "https://www.sparknotes.com/lit/lighthouse/section1/"
+      }
+    },
+    "podcasts": [
+      "99% Invisible",
+      "Radiolab",
+      "Hard Fork"
+    ],
+    "food": "mostly vegetarian; cooks pasta, curry and egg breakfasts"
+  },
+  "recent_activity": [
+    {
+      "time": "20:55",
+      "event": "finished dinner (leftover curry)"
+    },
+    {
+      "time": "21:20",
+      "event": "worked at the desk"
+    },
+    {
+      "time": "21:38",
+      "event": "stood up and walked around the bedroom"
+    }
+  ]
+}

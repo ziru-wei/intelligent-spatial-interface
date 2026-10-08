@@ -1,0 +1,2 @@
+{"name": "Pulse marker", "kind": "three", "entry": "index.mjs", "description": "A floor marker that pulses with the scenario clock; click it to toggle it on. Example of a dynamic, interactive component.",
+ "params": {"color": {"type": "color", "default": "#7fe3ff"}, "period": {"type": "number", "default": 1.5, "min": 0.2, "max": 10, "step": 0.1}, "radius": {"type": "number", "default": 0.25, "min": 0.05, "max": 2, "step": 0.05}}}

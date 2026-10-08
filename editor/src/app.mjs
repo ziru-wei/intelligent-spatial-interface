@@ -1,57 +1,843 @@
+import {surfaceQuality} from './surface-quality.mjs';
+import {createRecordingHandCache} from './hand-perception/recording-cache.mjs';
+import {createLatestFrameJob} from './latest-frame-job.mjs';
+import {createHandCompositor} from './hand-perception/compositor.mjs';
+import {createHandPerception} from './hand-perception/index.mjs';
+import {locateHands,handBoxDistance} from './hand-perception/spatial.mjs';
+import {createApproachRemoval} from './findmy-approach.mjs';
+import {createFindMy} from './findmy.mjs';
+import {weatherResponse} from './response-parts.mjs';
 import * as THREE from 'three';
+import {computeBoundsTree,disposeBoundsTree,acceleratedRaycast} from 'three-mesh-bvh';
+// Room meshes get a BVH (setRoom): raycasts and the triangles near a point in milliseconds instead of a scan of every triangle.
+THREE.BufferGeometry.prototype.computeBoundsTree=computeBoundsTree;THREE.BufferGeometry.prototype.disposeBoundsTree=disposeBoundsTree;THREE.Mesh.prototype.raycast=acceleratedRaycast;
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {setPose,frameAt} from './math.mjs';
-import {createTwin,roomFromGeometry} from './twin.mjs';
+import {createWeatherPreview,createWeatherSurfacePreview} from './weather-preview.mjs';
+import {createWeatherScene} from './weather-scene.mjs';
+import {createTwin} from './twin.mjs';
+import {createLayoutEditor} from './layout-editor.mjs';
+import {createOutline} from './layout-outline.mjs';
+import {outline as layoutOutline} from './layout-tree.mjs';
+import {createStructure} from './layout-structure.mjs';
+import {createAlignPanel} from './align-panel.mjs';
+import {load as loadResponseSettings,resolve as resolveSettings,modOf,textResponses,disabledResponseMods,MODS,resumeOnFirstResponse,createResponseSettingsPanel} from './response-settings.mjs';
+import {createComponentHost} from './components.mjs';
+import {createAgentLayer,READING,formatSpeed,stepsAt} from './agent.mjs';
+import {questionClock} from './question-caption.mjs';
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search);
-const sessionURL=new URL(params.get('session')||'./sessions/demo/session.json',location.href);
-const renderer=new THREE.WebGLRenderer({canvas:$('stage'),antialias:true,preserveDrawingBuffer:true});
+const sessionURL=new URL(params.get('session')||'./spaces/demo/scenarios/demo/session.json',location.href);
+const renderer=new THREE.WebGLRenderer({canvas:$('stage'),antialias:true,stencil:true,preserveDrawingBuffer:true});
 renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
-const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(),anchor=new THREE.Group();scene.add(anchor);
+// anchor: the selected component's root (src/components.mjs); an empty stand-in while nothing is selected.
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(),noSelection=new THREE.Group();let anchor=noSelection;
 const pmrem=new THREE.PMREMGenerator(renderer);const roomEnv=new RoomEnvironment();scene.environment=pmrem.fromScene(roomEnv,.04).texture;roomEnv.dispose();pmrem.dispose();
 scene.add(new THREE.HemisphereLight(0xddefff,0x485442,2));const sun=new THREE.DirectionalLight(0xffe5c8,3);sun.position.set(2,5,3);scene.add(sun);
-// A grounded, recognizable calibration object. Not a claim of final AR art direction.
-const body=new THREE.Mesh(new THREE.BoxGeometry(.45,.45,.45),new THREE.MeshStandardMaterial({color:0xd99c56,metalness:.3,roughness:.25}));body.position.y=.225;anchor.add(body);
-const ring=new THREE.Mesh(new THREE.TorusGeometry(.34,.018,16,100),new THREE.MeshStandardMaterial({color:0xa8ddcb,metalness:.65,roughness:.22}));ring.rotation.x=Math.PI/2;ring.position.y=.035;anchor.add(ring);
-let session,index=0,playing=false,start=0,startT=0,requested=0,room=null,modelName='calibration-cube',roomName=null,modelData=null,roomData=null;
-const textures=new Map();
-let roomGeometry=null,audioTrack=null;
-const twin=createTwin({canvas:$('twin'),scene,camera,anchor,getRoom:()=>room,renderVideo:()=>renderer.render(scene,camera),togglePlayback:()=> $('play').click(),onMove:pos=>{['x','y','z'].forEach((k,i)=>$(k).value=pos.toArray()[i].toFixed(4));update();}});
-function placement(){return {version:1,position:['x','y','z'].map(k=>Number($(k).value)),scale:Number($('scale').value),yaw:Number($('yaw').value),visible:$('visible').checked,model:modelName,room:roomName,modelData,roomData,roomGeometry,occlude:$('occlude').checked,roomWireframe:$('room-wireframe').checked};}
-function applyPlacement(p){if(p.version!==1||!Array.isArray(p.position)||p.position.length!==3||![...p.position,p.scale,p.yaw].every(Number.isFinite)||p.scale<=0)throw Error('Invalid placement');['x','y','z'].forEach((k,i)=>$(k).value=p.position[i]);$('scale').value=p.scale;$('yaw').value=p.yaw;$('visible').checked=p.visible!==false;update();}
-function update(){const p=placement();anchor.position.fromArray(p.position);anchor.scale.setScalar(Math.max(.001,p.scale));anchor.rotation.y=THREE.MathUtils.degToRad(p.yaw);anchor.visible=p.visible;twin.helper.visible=false;renderer.render(scene,camera);twin.render();}
-async function texture(i){if(textures.has(i))return textures.get(i);const tx=await new THREE.TextureLoader().loadAsync(new URL(session.frames[i].image,sessionURL).href);tx.colorSpace=THREE.SRGBColorSpace;textures.set(i,tx);while(textures.size>8){const key=textures.keys().next().value;if(key===i)break;textures.get(key).dispose();textures.delete(key);}return tx;}
-async function setFrame(i){const ticket=++requested;const tx=await texture(i);if(ticket!==requested)return;index=i;scene.background=tx;twin.setHandTime(session.frames[i].timestampUs);setPose(camera,session.frames[i],session.intrinsics);$('pose-status').textContent=`Frame ${i+1}/${session.frames.length} · camera XYZ (m): ${session.frames[i].position.map(v=>v.toFixed(3)).join(', ')}`;$('timeline').value=session.frames[i].t;$('time').textContent=session.frames[i].t.toFixed(2)+' s';update();}
-async function at(t){return setFrame(frameAt(session.frames,t));}
-function pause(){audioTrack?.pause();playing=false;$('play').textContent='Play';}
-$('play').onclick=()=>{if(playing){pause();return;}playing=true;start=performance.now();startT=Number($('timeline').value);if(startT>=session.frames.at(-1).t)startT=0;$('play').textContent='Pause';tick();};
-function syncAudio(t){if(!audioTrack)return;const target=t-session.audio.startRelativeToVideoSeconds;if(target<0||!$('audio-enabled').checked){audioTrack.pause();return;}if(Math.abs(audioTrack.currentTime-target)>.3)audioTrack.currentTime=target;if(audioTrack.paused)audioTrack.play().catch(()=>{});}
-async function tick(){if(!playing)return;const t=startT+(performance.now()-start)/1000;await at(Math.min(t,session.frames.at(-1).t));syncAudio(t);if(t>=session.duration){pause();return;}requestAnimationFrame(tick);}
-for(const key of ['trajectory','frustum','hands','video'])$('debug-'+key).onchange=()=>twin.setDebug({[key]:$('debug-'+key).checked});
-$('reset-view').onclick=()=>twin.resetView();
-$('audio-enabled').onchange=()=>{if(!$('audio-enabled').checked)audioTrack?.pause();};
-$('timeline').oninput=()=>{pause();at(Number($('timeline').value)).catch(fail);};
-['x','y','z','scale','yaw','visible'].forEach(k=>$(k).oninput=update);
-$('stage').onclick=e=>{pause();const r=e.target.getBoundingClientRect();const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2),camera);const point=new THREE.Vector3();const plane=new THREE.Plane(new THREE.Vector3(0,1,0),-Number($('plane').value));if(ray.ray.intersectPlane(plane,point)){['x','y','z'].forEach((k,i)=>$(k).value=point.toArray()[i].toFixed(4));update();}};
-const loader=new GLTFLoader();
-async function glb(file,isRoom){pause();const data=await file.arrayBuffer();const encoded=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});const g=await loader.parseAsync(data,'');if(isRoom){if(room)scene.remove(room);room=g.scene;roomName=file.name;roomData=encoded;roomGeometry=null;scene.add(room);occlusion();}else{anchor.clear();anchor.add(g.scene);modelName=file.name;modelData=encoded;}update();}
-function occlusion(){if(!room)return;room.traverse(o=>{if(o.isMesh){o.material=new THREE.MeshBasicMaterial({color:0x648c83,wireframe:!$('occlude').checked,colorWrite:!$('occlude').checked&&$('room-wireframe').checked,depthWrite:$('occlude').checked,side:THREE.DoubleSide});o.renderOrder=-1;}});update();}
-$('room-json').onchange=async e=>{try{const doc=JSON.parse(await e.target.files[0].text());loadRoomGeometry(doc);roomName=e.target.files[0].name;}catch(err){fail(err);}};
-function loadRoomGeometry(doc){const next=roomFromGeometry(doc);if(room)scene.remove(room);room=next;scene.add(room);roomGeometry=doc;roomData=null;roomName='Quest room geometry';occlusion();}
-$('occlude').onchange=occlusion;$('room-wireframe').onchange=occlusion;for(const [id,isRoom]of [['model',false],['room',true]])$(id).onchange=e=>glb(e.target.files[0],isRoom).catch(fail);
-$('save').onclick=()=>{const u=URL.createObjectURL(new Blob([JSON.stringify(placement(),null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='placement.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);};
-async function loadPlacement(p){for(const [key,name,isRoom] of [['modelData','model',false],['roomData','room',true]]){if(p[key]){if(!p[key].startsWith('data:'))throw Error('Only embedded local GLBs accepted');const b=await(await fetch(p[key])).blob();await glb(new File([b],p[name]||'asset.glb'),isRoom);}}if(p.roomGeometry)loadRoomGeometry(p.roomGeometry);applyPlacement(p);$('occlude').checked=!!p.occlude;$('room-wireframe').checked=!!p.roomWireframe;occlusion();}
-$('load').onchange=async e=>{try{await loadPlacement(JSON.parse(await e.target.files[0].text()));}catch(err){fail(err);}};
-function fail(e){$('status').textContent='Error: '+e.message;console.error(e);}
-try{const res=await fetch(sessionURL);if(!res.ok)throw Error('Session not found — run the importer or demo generator.');session=await res.json();if(session.version!==1||!session.frames.length)throw Error('Unsupported/empty session');renderer.setSize(session.intrinsics.width,session.intrinsics.height,false);$('timeline').max=session.frames.at(-1).t;$('badge').textContent=session.synthetic?'Synthetic pipeline test':'Quest recording · calibration pending';$('details').textContent=`${session.frames.length} frames · ${session.duration.toFixed(2)} seconds · ${session.intrinsics.width} × ${session.intrinsics.height}`;$('status').textContent=session.synthetic?'Synthetic input, not a recording of your home. Physical Quest alignment has not been tested.':`Orientation: ${session.sourceRowOrder}. Verify a static target before trusting alignment. Maximum frame gap: ${session.report.maxGapSeconds.toFixed(3)} s.`;twin.setSession(session);
-if(session.roomGeometryFile){loadRoomGeometry(await(await fetch(new URL(session.roomGeometryFile,sessionURL))).json());}
-if(session.handsFile&&session.captureSchemaFile){
-  const sampleText=await(await fetch(new URL(session.handsFile,sessionURL))).text();
-  const schema=await(await fetch(new URL(session.captureSchemaFile,sessionURL))).json();
-  const skeletons={};for(const side of ['left','right']){const file=session[side+'SkeletonFile'];if(file)skeletons[side]=await(await fetch(new URL(file,sessionURL))).json();}
-  const shown=twin.setHands(sampleText.trim().split('\n').filter(Boolean).map(s=>JSON.parse(s)),schema,skeletons);
-  $('hands-status').textContent=shown?'Hand joints loaded · timing alignment requires verification':'Raw hand log retained; this skeleton convention is not visualized.';
+// Recorded per-frame depth as a depth-only full-screen pass: virtual fragments farther than the measured surface (+bias) fail the depth test.
+const depthOccluder=new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.ShaderMaterial({glslVersion:THREE.GLSL3,uniforms:{depthMap:{value:null},proj:{value:new THREE.Vector2()},bias:{value:.03}},
+  vertexShader:'out vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}',
+  fragmentShader:'uniform sampler2D depthMap;uniform vec2 proj;uniform float bias;in vec2 vUv;void main(){float d=texture(depthMap,vec2(vUv.x,1.-vUv.y)).r;if(d<=0.)discard;d+=bias;gl_FragDepth=(-proj.x*d+proj.y)/d*.5+.5;}',
+  colorWrite:false,depthWrite:true,depthTest:true,depthFunc:THREE.AlwaysDepth}));
+depthOccluder.frustumCulled=false;depthOccluder.renderOrder=-2;depthOccluder.visible=false;scene.add(depthOccluder);
+// Shadows: the components cast onto invisible copies of the room mesh (ShadowMaterial draws only the shadow) or, without a room, onto a floor plane under it.
+// The light follows the object from nearly overhead; ARKit's y axis is gravity-aligned, so this is real "up".
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.normalBias=.02;scene.add(sun.target);
+const SUN=new THREE.Vector3(.3,1,.2).normalize(),shadowMaterial=new THREE.ShadowMaterial({opacity:.45,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+// The room only receives shadows (letting it cast would put everything under the ceiling in shade), so the object's shadow would also land on
+// surfaces hidden from the light by real furniture, e.g. the floor under a desk. Contact-style fade: full shadow on surfaces touching the
+// object's bounding box, none beyond `fade` metres from it.
+const shadowFade={boxMin:{value:new THREE.Vector3()},boxMax:{value:new THREE.Vector3()},fade:{value:.1}};
+shadowMaterial.onBeforeCompile=sh=>{Object.assign(sh.uniforms,shadowFade);
+  sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vShadowWorld;').replace('#include <worldpos_vertex>','#include <worldpos_vertex>\nvShadowWorld=(modelMatrix*vec4(transformed,1.)).xyz;');
+  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vShadowWorld;uniform vec3 boxMin,boxMax;uniform float fade;')
+    .replace('gl_FragColor = vec4( color, opacity * ( 1.0 - getShadowMask() ) );','float gap=length(max(max(boxMin-vShadowWorld,vShadowWorld-boxMax),0.));gl_FragColor=vec4(color,opacity*(1.0-getShadowMask())*(1.0-smoothstep(0.,fade,gap)));');};
+const catchers=new THREE.Group();catchers.visible=false;scene.add(catchers);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(50,50).rotateX(-Math.PI/2),shadowMaterial);ground.receiveShadow=true;
+function rebuildCatchers(){catchers.clear();if(!room){catchers.add(ground);return;}room.updateMatrixWorld(true);room.traverse(o=>{if(o.isMesh){const m=new THREE.Mesh(o.geometry,shadowMaterial);m.matrixAutoUpdate=false;m.matrix.copy(o.matrixWorld);m.receiveShadow=true;catchers.add(m);}});}
+function aimShadow(){
+  const all=components.group;all.updateMatrixWorld(true);all.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+  const box=new THREE.Box3();for(const i of components.instances)if(i.root.visible)box.expandByObject(i.root);if(box.isEmpty())return;
+  const c=box.getCenter(new THREE.Vector3()),r=Math.max(.2,box.getSize(new THREE.Vector3()).length()/2),cam=sun.shadow.camera;
+  sun.target.position.copy(c);sun.position.copy(c).addScaledVector(SUN,r*4+2);Object.assign(cam,{left:-r*3,right:r*3,top:r*3,bottom:-r*3,near:.05,far:r*8+4});cam.updateProjectionMatrix();
+  ground.position.y=box.min.y;
+  shadowFade.boxMin.value.copy(box.min);shadowFade.boxMax.value.copy(box.max);shadowFade.fade.value=THREE.MathUtils.clamp(r*.6,.05,.5);
 }
-if(session.audio){audioTrack=new Audio(new URL(session.audio.file,sessionURL).href);$('audio-enabled').disabled=false;$('audio-status').textContent='Audio available · sync estimate; verify with a clap';}
+const drawSize=new THREE.Vector2();let agent=null,connected=false,roomParts=null,alignScan=null,toSpace=null;
+let session,index=0,playing=false,start=0,startT=0,requested=0,room=null,roomName=null,roomData=null;
+rebuildCatchers();
+const textures=new Map(),depths=new Map(),textureLoads=new Map(),depthLoads=new Map();
+const loader=new GLTFLoader();
+const components=createComponentHost({scene,loader,siteURL:new URL('./',location.href),assetBase:sessionURL,invalidate:()=>update()});
+const twin=createTwin({canvas:$('twin'),scene,camera,anchor:null,getRoom:()=>room,onMove:o=>fromGizmo(o)});
+let weatherPreview=null,weatherSurfacePreview=null;
+const findmyScene=createFindMy();
+const findmyApproach=createApproachRemoval();
+const findmyStatus=Object.assign(document.createElement('p'),{className:'muted',id:'findmy-status',hidden:true});
+const handPerception=createHandPerception();
+const handCompositor=createHandCompositor();
+let playbackGeneration=0;const preparingFrames=new Map();
+let currentHandData=null; // Keep the displayed frame pinned even if another consumer fills the shared cache.
+const handKey=i=>`${sessionURL.href}#${i}`;
+const recordingHands=createRecordingHandCache({session:sessionURL.href,onChange:()=>showHandCache()});
+let preparingHands=false,cancelHandPreparation=false;
+function showHandCache(){
+ const s=recordingHands.status;
+ $('hand-cache-status').textContent=s.error?`Offline cache: ${s.error}`:`Offline hands · ${s.cached}/${s.total} frames · ${s.empty} without hands${s.total&&s.cached===s.total?' · Ready':''}`;
+}
+$('prepare-hands').onclick=async()=>{
+ if(preparingHands){cancelHandPreparation=true;return;}
+ preparingHands=true;cancelHandPreparation=false;pause();$('prepare-hands').textContent='Stop preparation';
+ try{
+  await recordingHands.ready;if(recordingHands.status.error)throw Error(recordingHands.status.error);
+  for(let i=0;i<session.frames.length&&!cancelHandPreparation;i++){
+   if(recordingHands.has(i))continue;
+   while(playing&&!cancelHandPreparation)await new Promise(r=>setTimeout(r,150));
+   if(cancelHandPreparation)break;
+   const result=await handJobs.request(i);
+   if(!result){i--;continue;}
+   if(result.status!=='ready')throw Error(result.error||'Hand detection failed');
+   if(recordingHands.status.error)throw Error(recordingHands.status.error);
+   await new Promise(r=>setTimeout(r,0));
+  }
+ }catch(e){$('hand-cache-status').textContent=`Offline cache: ${e.message}`;}
+ finally{preparingHands=false;$('prepare-hands').textContent='Prepare offline hands';}
+};
+async function perceiveHands(i){
+ const cached=await recordingHands.read(i,handKey(i));if(cached)return cached;
+ const result=await handPerception.request(handKey(i),(await texture(i)).image);
+ await recordingHands.write(i,result);return result;
+}
+const handJobs=createLatestFrameJob(perceiveHands,(i,result)=>{
+ if(i===index){currentHandData=result;update();}
+});
+function showHandStatus(){
+ const result=currentHandData;$('hand-status').title=result?.error||'';
+ $('hand-status').textContent=result?.status==='ready'?`Hands protected · ${result.landmarks.length} detected`:result?.status==='error'?'Hand protection unavailable · spatial effects hidden':'Hands · processing frame…';
+}
+const spatialHands=()=>locateHands({perception:currentHandData,depth:depths.get(index)?.image,camera,intrinsics:session.intrinsics});
+// Response settings: global, each mod (weather) able to override them (src/response-settings.mjs).
+const responseSettings=loadResponseSettings(),forResponse=r=>resolveSettings(responseSettings,modOf(responseSettings,r));
+const weatherScene=createWeatherScene({scene,getStability:()=>resolveSettings(responseSettings,'weather').stability,getCamera:()=>camera,getRoom:()=>roomParts?.userData.parts.space||room,getOccluders:()=>[roomParts?.userData.parts.space,roomParts?.userData.parts.recording].filter(Boolean),getDepthOccluder:c=>c===camera&&depths.has(index)?depthOccluder:null,getObjects:()=>components.instances.filter(i=>i.root.visible).map(i=>i.root),onAnimate:()=>update(),
+  onLabel:info=>{weatherPreview?.render(info);const el=$('weather-status');el.hidden=!info;if(info){const e=info.entry,label=`${e.label} · ${e.summary} · ${e.temp_c} °C${info.total>1?` · ${info.index}/${info.total}`:''}${info.target?'':' · Look at a layout surface'}`;if(el.textContent!==label)el.textContent=label;}}});
+weatherPreview=createWeatherPreview($('weather-preview'),weatherScene.playback,()=>update());
+createResponseSettingsPanel({root:$('response-settings'),settings:responseSettings,extra:{weather:[$('weather-preview'),$('weather-status')],findmy:[findmyStatus]},
+  onChange:async(_,{mod,enabled,option})=>{
+    if(mod==='weather'&&enabled!=null){if(enabled&&session?.frames[index].depth)await depthMap(index);weatherScene.setEnabled(enabled);agent?.report(userState());}
+    if(mod==='findmy'){
+      if(enabled===false||option==='removeOnHandApproach'||option==='handApproachDistance')findmyApproach.reset();
+      if(responseSettings.mods.findmy.enabled&&resolveSettings(responseSettings,'findmy').removeOnHandApproach&&session?.frames[index].depth)await depthMap(index);
+      if(enabled!=null)agent?.report(userState());
+    }
+    agent?.refreshSettings();update();}});
+$('enable-response-mod').onclick=()=>{const mod=$('enable-response-mod').dataset.mod;if(MODS[mod]&&!responseSettings.mods[mod].enabled)$(`${mod}-mod`).click();};
+weatherScene.setEnabled($('weather-mod').checked);
+twin.setOverlay(weatherScene);twin.setPresentation({get group(){return agent?.group;},get controls(){return weatherSurfacePreview?.mesh;},render:(r,c)=>{agent?.renderAfter(r,c,weatherSurfacePreview?.mesh,index,false);findmyScene.render(r,c);}});
+/** A gizmo moved, turned or scaled the selected component: its spec follows (scale stays one number while uniform). */
+function fromGizmo(o){if(fine&&o===fine.object){fineMoved(o);return;}const r=v=>+v.toFixed(4),d=v=>+THREE.MathUtils.radToDeg(v).toFixed(2),sc=o.scale.toArray().map(r);
+  setSelected({position:o.position.toArray().map(r),rotation:[d(o.rotation.x),d(o.rotation.y),d(o.rotation.z)],scale:Math.abs(sc[0]-sc[1])<1e-4&&Math.abs(sc[1]-sc[2])<1e-4?sc[0]:sc},{history:false});}
+// The saved state (Save / Load, ?placement=): the components and the compositing switches. Version 1 (one object) still loads.
+function placement(){return {version:2,components:components.specs(),selected,room:roomName,roomData,occlude:$('occlude').checked,depthOcclude:$('depth-occlude').checked,shadows:$('shadows').checked,roomWireframe:$('room-wireframe').checked,videoTwins:$('video-twins').checked};}
+/** A transform for the selected component: {position, scale, yaw, visible} (the version-1 placement fields). */
+function applyPlacement(p){if(!Array.isArray(p.position)||p.position.length!==3||![...p.position,p.scale,p.yaw].every(Number.isFinite)||p.scale<=0)throw Error('Invalid placement');setSelected({position:p.position,scale:p.scale,yaw:p.yaw,visible:p.visible!==false});}
+let paintRequest=0,lastTwinPaint=0;
+function update(){if(!paintRequest)paintRequest=requestAnimationFrame(()=>{paintRequest=0;paint();});}
+function paint(){
+  components.update({t:session?session.frames[index].t:0,frame:index});syncGizmo();twin.helper.visible=false;
+  const map=$('depth-occlude').checked?depths.get(index):null;depthOccluder.visible=!!map;
+  const weatherDepth=$('weather-mod').checked?depths.get(index):null;
+  if(map||weatherDepth){depthOccluder.material.uniforms.depthMap.value=map||weatherDepth;const e=camera.projectionMatrix.elements;depthOccluder.material.uniforms.proj.value.set(e[10],e[14]);}
+  agent?.update(session?session.frames[index].t:0);if(session)agent?.adapt(index);
+  const responses=agent?[...agent.widgets.values()].filter(w=>w.visible):[];
+  $('response-readability').hidden=!responses.some(w=>w.userData.placementHidden||w.userData.pose?.unreadable);
+  const currentResponses=responses.map(w=>w.userData.response);
+  const disabled=disabledResponseMods(responseSettings,currentResponses)[0],notice=$('mod-disabled-status');
+  notice.hidden=!disabled;
+  if(disabled){const label=MODS[disabled].label.replace(/ mod$/,'');notice.querySelector('span').textContent=`${label} overlay is off in this browser.`;$('enable-response-mod').textContent=`Enable ${label}`;$('enable-response-mod').dataset.mod=disabled;}
+  const latestQuestion=currentResponses.at(-1)?.question_id;
+  const found=currentResponses.find(r=>r.question_id===latestQuestion&&r.findmy);
+  const approachSettings=resolveSettings(responseSettings,'findmy');
+  const approachOn=responseSettings.mods.findmy.enabled&&approachSettings.removeOnHandApproach;
+  let removed=false;findmyStatus.hidden=true;
+  if(approachOn&&found?.findmy?.status==='found'){
+    const handData=spatialHands(),distance=handBoxDistance(handData,found.findmy.target);
+    const key=JSON.stringify([agent.conversation,found.question_id,found.findmy.target]);
+    removed=findmyApproach.update({key,frame:index,enabled:true,distance,distanceM:approachSettings.handApproachDistance});
+    findmyStatus.hidden=false;findmyStatus.textContent=removed?'Effect removed · hand reached the box':handData.status==='no-depth'?'Hand approach needs recorded depth':distance==null?'Waiting for a hand with valid depth':`Hand to box · ${distance.toFixed(2)} m`;
+  }
+  findmyScene.setResponse(responseSettings.mods.findmy.enabled&&!removed?found:null);
+  const latest=weatherResponse(currentResponses);
+  weatherScene.setResponse($('weather-mod').checked&&latest?.weather?latest:null);weatherScene.refresh();
+  agent?.orient(camera);
+  const weatherWidget=latest?.weather&&$('weather-mod').checked?agent?.widgets.get(latest.id):null;
+  weatherSurfacePreview?.update(weatherWidget?.userData.text?weatherWidget:null,responses);
+  // Hide only during the recorded-camera render, including its shadow pass.
+  const hidden=components.instances.filter(i=>i.root.visible&&!visibleInVideo(i));
+  for(const i of hidden)i.root.visible=false;
+  try{renderer.shadowMap.enabled=$('shadows').checked;if(renderer.shadowMap.enabled)aimShadow();catchers.visible=$('shadows').checked&&components.instances.some(i=>i.root.visible);ground.visible=!components.instances.some(i=>i.root.visible&&i.spec.mount==='wall');
+    const weatherVisible=weatherScene.group.visible,controls=weatherSurfacePreview?.mesh,controlVisible=controls?.visible;
+    if(agent)agent.group.visible=false;if(controls)controls.visible=false;weatherScene.group.visible=false;
+    renderer.render(scene,camera);weatherScene.group.visible=weatherVisible;weatherScene.render(renderer,camera);
+    if(controls)controls.visible=controlVisible;
+    findmyScene.render(renderer,camera);
+    handCompositor.render(renderer,scene.background,currentHandData);
+    // Response text/controls intentionally draw over hands; effects remain protected.
+    agent?.renderAfter(renderer,camera,controls,index,true);
+    agent?.renderHud(renderer);showHandStatus();showTrace();
+  }finally{for(const i of hidden)i.root.visible=true;depthOccluder.visible=false;catchers.visible=false;}
+  const now=performance.now();if(!playing||now-lastTwinPaint>=1000/15){lastTwinPaint=now;twin.render();}
+}
+function visibleInVideo(inst){return $('video-twins').checked||components.categoryOf(inst.spec)==='widget';}
+try{$('video-twins').checked=localStorage.getItem('spatial-take:video-twins')!=='false';}catch{}
+$('video-twins').onchange=()=>{try{localStorage.setItem('spatial-take:video-twins',$('video-twins').checked);}catch{}update();};
+function texture(i){
+ if(textures.has(i))return Promise.resolve(textures.get(i));
+ if(!textureLoads.has(i))textureLoads.set(i,loadTexture(i).finally(()=>textureLoads.delete(i)));
+ return textureLoads.get(i);
+}
+async function loadTexture(i){if(textures.has(i))return textures.get(i);const tx=await new THREE.TextureLoader().loadAsync(new URL(session.frames[i].image,sessionURL).href);tx.colorSpace=THREE.SRGBColorSpace;textures.set(i,tx);while(textures.size>8){const key=textures.keys().next().value;if(key===i)break;textures.get(key).dispose();textures.delete(key);}return tx;}
+// PNG stores uint16 millimeters as R (high byte), G (low byte); 0 = no measurement.
+function depthMap(i){
+ if(depths.has(i))return Promise.resolve(depths.get(i));
+ if(!depthLoads.has(i))depthLoads.set(i,loadDepth(i).finally(()=>depthLoads.delete(i)));
+ return depthLoads.get(i);
+}
+async function loadDepth(i){if(depths.has(i))return depths.get(i);const blob=await(await fetch(new URL(session.frames[i].depth,sessionURL))).blob();const bmp=await createImageBitmap(blob,{colorSpaceConversion:'none',premultiplyAlpha:'none'});const {width:w,height:h}=bmp;const ctx=new OffscreenCanvas(w,h).getContext('2d',{willReadFrequently:true});ctx.drawImage(bmp,0,0);bmp.close();const px=ctx.getImageData(0,0,w,h).data,m=new Float32Array(w*h);for(let k=0;k<w*h;k++)m[k]=(px[4*k]*256+px[4*k+1])/1000;const tx=new THREE.DataTexture(m,w,h,THREE.RedFormat,THREE.FloatType);tx.needsUpdate=true;depths.set(i,tx);while(depths.size>8){const key=depths.keys().next().value;if(key===i)break;depths.get(key).dispose();depths.delete(key);}return tx;}
+async function setFrame(i,{realtime=false,preparedHands=null,generation=null}={}){
+ if(realtime){
+  if(i===index||preparingFrames.has(i))return;
+  const epoch=playbackGeneration;
+  // Present RGB + mask atomically. While the worker prepares the next frame,
+  // keep animating effects over the last complete frame, never uncovered new RGB.
+  const cached=handPerception.get(handKey(i));
+  const job=(cached&&cached.status!=='processing'?Promise.resolve(cached):handJobs.request(i))
+   .then(result=>{
+    if(result&&playing&&epoch===playbackGeneration&&i>index)return setFrame(i,{preparedHands:result,generation:epoch});
+   }).catch(fail).finally(()=>{if(preparingFrames.get(i)===job)preparingFrames.delete(i);});
+  preparingFrames.set(i,job);
+  for(let j=i;j<=Math.min(i+2,session.frames.length-1);j++)void texture(j).catch(()=>{});
+  for(let j=i;j<=Math.min(i+2,session.frames.length-1);j++)if(recordingHands.has(j))void recordingHands.read(j,handKey(j));
+  return;
+ }
+ if(generation!=null&&generation!==playbackGeneration)return;
+ if(!preparedHands)playbackGeneration++;
+ const epoch=playbackGeneration,ticket=++requested;
+ const needDepth=($('depth-occlude').checked||$('weather-mod').checked||(responseSettings.mods.findmy.enabled&&resolveSettings(responseSettings,'findmy').removeOnHandApproach))&&session.frames[i].depth;
+ const [tx,,hands]=await Promise.all([texture(i),needDepth?depthMap(i):null,preparedHands||handJobs.request(i)]);
+ if(ticket!==requested||epoch!==playbackGeneration||!hands)return;
+ index=i;currentHandData=hands;
+ scene.background=tx;setPose(camera,session.frames[i],session.intrinsics);agent?.update(session.frames[i].t);
+ await agent?.adapt(i);
+ if(ticket!==requested||epoch!==playbackGeneration)return;
+ agent?.report(userState());$('timeline').value=session.frames[i].t;$('timeline').style.setProperty('--p',`${session.frames[i].t/(session.frames.at(-1).t||1)*100}%`);$('time').textContent=session.frames[i].t.toFixed(2)+' s';
+ if($('debug-lidar').checked)showLidar().catch(fail);update();
+}
+const qualityFrames=new Map();
+async function placementQuality(i){
+ if(!qualityFrames.has(i)){
+  const job=Promise.all([texture(i),session.frames[i].depth?depthMap(i):null]).then(([tx,dm])=>{
+   const canvas=new OffscreenCanvas(384,Math.max(1,Math.round(384*tx.image.height/tx.image.width))),ctx=canvas.getContext('2d',{willReadFrequently:true});
+   ctx.drawImage(tx.image,0,0,canvas.width,canvas.height);const image=ctx.getImageData(0,0,canvas.width,canvas.height),cam=frameCamera(i);
+   return (pose,aspect)=>surfaceQuality(pose,aspect,cam,image,dm?.image);
+  });qualityFrames.set(i,job);while(qualityFrames.size>3)qualityFrames.delete(qualityFrames.keys().next().value);
+ }
+ return qualityFrames.get(i);
+}
+async function at(t,options){return setFrame(frameAt(session.frames,t),options);}
+const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',PAUSE='<svg viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>';
+function playIcon(on){$('play').innerHTML=on?PAUSE:PLAY;$('play').setAttribute('aria-label',on?'Pause':'Play');}
+// Playback. When it reaches a question's frame the video holds (speed 0) for the agent's real time: thinking, the answer after the
+// measured latency, READ_S seconds of reading; then it moves on. Asking holds the same way, live.
+// h measures agent time; replay's typingDuration elapses before h reaches zero.
+// `held` = questions already held during this playback.
+const SPEEDS=[1,.5,.25];let speed=1,playT=0,lastNow=0,hold=null,held=new Set(),replayFrom=null;
+function pause(){playing=false;playbackGeneration++;preparingFrames.clear();endHold();playIcon(false);showSpeed();}
+$('play').onclick=async()=>{if(playing){pause();return;}playing=true;playT=Number($('timeline').value);if(playT>=session.frames.at(-1).t){playT=0;try{await at(0);}catch(e){pause();fail(e);return;}if(!playing)return;}
+  // Questions at or before the start are not held again, except the one a replay starts from.
+  // (The slider rounds to 1 ms, so a replay starts exactly at its question's time.)
+  const from=replayFrom&&agent?.questions.find(q=>q.id===replayFrom);if(from)playT=from.t;
+  held=new Set((agent?.questions||[]).filter(q=>q.t<=playT+.002&&q.id!==replayFrom).map(q=>q.id));replayFrom=null;
+  lastNow=performance.now();playIcon(true);tick();};
+function showSpeed(){$('speed').textContent=formatSpeed(hold?0:speed);$('speed').classList.toggle('slowed',!!hold);}
+$('speed').onclick=()=>{speed=SPEEDS[(SPEEDS.indexOf(speed)+1)%SPEEDS.length];showSpeed();};
+function startHold(q,{resume=true,live=false}={}){
+  playbackGeneration++;preparingFrames.clear();
+  playT=q.t;
+  const clock=questionClock(q,0,{live,reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches});
+  hold={id:q.id,start:performance.now(),...clock,shownAt:null,resume,live,pulsed:false};held.add(q.id);agent?.setHold({id:q.id,...clock,shownAt:null,live});showSpeed();
+  if(!playing){playing=true;playIcon(true);lastNow=performance.now();requestAnimationFrame(tick);}
+}
+function endHold(continueDelivery=false){if(!hold)return;hold=null;agent?.setHold(null,{continueDelivery});setAskStatus('');}
+function holdStep(now){
+  const q=agent?.questions.find(q=>q.id===hold.id);
+  if(!q||q.status==='failed'){const resume=hold.resume;endHold();return resume;}
+  Object.assign(hold,questionClock(q,(now-hold.start)/1000,{live:hold.live,typingDuration:hold.typingDuration}));
+  // The answer shows after its real latency; live, it can only show once it has arrived (the next status poll).
+  if(q.status==='answered'&&hold.shownAt==null)hold.shownAt=hold.live?Math.max(q.latency||0,hold.h):q.latency||0;
+  if(hold.shownAt!=null&&!hold.pulsed&&hold.h>=hold.shownAt){hold.pulsed=true;agent.replay(q.response);}
+  const end=hold.shownAt==null?Infinity:hold.shownAt+(q.live?.read_s??READ_S);
+  const writing=(hold.live&&q.parts?.text?.status==='streaming')||[...agent.widgets.values()].some(w=>w.visible&&w.userData.response.question_id===q.id&&w.userData.response.stream?.status==='streaming');
+  setAskStatus(hold.h<0?'Typing question…':hold.shownAt==null||hold.h<hold.shownAt?(writing?'Writing answer…':!hold.live?'Agent thinking':q.parts?.ui&&q.parts?.text?'Response ready…':q.parts?.ui?'UI ready · generating text…':q.parts?.text?'Text ready · preparing UI…':'Agent thinking'):`Reading… ${Math.max(1,Math.ceil(end-hold.h))} s`);
+  agent.setHold({id:hold.id,h:hold.h,typingElapsed:hold.typingElapsed,typingDuration:hold.typingDuration,shownAt:hold.shownAt,live:hold.live});
+  const first=[...agent.widgets.values()].find(w=>w.visible&&w.userData.response.question_id===q.id&&
+    (w.userData.response.weather||w.userData.response.findmy||!w.userData.pose?.unreadable));
+  if(hold.h>=0&&first&&currentHandData?.status==='ready'&&resumeOnFirstResponse(responseSettings,first.userData.response,q,agent.responses)){endHold(true);return true;}
+  if(hold.h>=end){const resume=hold.resume;endHold();return resume;}
+  return true;
+}
+async function tick(){if(!playing)return;const now=performance.now();
+  if(hold){const go=holdStep(now);lastNow=now;showSpeed();update();if(!go){pause();return;}requestAnimationFrame(tick);return;}
+  const next=playT+(now-lastNow)/1000*speed;lastNow=now;
+  // Reaching an answered question's frame starts its hold.
+  const q=(agent?.questions||[]).filter(q=>q.status==='answered'&&!held.has(q.id)&&q.t>=playT-1e-6&&q.t<=next).sort((a,b)=>a.t-b.t)[0];
+  if(q){playT=q.t;const seek=at(q.t),epoch=playbackGeneration;await seek;if(!playing||epoch!==playbackGeneration)return;startHold(q);requestAnimationFrame(tick);return;}
+  playT=next;await at(Math.min(playT,session.frames.at(-1).t),{realtime:true});if(playT>=session.duration){await at(session.frames.at(-1).t);if(playing&&playT>=session.duration)pause();return;}requestAnimationFrame(tick);}
+for(const key of ['trajectory','frustum','video','roomColors','spaceScan','recordingMesh'])$('debug-'+key).onchange=()=>twin.setDebug({[key]:$('debug-'+key).checked});
+$('debug-lidar').onchange=()=>{twin.setDebug({lidar:$('debug-lidar').checked});showLidar().catch(fail);};
+// This frame's LiDAR depth as points in space coordinates (every 2nd pixel).
+async function showLidar(){
+  if(!$('debug-lidar').checked||!session.frames[index].depth){twin.setLidar(null);return;}
+  const i=index,k=session.intrinsics,{data,width:w,height:h}=(await depthMap(i)).image,cam=frameCamera(i),pts=[],v=new THREE.Vector3();if(i!==index)return;
+  for(let y=0;y<h;y+=2)for(let x=0;x<w;x+=2){const d=data[y*w+x];if(!(d>0))continue;const u=(x+.5)/w*k.width,vv=(y+.5)/h*k.height;v.set((u-k.cx)/k.fx*d,-(vv-k.cy)/k.fy*d,-d).applyMatrix4(cam.matrixWorld);pts.push(v.x,v.y,v.z);}
+  twin.setLidar(new Float32Array(pts));
+}
+function showCut(range){for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',b.dataset.mode===twin.mode);$('cut-controls').hidden=!range;$('cut-flip-label').hidden=twin.mode==='plan';if(!range)return;Object.assign($('cut'),{min:range.min,max:range.max,value:range.value});$('cut-label').textContent=range.label;$('cut-value').textContent=range.value.toFixed(2);}
+for(const b of document.querySelectorAll('[data-mode]'))b.onclick=()=>showCut(twin.setView({mode:b.dataset.mode}));
+// Close open option menus on any click outside them.
+document.addEventListener('click',e=>{for(const d of document.querySelectorAll('details.menu[open]'))if(!d.contains(e.target))d.open=false;});
+$('cut').oninput=()=>showCut(twin.setView({cut:Number($('cut').value)}));
+$('cut-flip').onchange=()=>showCut(twin.setView({flip:$('cut-flip').checked}));
+$('reset-view').onclick=()=>twin.resetView();
+$('timeline').oninput=()=>{pause();at(Number($('timeline').value)).catch(fail);};
+// Components panel, laid out like the layout's objects: the instances grouped by category above (digital twin objects of the scene,
+// widgets), the selected one's editor below. Time spans and parameters are in the specs (composition.json, component.json defaults),
+// not in the panel. Saved by scope: the scene's own components (spaces/<scene>/composition.json, in every recording) and this
+// recording's (scenarios/<take>/composition.json).
+let fine=null;   // fine-tuning the open recording's alignment (see startFineTune)
+let selected=null,compositionRevision=0,sceneRevision=0,compositionTimer=null;
+function select(id){selected=components.get(id)?id:null;anchor=components.get(selected)?.root||noSelection;showComponents();update();}
+// The move gizmo only on a selected component that is showing (its eye on, inside its time span), and not while editing the layout.
+function syncGizmo(){const want=fine?fine.object:selected&&anchor.visible&&twin.gizmo.enabled?anchor:null;if(twin.gizmo.object!==want)twin.attach(want);}
+// Undo history of component transforms (Withdraw / ⌘Z): the transform before each change; typing in one field of one component is one
+// step, a gizmo drag is one step (its state at the press).
+const compHistory=[];let lastEditKey=null,dragBefore=null;
+function remember(id,key=null){if(key&&key===lastEditKey)return;lastEditKey=key;const s=components.get(id)?.spec;if(!s)return;
+  compHistory.push({id,before:components.transform(s)});if(compHistory.length>200)compHistory.shift();$('comp-withdraw').disabled=false;}
+function withdraw(){const h=compHistory.pop();lastEditKey=null;$('comp-withdraw').disabled=!compHistory.length;if(!h||!components.get(h.id))return;
+  select(h.id);components.set(h.id,h.before);showComponents();update();saveComposition();}
+for(const g of [twin.gizmo]){g.addEventListener('mouseDown',()=>{dragBefore=selected&&components.transform(components.get(selected).spec);});
+  g.addEventListener('mouseUp',()=>{const s=selected&&components.get(selected)?.spec;if(dragBefore&&s&&JSON.stringify(dragBefore)!==JSON.stringify(components.transform(s))){compHistory.push({id:selected,before:dragBefore});lastEditKey=null;$('comp-withdraw').disabled=false;}dragBefore=null;});}
+/** Change the selected component (transform, visibility, mount, name, time span) and save; transform changes go into the undo history
+ *  unless they come from a gizmo drag (recorded as one step at the press). */
+function setSelected(fields,{history=true,key=null}={}){if(!selected)return;
+  if(history&&['position','rotation','yaw','scale'].some(k=>k in fields))remember(selected,key);
+  components.set(selected,fields);showComponents();update();saveComposition();}
+async function addComponent(spec){
+  // New ones stand where the middle of the video meets a surface (else 2 m ahead of the camera).
+  let position=spec.position;
+  if(!position){const hit=session&&await surfaceAt(.5,.6).catch(()=>null);const p=hit?.point||new THREE.Vector3(0,0,-2).applyQuaternion(camera.quaternion).add(camera.position);position=p.toArray().map(v=>+v.toFixed(3));}
+  const inst=await components.add({...spec,position});
+  select(inst.spec.id);saveComposition();return inst;}
+async function setComposition(specs,sel){components.clear();for(const s of specs)await components.add(s);select(sel&&components.get(sel)?sel:null);}   // nothing selected unless asked: no gizmo until the user picks a component
+let compositionSave=Promise.resolve();
+function saveComposition(immediate=false){
+  if(!here[0])return Promise.resolve();clearTimeout(compositionTimer);
+  const persist=()=>{
+    const pending=compositionSave.catch(()=>{}).then(async()=>{
+      const r=await api('/api/composition',{session:'./'+sessionURL.pathname.replace(/^\//,''),revision:compositionRevision,components:components.specs('recording')});compositionRevision=r.revision;
+      for(const [id,src] of Object.entries(r.srcs||{}))if(components.get(id))components.get(id).spec.src=src;
+      if(components.specs('scene').length||sceneRevision)sceneRevision=(await api('/api/composition',{space:here[0],scope:'scene',revision:sceneRevision,components:components.specs('scene')})).revision;
+      $('take-status').textContent='';
+    });
+    compositionSave=pending;return pending;
+  };
+  if(immediate)return persist();
+  compositionTimer=setTimeout(()=>persist().catch(e=>{$('take-status').textContent=e.message;}),400);
+}
+const fmt=v=>String(+(+v).toFixed(3));
+// Groups (by the component's category) fold; the header button folds or unfolds all. Remembered in this browser.
+const folded=new Set((()=>{try{return JSON.parse(localStorage.getItem('spatial-take:comp-groups')||'[]');}catch{return [];}})());
+const keepFolded=()=>{try{localStorage.setItem('spatial-take:comp-groups',JSON.stringify([...folded]));}catch{}};
+const CHEVRON='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
+const EYES='<svg class="on" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+const GROUPS=[['persistent','Persistent objects'],['opportunistic','Opportunistic objects'],['widget','Widgets']];
+const groupOf=inst=>components.categoryOf(inst.spec);
+if(folded.delete('digital twin'))folded.add('persistent');
+function eye(on,id){return `<label class="eye" aria-label="${on?'Hide':'Show'}"><input type="checkbox" ${id?`id="${id}"`:''} ${on?'checked':''}>${EYES}</label>`;}
+function showComponents(){
+  const list=$('component-list');list.replaceChildren();
+  for(const [key,title] of GROUPS){const members=components.instances.filter(i=>groupOf(i)===key);if(!members.length&&key==='widget')continue;
+    const open=!folded.has(key),allOn=members.every(i=>i.spec.visible),head=document.createElement('div');head.className='node zone';head.style.setProperty('--depth',0);
+    head.innerHTML=`<button class="twist" aria-label="${open?'Collapse':'Expand'}" aria-expanded="${open}">${CHEVRON}</button><span class="name"></span><span class="n">${members.length}</span>${eye(allOn)}`;
+    head.querySelector('.name').textContent=title;head.dataset.category=key;head.title=key==='persistent'?'Shared across recordings of this scene':key==='opportunistic'?'Objects specific to this recording':'';
+    if(!members.length)head.querySelector('.eye input').disabled=true;
+    head.onclick=e=>{if(e.target.closest('.eye'))return;open?folded.add(key):folded.delete(key);keepFolded();showComponents();};
+    head.querySelector('.eye input').onchange=e=>{for(const i of members)components.set(i.spec.id,{visible:e.target.checked});showComponents();update();saveComposition();};
+    list.append(head);if(!open)continue;
+    for(const inst of members){const s=inst.spec,on=s.id===selected,m=components.library.get(s.component),row=document.createElement('div');
+      row.className='node comp'+(s.visible?'':' off');row.style.setProperty('--depth',1);if(on)row.setAttribute('aria-current','true');
+      row.innerHTML=`<span class="twist"></span><span class="name"></span><span class="n">${s.component==='file'||m?.kind==='gltf'?'glb':'three'}${Number.isFinite(s.start)||Number.isFinite(s.end)?' · timed':''}</span>${eye(s.visible,on?'visible':null)}`;
+      row.querySelector('.name').textContent=s.name;row.title=m?.description||s.name;
+      row.onclick=e=>{if(e.target.closest('.eye'))return;if(!on)select(s.id);};
+      row.querySelector('.eye input').onchange=e=>{components.set(s.id,{visible:e.target.checked});showComponents();update();saveComposition();};
+      row.querySelector('.name').ondblclick=()=>{const name=prompt('Name',s.name);if(name?.trim()){select(s.id);setSelected({name:name.trim()});}};
+      list.append(row);}}
+  $('comp-fold').setAttribute('aria-label',GROUPS.every(([k])=>folded.has(k))?'Unfold all':'Fold all');$('comp-fold').title=$('comp-fold').getAttribute('aria-label');
+  // The editor below the list: the selected component's transform (fields being typed in keep their text).
+  const inst=components.get(selected);$('component-edit').hidden=!inst;if(!inst)return;const s=inst.spec;$('comp-name').textContent=s.name;
+  const sc=Array.isArray(s.scale)?s.scale:[s.scale,s.scale,s.scale];
+  for(const [k,[field,i]] of Object.entries(FIELDS))if(document.activeElement!==$(k))$(k).value=fmt(field==='scale'?sc[i]:s[field][i]);
+  $('comp-save').hidden=groupOf(inst)==='widget';
+  $('comp-reset').disabled=!s.initial||JSON.stringify(components.transform(s))===JSON.stringify(s.initial);
+}
+function value(s,k){return fmt(k==='scale'||k==='yaw'?s[k]:s.position['xyz'.indexOf(k)]);}
+// Fields: position X Y Z, rotation X Y Z (degrees; Y is the yaw), scale X Y Z (locked together unless the chain is off).
+const FIELDS={x:['position',0],y:['position',1],z:['position',2],rx:['rotation',0],yaw:['rotation',1],rz:['rotation',2],sx:['scale',0],sy:['scale',1],sz:['scale',2]};
+for(const [k,[field,i]] of Object.entries(FIELDS))$(k).oninput=()=>{const v=Number($(k).value);if(!Number.isFinite(v)||(field==='scale'&&v<=0))return;const s=components.get(selected)?.spec;if(!s)return;
+  let next;if(field==='scale'){const cur=Array.isArray(s.scale)?[...s.scale]:[s.scale,s.scale,s.scale];next=$('scale-lock').checked?v:(cur[i]=v,cur);}else{next=[...s[field]];next[i]=v;}
+  setSelected({[field]:next},{key:`${selected}:${k}`});};
+$('comp-withdraw').onclick=withdraw;
+$('comp-save').onclick=async()=>{
+  const inst=components.get(selected);if(!inst)return;const previous=inst.spec.initial;
+  inst.spec.initial=components.transform(inst.spec);$('comp-save').disabled=true;
+  try{await saveComposition(true);$('take-status').textContent=`Saved defaults for ${inst.spec.name}`;}
+  catch(e){inst.spec.initial=previous;$('take-status').textContent=e.message;}
+  finally{$('comp-save').disabled=false;showComponents();}
+};
+$('comp-reset').onclick=()=>{const s=components.get(selected)?.spec;if(!s?.initial)return;remember(selected);setSelected(structuredClone(s.initial),{history:false});};
+
+addEventListener('keydown',e=>{if(e.key==='Escape'&&selected&&groupOf(components.get(selected))!=='widget'){e.preventDefault();select(null);return;}if(layout?.enabled||e.target.matches?.('input,select,textarea'))return;if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!e.shiftKey&&compHistory.length){e.preventDefault();withdraw();}});
+$('comp-delete').onclick=()=>{if(!selected)return;components.remove(selected);select(components.instances.at(-1)?.spec.id??null);saveComposition();};
+$('comp-fold').onclick=()=>{const all=GROUPS.every(([k])=>folded.has(k));for(const [k] of GROUPS)all?folded.delete(k):folded.add(k);keepFolded();showComponents();};
+// The recorded camera of any frame (the live camera for the frame on screen).
+function frameCamera(i){const snapshot=new THREE.PerspectiveCamera();setPose(snapshot,session.frames[i],session.intrinsics);return snapshot;}
+// Surface under (px,py) in frame i (default: the frame on screen), world space, normal facing the camera, with where it came from.
+// This recording's LiDAR depth is what the room looked like at that moment; the scan (or recording mesh) is complete but may be stale.
+// Both hit within SAME_SURFACE metres along the ray: the depth's point with the mesh's (smoother) normal. They disagree: something
+// moved or was added since the scan, so the depth wins. No depth (holes, beyond LiDAR range): the mesh. Neither: the object's plane.
+const SAME_SURFACE=.06;
+async function surfaceAt(px,py,i=index){
+  const k=session.intrinsics,u=px*k.width,v=py*k.height,camera=frameCamera(i),eye=new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld);
+  let depthHit=null;
+  if(session.frames[i].depth){
+    const {data,width:w,height:h}=(await depthMap(i)).image;
+    const cam=(x,y)=>{if(x<0||y<0||x>=w||y>=h)return null;const d=data[y*w+x];if(!(d>0))return null;const uu=(x+.5)/w*k.width,vv=(y+.5)/h*k.height;return new THREE.Vector3((uu-k.cx)/k.fx*d,-(vv-k.cy)/k.fy*d,-d);};
+    const x=Math.min(w-1,Math.floor(px*w)),y=Math.min(h-1,Math.floor(py*h)),c=cam(x,y);
+    if(c){
+      // Normal from neighbouring depth samples (3 px apart, one-sided at holes and borders).
+      const diff=(a,b)=>a&&b?a.clone().sub(b):null,s=3;
+      const tx=diff(cam(x+s,y),cam(x-s,y))||diff(cam(x+s,y),c)||diff(c,cam(x-s,y)),ty=diff(cam(x,y+s),cam(x,y-s))||diff(cam(x,y+s),c)||diff(c,cam(x,y-s));
+      let normal=null;if(tx&&ty){normal=tx.cross(ty).normalize();if(normal.dot(c)>0)normal.negate();normal.transformDirection(camera.matrixWorld);}
+      const d=-c.z,point=new THREE.Vector3((u-k.cx)/k.fx*d,-(v-k.cy)/k.fy*d,-d).applyMatrix4(camera.matrixWorld);depthHit={point,normal,dist:point.distanceTo(eye)};
+    }
+  }
+  const ray=new THREE.Raycaster();ray.firstHitOnly=true;ray.setFromCamera(new THREE.Vector2(px*2-1,1-py*2),camera);
+  const m=room&&ray.intersectObject(room,true)[0];let meshHit=null;
+  if(m){const normal=m.face.normal.clone().transformDirection(m.object.matrixWorld);if(normal.dot(ray.ray.direction)>0)normal.negate();meshHit={point:m.point,normal,dist:m.distance};}
+  if(depthHit&&meshHit)return Math.abs(depthHit.dist-meshHit.dist)<SAME_SURFACE?{point:depthHit.point,normal:meshHit.normal,source:'depth+mesh'}:{point:depthHit.point,normal:depthHit.normal,source:'depth (changed since scan)'};
+  if(depthHit)return {point:depthHit.point,normal:depthHit.normal,source:'depth'};
+  if(meshHit)return {point:meshHit.point,normal:meshHit.normal,source:'mesh'};
+  const point=new THREE.Vector3();return ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),-anchor.position.y),point)&&{point,normal:new THREE.Vector3(0,1,0),source:'plane'};
+}
+// World points of the surface within `radius` metres of the point under (px,py) in frame i, for fitting the area text will cover.
+// Where this frame's depth and the room mesh agree at that point, the mesh's vertices: fused from many views, it has much less of a
+// single frame's depth error (glass, distance, grazing angles). Where they disagree (something moved since the scan), or there is no
+// mesh, this frame's LiDAR depth (all pixels in the window around it). Without depth, the mesh. Null when neither is there.
+async function surfacePatch(px,py,radius,i=index,known=null){
+  const hit=known||await surfaceAt(px,py,i),k=session.intrinsics,camera=frameCamera(i),eye=new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld);
+  if(!hit||hit.source==='plane')return null;
+  if(hit.source==='depth+mesh'||hit.source==='mesh')return meshPatch(hit.point,radius,eye);
+  const {data,width:w,height:h}=(await depthMap(i)).image,fx=k.fx*w/k.width,pts=[];
+  const cam=(x,y)=>{const d=data[y*w+x];if(!(d>0))return null;const uu=(x+.5)/w*k.width,vv=(y+.5)/h*k.height;return new THREE.Vector3((uu-k.cx)/k.fx*d,-(vv-k.cy)/k.fy*d,-d);};
+  const x0=Math.min(w-1,Math.floor(px*w)),y0=Math.min(h-1,Math.floor(py*h)),c=cam(x0,y0);if(!c)return null;
+  const r=Math.min(64,Math.ceil(radius/-c.z*fx)),step=Math.max(1,Math.round(r/28));
+  for(let y=Math.max(0,y0-r);y<=Math.min(h-1,y0+r);y+=step)for(let x=Math.max(0,x0-r);x<=Math.min(w-1,x0+r);x+=step){
+    const p=cam(x,y);if(p&&p.distanceTo(c)<=radius)pts.push(p.applyMatrix4(camera.matrixWorld));}
+  return pts;
+}
+// Use a pose snapshot: asynchronous depth loads must not observe a later camera frame.
+// Text tolerates 8 cm of scan registration/depth noise and ignores hand pixels; other consumers keep the strict 25 mm test.
+async function visibleIn(i,points,{text=false,staticSurface=false}={}){
+  const camera=frameCamera(i),inv=camera.matrixWorld.clone().invert(),dm=session.frames[i].depth?(await depthMap(i)).image:null,v=new THREE.Vector3();
+  const hands=text?(i===index?currentHandData:await recordingHands.read(i,handKey(i))):null;
+  const eye=camera.position,ray=new THREE.Raycaster();ray.firstHitOnly=true;
+  const results=[];let sliceStart=performance.now();
+  const check=p=>{
+    v.copy(p).applyMatrix4(inv);const d=-v.z;if(d<=0)return false;v.applyMatrix4(camera.projectionMatrix);
+    if(Math.abs(v.x)>1||Math.abs(v.y)>1)return false;
+    if(text&&hands?.mask&&hands.width&&hands.height){
+      const x=Math.min(hands.width-1,Math.floor((v.x+1)/2*hands.width)),y=Math.min(hands.height-1,Math.floor((1-v.y)/2*hands.height));
+      if(hands.mask[y*hands.width+x])return true;
+    }
+    if(dm){const x=Math.min(dm.width-1,Math.floor((v.x+1)/2*dm.width)),y=Math.min(dm.height-1,Math.floor((1-v.y)/2*dm.height));
+      const o=dm.data[y*dm.width+x];if(o>0&&o<d-(text ? (staticSurface ? .12 : .08) : .025))return false;}
+    // Both the space scan and recording mesh contribute, independently of inspection toggles.
+    if(room&&(!text||!dm)){const direction=p.clone().sub(eye),distance=direction.length();ray.set(eye,direction.normalize());ray.far=Math.max(0,distance-.015);
+      if(ray.far>0&&ray.intersectObject(room,true).length)return false;}
+    return true;
+  };
+  for(const p of points){
+    results.push(check(p));
+    if(performance.now()-sliceStart>4){await new Promise(resolve=>setTimeout(resolve,0));sliceStart=performance.now();}
+  }
+  return results;
+}
+// Points on the room mesh within `radius` of `center`, on triangles facing `eye`, spread evenly over their area (the mesh is
+// decimated: big triangles on flat areas, so its vertices alone are too sparse): the space scan if there is one, else the recording's
+// mesh (not both: two meshes of one surface, slightly apart, would read as roughness). The BVH finds the triangles near the point;
+// each triangle's samples come from its own seed, so the points do not depend on the order they are visited in.
+function meshPatch(center,radius,eye){
+  const parts=room?.userData?.parts,shape=parts?.space||parts?.recording||room,pts=[],cell=radius/28,r2=radius*radius;
+  const e1=new THREE.Vector3(),e2=new THREE.Vector3(),n=new THREE.Vector3(),q=new THREE.Vector3(),A=new THREE.Vector3(),B=new THREE.Vector3(),C=new THREE.Vector3();
+  shape.traverse(o=>{if(!o.isMesh||!o.geometry.boundsTree)return;o.updateMatrixWorld(true);
+    const m=o.matrixWorld,local=new THREE.Sphere(center.clone().applyMatrix4(m.clone().invert()),radius/Math.cbrt(Math.abs(m.determinant())||1));
+    o.geometry.boundsTree.shapecast({intersectsBounds:box=>local.intersectsBox(box),intersectsTriangle:(tri,t)=>{
+      A.copy(tri.a).applyMatrix4(m);B.copy(tri.b).applyMatrix4(m);C.copy(tri.c).applyMatrix4(m);
+      e1.subVectors(B,A);e2.subVectors(C,A);n.crossVectors(e1,e2);const area=n.length()/2;q.copy(A).add(B).add(C).divideScalar(3);
+      if(!area||n.dot(e1.copy(eye).sub(q))<0)return false;e1.subVectors(B,A);
+      let seed=(t*2654435761>>>0)%2147483646+1;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+      for(let s=0,count=Math.max(1,Math.round(area/(cell*cell)));s<count;s++){let u=rnd(),w=rnd();if(u+w>1){u=1-u;w=1-w;}
+        q.copy(A).addScaledVector(e1,u).addScaledVector(e2,w);if(q.distanceToSquared(center)<=r2)pts.push(q.clone());}
+      return false;}});});
+  const step=Math.max(1,Math.ceil(pts.length/4000));return step>1?pts.filter((_,j)=>j%step===0):pts;
+}
+// Hovering a response shows its question; clicking it goes back to the frame where it was asked. Works in the video and the 3D view.
+function ndcOf(e){const r=e.target.getBoundingClientRect();return new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2);}
+function hoverResponse(e,cam){const r=agent?.pick(ndcOf(e),cam),tip=$('tooltip');e.target.style.cursor=r?'pointer':'';if(!r){tip.hidden=true;return null;}
+  tip.textContent=`${r.question||'(asked in the terminal)'} · ${r.t.toFixed(2)} s`;tip.hidden=false;tip.style.left=e.clientX+14+'px';tip.style.top=e.clientY+14+'px';return r;}
+// Replay a question: back to the frame it was asked at, then play through thinking, answer and reading time.
+function replayQuestion(q){pause();$('tooltip').hidden=true;setFrame(q.frame).then(()=>{replayFrom=q.id;$('play').click();}).catch(fail);}
+function goToResponse(r){const q=agent?.questions.find(q=>q.id===r.question_id);if(q)replayQuestion(q);else{pause();$('tooltip').hidden=true;setFrame(r.frame).catch(fail);}}
+$('stage').onpointermove=e=>hoverResponse(e,camera);$('stage').onpointerleave=()=>$('tooltip').hidden=true;
+$('twin').addEventListener('pointermove',e=>hoverResponse(e,twin.camera));$('twin').addEventListener('pointerleave',()=>$('tooltip').hidden=true);
+let twinDown=null;$('twin').addEventListener('pointerdown',e=>twinDown=[e.clientX,e.clientY]);
+$('twin').addEventListener('click',e=>{if(!twinDown||Math.hypot(e.clientX-twinDown[0],e.clientY-twinDown[1])>4)return;
+  if(fine)return;const r=agent?.pick(ndcOf(e),twin.camera);if(r){goToResponse(r);return;}pickComponent(e,twin.camera);});
+// A click on a component selects it, and an interactive component gets the click.
+function pickComponent(e,cam){const ray=new THREE.Raycaster();ray.setFromCamera(ndcOf(e),cam);const hit=components.pick(ray,cam===camera?visibleInVideo:undefined);if(!hit)return false;
+  select(hit.instance.spec.id);hit.instance.runtime.onPointer?.({type:'click',point:hit.point,object:hit.object});update();return true;}
+$('stage').onclick=async e=>{if(fine)return;pause();const hitResponse=agent?.pick(ndcOf(e),camera);if(hitResponse){goToResponse(hitResponse);return;}pickComponent(e,camera);};
+// Space: play/pause. Left/Right: one frame. Shift+Left/Right: one second. Ignored while typing in a field.
+document.addEventListener('keydown',e=>{
+  if(!session||e.metaKey||e.ctrlKey||e.altKey||e.target.matches('input[type=number],input[type=text],select,textarea'))return;
+  if(e.code==='Space'){e.preventDefault();document.activeElement?.blur();$('play').click();}
+  else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();pause();const dir=e.key==='ArrowLeft'?-1:1;(e.shiftKey?at(Math.max(0,session.frames[index].t+dir)):setFrame(Math.max(0,Math.min(session.frames.length-1,index+dir)))).catch(fail);}
+});
+function setRoom(next,name,encoded){if(room)scene.remove(room);room=next;room?.traverse(o=>{if(o.isMesh&&!o.geometry.boundsTree)o.geometry.computeBoundsTree();});roomName=name;roomData=encoded;scene.add(room);rebuildCatchers();occlusion();}
+// A .glb file: as the room mesh, or as a new component (scripts and tests; components are not added from the panel).
+async function glb(file,isRoom,category='widget'){pause();const encoded=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
+  if(isRoom){setRoom((await loader.parseAsync(await file.arrayBuffer(),'')).scene,file.name,encoded);update();return;}
+  await addComponent({component:'file',name:file.name,src:encoded,category});}
+$('opportunistic-import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{await glb(file,false,'opportunistic');folded.delete('opportunistic');keepFolded();showComponents();}catch(err){fail(err);}};
+function occlusion(){if(!room)return;room.traverse(o=>{if(o.isMesh){
+  // Keep a scan's texture for the 3D view before the occluder material replaces it.
+  if(!('scanMap' in o.userData))o.userData.scanMap=o.material.map||null;o.material=new THREE.MeshBasicMaterial({color:0x888888,wireframe:!$('occlude').checked,colorWrite:!$('occlude').checked&&$('room-wireframe').checked,depthWrite:$('occlude').checked,side:THREE.DoubleSide});o.renderOrder=-1;}});update();}
+$('occlude').onchange=occlusion;$('shadows').onchange=update;$('depth-occlude').onchange=()=>setFrame(index).catch(fail);$('room-wireframe').onchange=occlusion;// Save: a self-contained file (imported .glb files embedded as data URLs, wherever they are stored).
+$('save').onclick=async()=>{const doc=placement();for(const c of doc.components)if(c.src&&!c.src.startsWith('data:')){const blob=await(await fetch(new URL(c.src,sessionURL))).blob();c.src=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(blob);});}
+  const u=URL.createObjectURL(new Blob([JSON.stringify(doc,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='placement.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);};
+async function loadPlacement(p){
+  if(p.roomData){if(!p.roomData.startsWith('data:'))throw Error('Only embedded local GLBs accepted');const b=await(await fetch(p.roomData)).blob();await glb(new File([b],p.room||'room.glb'),true);}
+  // Version 1: one object (the calibration cube, or an embedded .glb) with its transform.
+  const specs=p.version===2?p.components:[{component:p.modelData?'file':'calibration-cube',name:p.modelData?p.model:undefined,src:p.modelData,position:p.position,yaw:p.yaw,scale:p.scale,visible:p.visible,mount:p.mount}];
+  if(specs.some(s=>s.src&&!s.src.startsWith('data:')&&!/^assets\//.test(s.src)))throw Error('Only embedded or scenario GLBs accepted');
+  await setComposition(specs,p.selected);$('shadows').checked=p.shadows!==false;$('occlude').checked=!!p.occlude;$('depth-occlude').checked=!!p.depthOcclude&&!$('depth-occlude').disabled;$('room-wireframe').checked=!!p.roomWireframe;$('video-twins').checked=p.videoTwins!==false;occlusion();if(session)await setFrame(index);}
+$('load').onchange=async e=>{try{await loadPlacement(JSON.parse(await e.target.files[0].text()));saveComposition();}catch(err){fail(err);}};
+// Scene panel (only when served by scripts/server.py), three levels: Scene (a space) → Scan (one of the space's scans, from any
+// scanning app; all are already in the space's coordinates, so switching needs no re-alignment) → Recordings (Record3D takes made
+// there, the scenarios). "Add recording" picks a take from private/ and runs the whole pipeline on the server (import, its own mesh,
+// alignment to the scan).
+const here=(sessionURL.pathname.match(/\/spaces\/([^/]+)\/scenarios\/([^/]+)\/session\.json$/)||[]).slice(1);
+async function api(path,body){const r=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;}
+const ICON={scenario:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>',add:'<path d="M12 5v14M5 12h14"/>',
+  ok:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',target:'<circle cx="12" cy="12" r="7"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>',warn:'<path d="M12 4l9 16H3zM12 10v4M12 17v.5"/>',spin:'<path d="M12 3a9 9 0 1 0 9 9"/>'};
+const svg=k=>`<svg viewBox="0 0 24 24">${ICON[k]}</svg>`;
+let spaceData={spaces:[],takes:[],meshAvailable:false},busySpace=null;
+const openScenario=session=>{location.href='?session='+encodeURIComponent(session);};
+function row(cls,icon,name,state){const li=document.createElement('li');li.className='item '+cls;li.innerHTML=`${svg(icon)}<span class="name"></span>${state||''}`;li.querySelector('.name').textContent=name;return li;}
+function picker(li,takes,onPick){const sel=document.createElement('select');sel.className='pick';sel.setAttribute('aria-label',li.querySelector('.name').textContent);
+  sel.add(new Option('',''));for(const t of takes)sel.add(new Option(t.label,t.name));sel.onchange=()=>{if(sel.value)onPick(sel.value);};li.append(sel);return li;}
+function showSpace(){
+  const sp=spaceData.spaces.find(s=>s.name===$('space').value),list=$('space-items');list.replaceChildren();if(!sp)return;
+  const busy=busySpace?.space===sp.name?busySpace:null,spinner=`<span class="state">${svg('spin').replace('<svg','<svg class="spin"')}</span>`;
+  // Scan: which of the scene's scans is used for occlusion, placement and aligning recordings. A layout (RoomPlan) is boxes only.
+  const scan=$('scan');scan.replaceChildren();scan.disabled=!sp.scans.length||!!busy;
+  if(!sp.scans.length)scan.add(new Option('No scan',''));
+  for(const x of sp.scans){scan.add(new Option(x.label+(x.kind==='layout'?' · layout':''),x.id));if(x.primary)scan.value=x.id;}
+  // Layout: labelled boxes over the scan (RoomPlan's first guess, corrected here). Editable for the scene that is open.
+  const L=sp.layout;$('layout-count').textContent=L?`${L.objects+L.openings} boxes`:'None';$('layout-count').disabled=!(L&&here[0]===sp.name);if($('layout-count').disabled)$('layout-outline-wrap').hidden=true;
+  $('layout-edit').disabled=!(L&&here[0]===sp.name&&layoutLoaded);
+  // Surfaces made from another scan or an older layout (or never made): offer to run the segmentation again.
+  $('surfaces-update').hidden=!(L&&here[0]===sp.name&&sp.scan&&(!L.surfaces||L.surfaces.stale));if($('layout-edit').disabled&&layout.enabled)editLayout(false);
+  // Recordings: click to open. State: aligned / aligning / not aligned (click the warning to try again).
+  for(const sc of sp.scenarios){
+    const aligning=busy&&busy.take===sc.name&&sp.scan,current=here[0]===sp.name&&here[1]===sc.name;
+    const state=aligning?spinner:sc.alignError?`<span class="state warn">${svg('warn')}</span>`:sc.registered?`<span class="state">${svg('ok')}</span>`:'';
+    // The open recording can be aligned by hand to the scan.
+    const manual=current&&sp.scan&&!aligning?`<button class="state manual" aria-label="Align" title="Align: pick what this recording shows">${svg('target')}</button>`:'';
+    // How well it is aligned: the error left, and what it was aligned to.
+    const r=sc.registration,quality=sc.registered&&r?.rmse!=null&&!aligning?`<span class="state q" title="${r.target?'aligned to the parts picked':'aligned to the whole scan'} · ${r.method||''}${r.explained!=null?` · ${Math.round(r.explained*100)}% explained`:''}">${(r.rmse*100).toFixed(1)} cm${r.target?'':' ·?'}</span>`:'';
+    const li=row('scenario','scenario',sc.label,quality+state+manual);if(current)li.setAttribute('aria-current','true');
+    li.onclick=e=>{if(e.target.closest('.manual')){e.stopPropagation();openAlign();return;}if(e.target.closest('.warn')){e.stopPropagation();run('/api/register',{space:sp.name,take:sc.name},'align');return;}if(!current)openScenario(sc.session);};
+    // Rename the open scenario's recording by double-clicking its name.
+    if(current)li.querySelector('.name').ondblclick=()=>renameInline(li.querySelector('.name'),sc.name,sc.label);
+    list.append(li);
+  }
+  if(busy?.kind==='add')list.append(row('scenario','scenario',busy.take,spinner));
+  // Add recording: this scene's recordings in private/<scene>/recordings/ that are not added yet.
+  const free=spaceData.takes.filter(t=>(!t.scene||t.scene===sp.name)&&!t.spaces.includes(sp.name)&&busy?.take!==t.name);
+  if(free.length)list.append(picker(row('add','add','Add recording'),free,take=>run('/api/scenarios',{space:sp.name,take},'add')));
+}
+function renameInline(span,take,current){
+  const input=document.createElement('input');input.className='rename';input.value=current;span.replaceWith(input);input.focus();input.select();
+  let done=false;const finish=async save=>{if(done)return;done=true;const name=input.value.trim();
+    if(save&&name&&name!==current){try{await api('/api/rename',{take,name});}catch(e){$('take-status').textContent=e.message;}}await loadSpaces();};
+  input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();finish(true);}if(e.key==='Escape')finish(false);};input.onblur=()=>finish(true);
+}
+async function loadSpaces(){
+  try{spaceData=await api('/api/spaces');}catch{return;}
+  $('space-panel').hidden=false;const keep=$('space').value||here[0];$('space').innerHTML='';
+  for(const sp of spaceData.spaces)$('space').add(new Option(sp.name,sp.name));if(keep)$('space').value=keep;
+  showSpace();
+}
+async function run(path,body,kind){
+  if(busySpace)return;busySpace={...body,kind};$('take-status').textContent=kind==='add'?'Preparing recording · import, mesh, alignment and offline hands…':'';showSpace();
+  let polling=false;
+  const progress=kind==='add'?setInterval(async()=>{
+    if(polling||!busySpace)return;polling=true;
+    try{const s=await api('/api/hands?session='+encodeURIComponent(`./spaces/${body.space}/scenarios/${body.take}/session.json`));if(busySpace)$('take-status').textContent=`Preparing recording · offline hands ${Object.keys(s.entries).length}/${s.total}`;}catch{}finally{polling=false;}
+  },2500):null;
+  try{const r=await api(path,body);busySpace=null;
+    // The open scenario changed (re-imported, newly aligned, or the scan moved): reload it; a newly added one opens.
+    if(kind==='add')openScenario(r.session);else if(here[0]===body.space)location.reload();else await loadSpaces();
+  }catch(e){busySpace=null;$('take-status').textContent=e.message;await loadSpaces();}finally{clearInterval(progress);}
+}
+// Fine-tune a recording's alignment by hand: its own mesh (placed in the scene by toSpace) gets the move / rotate gizmo in the 3D view
+// and is dragged onto the scan; the recorded camera follows live (video overlay, frustum, trajectory). Scale stays 1. Withdraw steps back
+// one drag, Reset goes back to the saved alignment, Save stores it (method fine-tune), Cancel leaves it as saved.
+function applyToSpace(M){toSpace=M.clone();
+  for(const f of session.frames){const p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();
+    new THREE.Matrix4().compose(new THREE.Vector3(...f.raw.position),new THREE.Quaternion(...f.raw.quaternion),new THREE.Vector3(1,1,1)).premultiply(M).decompose(p,q,sc);f.position=p.toArray();f.quaternion=q.toArray();}
+  twin.trajectory.geometry.dispose();twin.trajectory.geometry=new THREE.BufferGeometry().setFromPoints(session.frames.map(f=>new THREE.Vector3(...f.position)));
+  setFrame(index).catch(fail);}
+// The gizmo sits on a pivot at the centre of the recording's mesh (its own origin is where the recording started, often far off), the
+// mesh hanging under it; toSpace is the mesh's resulting world matrix.
+function fineToSpace(){fine.mesh.updateMatrixWorld(true);return fine.mesh.matrixWorld.clone();}
+function setFineMatrix(M){const o=fine.object;M.decompose(o.position,o.quaternion,o.scale);o.scale.set(1,1,1);o.updateMatrix();o.updateMatrixWorld(true);applyToSpace(fineToSpace());showFine();}
+function showFine(){$('fine-bar').hidden=!fine;if(!fine)return;$('fine-withdraw').disabled=!fine.history.length;$('fine-reset').disabled=fine.object.matrix.equals(fine.saved);$('fine-save').disabled=$('fine-reset').disabled;}
+function startFineTune(){const g=roomParts?.userData.parts.recording;
+  if(!g||!toSpace){$('take-status').textContent='Fine-tuning needs the recording aligned once and its own mesh (room.glb).';return;}
+  pause();select(null);
+  const pivot=new THREE.Group();pivot.name='recording-pivot';new THREE.Box3().setFromObject(g).getCenter(pivot.position);g.parent.add(pivot);pivot.updateMatrixWorld(true);pivot.attach(g);
+  fine={object:pivot,mesh:g,saved:pivot.matrix.clone(),history:[],before:null};
+  $('debug-recordingMesh').checked=true;$('debug-spaceScan').checked=true;twin.setDebug({recordingMesh:true,spaceScan:true});
+  // Look at the whole recording mesh, the gizmo in the middle.
+  const sphere=new THREE.Box3().setFromObject(g).getBoundingSphere(new THREE.Sphere());for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',b.dataset.mode==='orbit');
+  twin.focusOn(sphere.center,Math.max(.8,sphere.radius));showFine();update();}
+function endFineTune(restore){if(!fine)return;if(restore)setFineMatrix(fine.saved);
+  const {object:pivot,mesh:g}=fine;pivot.parent.attach(g);pivot.removeFromParent();fine=null;showFine();update();}
+// The gizmo reports the pivot moved: scale is not part of an alignment.
+function fineMoved(o){o.scale.set(1,1,1);o.updateMatrix();o.updateMatrixWorld(true);applyToSpace(fineToSpace());showFine();}
+for(const g of [twin.gizmo]){g.addEventListener('mouseDown',()=>{if(fine)fine.before=fine.object.matrix.clone();});
+  g.addEventListener('mouseUp',()=>{if(fine?.before&&!fine.before.equals(fine.object.matrix))fine.history.push(fine.before);if(fine)fine.before=null;showFine();});}
+$('fine-withdraw').onclick=()=>{const M=fine?.history.pop();if(M)setFineMatrix(M);};
+$('fine-reset').onclick=()=>{if(!fine)return;fine.history.push(fine.object.matrix.clone());setFineMatrix(fine.saved);};
+$('fine-cancel').onclick=()=>endFineTune(true);
+$('fine-save').onclick=async()=>{const e=fineToSpace().elements,rowMajor=[e[0],e[4],e[8],e[12],e[1],e[5],e[9],e[13],e[2],e[6],e[10],e[14],e[3],e[7],e[11],e[15]];
+  try{await api('/api/align-manual',{space:here[0],take:here[1],toSpace:rowMajor.map(v=>+v.toFixed(6)),info:{method:'fine-tune'}});fine.saved=fine.object.matrix.clone();fine.history=[];showFine();loadSpaces();}
+  catch(err){$('take-status').textContent=err.message;}};
+$('space').onchange=showSpace;
+// Layout editing (src/layout-editor.mjs). Saved half a second after the last change.
+let layoutLoaded=false,layoutTimer=null,layoutRevision=0,layoutRooms=[];
+const layout=createLayoutEditor({group:twin.semantic,getRooms:()=>layoutRooms,canvas:$('twin'),getCamera:()=>twin.camera,render:()=>twin.render(),
+  // In plan and elevation views, only what the section plane leaves visible.
+  pickScene:ray=>room?ray.intersectObject(room,true).find(h=>!['plan','elevation-x','elevation-z'].includes(twin.mode)||twin.clip.distanceToPoint(h.point)>=0):null,
+    // Saves carry the revision this page loaded; one saved from another window since is refused (409) instead of overwritten.
+  onChange:data=>{showOutline();clearTimeout(layoutTimer);layoutTimer=setTimeout(async()=>{try{layoutRevision=(await api('/api/layout',{space:here[0],revision:layoutRevision,...data})).revision;$('take-status').textContent='';await loadSpaces();}catch(e){$('take-status').textContent=e.message;}},500);},
+  onHistory:h=>{$('layout-undo').disabled=!h.undo;$('layout-redo').disabled=!h.redo;},
+  onSelect:b=>{outlineView?.setSelected(b?.id??null);for(const id of ['box-label','box-yaw','box-delete','box-duplicate'])$(id).disabled=!b;
+    const kids=b?layout.children().length:0;$('box-arrange').disabled=!kids;$('box-arrange').querySelector('span').textContent=kids?`Arrange ${kids} children`:'Arrange children';
+    if(document.activeElement!==$('box-label'))$('box-label').value=b?.label||'';if(document.activeElement!==$('box-yaw'))$('box-yaw').value=b?Math.round(b.yaw||0):'';}});
+// The layout's outline (zones → boxes → nested boxes) with show/hide per row: src/layout-outline.mjs.
+const outlineView=here[0]?createOutline({root:$('layout-outline'),scene:here[0],onSelect:id=>layout.select(layout.boxes.find(b=>b.id===id)),onHidden:ids=>layout.setHidden(ids)}):null;
+function showOutline(){if(outlineView&&layoutLoaded){outlineView.setTree(layoutOutline(layout.boxes,layoutRooms));layout.setHidden(outlineView.hiddenBoxes());}}
+$('layout-count').onclick=()=>{const open=$('layout-outline-wrap').hidden;$('layout-outline-wrap').hidden=!open;$('layout-count').setAttribute('aria-expanded',open);};
+$('outline-expand').onclick=()=>outlineView?.expandAll();$('outline-collapse').onclick=()=>outlineView?.collapseAll();$('outline-show').onclick=()=>outlineView?.showAll();
+function editLayout(on){layout.setEnabled(on);$('layout-edit').setAttribute('aria-pressed',on);$('layout-tools').hidden=!on;
+  // The object's move gizmo would compete for the same drags.
+  twin.gizmo.enabled=!on;twin.gizmo.getHelper().visible=!on;if(on){$('show-boxes').checked=true;twin.setDebug({semantic:true});}update();}
+$('layout-edit').onclick=()=>editLayout(!layout.enabled);
+// Layout layers in the 3D view (src/layout-structure.mjs): boxes, zones, walls, ceilings. Remembered in this browser.
+const structure=createStructure({group:twin.helper,twin});const LAYERS=['boxes','zones','walls','ceilings','surfaces'];
+try{const v=JSON.parse(localStorage.getItem('spatial-take:layout-layers')||'null');if(v)for(const k of LAYERS)if(k in v)$('show-'+k).checked=!!v[k];}catch{}
+function showLayers(){const v=Object.fromEntries(LAYERS.map(k=>[k,$('show-'+k).checked]));twin.setDebug({semantic:v.boxes});structure.setVisible(v);try{localStorage.setItem('spatial-take:layout-layers',JSON.stringify(v));}catch{}}
+for(const k of LAYERS)$('show-'+k).onchange=showLayers;showLayers();
+// The scene's segmented surfaces (scan/surfaces.glb), if it has been segmented; Update reruns the segmentation on the server.
+async function loadSurfaces(spaceURL,rooms){
+  try{const info=await(await fetch(new URL('scan/surfaces.json',spaceURL))).json();const g=(await loader.loadAsync(new URL('scan/surfaces.glb',spaceURL).href)).scene;
+    structure.setSurfaces(g,info.surfaces,rooms);surfacesInfo=info.surfaces;$('show-surfaces').disabled=false;}catch{structure.setSurfaces(null);surfacesInfo=[];$('show-surfaces').disabled=true;}}
+// Align panel (src/align-panel.mjs): pick what the open recording shows, then align it to those parts of the scan. While it is open the
+// 3D view shows surfaces and boxes; the layer switches come back as they were when it closes.
+let surfacesInfo=[],layersBeforeAlign=null;
+const alignPanel=createAlignPanel({root:$('align-panel'),canvas:$('twin'),getCamera:()=>twin.camera,structure,layout,
+  onOpen(){layersBeforeAlign=Object.fromEntries(['boxes','surfaces'].map(k=>[k,$('show-'+k).checked]));for(const k of ['boxes','surfaces'])$('show-'+k).checked=true;showLayers();},
+  onClose(){if(layersBeforeAlign)for(const [k,v] of Object.entries(layersBeforeAlign))$('show-'+k).checked=v;layersBeforeAlign=null;showLayers();},
+  onFineTune:()=>startFineTune(),
+  async onAlign(target){const r=await api('/api/register',{space:here[0],take:here[1],target});
+    // The recording's frames move with the new alignment: reload to see it.
+    setTimeout(()=>location.reload(),1200);return `Aligned: ${Math.round((r.explained??r.fitness)*100)}% of the picked parts explained, ${(r.rmse*100).toFixed(1)} cm, camera ${r.cameraHeight?.join('–')??'?'} m above the floor. Reloading…`;}});
+function openAlign(){const parents=new Map();for(const b of layout.boxes){const m=/^(.*)\/[^/]+$/.exec(b.label);if(m)parents.set(b.id,m[1]);}
+  const boxes=layout.boxes.filter(b=>!parents.has(b.id)&&!/^(Door|Window)_/.test(b.id)).map(b=>({id:b.id,label:b.label,zone:layoutRooms.find(r=>r.id===b.room)?.name||'No zone'}));
+  alignPanel.show({title:here[1],surfaces:surfacesInfo,boxes,target:session.alignTarget});}
+$('surfaces-update').onclick=async()=>{const b=$('surfaces-update');b.disabled=true;b.lastChild.textContent='Updating…';
+  try{await api('/api/segment',{space:here[0]});const su=new URL('../../space.json',sessionURL);
+    // Segmenting also re-cuts doors and windows into the walls (scripts/wall_openings.py): the structure layers follow.
+    const sem=await(await fetch(new URL('scan/semantic.json',su))).json();layoutRevision=sem.revision||0;layoutRooms=sem.rooms||[];structure.setData(sem);weatherScene.setLayout(sem);await loadSurfaces(su,layoutRooms);await loadSpaces();}catch(e){$('take-status').textContent=e.message;}
+  b.disabled=false;b.lastChild.textContent='Update surfaces';};
+$('box-label').oninput=()=>layout.update({label:$('box-label').value});
+$('box-label').onchange=()=>layout.renumber();   // typed name committed: repeats get numbers
+$('box-yaw').oninput=()=>{const v=parseFloat($('box-yaw').value);if(Number.isFinite(v))layout.update({yaw:v});};
+$('box-add').onclick=()=>layout.add();$('box-duplicate').onclick=()=>layout.duplicate();$('box-delete').onclick=()=>layout.remove();
+$('box-arrange').onclick=()=>layout.arrangeChildren();$('layout-undo').onclick=()=>layout.undo();$('layout-redo').onclick=()=>layout.redo();
+$('scan').onchange=async()=>{const space=$('space').value;$('scan').disabled=true;
+  try{await api('/api/scan/primary',{space,scan:$('scan').value});if(here[0]===space)location.reload();else await loadSpaces();}catch(e){$('take-status').textContent=e.message;await loadSpaces();}};
+// New space: a name field under the picker (the picker stays); Enter creates, Escape or leaving the field closes it.
+$('space-new').onclick=()=>{$('space-create').hidden=false;$('space-name').value='';$('space-name').focus();};
+$('space-name').onkeydown=e=>{if(e.key==='Escape')$('space-create').hidden=true;};
+$('space-name').onblur=()=>setTimeout(()=>{if(document.activeElement?.closest('#space-create'))return;$('space-create').hidden=true;},150);
+$('space-create').onsubmit=async e=>{e.preventDefault();try{const r=await api('/api/spaces',{name:$('space-name').value});$('space-create').hidden=true;await loadSpaces();$('space').value=r.name;showSpace();}catch(err){$('take-status').textContent=err.message;}};
+loadSpaces();
+// Local coding agent as the spatial assistant (scripts/agent-bridge.mjs + scripts/mcp.mjs); only when served by scripts/server.py.
+// Questions and answers belong to a session of this scene (agent conversations, scripts/agent_store.py); each starts with an empty timeline.
+const convKey='spatialTake.conversation:'+sessionURL.pathname,store={get:k=>{try{return localStorage.getItem(k);}catch{return null;}},set:(k,v)=>{try{localStorage.setItem(k,v);}catch{}}};
+const agentApi=async(path,body)=>{const u=new URL(path,location.href);u.searchParams.set('session',sessionURL.pathname);const r=await fetch(u,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:sessionURL.pathname,...body})}:{});const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;};
+const userState=()=>({conversation:agent?.conversation,frame:index,t:session.frames[index].t,position:session.frames[index].position,quaternion:session.frames[index].quaternion,weather_mod:$('weather-mod').checked,findmy_mod:$('findmy-mod').checked});
+async function showConversations(select){
+  const list=await agentApi('/api/agent/conversations');$('conv').innerHTML='';
+  for(const c of list.slice().reverse())$('conv').add(new Option(`${c.name}${c.questions?` · ${c.questions}`:''}`,c.id));
+  const id=list.some(c=>c.id===select)?select:list.at(-1)?.id;$('conv').value=id;return id;
+}
+async function openConversation(id){if(agent.conversation!==id){pause();replayFrom=null;}store.set(convKey,id);$('conv').value=id;await agent.setConversation(id);agent.report(userState());update();}
+async function startAgent(){
+  let command;try{const setup=await agentApi('/api/agent/command');command=setup.command;$('agent-command').textContent=command;$('agent-config-path').textContent=setup.config_path;$('editor-restart-command').textContent=setup.restart_command;$('gemini-setup-command').textContent=setup.gemini_setup_command||'';$('gemini-setup-copy').onclick=()=>navigator.clipboard.writeText(setup.gemini_setup_command||'');}catch{return;}
+  agent=createAgentLayer({scene,getStyleRevision:()=>weatherScene.playback.state.entry?.id,getSettings:forResponse,frames:session.frames,sessionPath:sessionURL.pathname,intrinsics:session.intrinsics,frameCamera,viewport:()=>({width:$('stage').clientWidth,height:$('stage').clientHeight}),
+    surfaceAt:(i,u,v)=>surfaceAt(u,v,i),surfacePatch:(i,u,v,r,hit)=>surfacePatch(u,v,r,i,hit),visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>weatherScene.surfaceTargets,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
+    onChange:()=>update(),onAnimate:()=>update(),onStatus:showAgentStatus});
+  $('agent-panel').hidden=false;$('ask').hidden=false;
+  let id=await showConversations(store.get(convKey));if(!id)id=await showConversations((await agentApi('/api/agent/conversations',{})).id);
+  await openConversation(id);agent.start();
+  $('agent-copy').onclick=async()=>{await navigator.clipboard.writeText(command);const label=$('agent-copy').querySelector('span');label.textContent='Copied';setTimeout(()=>label.textContent='Copy command',1500);};
+  $('conv').onchange=()=>openConversation($('conv').value).catch(fail);
+  $('conv-new').onclick=async()=>{try{await openConversation(await showConversations((await agentApi('/api/agent/conversations',{})).id));}catch(e){fail(e);}};
+  $('conv-delete').onclick=async()=>{
+    const id=agent.conversation;if(!id)return;$('conv-delete').disabled=true;
+    try{const result=await agentApi('/api/agent/conversations/delete',{conversation:id});
+      pause();replayFrom=null;agent.setHold(null);$('tooltip').hidden=true;
+      $('conv-name').hidden=true;$('conv').hidden=false;
+      await openConversation(await showConversations(result.conversation));
+    }catch(e){fail(e);}finally{$('conv-delete').disabled=false;}
+  };
+  $('conv-export').onclick=async()=>{try{const c=await agentApi('/api/agent/conversations/export?conversation='+encodeURIComponent(agent.conversation));
+    const u=URL.createObjectURL(new Blob([JSON.stringify(c,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download=`${sessionURL.pathname.split('/').at(-2)}-${c.name.replace(/[^\w\- ]+/g,'_')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);}catch(e){fail(e);}};
+  $('conv-import').onchange=async e=>{try{const data=JSON.parse(await e.target.files[0].text());e.target.value='';await openConversation(await showConversations((await agentApi('/api/agent/conversations/import',{data})).id));}catch(err){fail(err);}};
+  // Rename in place: the session picker turns into a text field; Enter saves, Escape cancels.
+  const endRename=async save=>{const name=$('conv-name').value.trim();$('conv-name').hidden=true;$('conv').hidden=false;
+    if(save&&name){try{await agentApi('/api/agent/conversations/rename',{conversation:agent.conversation,name});await showConversations(agent.conversation);}catch(e){fail(e);}}};
+  $('conv-rename').onclick=()=>{$('conv-name').value=$('conv').selectedOptions[0]?.text.replace(/ · \d+$/,'')||'';$('conv').hidden=true;$('conv-name').hidden=false;$('conv-name').focus();$('conv-name').select();};
+  $('conv-name').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();endRename(true);}else if(e.key==='Escape')endRename(false);};
+  $('conv-name').onblur=()=>{if(!$('conv-name').hidden)endRename(true);};
+}
+// Status line under the question box, and one marker per question on the timeline: click to go back and replay the answer,
+// × (on hover) to delete the question and its answer.
+let markersKey='';
+function showAgentStatus({connected:c,questions,responses}){
+  connected=c;$('ask-input').disabled=!c;$('ask-send').disabled=!c;
+  $('ask-input').placeholder=c?'Ask the assistant at this moment…':'Copy the agent command (Agent panel) and run it in a terminal to connect';
+  const q=questions.at(-1);
+  if(!hold)setAskStatus(q?.status==='queued'?'Waiting for the agent…':q?.status==='running'&&q.parts?.text?.status==='streaming'?'Writing answer…':'');showTrace();
+  const key=JSON.stringify(questions.map(q=>[q.id,q.status,q.t])),duration=session.frames.at(-1).t||1;if(key===markersKey)return;markersKey=key;
+  const byQuestion=new Map();for(const r of responses)if(r.part!=='ui'||!byQuestion.has(r.question_id))byQuestion.set(r.question_id,r);$('markers').innerHTML='';
+  for(const q of questions){
+    const m=document.createElement('button'),r=byQuestion.get(q.id);m.className='marker';m.type='button';m.dataset.status=q.status;m.style.left=`${q.t/duration*100}%`;
+    m.setAttribute('aria-label',`Question at ${q.t.toFixed(2)} s: ${q.text}`);
+    m.onmouseenter=e=>{const tip=$('tooltip'),b=m.getBoundingClientRect();tip.textContent=`${q.text}${r?` → ${r.title}`:q.status==='failed'?' (no response)':' …'} · ${q.t.toFixed(2)} s`;tip.hidden=false;tip.style.left=b.left+'px';tip.style.top=b.bottom+8+'px';};
+    m.onmouseleave=()=>$('tooltip').hidden=true;
+    // Replay lands where the answer appeared (after the agent's latency for live questions).
+    m.onclick=()=>replayQuestion(q);
+    const del=document.createElement('span');del.className='del';del.setAttribute('role','button');
+    del.innerHTML='<svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg>';
+    del.onclick=e=>{e.stopPropagation();$('tooltip').hidden=true;agent.deleteQuestion(q.id).catch(fail);};
+    m.append(del);$('markers').append(m);
+  }
+}
+// The agent's work on the focused question (live while it answers, stored for replay): faint text under the question box.
+let traceKey='';
+function showTrace(){
+  const q=agent&&session?agent.focus():null;
+  const clock=hold||agent?.delivery;
+  const replaying=!!hold&&!hold.live,steps=q?stepsAt(q,clock?.id===q.id?clock.h:Infinity):[];
+  const tail=!q?'':replaying?(hold.h<0?'Typing question…':hold.h<(q.latency||0)?`Processing… ${Math.floor(hold.h)} s`:''):q.status==='running'?`thinking… ${Math.max(0,Math.round(Date.now()/1000-q.started))} s`:q.status==='failed'?`no response: ${q.message||''}`:q.duration!=null?`${q.duration.toFixed(1)} s`:'';
+  const key=q?JSON.stringify([q.id,steps.length,q.status,tail]):'';if(key===traceKey)return;traceKey=key;
+  $('trace').replaceChildren(...(q?[...steps.map(s=>{const line=document.createElement('div');line.className='trace-'+s.kind;
+    line.textContent=s.kind==='reasoning'?`∴ ${s.text}`:s.kind==='tool'?`· ${s.tool}${s.text?'  '+s.text:''}`:s.kind==='error'?`✗ ${s.tool?s.tool+': ':''}${s.text}`:`→ ${s.text}`;return line;}),
+    Object.assign(document.createElement('div'),{className:'trace-tail',textContent:tail})]:[]));
+}
+setInterval(()=>{if(agent?.questions.some(q=>q.status==='running'))showTrace();},1000);
+// Asking holds the video on this frame until the agent has answered and READ_S seconds of reading have passed; a playing video then
+// continues, a paused one stays paused.
+const READ_S=READING.read_s;let askStatus='';
+function setAskStatus(text){if(text!==askStatus){askStatus=text;$('ask-status').textContent=text;}}
+$('ask').onsubmit=async e=>{e.preventDefault();const text=$('ask-input').value.trim();if(!text||!agent||!connected)return;
+  const wasPlaying=playing;
+  try{const q=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},$('weather-mod').checked,textResponses(responseSettings),$('findmy-mod').checked);$('ask-input').value='';startHold(q,{resume:wasPlaying,live:true});
+  }catch(err){$('ask-status').textContent='Error: '+err.message;}};
+function fail(e){$('status').textContent='Error: '+e.message;console.error(e);}
+async function sessionLoadError(status){
+  if(status!==404)return Error(`Could not load recording (HTTP ${status}). Try reloading the page.`);
+  await loadSpaces();
+  const sp=spaceData.spaces.find(s=>s.name===here[0]);
+  const recordings=sp?sp.scenarios:spaceData.spaces.flatMap(s=>s.scenarios);
+  const message=`Recording “${here[1]||sessionURL.pathname}” is no longer available at this address. ${recordings.length?'Open an available recording below or choose one under Recordings.':'Choose a scene and add a recording under Recordings.'}`;
+  const recovery=$('session-recovery');recovery.replaceChildren();
+  for(const sc of recordings){
+    const link=document.createElement('a'),url=new URL(location.href);url.searchParams.set('session',sc.session);url.searchParams.delete('placement');
+    link.href=url.href;link.className='btn';link.textContent=`Open ${sc.label}`;recovery.append(link);
+  }
+  recovery.hidden=!recordings.length;
+  return Error(message);
+}
+try{const res=await fetch(sessionURL);if(!res.ok)throw await sessionLoadError(res.status);session=await res.json();if(session.version!==1||!session.frames.length)throw Error('Unsupported/empty session');renderer.setSize(session.intrinsics.width,session.intrinsics.height,false);$('timeline').max=session.frames.at(-1).t;
+// The scenario's frames move into the space's coordinates (toSpace, row-major 4x4, from scripts/register_scenario.py). The room is the
+// space scan (complete, maybe stale) plus this recording's own mesh (current, with holes); both occlude and both can be shown.
+const spaceURL=new URL('../../space.json',sessionURL);let space=null;try{const r=await fetch(spaceURL);if(r.ok)space=await r.json();}catch{}
+toSpace=session.toSpace?new THREE.Matrix4().set(...session.toSpace):null;
+for(const f of session.frames)f.raw={position:[...f.position],quaternion:[...f.quaternion]};   // the recording's own poses (fine-tuning re-applies toSpace)
+if(toSpace)for(const f of session.frames){const p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();
+  new THREE.Matrix4().compose(new THREE.Vector3(...f.position),new THREE.Quaternion(...f.quaternion),new THREE.Vector3(1,1,1)).premultiply(toSpace).decompose(p,q,sc);f.position=p.toArray();f.quaternion=q.toArray();}
+twin.setSession(session);
+roomParts=new THREE.Group();roomParts.userData.parts={};
+if(space?.scan?.mesh&&toSpace){const g=(await loader.loadAsync(new URL(space.scan.mesh,spaceURL).href)).scene;g.name='space-scan';roomParts.add(g);roomParts.userData.parts.space=g;}
+else if(space?.scan?.mesh){alignScan=(await loader.loadAsync(new URL(space.scan.mesh,spaceURL).href)).scene;twin.setAlignScan(alignScan);}
+if(session.roomMesh){const g=(await loader.loadAsync(new URL(session.roomMesh,sessionURL).href)).scene;if(toSpace){g.applyMatrix4(toSpace);g.updateMatrixWorld(true);}g.name='recording-mesh';roomParts.add(g);roomParts.userData.parts.recording=g;}
+if(roomParts.children.length)setRoom(roomParts,null,null);
+// 3D view: the scan by default, the recording's own mesh when there is no scan.
+const hasPart=k=>!!roomParts.userData.parts[k];$('debug-spaceScan').disabled=!hasPart('space');$('debug-recordingMesh').disabled=!hasPart('recording');
+$('debug-recordingMesh').checked=!hasPart('space');twin.setDebug({spaceScan:true,recordingMesh:!hasPart('space')});
+// Layout boxes (scan/semantic.json), shown and edited in the 3D view.
+if(space?.scan?.semantic&&toSpace){try{const sem=await(await fetch(new URL(space.scan.semantic,spaceURL))).json();layoutRevision=sem.revision||0;layoutRooms=sem.rooms||[];layout.setData(sem);structure.setData(sem);weatherScene.setLayout(sem);layoutLoaded=true;showOutline();await loadSurfaces(spaceURL,layoutRooms);showSpace();}catch(e){console.warn('layout',e);}}
+if(!(session.depth&&session.frames.every(f=>f.depth)))$('depth-occlude').checked=false;
+else{$('depth-occlude').disabled=false;}
+await setFrame(0);
+// Components: the scenario's saved composition, else the calibration cube (in front of the camera; at the demo's usual spot without a scene).
+// The scene's own components (digital twins of its objects: spaces/<scene>/composition.json) and this recording's.
+await components.loadLibrary(here[0]);
+const fetchJSON=async u=>{try{const r=await fetch(u);return r.ok?await r.json():null;}catch{return null;}};
+const sceneSaved=here[0]?await fetchJSON(new URL('../../composition.json',sessionURL)):null,saved=here[0]?await fetchJSON(new URL('composition.json',sessionURL)):null;
+sceneRevision=sceneSaved?.revision||0;compositionRevision=saved?.revision||0;
+const sceneSpecs=(sceneSaved?.components||[]).map(c=>({...c,scope:'scene'})),takeSpecs=(saved?.components||[]).map(c=>({...c,scope:'recording'}));
+if(saved||sceneSpecs.length)await setComposition([...sceneSpecs,...takeSpecs],takeSpecs[0]?.id);
+// The calibration cube (a reference for checking placement, occlusion and shadows) only where there is no scene to check against: the demo.
+if(!saved&&!params.has('placement')&&!toSpace){await addComponent({component:'calibration-cube',position:[0,0,-2.5]});}
 if(params.has('placement')){const u=new URL(params.get('placement'),location.href);if(u.origin!==location.origin)throw Error('Placement URL must use this server');const response=await fetch(u);if(!response.ok)throw Error('Placement not found');await loadPlacement(await response.json());}
-await setFrame(0);window.replay={ready:true,setFrame,at,placement,applyPlacement,loadPlacement,loadRoomGeometry,session,renderer,camera,anchor,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}
+weatherSurfacePreview=await createWeatherSurfacePreview(scene,weatherScene.playback,()=>update());weatherSurfacePreview.attach($('stage'),()=>camera);weatherSurfacePreview.attach($('twin'),()=>twin.camera);
+await startAgent();new ResizeObserver(()=>update()).observe($('stage'));window.replay={ready:true,agent,get handData(){return currentHandData;},handPerception,recordingHands,handCompositor,spatialHands,findmyApproach,findmyScene,weatherScene,weatherSurfacePreview,layout,editLayout,components,addComponent,loadGLB:glb,select,get selected(){return selected;},get anchor(){return anchor;},fineTune:{start:startFineTune,end:endFineTune,get state(){return fine;}},setFrame,at,placement,applyPlacement,loadPlacement,depthMap,surfaceAt,surfacePatch,visibleIn,session,renderer,camera,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}

@@ -1,14 +1,21 @@
 {
-  "name": "spatial-video-replay",
+  "name": "spatial-take",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "python3 -m http.server 8766 --bind 127.0.0.1",
+    "start": ".venv/bin/python scripts/server.py 8766",
     "test": "node --test tests/*.test.mjs && .venv/bin/python -m unittest discover -s tests -p 'test_*.py'",
-    "export": "node scripts/export.mjs"
+    "test:mesh": ".venv-mesh/bin/python -m unittest tests/test_segment.py",
+    "export": "node scripts/export.mjs",
+    "prepare:hands": "node scripts/prepare-recording-hands.mjs"
   },
   "dependencies": {
-    "three": "0.180.0"
+    "@mediapipe/tasks-vision": "0.10.32",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@techstark/opencv-js": "4.11.0-release.1",
+    "three": "0.180.0",
+    "three-mesh-bvh": "^0.9.15",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "playwright": "1.56.1"

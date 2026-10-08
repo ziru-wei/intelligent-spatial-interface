@@ -1,0 +1,43 @@
+{
+  "mock": true,
+  "note": "Prototype household data. The recording does not show these details; they stand in for what scene understanding and personal memory would provide.",
+  "user": {
+    "room": "bedroom",
+    "looking_at": "desk",
+    "activity": "winding down after dinner"
+  },
+  "timezone": "America/Denver",
+  "groups": {
+    "weather": {
+      "description": "Mock weather by date, temperature, rain, wind, snow, forecast; useful for outdoor plans.",
+      "file": "context/weather.json",
+      "keys": [
+        "weather"
+      ]
+    },
+    "storage": {
+      "description": "Objects, food inventory, supplies, belongings, locations, drawers, fridge, laundry and appliance state.",
+      "file": "context/storage.json",
+      "keys": [
+        "objects",
+        "stored_items"
+      ]
+    },
+    "user_events": {
+      "description": "Calendar, recurring activities, badminton, meetings, hangouts, hiking and availability.",
+      "file": "context/user_events.json",
+      "keys": [
+        "calendar"
+      ]
+    },
+    "personal": {
+      "description": "User preferences, daily routines, recent activity and current activity. Includes the current reading book, page progress and approximate story checkpoint.",
+      "file": "context/personal.json",
+      "keys": [
+        "routines",
+        "preferences",
+        "recent_activity"
+      ]
+    }
+  }
+}

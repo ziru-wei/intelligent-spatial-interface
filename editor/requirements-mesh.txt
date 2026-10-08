@@ -1,0 +1,9 @@
+# Room mesh fusion (scripts/fuse_record3d.py). Separate environment: open3d 0.18 segfaults with numpy 2.
+open3d==0.18.0
+numpy<2
+OpenEXR==3.4.4
+Pillow
+trimesh
+scipy
+shapely
+mapbox_earcut

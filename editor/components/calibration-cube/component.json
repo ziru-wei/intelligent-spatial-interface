@@ -1,0 +1,2 @@
+{"name": "Calibration cube", "kind": "three", "entry": "index.mjs", "description": "A grounded, recognisable reference object (22.5 cm) for checking placement, occlusion and shadows.",
+ "params": {"color": {"type": "color", "default": "#d99c56"}, "size": {"type": "number", "default": 0.225, "min": 0.02, "max": 2, "step": 0.025}}}

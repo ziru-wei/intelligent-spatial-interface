@@ -1,0 +1,174 @@
+{
+  "objects": [
+    {
+      "id": "laundry-basket",
+      "label": "laundry basket",
+      "location": "bedroom, next to the closet",
+      "state": {
+        "fill": "about 80% full",
+        "items": [
+          {
+            "item": "white T-shirt",
+            "count": 3,
+            "care": "warm wash"
+          },
+          {
+            "item": "dark jeans",
+            "count": 2,
+            "care": "cold wash, inside out"
+          },
+          {
+            "item": "wool sweater",
+            "count": 1,
+            "care": "hand wash only"
+          },
+          {
+            "item": "bath towel",
+            "count": 2,
+            "care": "hot wash"
+          },
+          {
+            "item": "socks",
+            "count": 6,
+            "care": "warm wash"
+          }
+        ]
+      }
+    },
+    {
+      "id": "washer",
+      "label": "washing machine",
+      "location": "hallway closet",
+      "state": {
+        "status": "idle",
+        "last_run": "Wednesday",
+        "detergent": "about 5 loads left"
+      }
+    },
+    {
+      "id": "nightstand",
+      "label": "nightstand",
+      "location": "bedroom, left of the bed",
+      "state": {
+        "books": [
+          {
+            "title": "Piranesi",
+            "author": "Susanna Clarke",
+            "reading_status": "Not the current reading book"
+          },
+          {
+            "title": "The Design of Everyday Things",
+            "author": "Don Norman",
+            "progress": "not started"
+          }
+        ],
+        "lamp": "off"
+      }
+    },
+    {
+      "id": "bookshelf",
+      "label": "bookshelf",
+      "location": "bedroom wall opposite the desk",
+      "state": {
+        "unread": [
+          "Klara and the Sun (Kazuo Ishiguro)",
+          "Exhalation (Ted Chiang)",
+          "How to Do Nothing (Jenny Odell)"
+        ]
+      }
+    },
+    {
+      "id": "desk",
+      "label": "white desk",
+      "location": "bedroom, by the window",
+      "state": {
+        "laptop": "open",
+        "mug": "empty",
+        "phone": "charging",
+        "drawer": [
+          {
+            "item": "sticky notes",
+            "aliases": [
+              "stikie",
+              "stickies"
+            ]
+          },
+          {
+            "item": "marker"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fridge",
+      "label": "fridge",
+      "location": "kitchen",
+      "state": {
+        "contents": [
+          {
+            "item": "milk",
+            "amount": "almost empty"
+          },
+          {
+            "item": "eggs",
+            "count": 0
+          },
+          {
+            "item": "spinach",
+            "amount": "half bag, wilting, use soon"
+          },
+          {
+            "item": "greek yogurt",
+            "count": 1
+          },
+          {
+            "item": "leftover curry",
+            "note": "cooked Friday"
+          },
+          {
+            "item": "lemons",
+            "count": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "pantry",
+      "label": "pantry shelf",
+      "location": "kitchen",
+      "state": {
+        "rice": "half bag",
+        "pasta": "none left",
+        "coffee beans": "low, about 3 days",
+        "olive oil": "plenty"
+      }
+    }
+  ],
+  "stored_items": [
+    {
+      "id": "brush",
+      "label": "Brush",
+      "aliases": [
+        "brush",
+        "刷子"
+      ],
+      "location": "cabinet 3",
+      "box_id": "storage_cabinet_mid1_1"
+    },
+    {
+      "id": "to-the-lighthouse",
+      "label": "To the Lighthouse by Virginia Woolf",
+      "aliases": [
+        "To the Lighthouse",
+        "Virginia Woolf book",
+        "current reading book",
+        "current book",
+        "reading book"
+      ],
+      "location": "Inside the drawer of Table 2",
+      "box_id": "custom_11",
+      "container_detail": "drawer",
+      "progress": "Around page 68"
+    }
+  ]
+}

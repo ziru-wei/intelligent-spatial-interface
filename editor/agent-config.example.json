@@ -1,0 +1,8 @@
+{
+  "apiKey": "",
+  "geminiApiKey": "",
+  "jevModel": "jev-latest",
+  "answerProvider": "gemini",
+  "answerModel": "gemini-3.5-flash-lite",
+  "answerEffort": "minimal"
+}
