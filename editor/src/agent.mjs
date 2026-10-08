@@ -230,8 +230,10 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     sourceResponses=status.responses;await reconcileWidgets();
     onStatus?.(status);return status;
   }
+  // Bumped when the surfaces text is placed on change (relayout): widgets placed against the old ones are not kept.
+  let placementEpoch=0;
   async function reconcileWidgets(){
-    if(reconciling)return;reconciling=true;const gen=generation;let changed=false;
+    if(reconciling)return;reconciling=true;const gen=generation,epoch=placementEpoch;let changed=false;
     try{
       const list=presentationResponses(sourceResponses,questions,hold,deliveryClocks()),ids=new Set(list.map(r=>r.id));
       for(const [id,w] of widgets)if(!ids.has(id)){group.remove(w);dispose(w);widgets.delete(id);changed=true;}
@@ -242,11 +244,12 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         const q=questions.find(q=>q.id===r.question_id),frame=q?.frame??r.frame;
         const w=await createResponseWidget(r,ctx,list.filter(o=>o.id<r.id&&o.frame===r.frame).length,frame,old);
         const current=presentationResponses(sourceResponses,questions,hold,deliveryClocks()).find(p=>p.id===r.id);
-        if(gen!==generation||!current||(current.component_key!==r.component_key&&!updateResponseWidget(w,current))){dispose(w);continue;}
+        if(gen!==generation||epoch!==placementEpoch||!current||(current.component_key!==r.component_key&&!updateResponseWidget(w,current))){dispose(w);continue;}
         if(old){group.remove(old);dispose(old);}
         widgets.set(r.id,w);group.add(w);changed=true;
       }
     }finally{reconciling=false;}
+    if(epoch!==placementEpoch)return reconcileWidgets();   // relaid out meanwhile: place again on the new surfaces
     if(changed){apply();onChange?.(sourceResponses);}
   }
   // During a hold (hold = {id, h, shownAt}): negative h types the question, then thinking until the answer at h = shownAt. Outside a hold, an answer
@@ -394,6 +397,10 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     update(t){time=t;apply();},
     // Questions change often while the agent works (new steps): re-apply so the streaming thought updates.
     refresh(){apply();},
+    get widgets(){return [...widgets.values()];},
+    // The surfaces changed (the recording's depth correction finished, the layout was saved): every response is placed again from its
+    // question's frame, as if seen for the first time. Saved conversations keep no poses, so a replay always uses the current placement.
+    relayout(){placementEpoch++;for(const w of widgets.values()){group.remove(w);dispose(w);}widgets.clear();apply();},
     /** The response settings changed (src/response-settings.mjs): show, hide and place again. */
     refreshSettings(){apply();},
     replay(responseId){const w=widgets.get(responseId)||[...widgets.values()].find(w=>w.userData.response.component_ids?.includes(responseId));if(!w)return;w.userData.replay=performance.now();

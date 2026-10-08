@@ -27,7 +27,7 @@ import {createComponentHost} from './components.mjs';
 import {createAgentLayer,READING,formatSpeed,stepsAt} from './agent.mjs';
 import {questionClock} from './question-caption.mjs';
 import {buildTextTargets,calibrate,applyOffsets} from './layout-surfaces.mjs';
-import {createRelationTracker,relationsAt,pickRelation,viewOf} from './spatial-relations.mjs';
+import {createRelationTracker,viewOf} from './spatial-relations.mjs';
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search);
 const sessionURL=new URL(params.get('session')||'./spaces/demo/scenarios/demo/session.json',location.href);
 const renderer=new THREE.WebGLRenderer({canvas:$('stage'),antialias:true,stencil:true,preserveDrawingBuffer:true});
@@ -218,29 +218,23 @@ async function calibrateSurfaces(){
   const run=++calibrationRun,frames=session?.frames.map((f,i)=>f.depth?i:-1).filter(i=>i>=0)||[];if(!frames.length||!toSpace||!textTargets.length)return;
   try{const offsets=await calibrate(textTargets,{frames,readDepth:i=>decodeDepth(i).catch(()=>null),camera:frameCamera,intrinsics:session.intrinsics});
     if(run!==calibrationRun)return;surfaceOffsets=offsets;textSurfaces=applyOffsets(textTargets,offsets);resetRelations();}catch(e){console.warn('surface calibration',e);}}
-// How the person stands to the room (src/spatial-relations.mjs): tracked over the frames as they are shown (with hysteresis); placement
-// prefers that surface. A frame not shown yet gets the instantaneous relation.
-const relationTracker=createRelationTracker(),relationByFrame=new Map(),RELATION_COLORS={A:0x5fd38d,B:0x5aa9ff,D:0xf0a64a};
-let relationMarker=null,relationMarkerKey='';
-function resetRelations(){relationTracker.reset();relationByFrame.clear();}
+// How the person stands to the room (src/spatial-relations.mjs), tracked over the frames as they are shown (with hysteresis): it names
+// the surface an answer is placed on (src/placement.mjs).
+const relationTracker=createRelationTracker(),relationByFrame=new Map();
+// The text surfaces changed (depth correction finished, layout saved): relations and every answer's placement are worked out again.
+function resetRelations(){relationTracker.reset();relationByFrame.clear();agent?.relayout();}
 // Metres along a world direction from frame i's camera to what its LiDAR depth saw (only when that depth is loaded already).
 function depthAlong(i,cam){const tx=depths.get(i);if(!tx)return null;const {data,width:w,height:h}=tx.image,fwd=cam.getWorldDirection(new THREE.Vector3());
   return dir=>{const p=cam.position.clone().add(dir).project(cam);if(Math.abs(p.x)>1||Math.abs(p.y)>1)return null;
     const d=data[Math.min(h-1,Math.floor((1-p.y)/2*h))*w+Math.min(w-1,Math.floor((p.x+1)/2*w))];const c=dir.dot(fwd);return d>0&&c>.05?d/c:null;};}
 function trackRelation(i){if(!textSurfaces.length)return null;const cam=frameCamera(i);cam.updateMatrixWorld(true);
-  const r=relationTracker.update(session.frames[i].t,viewOf(cam),textSurfaces,{depth:depthAlong(i,cam)});relationByFrame.set(i,r);showRelation(r);return r;}
-function relationAt(i){if(relationByFrame.has(i))return relationByFrame.get(i);if(!textSurfaces.length)return null;const cam=frameCamera(i);cam.updateMatrixWorld(true);
-  const v=viewOf(cam);return pickRelation(relationsAt(v,textSurfaces,{depth:depthAlong(i,cam)}),Math.asin(v.dir.y)*180/Math.PI);}
-function describeRelation(r){if(!r)return 'No relation';const t=textSurfaces.find(x=>x.id===r.surfaceId),name=t?.label||t?.wall||r.surfaceId;
-  return `${r.relation}${r.kind?' · '+r.kind:''} · ${name} · ${r.distance.toFixed(2)} m${r.cluttered?' · cluttered':''}`;}
-// Debug: the relation's surface outlined in the 3D view and named under the video.
-function showRelation(r){const on=$('show-relation').checked,chip=$('relation');chip.hidden=!on;if(on)chip.textContent=describeRelation(r);
-  const key=on&&r?r.relation+r.surfaceId:'';if(key===relationMarkerKey)return;relationMarkerKey=key;
-  if(relationMarker){twin.helper.remove(relationMarker);relationMarker.geometry.dispose();relationMarker.material.dispose();relationMarker=null;}
-  const t=key&&textSurfaces.find(x=>x.id===r.surfaceId);if(!t)return;const pos=[];
-  for(const p of t.triangles||[])pos.push(...t.origin.clone().addScaledVector(t.right,p.x).addScaledVector(t.up,p.y).addScaledVector(t.n,.01).toArray());
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-  relationMarker=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:RELATION_COLORS[r.relation],transparent:true,opacity:.45,side:THREE.DoubleSide,depthWrite:false}));relationMarker.renderOrder=4;twin.helper.add(relationMarker);}
+  const r=relationTracker.update(session.frames[i].t,viewOf(cam),textSurfaces,{depth:depthAlong(i,cam)});relationByFrame.set(i,r);return r;}
+// A frame not played yet (an answer replayed from a saved conversation, a seek): a fresh tracker over the 2 s before it, so the relation
+// has the same hysteresis as during playback.
+function relationAt(i){if(relationByFrame.has(i))return relationByFrame.get(i);if(!textSurfaces.length)return null;
+  const t=session.frames[i].t,tracker=createRelationTracker();let start=i,r=null;while(start>0&&session.frames[start-1].t>=t-2)start--;
+  for(let j=start;j<=i;j++){const cam=frameCamera(j);cam.updateMatrixWorld(true);r=tracker.update(session.frames[j].t,viewOf(cam),textSurfaces,{depth:depthAlong(j,cam)});}
+  relationByFrame.set(i,r);return r;}
 async function setFrame(i,{realtime=false,preparedHands=null,generation=null}={}){
  if(realtime){
   if(i===index||preparingFrames.has(i))return;
@@ -434,22 +428,6 @@ async function surfaceAt(px,py,i=index){
   if(meshHit)return {point:meshHit.point,normal:meshHit.normal,source:'mesh'};
   const point=new THREE.Vector3();return ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),-anchor.position.y),point)&&{point,normal:new THREE.Vector3(0,1,0),source:'plane'};
 }
-// World points of the surface within `radius` metres of the point under (px,py) in frame i, for fitting the area text will cover.
-// Where this frame's depth and the room mesh agree at that point, the mesh's vertices: fused from many views, it has much less of a
-// single frame's depth error (glass, distance, grazing angles). Where they disagree (something moved since the scan), or there is no
-// mesh, this frame's LiDAR depth (all pixels in the window around it). Without depth, the mesh. Null when neither is there.
-async function surfacePatch(px,py,radius,i=index,known=null){
-  const hit=known||await surfaceAt(px,py,i),k=session.intrinsics,camera=frameCamera(i),eye=new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld);
-  if(!hit||hit.source==='plane')return null;
-  if(hit.source==='depth+mesh'||hit.source==='mesh')return meshPatch(hit.point,radius,eye);
-  const {data,width:w,height:h}=(await depthMap(i)).image,fx=k.fx*w/k.width,pts=[];
-  const cam=(x,y)=>{const d=data[y*w+x];if(!(d>0))return null;const uu=(x+.5)/w*k.width,vv=(y+.5)/h*k.height;return new THREE.Vector3((uu-k.cx)/k.fx*d,-(vv-k.cy)/k.fy*d,-d);};
-  const x0=Math.min(w-1,Math.floor(px*w)),y0=Math.min(h-1,Math.floor(py*h)),c=cam(x0,y0);if(!c)return null;
-  const r=Math.min(64,Math.ceil(radius/-c.z*fx)),step=Math.max(1,Math.round(r/28));
-  for(let y=Math.max(0,y0-r);y<=Math.min(h-1,y0+r);y+=step)for(let x=Math.max(0,x0-r);x<=Math.min(w-1,x0+r);x+=step){
-    const p=cam(x,y);if(p&&p.distanceTo(c)<=radius)pts.push(p.applyMatrix4(camera.matrixWorld));}
-  return pts;
-}
 // Use a pose snapshot: asynchronous depth loads must not observe a later camera frame.
 // Text tolerates 8 cm of scan registration/depth noise and ignores hand pixels; other consumers keep the strict 25 mm test.
 async function visibleIn(i,points,{text=false,staticSurface=false}={}){
@@ -476,25 +454,6 @@ async function visibleIn(i,points,{text=false,staticSurface=false}={}){
     if(performance.now()-sliceStart>4){await new Promise(resolve=>setTimeout(resolve,0));sliceStart=performance.now();}
   }
   return results;
-}
-// Points on the room mesh within `radius` of `center`, on triangles facing `eye`, spread evenly over their area (the mesh is
-// decimated: big triangles on flat areas, so its vertices alone are too sparse): the space scan if there is one, else the recording's
-// mesh (not both: two meshes of one surface, slightly apart, would read as roughness). The BVH finds the triangles near the point;
-// each triangle's samples come from its own seed, so the points do not depend on the order they are visited in.
-function meshPatch(center,radius,eye){
-  const parts=room?.userData?.parts,shape=parts?.space||parts?.recording||room,pts=[],cell=radius/28,r2=radius*radius;
-  const e1=new THREE.Vector3(),e2=new THREE.Vector3(),n=new THREE.Vector3(),q=new THREE.Vector3(),A=new THREE.Vector3(),B=new THREE.Vector3(),C=new THREE.Vector3();
-  shape.traverse(o=>{if(!o.isMesh||!o.geometry.boundsTree)return;o.updateMatrixWorld(true);
-    const m=o.matrixWorld,local=new THREE.Sphere(center.clone().applyMatrix4(m.clone().invert()),radius/Math.cbrt(Math.abs(m.determinant())||1));
-    o.geometry.boundsTree.shapecast({intersectsBounds:box=>local.intersectsBox(box),intersectsTriangle:(tri,t)=>{
-      A.copy(tri.a).applyMatrix4(m);B.copy(tri.b).applyMatrix4(m);C.copy(tri.c).applyMatrix4(m);
-      e1.subVectors(B,A);e2.subVectors(C,A);n.crossVectors(e1,e2);const area=n.length()/2;q.copy(A).add(B).add(C).divideScalar(3);
-      if(!area||n.dot(e1.copy(eye).sub(q))<0)return false;e1.subVectors(B,A);
-      let seed=(t*2654435761>>>0)%2147483646+1;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
-      for(let s=0,count=Math.max(1,Math.round(area/(cell*cell)));s<count;s++){let u=rnd(),w=rnd();if(u+w>1){u=1-u;w=1-w;}
-        q.copy(A).addScaledVector(e1,u).addScaledVector(e2,w);if(q.distanceToSquared(center)<=r2)pts.push(q.clone());}
-      return false;}});});
-  const step=Math.max(1,Math.ceil(pts.length/4000));return step>1?pts.filter((_,j)=>j%step===0):pts;
 }
 // Hovering a response shows its question; clicking it goes back to the frame where it was asked. Works in the video and the 3D view.
 function ndcOf(e){const r=e.target.getBoundingClientRect();return new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2);}
@@ -794,7 +753,6 @@ const structure=createStructure({group:twin.helper,twin});const LAYERS=['boxes',
 try{const v=JSON.parse(localStorage.getItem('spatial-take:layout-layers')||'null');if(v)for(const k of LAYERS)if(k in v)$('show-'+k).checked=!!v[k];}catch{}
 function showLayers(){const v=Object.fromEntries(LAYERS.map(k=>[k,$('show-'+k).checked]));twin.setDebug({semantic:v.boxes});structure.setVisible(v);try{localStorage.setItem('spatial-take:layout-layers',JSON.stringify(v));}catch{}}
 for(const k of LAYERS)$('show-'+k).onchange=showLayers;showLayers();
-$('show-relation').onchange=()=>{relationMarkerKey='-';showRelation(relationByFrame.get(index)??null);twin.render();};
 // Align panel (src/align-panel.mjs): pick what the open recording shows, then align it to those parts of the scan. While it is open the
 // 3D view shows surfaces and boxes; the layer switches come back as they were when it closes.
 const ALIGN_LAYERS=['boxes','zones','walls','ceilings'];let layersBeforeAlign=null;
@@ -840,7 +798,7 @@ async function openConversation(id){if(agent.conversation!==id){pause();replayFr
 async function startAgent(){
   let command;try{const setup=await agentApi('/api/agent/command');command=setup.command;$('agent-command').textContent=command;$('agent-config-path').textContent=setup.config_path;$('editor-restart-command').textContent=setup.restart_command;$('gemini-setup-command').textContent=setup.gemini_setup_command||'';$('gemini-setup-copy').onclick=()=>navigator.clipboard.writeText(setup.gemini_setup_command||'');}catch{return;}
   agent=createAgentLayer({scene,getStyleRevision:()=>weatherScene.playback.state.entry?.id,getSettings:forResponse,frames:session.frames,sessionPath:sessionURL.pathname,intrinsics:session.intrinsics,frameCamera,viewport:()=>({width:$('stage').clientWidth,height:$('stage').clientHeight}),
-    surfaceAt:(i,u,v)=>surfaceAt(u,v,i),surfacePatch:(i,u,v,r,hit)=>surfacePatch(u,v,r,i,hit),visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,relationAt,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
+    visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,relationAt,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
     onChange:()=>update(),onAnimate:()=>update(),onStatus:showAgentStatus});
   $('agent-panel').hidden=false;$('ask').hidden=false;agentTab.disabled=false;agentTab.title='';showTab(store.get('spatialTake.sideTab')||'scene');
   let id=await showConversations(store.get(convKey));if(!id)id=await showConversations((await agentApi('/api/agent/conversations',{})).id);
@@ -959,4 +917,4 @@ if(saved||sceneSpecs.length)await setComposition([...sceneSpecs,...takeSpecs],nu
 if(!saved&&!params.has('placement')&&!toSpace){await addComponent({component:'calibration-cube',position:[0,0,-2.5]});}
 if(params.has('placement')){const u=new URL(params.get('placement'),location.href);if(u.origin!==location.origin)throw Error('Placement URL must use this server');const response=await fetch(u);if(!response.ok)throw Error('Placement not found');await loadPlacement(await response.json());}
 weatherSurfacePreview=await createWeatherSurfacePreview(scene,weatherScene.playback,()=>update());weatherSurfacePreview.attach($('stage'),()=>camera);weatherSurfacePreview.attach($('twin'),()=>twin.camera);
-await startAgent();new ResizeObserver(()=>update()).observe($('stage'));window.replay={ready:true,agent,get textSurfaces(){return textSurfaces;},get surfaceOffsets(){return surfaceOffsets;},relationAt,get handData(){return currentHandData;},handPerception,recordingHands,handCompositor,spatialHands,findmyApproach,findmyScene,weatherScene,weatherSurfacePreview,layout,editLayout,components,addComponent,loadGLB:glb,select,setSelected,editObjects,get selected(){return selected;},get anchor(){return anchor;},fineTune:{start:startFineTune,end:endFineTune,get state(){return fine;}},setFrame,at,placement,applyPlacement,loadPlacement,depthMap,surfaceAt,surfacePatch,visibleIn,session,renderer,camera,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}
+await startAgent();new ResizeObserver(()=>update()).observe($('stage'));window.replay={ready:true,agent,get textSurfaces(){return textSurfaces;},get surfaceOffsets(){return surfaceOffsets;},relationAt,get handData(){return currentHandData;},handPerception,recordingHands,handCompositor,spatialHands,findmyApproach,findmyScene,weatherScene,weatherSurfacePreview,layout,editLayout,components,addComponent,loadGLB:glb,select,setSelected,editObjects,get selected(){return selected;},get anchor(){return anchor;},fineTune:{start:startFineTune,end:endFineTune,get state(){return fine;}},setFrame,at,placement,applyPlacement,loadPlacement,depthMap,surfaceAt,visibleIn,session,renderer,camera,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}

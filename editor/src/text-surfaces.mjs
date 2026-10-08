@@ -25,20 +25,9 @@ export function surfaceSupports(target,pose,aspect){
  });
 }
 export const visibleFraction=values=>values.length?values.filter(Boolean).length/values.length:1;
-// The surface the person relates to (src/spatial-relations.mjs: A desk under the gaze, B the wall or tall cabinet faced, D the floor,
-// window, door or object looked at) comes first, unless it fails the hard checks above (support, size in view, visibility). On a faced
-// wall, text sits near eye level; another part of the same wall (split by a door) is the next best.
-export const RELATION_BONUS={A:1.2,B:1.2,D:.8,sameWall:.8,cluttered:.6,eyeLevel:.8,belowEye:.1};
-export function relationMatch(target,relation){return !!relation&&target.id===relation.surfaceId;}
-export function relationBonus(target,contact,relation,eye){
- if(!relation)return 0;
- if(relationMatch(target,relation)){
-  let b=relation.cluttered?RELATION_BONUS.cluttered:RELATION_BONUS[relation.relation]||0;
-  if(relation.relation==='B')b-=RELATION_BONUS.eyeLevel*Math.abs(contact.y-(eye.y-RELATION_BONUS.belowEye));
-  return b;
- }
- return relation.relation==='B'&&relation.wallId&&target.wall===relation.wallId&&target.n.dot(eye.clone().sub(target.origin))>0?RELATION_BONUS.sameWall-RELATION_BONUS.eyeLevel*Math.abs(contact.y-(eye.y-RELATION_BONUS.belowEye)):0;
-}
+// On a wall or cabinet side the person faces (relation B), text sits near eye level (a little below the eye).
+export const EYE_LEVEL={weight:.8,below:.1};
+const eyeLevelCost=(contact,relation,eye)=>relation?.relation==='B'?EYE_LEVEL.weight*Math.abs(contact.y-(eye.y-EYE_LEVEL.below)):0;
 export async function staticTextPlacement(response,ctx,basis){
  const targets=ctx.getStaticSurfaces?.()||[],camera=ctx.frameCamera(response.frame),eye=camera.position,viewport=ctx.viewport(),aspect=response.aspect||.45;
  const quality=await ctx.getSurfaceQuality?.(response.frame);
@@ -75,14 +64,14 @@ export async function staticTextPlacement(response,ctx,basis){
     :[1,.85,.7,.55].map(s=>wanted*s);
    for(const width of new Set(widths)){
     const scale=width/wanted;
-    const pose={position,quaternion:q,width,align:'center',kind:'plane',surfaceAnchor:contact.clone(),normalLift:.018,surfaceId:target.id,source:target.source||'parametric-layout',...(target.source==='smoothed-scan'?{supportTarget:target}:{}),...(relation&&relationMatch(target,relation)?{relation:relation.relation}:{})};
+    const pose={position,quaternion:q,width,align:'center',kind:'plane',surfaceAnchor:contact.clone(),normalLift:.018,surfaceId:target.id,source:target.source||'parametric-layout',...(target.source==='smoothed-scan'?{supportTarget:target}:{})};
     const footprint=footprintPoints(pose,aspect,8,4);
     if(!surfaceSupports(target,pose,aspect))continue;
     const metrics=textViewMetrics(centeredPose(pose,aspect),camera,viewport,response.textMetrics);if(!metrics.inView||metrics.minPx<TEXT_VIEW.minPx*.9||metrics.maxPx>TEXT_VIEW.maxPx*1.4)continue;
     // A nearer replacement surface must not magnify the same world width.
     if(response.sizeReference&&(metrics.maxPx>response.sizeReference.maxPx*1.15||metrics.minPx<response.sizeReference.minPx*.85))continue;
     pose.surfaceQuality=quality?.(pose,aspect);
-    candidates.push({pose,footprint,metrics,score:(oldWidth?4*Math.abs(Math.log(width/oldWidth)):0)+2*(pose.surfaceQuality?.cost||0)+.15*Math.abs(Math.log(scale))+Math.hypot(projected.x,projected.y)*.35+.03*eye.distanceTo(contact)-(target.surface==='box'&&normal.y>.7?.6:0)-relationBonus(target,contact,relation,eye)+(same?stability*contact.distanceTo(previous.surfaceAnchor)/Math.max(.1,previous.width):0)});
+    candidates.push({pose,footprint,metrics,score:(oldWidth?4*Math.abs(Math.log(width/oldWidth)):0)+2*(pose.surfaceQuality?.cost||0)+.15*Math.abs(Math.log(scale))+Math.hypot(projected.x,projected.y)*.35+.03*eye.distanceTo(contact)+eyeLevelCost(contact,relation,eye)+(same?stability*contact.distanceTo(previous.surfaceAnchor)/Math.max(.1,previous.width):0)});
    }
   }
  }
