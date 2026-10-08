@@ -5,12 +5,13 @@
   structure.py <scene> align-openings [ids...] [--dry-run]
   structure.py <scene> merge-walls [--dry-run]
 
-split-ceiling: RoomPlan sometimes draws an attic slope as part of a flat ceiling piece. The scan triangles segmentation gave that piece
-(scan/surfaces.glb, scripts/segment_surfaces.py) are grouped by the way they face (within --angle degrees); every group of at least
+split-ceiling: RoomPlan sometimes draws an attic slope as part of a flat ceiling piece. The scan triangles under that piece (facing down,
+inside its outline, from 15 cm above its plane to 1.2 m below: scripts/scan_geometry.py near) are grouped by the way they face (within
+--angle degrees); every group of at least
 --min-area m² gets a plane fitted to it (its largest connected part, inliers within 3 cm). The group that faces like RoomPlan's piece
 keeps the piece's id and its outline minus the others' footprints; each other group becomes a new piece (<id>b, <id>c, ...; outline:
 the convex hull of its part, source 'scan'). Walls whose outline reaches above a new sloped piece are cut down to it. Then the zones'
-relations (layout.relate) and the segmentation are redone.
+relations (layout.relate) and the doors and windows cut into the walls (scripts/wall_openings.py) are redone.
 
 align-openings: a window's or door's box from RoomPlan (or drawn by hand) is often a few cm off. Its frame (casing, sill, head) stands
 out from the wall as narrow ridges in the scan (1-3 cm proud, about 10 cm wide), even where the glass, blinds and wall are all at about
@@ -29,7 +30,8 @@ from pathlib import Path
 import numpy as np, trimesh, shapely
 from shapely.geometry import Polygon, MultiPoint
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import layout, segment_surfaces as seg
+import layout, wall_openings
+from scan_geometry import box_frame, scan_mesh, layout_surfaces, near
 from wall_openings import wall_of
 
 SPACES = Path(__file__).resolve().parents[1]/'spaces'
@@ -48,7 +50,7 @@ def fit(mesh, faces):
     return p, n, faces[keep]
 
 def largest_part(mesh, faces):
-    # surfaces.glb stores each triangle with its own vertices (they were cut to regions): weld them to see what touches what.
+    # Weld the scan's vertices (exports often store triangles apart) to see what touches what.
     sub = mesh.submesh([faces], append=True, only_watertight=False); sub.merge_vertices(digits_vertex=4)
     labels = trimesh.graph.connected_component_labels(sub.face_adjacency, node_count=len(faces))
     areas = np.bincount(labels, weights=sub.area_faces); return faces[labels == areas.argmax()]
@@ -57,9 +59,10 @@ def split_ceiling(scene, cid, angle=15., min_area=.3):
     d = SPACES/scene; m = json.loads((d/'space.json').read_text()); p = d/m['semantic']; sem = json.loads(p.read_text())
     piece = next((c for c in sem['ceilings'] if c['id'] == cid), None)
     if piece is None: raise ValueError('Unknown ceiling: '+cid)
-    g = trimesh.load(d/'scan'/'surfaces.glb', force='scene')
-    if cid not in g.graph.nodes_geometry: raise ValueError(f'{cid} has no segmented triangles; run segment first')
-    mesh = g.geometry[g.graph[cid][1]]; N, A = mesh.face_normals, mesh.area_faces; n0 = np.array(piece['normal'], float); n0 /= np.linalg.norm(n0)
+    s = next((x for x in layout_surfaces(sem) if x['id'] == cid), None); full = scan_mesh(d/m['scan']['mesh'])
+    idx = near(full, s, behind=.15, front=1.2, facing=.5) if s else []
+    if not len(idx): raise ValueError(f'The scan has no triangles under {cid}')
+    mesh = full.submesh([idx], append=True); N, A = mesh.face_normals, mesh.area_faces; n0 = np.array(piece['normal'], float); n0 /= np.linalg.norm(n0)
     # Group by facing: repeatedly take the most common direction (area-weighted, among the remaining faces) and everything within `angle`.
     left = np.arange(len(N)); groups = []
     while len(left) and A[left].sum() >= min_area:
@@ -107,11 +110,10 @@ def split_ceiling(scene, cid, angle=15., min_area=.3):
             if wall2.is_empty: continue
             wall2 = max(getattr(wall2, 'geoms', [wall2]), key=lambda x: x.area); ring = np.array(wall2.exterior.coords)[:-1]
             w['outline'] = np.round(o+ring[:, :1]*along+ring[:, 1:]*np.array([0, 1, 0]), 3).tolist(); w['refit'] = 'split-ceiling'; cut.append(w['id'])
-    layout.relate(sem); sem['revision'] = sem.get('revision', 0)+1; p.write_text(json.dumps(sem, indent=1))
-    segmented = seg.run(d)
+    layout.relate(sem); wall_openings.cut(sem); sem['revision'] = sem.get('revision', 0)+1; p.write_text(json.dumps(sem, indent=1))
     return dict(ceiling=cid, kept=dict(area=round(planes[keep]['area'], 2), slope=round(math.degrees(math.acos(min(1, abs(planes[keep]['normal'][1])))), 1)),
                 added=[dict(id=c['id'], slope=c['slope'], area=round(planes[i]['area'], 2)) for c, i in zip(new, [j for j in range(len(planes)) if j != keep])],
-                walls_cut=sorted(set(cut)), surfaces=segmented['surfaces'])
+                walls_cut=sorted(set(cut)))
 
 def merge_walls(scene, dry=False, angle=2., offset=.03, gap=.05):
     d = SPACES/scene; m = json.loads((d/'space.json').read_text()); p = d/m['semantic']; sem = json.loads(p.read_text())
@@ -121,10 +123,10 @@ def merge_walls(scene, dry=False, angle=2., offset=.03, gap=.05):
     while changed:
         changed = False
         for a in walls:
-            A = seg.box_frame(a); oa = np.array([a['center'][0], 0, a['center'][2]])
+            A = box_frame(a); oa = np.array([a['center'][0], 0, a['center'][2]])
             for b in walls:
                 if b is a: continue
-                B = seg.box_frame(b)
+                B = box_frame(b)
                 if abs(A[0]@B[0]) < math.cos(math.radians(angle)) or abs((np.array(b['center'])-oa)@A[2]) > offset: continue
                 (a0, a1), (b0, b1) = span(a, oa, A[0]), span(b, oa, A[0])
                 if max(a0, b0)-min(a1, b1) > gap: continue
@@ -147,7 +149,7 @@ def merge_walls(scene, dry=False, angle=2., offset=.03, gap=.05):
             if changed: break
     if not dry and merged:
         sem['walls'] = sorted(walls, key=lambda w: int(w['id'].split('_')[1])); layout.relate(sem); sem['revision'] = sem.get('revision', 0)+1
-        p.write_text(json.dumps(sem, indent=1)); seg.run(d)
+        wall_openings.cut(sem); p.write_text(json.dumps(sem, indent=1))
     return merged
 
 def ridges(profile, x, rise=.008, smooth=25):
@@ -165,12 +167,12 @@ def ridges(profile, x, rise=.008, smooth=25):
 
 def align_openings(scene, ids=None, dry=False, reach=.3, step=.02):
     d = SPACES/scene; m = json.loads((d/'space.json').read_text()); p = d/m['semantic']; sem = json.loads(p.read_text())
-    mesh = seg.scan_mesh(d/m['scan']['mesh']); C = mesh.triangles_center; out = []
+    mesh = scan_mesh(d/m['scan']['mesh']); C = mesh.triangles_center; out = []
     for b in sem['openings']:
         if (ids and b['id'] not in ids) or (not ids and not b['id'].startswith('Window')): continue
         w = wall_of(sem, b)
         if not w: out.append(dict(id=b['id'], note='no wall')); continue
-        W = seg.box_frame(w); o = np.array([w['center'][0], 0, w['center'][2]]); c = np.array(b['center'])
+        W = box_frame(w); o = np.array([w['center'][0], 0, w['center'][2]]); c = np.array(b['center'])
         side = 1. if (c-o)@W[2] >= 0 else -1.; n = W[2]*side
         # The room side of the wall is where the box's centre is; depth = distance toward the room from RoomPlan's centre plane.
         uc, hw, yc, hh = (c-o)@W[0], b['size'][0]/2, c[1], b['size'][1]/2
@@ -208,7 +210,7 @@ def align_openings(scene, ids=None, dry=False, reach=.3, step=.02):
         if not dry: b['center'] = np.round(new_c, 3).tolist(); b['size'] = size; b['yaw'] = w['yaw']; b['aligned'] = 'scan-frame'
     if not dry:
         # Boxes moved: editors that loaded an older layout must reload (boxesRevision, see spaces.save_layout).
-        layout.relate(sem); sem['revision'] = sem['boxesRevision'] = sem.get('revision', 0)+1; p.write_text(json.dumps(sem, indent=1)); seg.run(d)
+        layout.relate(sem); sem['revision'] = sem['boxesRevision'] = sem.get('revision', 0)+1; wall_openings.cut(sem); p.write_text(json.dumps(sem, indent=1))
     return out
 
 if __name__ == '__main__':

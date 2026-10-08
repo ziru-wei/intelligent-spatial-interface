@@ -39,10 +39,9 @@ def load(scene):
 def save(p, sem):
     sem['rooms'] = [r for r in sem['rooms'] if r.get('triangles')]; layout.relate(sem)
     sem['revision'] = sem.get('revision', 0)+1; p.write_text(json.dumps(sem, indent=1))
-    # Zone floors changed: segment the scan again (scene setup, scripts/segment_surfaces.py).
-    import segment_surfaces
-    try: segment_surfaces.run(p.parent.parent)
-    except ValueError: pass   # no chosen scan yet
+    # Zones changed: doors and windows are cut into the walls again (the walls' zones may have changed).
+    import wall_openings
+    wall_openings.run(p.parent.parent)
 
 def assign(sem, zid, area, name=None, keep_out=()):
     rooms = sem['rooms']; floor = unary_union([geom(r) for r in rooms])

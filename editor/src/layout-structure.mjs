@@ -4,11 +4,10 @@ import {zoneColor,shade,makeLabel} from './palette.mjs';
 // The scene's structure from its layout (scan/semantic.json), drawn in the 3D view: zones as tinted floor areas with their names,
 // walls and ceilings as outlined translucent faces (sloped ceilings included). Read-only; the layer toggles in the Scene panel show
 // each kind. In plan and elevation views the section plane cuts these too, so ceilings do not cover the plan.
-// Surfaces: the scan split into those walls, ceilings and zone floors (scripts/segment_surfaces.py, scan/surfaces.glb), drawn as
-// coloured patches over the scan's own triangles: what an effect on "Wall_8" would actually cover in the video.
+// The faces carry their surface id (Wall_*, Ceiling_*, Floor_<zone>): the align panel picks and highlights them.
 // Colours come from the zones (src/palette.mjs): a wall or ceiling is drawn in a shade of the zone it faces, alternating lighter and
 // darker so neighbours stay apart; labels are square tags for zones, bordered tags for walls (solid) and ceilings (dashed).
-const KINDS=['zones','walls','ceilings','surfaces'];
+const KINDS=['zones','walls','ceilings'];
 const WALL_SHADES=[-.25,.2,-.4,.35,-.1,.45],CEILING_TINTS=[.45,.3,.6];
 
 export function createStructure({group,twin}){
@@ -37,10 +36,14 @@ export function createStructure({group,twin}){
     g.add(new THREE.Mesh(geo,material(THREE.MeshBasicMaterial,{color,transparent:true,opacity,depthWrite:false,side:THREE.DoubleSide})));
     for(const ring of [pts,...holes])g.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(ring),material(THREE.LineBasicMaterial,{color,transparent:true,opacity:.9})));return g;
   }
+  const tagged=(g,id)=>{g.traverse(o=>{if(o.isMesh)o.userData.surface=id;});return g;};
+  let list=[];
   function clear(){for(const g of Object.values(layers)){g.traverse(o=>{o.geometry?.dispose();if(o.isSprite){o.material.map.dispose();o.material.dispose();}});g.clear();}materials.forEach(m=>m.dispose());materials.length=0;tags.length=0;}
   function setData(sem){
     clear();
     const rooms=sem?.rooms||[];
+    list=[...rooms.map(z=>({id:'Floor_'+z.id,kind:'floor',zones:[z.id]})),...(sem?.walls||[]).map(w=>({id:w.id,kind:'wall',zones:w.rooms||[]})),
+      ...(sem?.ceilings||[]).map(c=>({id:c.id,kind:'ceiling',zones:c.rooms||[c.room].filter(Boolean)}))];
     rooms.forEach(z=>{
       const color=zoneColor(rooms,z.id),y=(z.floorY||0)+.012,parts=z.polygon||z.triangles.map(t=>[t]);
       // Plan coordinates (x, z) → a shape in (x, -z), laid flat: rotating -90° about x maps (x, -z, 0) back to (x, 0, z).
@@ -48,7 +51,7 @@ export function createStructure({group,twin}){
         const shape=new THREE.Shape(outer.map(([x,z])=>new THREE.Vector2(x,-z)));shape.holes=holes.map(h=>new THREE.Path(h.map(([x,z])=>new THREE.Vector2(x,-z))));
         const mesh=new THREE.Mesh(new THREE.ShapeGeometry(shape).rotateX(-Math.PI/2),material(THREE.MeshBasicMaterial,{color,transparent:true,opacity:.22,depthWrite:false,depthTest:false,side:THREE.DoubleSide}));
         // Drawn over the scan (the zone is on the scanned floor; a depth test would hide it behind that floor's own bumps).
-        mesh.position.y=y;mesh.renderOrder=2;layers.zones.add(mesh);
+        mesh.position.y=y;mesh.renderOrder=2;mesh.userData.surface='Floor_'+z.id;layers.zones.add(mesh);
         const line=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(outer.map(([x,z])=>new THREE.Vector3(x,y,z))),material(THREE.LineBasicMaterial,{color,depthTest:false}));line.renderOrder=3;layers.zones.add(line);
       }
       const c=z.center||[0,0];tag(layers.zones,z.name||z.id,'zone',color,new THREE.Vector3(c[0],y+.05,c[1]));
@@ -56,33 +59,19 @@ export function createStructure({group,twin}){
     // Walls with their doors and windows cut out (`region`, scripts/wall_openings.py); the full outline before any cut.
     const ws=shader(rooms),cs=shader(rooms);
     for(const w of sem?.walls||[]){const {zone,k}=ws(w.rooms?.[0],WALL_SHADES),color=shade(zone,k);
-      for(const [outer,...holes] of w.region||[[w.outline||[]]])layers.walls.add(face(outer,color,.22,holes));
+      for(const [outer,...holes] of w.region||[[w.outline||[]]])layers.walls.add(tagged(face(outer,color,.22,holes),w.id));
       if(w.outline?.length)tag(layers.walls,pretty(w.id),'wall',zone,centroid(w.outline));}
-    for(const c of sem?.ceilings||[]){const {zone,k}=cs(c.room,CEILING_TINTS);layers.ceilings.add(face(c.outline||[],shade(zone,k),.2));
+    for(const c of sem?.ceilings||[]){const {zone,k}=cs(c.room,CEILING_TINTS);layers.ceilings.add(tagged(face(c.outline||[],shade(zone,k),.2),c.id));
       if(c.outline?.length)tag(layers.ceilings,pretty(c.id),'ceiling',zone,centroid(c.outline));}
     twin.render();
   }
-  /** Segmented scan surfaces: the glTF scene of scan/surfaces.glb (one mesh per surface id) and surfaces.json's list. */
-  function setSurfaces(gltfScene,info,rooms){
-    const g=layers.surfaces;g.traverse(o=>{if(o.isSprite){const i=tags.indexOf(o);if(i>=0)tags.splice(i,1);o.material.map.dispose();o.material.dispose();}if(o.isMesh){o.geometry.dispose();}});g.clear();if(!gltfScene)return twin.render();
-    const ws=shader(rooms),cs=shader(rooms);
-    for(const s of info||[]){const mesh=gltfScene.getObjectByName(s.id);if(!mesh)continue;
-      // Doors and windows: dark shades of their zone; their nested parts (a window's glass) a light tint, more see-through.
-      const opening=s.kind==='door'||s.kind==='window',part=opening&&s.parent;
-      const pick=s.kind==='wall'?ws(s.zones[0],WALL_SHADES):s.kind==='ceiling'?cs(s.zones[0],CEILING_TINTS):opening?{zone:zoneColor(rooms,s.zones[0]),k:part?.55:s.kind==='door'?-.5:-.3}:{zone:zoneColor(rooms,s.zones[0]),k:0},color=shade(pick.zone,pick.k);
-      // Drawn over the scan's own triangles (they coincide with them): pulled toward the camera so they win the depth test.
-      mesh.traverse(o=>{if(o.isMesh)o.material=material(THREE.MeshBasicMaterial,{color,transparent:true,opacity:part?.4:.55,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-4});});
-      mesh.updateMatrixWorld(true);g.add(mesh);mesh.userData.surface=s.id;mesh.traverse(o=>{if(o.isMesh)o.userData.surface=s.id;});
-      const c=[0,1,2].map(i=>s.origin[i]+s.u[i]*(s.uvMin[0]+s.uvMax[0])/2+s.v[i]*(s.uvMin[1]+s.uvMax[1])/2);
-      tag(g,opening?String(s.label).split('/').pop():pretty(s.id),s.kind==='floor'?'zone':opening?(part?'nested':'object'):s.kind,pick.zone,new THREE.Vector3(...c).addScaledVector(new THREE.Vector3(...s.normal),.04));}
-    twin.render();
-  }
   // Focus (aligning a recording): the chosen surfaces stand out, the others fade; null: all as usual.
+  const faces=()=>[layers.zones,layers.walls,layers.ceilings].flatMap(g=>{const out=[];g.traverse(o=>{if(o.isMesh&&o.userData.surface)out.push(o);});return out;});
   function setFocus(ids){const on=ids?new Set(ids):null;
-    for(const o of layers.surfaces.children){const id=o.userData.surface;if(!id)continue;o.traverse(m=>{if(m.isMesh){m.material.opacity=!on?(m.userData.baseOpacity??=m.material.opacity):on.has(id)?.8:.08;}});}
+    for(const m of faces()){const base=m.userData.baseOpacity??=m.material.opacity;m.material.opacity=!on?base:on.has(m.userData.surface)?.6:.06;}
     twin.render();}
-  /** The surface id under a ray (shown surfaces only). */
-  function pickSurface(ray){if(!layers.surfaces.visible)return null;const hit=ray.intersectObjects(layers.surfaces.children,true).find(h=>h.object.isMesh);return hit?.object.userData.surface??null;}
+  /** The surface id under a ray (shown layers only). */
+  function pickSurface(ray){const hit=ray.intersectObjects(faces().filter(m=>{let o=m;while(o){if(!o.visible)return false;o=o.parent;}return true;}),false)[0];return hit?.object.userData.surface??null;}
   function setVisible(kinds){for(const k of KINDS)if(k in kinds)layers[k].visible=!!kinds[k];twin.render();}
-  return {setData,setSurfaces,setVisible,setFocus,pickSurface,layers};
+  return {setData,setVisible,setFocus,pickSurface,layers,get surfaces(){return list;}};
 }

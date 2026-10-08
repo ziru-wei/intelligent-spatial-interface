@@ -1,8 +1,10 @@
-"""Openings (doors, windows) cut into the layout's walls: a pre-processing step of scene setup, run before every segmentation
-(scripts/segment_surfaces.py run) so the cuts follow the opening boxes as they are edited.
+"""Openings (doors, windows) cut into the layout's walls: a step of scene setup, run whenever the layout changes (a layout saved
+in the editor, zones, structure fixes) so the cuts follow the opening boxes as they are edited.
+
+  wall_openings.py <scene dir>      cut, and write scan/semantic.json if the cut changed (prints {wall id: m² cut})
 
 Doors and windows are part of the room's shell, like the walls, so the cut lives in the floor plan (scan/semantic.json), where every
-consumer reads it (the 3D view's Walls layer, segmentation, the agent's context, later placement on free wall), rather than being
+consumer reads it (the 3D view's Walls layer, the agent's context, placement on free wall), rather than being
 redone by each of them. Per wall:
   outline   the wall's full shape (RoomPlan, merged or cut under a slope by scripts/structure.py); never changed here
   region    outline minus its openings: [[exterior ring, hole ring, ...], ...] of 3D points (a door reaching the floor makes a notch;
@@ -11,7 +13,8 @@ redone by each of them. Per wall:
 An opening belongs to the wall parallel to its face, within 15 cm of it and overlapping it along the wall. Recomputed from `outline`
 every time, so it can run any number of times. No dependencies beyond numpy and shapely.
 """
-import math
+import json, math, sys
+from pathlib import Path
 import numpy as np, shapely
 from shapely.geometry import Polygon
 
@@ -61,3 +64,17 @@ def region_polygon(w, o, u, v):
     to2 = lambda ring: np.c_[(np.array(ring)-o)@u, (np.array(ring)-o)@v]
     if w.get('region'): return shapely.union_all([Polygon(to2(part[0]), [to2(h) for h in part[1:]]).buffer(0) for part in w['region']])
     return Polygon(to2(w['outline'])).buffer(0)
+
+def run(d):
+    """Cut scene folder d's layout; scan/semantic.json is written (revision + 1) only when the cut changed."""
+    d = Path(d); m = json.loads((d/'space.json').read_text())
+    if not m.get('semantic'): return {}
+    p = d/m['semantic']; sem = json.loads(p.read_text())
+    key = lambda: json.dumps([(w.get('region'), w.get('openings')) for w in sem.get('walls', [])])
+    before = key(); report = cut(sem)
+    if key() != before: sem['revision'] = sem.get('revision', 0)+1; p.write_text(json.dumps(sem, indent=1))
+    return report
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2: sys.exit('usage: wall_openings.py <scene dir>')
+    print(json.dumps(run(sys.argv[1])))
