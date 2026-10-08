@@ -54,7 +54,7 @@ export function buildWeatherTargets(sem={}){
    const normal=new THREE.Vector3().setComponent(axis,sign),b=basis(normal),half=o.size[axis]/2;
    const extent=v=>v.toArray().reduce((sum,n,i)=>sum+Math.abs(n)*o.size[i],0),width=extent(b.right),height=extent(b.up);
    const points=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([x,y])=>normal.clone().multiplyScalar(half).addScaledVector(b.right,x*width/2).addScaledVector(b.up,y*height/2).applyQuaternion(yaw).add(center));
-   const t=polygonTarget(`${o.id}:${name}`,axis===1?'horizontal':'vertical',points,normal.applyQuaternion(yaw),o.room);t.surface='box';t.objectId=o.id;targets.push(t);
+   const t=polygonTarget(`${o.id}:${name}`,axis===1?'horizontal':'vertical',points,normal.applyQuaternion(yaw),o.room);t.surface='box';t.objectId=o.id;t.label=o.label||o.category||o.id;t.opening=(sem.openings||[]).includes(o);targets.push(t);
   }
  }
  for(const room of sem.rooms||[])for(const [i,[outer,...holes]] of (room.polygon||room.triangles?.map(t=>[t])||[]).entries()){
