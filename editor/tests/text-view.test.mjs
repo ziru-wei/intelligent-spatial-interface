@@ -12,13 +12,24 @@ test('video CSS size and foreshortening are measured, not source-image resolutio
  const large=textViewMetrics(p,c,viewport,metrics),small=textViewMetrics(p,c,{width:270,height:360},metrics);assert.ok(Math.abs(small.minPx-large.minPx/2)<1e-8);
  p.quaternion.setFromAxisAngle(new THREE.Vector3(1,0,0),1.2);assert.ok(textViewMetrics(p,c,viewport,metrics).minPx<large.minPx*.6);
 });
+// One layout face 2 m ahead (a cabinet's front, z = -2), and the person facing it (relation B). Tests that change the surfaces name the
+// relation's surface in ctx.relationSurface. ctx.searches counts full searches (each asks for the relation).
 const surfaceContext=()=>{
  const c=camera(),frame={position:[0,0,0],quaternion:[0,0,0,1]};
- return {frames:[frame],frameCamera:()=>c,viewport:()=>viewport,surfaceAt:async()=>({point:new THREE.Vector3(0,0,-2),normal:new THREE.Vector3(0,0,1)}),surfacePatch:async(_f,_u,_v,r)=>{const points=[];for(let y=-30;y<=30;y++)for(let x=-30;x<=30;x++)points.push(new THREE.Vector3(x*r/30,y*r/30,-2));return points;},visible:async(_,pts)=>pts.map(()=>true)};
+ const ctx={frames:[frame],frameCamera:()=>c,viewport:()=>viewport,visible:async(_,points)=>points.map(()=>true),searches:0,relationSurface:'wall:front',
+  getStaticSurfaces:()=>wallTargets,relationAt:()=>{ctx.searches++;return ctx.relationSurface&&{relation:'B',surfaceId:ctx.relationSurface,distance:2};}};
+ return ctx;
 };
-test('screen-readable text stays on its measured surface with only a small normal lift',async()=>{
+let wallTargets=[];
+test('setup: layout targets',async()=>{const {buildWeatherTargets}=await import('../src/weather-scene.mjs');wallTargets=buildWeatherTargets({objects:[{id:'wall',center:[0,0,-2.1],size:[4,3,.2]}]});});
+test('screen-readable text goes on the surface the person relates to, with only a small normal lift',async()=>{
  const pose=await place({frame:0,aspect:.4,textMetrics:metrics},surfaceContext());
- assert.equal(pose.unreadable,undefined);assert.equal(pose.kind,'plane');assert.ok(Math.abs(pose.position.z+2)<=.04);assert.ok(pose.viewMetrics.minPx>=TEXT_VIEW.minPx&&pose.viewMetrics.maxPx<=TEXT_VIEW.maxPx);
+ assert.equal(pose.unreadable,undefined);assert.equal(pose.kind,'plane');assert.equal(pose.surfaceId,'wall:front');assert.equal(pose.relation,'B');assert.ok(Math.abs(pose.position.z+2)<=.04);assert.ok(pose.viewMetrics.minPx>=TEXT_VIEW.minPx&&pose.viewMetrics.maxPx<=TEXT_VIEW.maxPx);
+});
+test('no relation: nothing to place on (hidden, or floating with the fallback)',async()=>{
+ const ctx=surfaceContext();ctx.relationSurface=null;
+ const pose=await place({frame:0,aspect:.4,textMetrics:metrics},ctx);assert.equal(pose.unreadable,true);assert.equal(pose.kind,'unavailable');
+ ctx.getSettings=()=>({surfaceFallback:true});assert.equal((await place({frame:0,aspect:.4,textMetrics:metrics},ctx)).kind,'view-fallback');
 });
 test('blocked surfaces do not become a floating eye-facing panel',async()=>{
  const ctx=surfaceContext();ctx.visible=async(_,pts)=>pts.map(()=>false);
@@ -41,30 +52,28 @@ test('optional fallback is readable, follows the recorded camera, and returns to
  assert.equal((await place(response,ctx)).unreadable,true);
 });
 
-test('a valid existing surface skips refitting but rechecks current depth and full footprint',async()=>{
+test('a valid existing anchor skips the search but rechecks current depth and full footprint',async()=>{
  const ctx=surfaceContext(),response={frame:0,aspect:.4,textMetrics:metrics};
- const pose=await place(response,ctx);let fits=0,checks=0;
- const fit=ctx.surfacePatch;ctx.surfacePatch=(...args)=>{fits++;return fit(...args);};ctx.visible=async(_,points)=>{checks+=points.length;return points.map(()=>true);};
+ const pose=await place(response,ctx);let checks=0;ctx.searches=0;ctx.visible=async(_,points)=>{checks+=points.length;return points.map(()=>true);};
  const reused=await place({...response,previousPose:pose},ctx);
- assert.equal(reused.reusedSurface,true);assert.equal(fits,0);assert.ok(checks>=45);
+ assert.equal(reused.reusedSurface,true);assert.equal(ctx.searches,0);assert.ok(checks>=45);
  ctx.visible=async(_,points)=>points.map(()=>false);
- assert.equal((await place({...response,previousPose:pose},ctx)).unreadable,true);assert.ok(fits>0);
+ assert.equal((await place({...response,previousPose:pose},ctx)).unreadable,true);assert.ok(ctx.searches>0);
 });
 
 test('reserved streamed text keeps a readable off-centre anchor, but releases it when occluded',async()=>{
  const ctx=surfaceContext(),response={frame:0,aspect:.4,textMetrics:metrics,reserve_text:true};
  const pose=await place(response,ctx);pose.position.x+=.5;pose.surfaceAnchor.x+=.5;
  assert.ok(Math.abs(pose.surfaceAnchor.clone().project(ctx.frameCamera()).x)>.55);
- let fits=0;const fit=ctx.surfacePatch;ctx.surfacePatch=(...args)=>{fits++;return fit(...args);};
- ctx.surfaceAt=async()=>({point:pose.surfaceAnchor.clone(),normal:new THREE.Vector3(0,0,1)});
- const kept=await place({...response,previousPose:pose},ctx);assert.equal(kept.reusedSurface,true);assert.ok(kept.position.equals(pose.position));assert.equal(fits,0);
+ ctx.searches=0;
+ const kept=await place({...response,previousPose:pose},ctx);assert.equal(kept.reusedSurface,true);assert.ok(kept.position.equals(pose.position));assert.equal(ctx.searches,0);
  ctx.visible=async(_,points)=>points.map(()=>false);
- assert.equal((await place({...response,previousPose:pose},ctx)).unreadable,true);assert.ok(fits>0);
+ assert.equal((await place({...response,previousPose:pose},ctx)).unreadable,true);assert.ok(ctx.searches>0);
 });
 
-test('deferred full search does not probe surfaces or expose an uncertified pose',async()=>{
+test('deferred full search does not search surfaces or expose an uncertified pose',async()=>{
  const c=camera();let probes=0;
- const pose=await place({frame:0,aspect:.4,textMetrics:metrics,allowSearch:false},{frameCamera:()=>c,viewport:()=>viewport,surfaceAt:()=>{probes++;throw Error('Unbudgeted search');}});
+ const pose=await place({frame:0,aspect:.4,textMetrics:metrics,allowSearch:false},{frameCamera:()=>c,viewport:()=>viewport,relationAt:()=>{probes++;throw Error('Unbudgeted search');}});
  assert.equal(probes,0);assert.equal(pose.unreadable,true);
 });
 
@@ -81,17 +90,16 @@ test('high stability preserves the exact anchor through a transient loss, then r
 
 test('small environment overlap and noisy surface samples cannot move a readable anchor',async()=>{
  const ctx=surfaceContext(),response={frame:0,aspect:.4,textMetrics:metrics},pose=await place(response,ctx);
- ctx.surfaceAt=()=>{throw Error('Retained anchors must not refit noisy depth');};
+ ctx.relationAt=()=>{throw Error('Retained anchors must not search again');};
  ctx.visible=async(_,points)=>points.map((_,i)=>i%10!==0);
  const kept=await place({...response,previousPose:pose},ctx);
  assert.equal(kept.reusedSurface,true);assert.ok(kept.position.equals(pose.position));assert.ok(kept.quaternion.equals(pose.quaternion));
 });
 
-test('explicit static furniture face wins over raw depth and respects its boundary',async()=>{
+test('the relation names a furniture face; the text respects its boundary',async()=>{
  const ctx=surfaceContext(),response={frame:0,aspect:.4,textMetrics:metrics};
  const {buildWeatherTargets}=await import('../src/weather-scene.mjs');
- ctx.getStaticSurfaces=()=>buildWeatherTargets({objects:[{id:'cabinet',center:[0,0,-2.1],size:[3,2,.2]}]});
- ctx.surfaceAt=()=>{throw Error('A readable static face should avoid raw scan fitting');};
+ ctx.getStaticSurfaces=()=>buildWeatherTargets({objects:[{id:'cabinet',center:[0,0,-2.1],size:[3,2,.2]}]});ctx.relationSurface='cabinet:front';
  const pose=await place(response,ctx);assert.equal(pose.source,'parametric-layout');assert.equal(pose.surfaceId,'cabinet:front');assert.ok(Math.abs(pose.position.z+1.982)<.001);assert.equal(pose.viewMetrics.inView,true);
 });
 
@@ -116,7 +124,7 @@ test('stability searches the previous surface before a more central different su
 
 test('clutter relocation keeps font size even when quality alternately rewards huge and tiny panels',async()=>{
  const ctx=surfaceContext(),{buildWeatherTargets}=await import('../src/weather-scene.mjs');
- ctx.getStaticSurfaces=()=>buildWeatherTargets({objects:[{id:'desk',center:[0,0,-2.1],size:[3,2,.2]}]});
+ ctx.getStaticSurfaces=()=>buildWeatherTargets({objects:[{id:'desk',center:[0,0,-2.1],size:[3,2,.2]}]});ctx.relationSurface='desk:front';
  ctx.getSettings=()=>({stability:0});ctx.frames=Array.from({length:6},(_,i)=>({t:i/30}));
  let pose=await place({frame:0,aspect:.4,textMetrics:metrics},ctx);const width=pose.width;
  // Keep every candidate crowded to force repeated searches; invert scale preference.
@@ -144,10 +152,10 @@ test('size reacquisition cannot jump between widely separated scale candidates',
 test('a closer clean surface cannot abruptly magnify an otherwise readable response',async()=>{
  const ctx=surfaceContext(),{buildWeatherTargets}=await import('../src/weather-scene.mjs');
  const far=buildWeatherTargets({objects:[{id:'far',center:[0,0,-2.1],size:[3,2,.2]}]});
- ctx.getStaticSurfaces=()=>far;ctx.getSettings=()=>({stability:0});
+ ctx.getStaticSurfaces=()=>far;ctx.relationSurface='far:front';ctx.getSettings=()=>({stability:0});
  const response={frame:0,aspect:.4,textMetrics:metrics},first=await place(response,ctx);
  const near=buildWeatherTargets({objects:[{id:'near',center:[0,0,-1.1],size:[2,2,.2]}]});
- ctx.getStaticSurfaces=()=>[...far,...near];ctx.getSurfaceQuality=async()=>p=>({cost:p.surfaceId?.startsWith('near')?0:3});
+ ctx.getStaticSurfaces=()=>[...far,...near];ctx.relationSurface='near:front';ctx.getSurfaceQuality=async()=>p=>({cost:p.surfaceId?.startsWith('near')?0:3});
  const next=await place({...response,previousPose:first},ctx);
  const a=textViewMetrics({...first,height:first.width*.4},ctx.frameCamera(),viewport,metrics);
  const b=textViewMetrics({...next,height:next.width*.4},ctx.frameCamera(),viewport,metrics);

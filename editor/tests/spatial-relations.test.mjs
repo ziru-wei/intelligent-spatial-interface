@@ -57,11 +57,12 @@ test('tracker: stays while relaxed thresholds hold, leaves after the hold, a see
 });
 
 test('placement: the relation decides between the desk and the wall behind it',async()=>{
-  const {staticTextPlacement}=await import('../src/text-surfaces.mjs'),{readableSurfaceBasis}=await import('../src/placement.mjs');
+  const {place}=await import('../src/placement.mjs');
   const camera=new THREE.PerspectiveCamera(60,1,.01,100);camera.position.set(0,1.45,1.3);camera.rotation.set(-28*D,0,0);camera.updateMatrixWorld(true);
-  const base={getStaticSurfaces:()=>T,frameCamera:()=>camera,viewport:()=>({width:600,height:600}),visible:async(_,pts)=>pts.map(()=>true)};
-  const place=relation=>staticTextPlacement({frame:0,aspect:.4,textMetrics:{xHeightRatio:.04}},{...base,relationAt:()=>relation},readableSurfaceBasis);
-  const a=await place({relation:'A',surfaceId:'desk_0:top',distance:.9});assert.equal(a.surfaceId,'desk_0:top');assert.equal(a.relation,'A');
-  const b=await place({relation:'B',surfaceId:'Wall_0:0:a',wallId:'Wall_0',distance:1.25});assert.equal(b.surfaceId,'Wall_0:0:a');assert.equal(b.relation,'B');
+  const base={frames:[{t:0}],getStaticSurfaces:()=>T,frameCamera:()=>camera,viewport:()=>({width:600,height:600}),visible:async(_,pts)=>pts.map(()=>true)};
+  const at=relation=>place({frame:0,aspect:.4,textMetrics:{xHeightRatio:.04}},{...base,relationAt:()=>relation});
+  const a=await at({relation:'A',surfaceId:'desk_0:top',distance:.9});assert.equal(a.surfaceId,'desk_0:top');assert.equal(a.relation,'A');
+  const b=await at({relation:'B',surfaceId:'Wall_0:0:a',wallId:'Wall_0',distance:1.25});assert.equal(b.surfaceId,'Wall_0:0:a');assert.equal(b.relation,'B');
   assert.ok(Math.abs(b.surfaceAnchor.y-1.35)<.35,`near eye level: ${b.surfaceAnchor.y}`);
+  assert.equal((await at(null)).unreadable,true);   // no relation: no surface
 });
