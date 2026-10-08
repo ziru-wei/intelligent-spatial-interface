@@ -294,7 +294,8 @@ async function surfacePlacement(response,ctx){
  }
  const staticPose=await staticTextPlacement(response,ctx,readableSurfaceBasis);
  const projected=staticPose?.position.clone().project(camera);
- if(staticPose&&(staticPose.surfaceQuality?.cost<.65||Math.hypot(projected.x,projected.y)<.2&&!ctx.getSurfaceQuality)){state.badSince=null;return staticPose;}
+ // On the surface the person relates to (A/B/D), or clear enough: no need to look at the scan.
+ if(staticPose&&(staticPose.relation||staticPose.surfaceQuality?.cost<.65||Math.hypot(projected.x,projected.y)<.2&&!ctx.getSurfaceQuality)){state.badSince=null;return staticPose;}
  const central=await centralScanPlacement(response,ctx,readableSurfaceBasis);
  if(central&&(!staticPose||(central.surfaceQuality?.cost??0)+.25<(staticPose.surfaceQuality?.cost??0))){state.badSince=null;return central;}
  if(staticPose){state.badSince=null;return staticPose;}
