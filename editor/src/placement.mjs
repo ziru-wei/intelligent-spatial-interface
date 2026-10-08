@@ -27,6 +27,9 @@ export function projectedSurfaceBasis(normal,position,camera){
  return {right,up:n.clone().cross(right).normalize()};
 }
 export function readableSurfaceBasis(normal,viewQuaternion,position,eye,camera){
+ // Walls and box sides: text stands upright (up = gravity within the face), whatever the camera's pitch or roll.
+ const v=normal.clone().normalize();
+ if(Math.abs(v.y)<.7){const up=UP.clone().addScaledVector(v,-UP.dot(v)).normalize();return {up,right:up.clone().cross(v).normalize()};}
  if(camera&&position)return projectedSurfaceBasis(normal,position,camera);
  if(position&&eye){
   const n=normal.clone().normalize(),local=position.clone().sub(eye).applyQuaternion(viewQuaternion.clone().invert());
