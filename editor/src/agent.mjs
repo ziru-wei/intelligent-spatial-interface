@@ -397,7 +397,6 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     update(t){time=t;apply();},
     // Questions change often while the agent works (new steps): re-apply so the streaming thought updates.
     refresh(){apply();},
-    get widgets(){return [...widgets.values()];},
     // The surfaces changed (the recording's depth correction finished, the layout was saved): every response is placed again from its
     // question's frame, as if seen for the first time. Saved conversations keep no poses, so a replay always uses the current placement.
     relayout(){placementEpoch++;for(const w of widgets.values()){group.remove(w);dispose(w);}widgets.clear();apply();},

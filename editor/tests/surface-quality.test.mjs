@@ -9,8 +9,16 @@ test('printed clutter costs more than the adjacent blank area',()=>{
  const book=surfaceQuality(pose(-.5),.6,camera,image),blank=surfaceQuality(pose(.5),.6,camera,image);
  assert.ok(book.cost>blank.cost+1);assert.equal(blank.clutter,0);
 });
-test('horizontal and vertical surface baselines project horizontally, including camera roll',()=>{
- for(const normal of [new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1),new THREE.Vector3(.4,.12,1).normalize()]){
+test('vertical surfaces keep text upright whatever the camera pitch and roll',()=>{
+ for(const normal of [new THREE.Vector3(0,0,1),new THREE.Vector3(.4,.12,1).normalize(),new THREE.Vector3(-1,0,0)]){
+  const camera=new THREE.PerspectiveCamera(60,1,.01,100);camera.position.set(0,2,3);camera.lookAt(0,0,0);camera.rotateZ(.35);camera.updateMatrixWorld(true);
+  const b=readableSurfaceBasis(normal,camera.quaternion,new THREE.Vector3(.4,0,0),camera.position,camera);
+  assert.ok(Math.abs(b.right.y)<1e-8,'baseline level in the world');assert.ok(b.up.y>.9);assert.ok(Math.abs(b.right.dot(normal))<1e-8);assert.ok(Math.abs(b.up.dot(normal))<1e-8);
+  assert.ok(b.right.clone().cross(b.up).dot(normal)>.99,'reads from the front');
+ }
+});
+test('horizontal surface baselines project horizontally, including camera roll',()=>{
+ for(const normal of [new THREE.Vector3(0,1,0),new THREE.Vector3(.1,1,.2).normalize()]){
   const camera=new THREE.PerspectiveCamera(60,1,.01,100);camera.position.set(0,2,3);camera.lookAt(0,0,0);camera.rotateZ(.35);camera.updateMatrixWorld(true);
   const p=new THREE.Vector3(.4,0,0),b=readableSurfaceBasis(normal,camera.quaternion,p,camera.position),left=p.clone().addScaledVector(b.right,-.2).project(camera),right=p.clone().addScaledVector(b.right,.2).project(camera);
   assert.ok(Math.abs(left.y-right.y)<1e-8);assert.ok(right.x>left.x);assert.ok(Math.abs(b.right.dot(normal))<1e-8);assert.ok(Math.abs(b.up.dot(normal))<1e-8);
