@@ -2,7 +2,7 @@
 and responses, so a new conversation starts with an empty timeline. Question ids are unique across a scene's conversations because
 the agent only echoes the number back. All access goes through `lock`; the bridge long-polls on it."""
 import json, re, threading, time
-import weather, findmy, conversation_context
+import weather, findmy, ego, conversation_context
 from datetime import datetime
 
 lock = threading.Condition()
@@ -101,13 +101,13 @@ def running_question(d):
     if not running: return None, None
     _, c, q = max(running, key=lambda x: x[0]); return c, q
 
-def ask(d, cid, frame, t, text, live=None, weather_mod=False, text_response=None, findmy_mod=False):
+def ask(d, cid, frame, t, text, live=None, weather_mod=False, text_response=None, findmy_mod=False, ego_mod=False):
     """live = {read_s}: asked in the editor, which held the video on the question's frame while the agent answered and for `read_s`
     real seconds after the answer appeared; replays hold the same way, using the measured latency.
     text_response = {default: bool, <mod>: bool}: whether a text answer is wanted, for answers in no mod and per mod that is on
     (src/response-settings.mjs); off skips the language model (scripts/jev-pipeline.mjs). Missing: always."""
     c = read(d, cid)
-    q = dict(weather_mod=weather_mod is True, findmy_mod=findmy_mod is True, id=_next_qid(d), text=text[:500], frame=frame, t=t, status='queued', created=time.time())
+    q = dict(weather_mod=weather_mod is True, findmy_mod=findmy_mod is True, ego_mod=ego_mod is True, id=_next_qid(d), text=text[:500], frame=frame, t=t, status='queued', created=time.time())
     if isinstance(live, dict):
         read_s = float(live.get('read_s', 5))
         if not 0 <= read_s <= 30: raise ValueError('Bad live timing.')
@@ -163,19 +163,19 @@ def delete_question(d, cid, qid):
     _write(d, c); return dict(ok=True)
 
 def add_response(d, body):
-    if not (body.get('title') or body.get('body') or body.get('items') or (body.get('part') == 'ui' and (body.get('weather') or body.get('findmy')))): raise ValueError('A response needs a title, body or items.')
+    if not (body.get('title') or body.get('body') or body.get('items') or (body.get('part') == 'ui' and (body.get('weather') or body.get('findmy') or body.get('ego')))): raise ValueError('A response needs a title, body or items.')
     c, q = _find_question(d, body.get('question_id')) if body.get('question_id') is not None else (None, None)
     if body.get('question_id') is not None and not q: raise ValueError('Unknown question.')
     part = body.get('part')
     if part not in (None, 'ui', 'text'): raise ValueError('Unknown response part.')
     if part and not q: raise ValueError('Response parts need a question_id.')
     if body.get('stream') is not None:
-        if part != 'text' or body.get('weather') is not None or body.get('findmy') is not None: raise ValueError('Only text parts can stream.')
+        if part != 'text' or body.get('weather') is not None or body.get('findmy') is not None or body.get('ego') is not None: raise ValueError('Only text parts can stream.')
         return _add_stream(d, c, q, body)
     if part and any(r.get('part') == part and r.get('question_id') == q['id'] for r in c['responses']):
         return next(r for r in c['responses'] if r.get('part') == part and r.get('question_id') == q['id'])
     if part == 'ui' and (body.get('title') or body.get('body') or body.get('items')): raise ValueError('UI part cannot contain language text.')
-    if part == 'text' and (body.get('weather') is not None or body.get('findmy') is not None): raise ValueError('Text part cannot contain weather UI.')
+    if part == 'text' and (body.get('weather') is not None or body.get('findmy') is not None or body.get('ego') is not None): raise ValueError('Text part cannot contain mod UI.')
     if q: at = q
     else:
         # Asked in the terminal: the conversation and frame the editor shows.
@@ -185,7 +185,10 @@ def add_response(d, body):
         question=q['text'] if q else str(body.get('question') or ''), question_id=q['id'] if q else None, title=str(body.get('title') or ''),
         body=str(body.get('body') or ''), items=[str(i) for i in body.get('items') or []][:12], anchor=body.get('anchor') or None)
     if body.get('reserve_text') is True: r['reserve_text'] = True
-    if body.get('weather') is not None and body.get('findmy') is not None: raise ValueError('Only one mod per response.')
+    if sum(body.get(k) is not None for k in ('weather', 'findmy', 'ego')) > 1: raise ValueError('Only one mod per response.')
+    if body.get('ego') is not None:
+        if not at.get('ego_mod'): raise ValueError('Object mod was not enabled for this question.')
+        r['ego'] = ego.resolve(d, body['ego'])
     if body.get('findmy') is not None:
         if not at.get('findmy_mod'): raise ValueError('FindMy mod was not enabled for this question.')
         r['findmy'] = findmy.resolve(d,body['findmy'])

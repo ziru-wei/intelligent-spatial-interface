@@ -27,10 +27,12 @@ import {createComponentHost} from './components.mjs';
 import {createAgentLayer,READING,formatSpeed,stepsAt} from './agent.mjs';
 import {questionClock} from './question-caption.mjs';
 import {readModel,modelBounds,fitScale,boxFromModel,swapHTML,wireSwap} from './model-fit.mjs';
+import {createEgo} from './ego.mjs';
 import {buildTextTargets,calibrate,applyOffsets} from './layout-surfaces.mjs';
 import {createRelationTracker,viewOf} from './spatial-relations.mjs';
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search);
 const sessionURL=new URL(params.get('session')||'./spaces/demo/scenarios/demo/session.json',location.href);
+const spaceURL=new URL('../../space.json',sessionURL);
 const renderer=new THREE.WebGLRenderer({canvas:$('stage'),antialias:true,stencil:true,preserveDrawingBuffer:true});
 renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
 // anchor: the selected component's root (src/components.mjs); an empty stand-in while nothing is selected.
@@ -84,6 +86,14 @@ function syncLidarMesh(){lidarMesh.visible=$('video-lidar-mesh').checked&&!$('vi
 const twin=createTwin({canvas:$('twin'),scene,camera,anchor:null,getRoom:()=>room,onMove:o=>fromGizmo(o)});
 let weatherPreview=null,weatherSurfacePreview=null;
 const findmyScene=createFindMy();
+// Object mod (src/ego.mjs): what an answer's object ids are in the scene. layout:<box> (furniture, doors, windows; its model when shown as one)
+// or comp:<instance> (a placed object: its bounds, its model unless it is kept as a box).
+function egoTarget(id){
+  if(id.startsWith('layout:')){const b=layout.boxes.find(x=>x.id===id.slice(7));return b&&{center:b.center,size:b.size,yaw:b.yaw||0,model:b.object?.userData.model||null};}
+  if(id.startsWith('comp:')){const i=components.get(id.slice(5));if(!i)return null;i.root.updateWorldMatrix(true,true);const box=new THREE.Box3().setFromObject(i.root);if(box.isEmpty())return null;
+    const m=components.library.get(i.spec.component);return {center:box.getCenter(new THREE.Vector3()).toArray(),size:box.getSize(new THREE.Vector3()).toArray(),yaw:0,root:i.root,model:m?.kind==='box'?null:i.root};}
+  return null;}
+const egoScene=createEgo({getTarget:egoTarget});
 const findmyApproach=createApproachRemoval();
 const findmyStatus=Object.assign(document.createElement('p'),{className:'muted',id:'findmy-status',hidden:true});
 const handPerception=createHandPerception();
@@ -144,7 +154,7 @@ createResponseSettingsPanel({root:$('response-settings'),settings:responseSettin
     agent?.refreshSettings();update();}});
 $('enable-response-mod').onclick=()=>{const mod=$('enable-response-mod').dataset.mod;if(MODS[mod]&&!responseSettings.mods[mod].enabled)$(`${mod}-mod`).click();};
 weatherScene.setEnabled($('weather-mod').checked);
-twin.setOverlay(weatherScene);twin.setPresentation({get group(){return agent?.group;},get controls(){return weatherSurfacePreview?.mesh;},render:(r,c)=>{agent?.renderAfter(r,c,weatherSurfacePreview?.mesh,index,false);findmyScene.render(r,c);}});
+twin.setOverlay(weatherScene);twin.setPresentation({get group(){return agent?.group;},get controls(){return weatherSurfacePreview?.mesh;},render:(r,c)=>{agent?.renderAfter(r,c,weatherSurfacePreview?.mesh,index,false);findmyScene.render(r,c);egoScene.render(r,c,{bounce:false});}});
 /** A gizmo moved, turned or scaled the selected component: its spec follows (scale stays one number while uniform; a box's stays its size). */
 function fromGizmo(o){if(fine&&o===fine.object){fineMoved(o);return;}const r=v=>+v.toFixed(4),d=v=>+THREE.MathUtils.radToDeg(v).toFixed(2),sc=o.scale.toArray().map(r);
   setSelected({position:o.position.toArray().map(r),rotation:[d(o.rotation.x),d(o.rotation.y),d(o.rotation.z)],scale:!Array.isArray(components.get(selected)?.spec.scale)&&Math.abs(sc[0]-sc[1])<1e-4&&Math.abs(sc[1]-sc[2])<1e-4?sc[0]:sc},{history:false});}
@@ -178,25 +188,27 @@ function paint(){
     findmyStatus.hidden=false;findmyStatus.textContent=removed?'Effect removed · hand reached the box':handData.status==='no-depth'?'Hand approach needs recorded depth':distance==null?'Waiting for a hand with valid depth':`Hand to box · ${distance.toFixed(2)} m`;
   }
   findmyScene.setResponse(responseSettings.mods.findmy.enabled&&!removed?found:null);
+  const egoAnswer=currentResponses.find(r=>r.question_id===latestQuestion&&r.ego);
+  egoScene.setResponse(responseSettings.mods.ego.enabled?egoAnswer:null);if(egoScene.active)requestAnimationFrame(update);   // effects animate
   const latest=weatherResponse(currentResponses);
   weatherScene.setResponse($('weather-mod').checked&&latest?.weather?latest:null);weatherScene.refresh();
   agent?.orient(camera);
   const weatherWidget=latest?.weather&&$('weather-mod').checked?agent?.widgets.get(latest.id):null;
   weatherSurfacePreview?.update(weatherWidget?.userData.text?weatherWidget:null,responses);
   // Hide only during the recorded-camera render, including its shadow pass.
-  const hidden=components.instances.filter(i=>i.root.visible&&!visibleInVideo(i));
-  for(const i of hidden)i.root.visible=false;
+  const hidden=components.instances.filter(i=>i.root.visible&&!visibleInVideo(i)).map(i=>i.root);
+  for(const r of hidden)r.visible=false;hidden.push(...egoScene.hideBouncing());
   try{renderer.shadowMap.enabled=$('shadows').checked;if(renderer.shadowMap.enabled)aimShadow();catchers.visible=$('shadows').checked&&components.instances.some(i=>i.root.visible);ground.visible=!components.instances.some(i=>i.root.visible&&i.spec.mount==='wall');
     const weatherVisible=weatherScene.group.visible,controls=weatherSurfacePreview?.mesh,controlVisible=controls?.visible;
     if(agent)agent.group.visible=false;if(controls)controls.visible=false;weatherScene.group.visible=false;
     renderer.render(scene,camera);weatherScene.group.visible=weatherVisible;weatherScene.render(renderer,camera);
     if(controls)controls.visible=controlVisible;
-    findmyScene.render(renderer,camera);
+    findmyScene.render(renderer,camera);egoScene.render(renderer,camera);
     handCompositor.render(renderer,scene.background,currentHandData);
     // Response text/controls intentionally draw over hands; effects remain protected.
     agent?.renderAfter(renderer,camera,controls,index,true);
     agent?.renderHud(renderer);showHandStatus();showTrace();
-  }finally{for(const i of hidden)i.root.visible=true;depthOccluder.visible=false;catchers.visible=false;}
+  }finally{for(const r of hidden)r.visible=true;depthOccluder.visible=false;catchers.visible=false;}
   const now=performance.now();if(!playing||now-lastTwinPaint>=1000/15){lastTwinPaint=now;twin.render();}
 }
 // Persistent objects and Obj library objects can each be left out of the recorded camera and of the 3D view (remembered in this browser).
@@ -839,7 +851,7 @@ function showTab(tab){if(tab==='agent'&&agentTab.disabled)tab='scene';for(const 
 for(const b of document.querySelectorAll('[data-tab]'))b.onclick=()=>showTab(b.dataset.tab);
 const convKey='spatialTake.conversation:'+sessionURL.pathname,store={get:k=>{try{return localStorage.getItem(k);}catch{return null;}},set:(k,v)=>{try{localStorage.setItem(k,v);}catch{}}};
 const agentApi=async(path,body)=>{const u=new URL(path,location.href);u.searchParams.set('session',sessionURL.pathname);const r=await fetch(u,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:sessionURL.pathname,...body})}:{});const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;};
-const userState=()=>({conversation:agent?.conversation,frame:index,t:session.frames[index].t,position:session.frames[index].position,quaternion:session.frames[index].quaternion,weather_mod:$('weather-mod').checked,findmy_mod:$('findmy-mod').checked});
+const userState=()=>({conversation:agent?.conversation,frame:index,t:session.frames[index].t,position:session.frames[index].position,quaternion:session.frames[index].quaternion,weather_mod:$('weather-mod').checked,findmy_mod:$('findmy-mod').checked,ego_mod:$('ego-mod').checked});
 async function showConversations(select){
   const list=await agentApi('/api/agent/conversations');$('conv').innerHTML='';
   for(const c of list.slice().reverse())$('conv').add(new Option(`${c.name}${c.questions?` · ${c.questions}`:''}`,c.id));
@@ -849,7 +861,7 @@ async function openConversation(id){if(agent.conversation!==id){pause();replayFr
 async function startAgent(){
   let command;try{const setup=await agentApi('/api/agent/command');command=setup.command;$('agent-command').textContent=command;$('agent-config-path').textContent=setup.config_path;$('editor-restart-command').textContent=setup.restart_command;$('gemini-setup-command').textContent=setup.gemini_setup_command||'';$('gemini-setup-copy').onclick=()=>navigator.clipboard.writeText(setup.gemini_setup_command||'');}catch{return;}
   agent=createAgentLayer({scene,getStyleRevision:()=>weatherScene.playback.state.entry?.id,getSettings:forResponse,frames:session.frames,sessionPath:sessionURL.pathname,intrinsics:session.intrinsics,frameCamera,viewport:()=>({width:$('stage').clientWidth,height:$('stage').clientHeight}),
-    visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,relationAt,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
+    visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,relationAt,egoTarget,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
     onChange:()=>update(),onAnimate:()=>update(),onStatus:showAgentStatus});
   $('agent-panel').hidden=false;$('ask').hidden=false;agentTab.disabled=false;agentTab.title='';showTab(store.get('spatialTake.sideTab')||'scene');
   let id=await showConversations(store.get(convKey));if(!id)id=await showConversations((await agentApi('/api/agent/conversations',{})).id);
@@ -917,7 +929,7 @@ const READ_S=READING.read_s;let askStatus='';
 function setAskStatus(text){if(text!==askStatus){askStatus=text;$('ask-status').textContent=text;}}
 $('ask').onsubmit=async e=>{e.preventDefault();const text=$('ask-input').value.trim();if(!text||!agent||!connected)return;
   const wasPlaying=playing;
-  try{const q=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},$('weather-mod').checked,textResponses(responseSettings),$('findmy-mod').checked);$('ask-input').value='';startHold(q,{resume:wasPlaying,live:true});
+  try{const q=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},$('weather-mod').checked,textResponses(responseSettings),$('findmy-mod').checked,$('ego-mod').checked);$('ask-input').value='';startHold(q,{resume:wasPlaying,live:true});
   }catch(err){$('ask-status').textContent='Error: '+err.message;}};
 function fail(e){$('status').textContent='Error: '+e.message;console.error(e);}
 async function sessionLoadError(status){
@@ -937,7 +949,7 @@ async function sessionLoadError(status){
 try{const res=await fetch(sessionURL);if(!res.ok)throw await sessionLoadError(res.status);session=await res.json();if(session.version!==1||!session.frames.length)throw Error('Unsupported/empty session');renderer.setSize(session.intrinsics.width,session.intrinsics.height,false);$('timeline').max=session.frames.at(-1).t;
 // The scenario's frames move into the space's coordinates (toSpace, row-major 4x4, from scripts/register_scenario.py). The room is the
 // space scan (complete, maybe stale) plus this recording's own mesh (current, with holes); both occlude and both can be shown.
-const spaceURL=new URL('../../space.json',sessionURL);let space=null;try{const r=await fetch(spaceURL);if(r.ok)space=await r.json();}catch{}
+let space=null;try{const r=await fetch(spaceURL);if(r.ok)space=await r.json();}catch{}
 toSpace=session.toSpace?new THREE.Matrix4().set(...session.toSpace):null;
 for(const f of session.frames)f.raw={position:[...f.position],quaternion:[...f.quaternion]};   // the recording's own poses (fine-tuning re-applies toSpace)
 if(toSpace)for(const f of session.frames){const p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();

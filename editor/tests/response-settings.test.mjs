@@ -7,7 +7,7 @@ test('a mod follows the global settings unless it overrides one',()=>{
   assert.deepEqual(resolve(s),{textResponse:true,resumeOnResponse:false,autoHide:true,fallback:'fixed',fixedText:false,stability:.4});
   assert.deepEqual(resolve(s,'weather'),{textResponse:true,resumeOnResponse:false,autoHide:true,fallback:'fixed',fixedText:true,stability:.9});
   delete s.mods.weather.overrides.stability;
-  s.mods.weather.overrides.textResponse=false;assert.deepEqual(textResponses(s),{default:true,weather:false});s.mods.weather.enabled=false;assert.deepEqual(textResponses(s),{default:true});s.mods.weather.enabled=true;
+  s.mods.weather.overrides.textResponse=false;assert.deepEqual(textResponses(s),{default:true,weather:false,ego:true});s.mods.weather.enabled=false;assert.deepEqual(textResponses(s),{default:true,ego:true});s.mods.weather.enabled=true;
 assert.equal(resolve(s,'weather').stability,.4);
 });
 test('a response belongs to the weather mod only while it is on',()=>{

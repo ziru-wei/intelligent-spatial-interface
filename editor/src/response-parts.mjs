@@ -56,7 +56,7 @@ export function presentationResponses(records,questions,hold,deliveries=new Map(
     const ui=ready.find(r=>r.part==='ui'),text=ready.find(r=>r.part==='text');
     const base=parts.reduce((a,b)=>a.id<b.id?a:b);
     output.push({...base,title:text?.title||'',body:text?.body||'',items:text?.items||[],anchor:text?.anchor||null,
-      findmy:ui?.findmy,weather:ui?.weather,weather_identity:ui?.id,part:'presentation',layout_slot:0,
+      findmy:ui?.findmy,weather:ui?.weather,ego:ui?.ego,weather_identity:ui?.id,part:'presentation',layout_slot:0,
       reserve_text:!!(ui?.reserve_text||text?.reserve_text||text?.stream),stream:text?.stream,
       latency:Math.min(...ready.map(r=>r.latency||0)),component_ids:ready.map(r=>r.id),
       component_key:ready.map(r=>r.id+(r.stream?`@${r.stream.seq}`:'')).join(':')});

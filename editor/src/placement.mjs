@@ -5,6 +5,8 @@ import {TEXT_VIEW,textViewMetrics,viewSizedWidth,footprintPoints,centeredPose} f
 // Where an agent response appears in the room: the pose of a text plane (local +Z = the side it is read from, +Y = text up) and its
 // width in metres.
 //
+//   0. An answer the object mod carries (response.ego, src/ego.mjs) is a bubble just above its main object, turned to the viewer, with
+//      a line down to the object; while that object is out of the recorded view, the fallback of step 3 shows it instead.
 //   1. A placed answer keeps its world anchor while it stays readable, visible, on its surface and uncluttered (a short grace period,
 //      longer with Stability, rides out brief losses).
 //   2. Otherwise it goes on the surface the person relates to at the response's frame (src/spatial-relations.mjs): A the desk top under
@@ -16,7 +18,7 @@ import {TEXT_VIEW,textViewMetrics,viewSizedWidth,footprintPoints,centeredPose} f
 //      the question caption (src/agent.mjs, on an unreadable pose). It returns to a surface when one fits.
 //
 // ctx = {frames, frameCamera(i), viewport(), relationAt(i), getStaticSurfaces(), getSettings(response), getSurfaceQuality(i),
-//        visible(i, points, {staticSurface}) -> booleans}. response.aspect: text height / width.
+//        visible(i, points, {staticSurface}) -> booleans, egoTarget(id) -> {center, size, yaw}}. response.aspect: text height / width.
 const UP=new THREE.Vector3(0,1,0);
 export function projectedSurfaceBasis(normal,position,camera){
  camera.updateMatrixWorld(true);
@@ -85,8 +87,27 @@ async function surfacePlacement(response,ctx){
  if(!pose)return retained||unavailable(eye,viewQ,`No readable spot on ${relation.surfaceId} (${relation.relation})`);
  state.badSince=null;return {...pose,relation:relation.relation,relationKind:relation.kind};
 }
+// An answer the objects carry (object mod): a bubble above its main object, upright and turned to the viewer, sized for the view like
+// any answer. It stays put while the viewer's direction to it turns less than BUBBLE_TURN; out of view, the fallback (Fixed / Floating)
+// shows it until the object is back. ctx.egoTarget(id) → {center, size} in the scene.
+const BUBBLE_GAP=.06,BUBBLE_TURN=THREE.MathUtils.degToRad(4);
+function bubblePlacement(response,ctx){
+  const t=ctx.egoTarget?.(response.ego.main);if(!t)return null;
+  const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),aspect=response.aspect||.45,eye=camera.position;
+  const top=new THREE.Vector3(t.center[0],t.center[1]+t.size[1]/2,t.center[2]),yaw=Math.atan2(eye.x-top.x,eye.z-top.z);
+  const previous=response.previousPose;
+  if(previous?.kind==='bubble'&&previous.anchor&&new THREE.Vector3(...previous.anchor).distanceTo(top)<1e-4&&Math.abs(Math.atan2(Math.sin(yaw-previous.yaw),Math.cos(yaw-previous.yaw)))<BUBBLE_TURN){
+    const m=textViewMetrics(centeredPose(previous,aspect),camera,viewport,response.textMetrics);
+    if(m.inView)return {...previous,reusedSurface:true,viewMetrics:{...m,points:undefined}};
+  }
+  const quaternion=new THREE.Quaternion().setFromAxisAngle(UP,yaw),width=viewSizedWidth(top,quaternion,camera,viewport,response.textMetrics,aspect);
+  const pose={position:top.clone().addScaledVector(UP,BUBBLE_GAP+width*aspect/2),quaternion,width,align:'center',kind:'bubble',anchor:top.toArray(),yaw,objectId:response.ego.main};
+  const m=textViewMetrics(centeredPose(pose,aspect),camera,viewport,response.textMetrics);
+  return m.inView?{...pose,viewMetrics:{...m,points:undefined}}:unavailable(eye,camera.getWorldQuaternion(new THREE.Quaternion()),'The object is out of view');
+}
 export async function place(response,ctx){
-  const surface=await surfacePlacement(response,ctx);
+  const bubble=response.ego?.main?bubblePlacement(response,ctx):null;
+  const surface=bubble||await surfacePlacement(response,ctx);
   if(!surface.unreadable||ctx.getSettings?.(response)?.fallback!=='floating')return surface;
   const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),aspect=response.aspect||.45;
   const quaternion=camera.getWorldQuaternion(new THREE.Quaternion());
