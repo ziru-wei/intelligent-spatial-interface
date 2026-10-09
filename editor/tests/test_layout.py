@@ -45,3 +45,27 @@ class RelateTest(unittest.TestCase):
                    ceilings=[dict(id='c', center=[2, 2.5, 1], outline=[[1, 2.5, 0], [3, 2.5, 0], [3, 2.5, 2], [1, 2.5, 2]])])
         layout.relate(sem)
         self.assertEqual(sem['objects'][0]['room'], 'b'); self.assertEqual(sem['walls'][0]['rooms'], ['a', 'b']); self.assertEqual(sem['ceilings'][0]['rooms'], ['a', 'b'])
+
+class FurnitureModelTest(unittest.TestCase):
+    def test_model_kept_beside_the_box_and_removed_with_it(self):
+        import base64, json, tempfile, spaces
+        with tempfile.TemporaryDirectory() as tmp:
+            old, spaces.SPACES = spaces.SPACES, Path(tmp)
+            try:
+                d = Path(tmp)/'s'; (d/'scan').mkdir(parents=True)
+                (d/'space.json').write_text(json.dumps(dict(name='s', semantic='scan/semantic.json')))
+                (d/'scan'/'semantic.json').write_text(json.dumps(dict(rooms=ROOMS, objects=[], openings=[])))
+                box = dict(id='a', center=[1, 0, 1], size=[1, 1, 1]); spaces.save_layout('s', [box], [], 0)
+                src = 'data:model/gltf-binary;base64,'+base64.b64encode(b'glb').decode()
+                r = spaces.set_furniture_model('s', 'a', src, [2, 1, 1], [0, .5, 0])
+                sem = json.loads((d/'scan'/'semantic.json').read_text())
+                self.assertEqual(sem['models']['a']['src'], 'scan/models/a.glb'); self.assertTrue((d/'scan'/'models'/'a.glb').is_file())
+                self.assertEqual(sem['objects'][0]['size'], [1, 1, 1])                          # the box itself is unchanged
+                self.assertGreater(r['revision'], r['boxesRevision'])                            # the editor's box saves stay valid
+                with self.assertRaises(ValueError): spaces.set_furniture_model('s', 'nope', src, [1, 1, 1], [0, 0, 0])
+                spaces.set_furniture_model('s', 'a'); self.assertNotIn('a', json.loads((d/'scan'/'semantic.json').read_text())['models'])
+                self.assertFalse((d/'scan'/'models'/'a.glb').exists())
+                spaces.set_furniture_model('s', 'a', src, [2, 1, 1], [0, .5, 0])
+                spaces.save_layout('s', [], [], r['boxesRevision'])                               # the box deleted: its model goes too
+                self.assertEqual(json.loads((d/'scan'/'semantic.json').read_text())['models'], {}); self.assertFalse((d/'scan'/'models'/'a.glb').exists())
+            finally: spaces.SPACES = old

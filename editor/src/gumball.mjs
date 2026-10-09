@@ -39,6 +39,9 @@ export class Gumball extends THREE.EventDispatcher {
     };
     canvas.addEventListener('pointerdown',e=>{
       if(e.button!==0||this.active)return;const c=pick(e);if(!c)return;
+      // Shift on a scale box scales uniformly; Alt (Option) asks the owner to leave a copy behind before the drag moves the object.
+      if(c.mode==='scale'&&e.shiftKey&&['X','Y','Z'].includes(c.axis))c.axis='XYZ';
+      if(e.altKey)this.dispatchEvent({type:'duplicate',mode:c.mode,axis:c.axis});
       e.stopImmediatePropagation();this.active=c;this.pointerId=e.pointerId;this.suppressClick=true;
       canvas.setPointerCapture(e.pointerId);this.root.updateMatrixWorld(true);c.pointerDown(pointer(e));
     },true);

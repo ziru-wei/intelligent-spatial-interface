@@ -26,6 +26,7 @@ import {load as loadResponseSettings,resolve as resolveSettings,modOf,textRespon
 import {createComponentHost} from './components.mjs';
 import {createAgentLayer,READING,formatSpeed,stepsAt} from './agent.mjs';
 import {questionClock} from './question-caption.mjs';
+import {readModel,modelBounds,fitScale,boxFromModel,swapHTML,wireSwap} from './model-fit.mjs';
 import {buildTextTargets,calibrate,applyOffsets} from './layout-surfaces.mjs';
 import {createRelationTracker,viewOf} from './spatial-relations.mjs';
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search);
@@ -72,6 +73,14 @@ rebuildCatchers();
 const textures=new Map(),depths=new Map(),textureLoads=new Map(),depthLoads=new Map();
 const loader=new GLTFLoader();
 const components=createComponentHost({scene,loader,siteURL:new URL('./',location.href),assetBase:sessionURL,invalidate:()=>update()});
+// LiDAR mesh in the video (display option): this recording's own mesh (room.glb) as a wireframe over the frame, kept on it through
+// alignment edits; the 3D view has its own Recording mesh switch. Occlusion is unaffected (the room's occluders stay as they are).
+const lidarMesh=new THREE.Group();lidarMesh.name='lidar-mesh-overlay';lidarMesh.visible=false;scene.add(lidarMesh);
+const lidarMaterial=new THREE.MeshBasicMaterial({color:0x5fd3ff,wireframe:true,transparent:true,opacity:.7,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+function buildLidarMesh(){lidarMesh.clear();const src=roomParts?.userData.parts?.recording;$('video-lidar-mesh').disabled=!src;$('video-lidar-mesh-label').title=src?'This recording\'s own LiDAR mesh drawn over the video':'This recording has no LiDAR mesh';
+  src?.traverse(o=>{if(o.isMesh){const m=new THREE.Mesh(o.geometry,lidarMaterial);m.matrixAutoUpdate=false;m.renderOrder=1;m.userData.source=o;lidarMesh.add(m);}});}
+function syncLidarMesh(){lidarMesh.visible=$('video-lidar-mesh').checked&&!$('video-lidar-mesh').disabled;if(!lidarMesh.visible)return;
+  for(const m of lidarMesh.children){const o=m.userData.source;o.updateWorldMatrix(true,false);m.matrix.copy(o.matrixWorld);m.matrixWorldNeedsUpdate=true;}}
 const twin=createTwin({canvas:$('twin'),scene,camera,anchor:null,getRoom:()=>room,onMove:o=>fromGizmo(o)});
 let weatherPreview=null,weatherSurfacePreview=null;
 const findmyScene=createFindMy();
@@ -146,7 +155,7 @@ function applyPlacement(p){if(!Array.isArray(p.position)||p.position.length!==3|
 let paintRequest=0,lastTwinPaint=0;
 function update(){if(!paintRequest)paintRequest=requestAnimationFrame(()=>{paintRequest=0;paint();});}
 function paint(){
-  components.update({t:session?session.frames[index].t:0,frame:index});syncGizmo();twin.helper.visible=false;
+  syncLidarMesh();components.update({t:session?session.frames[index].t:0,frame:index});syncGizmo();twin.helper.visible=false;
   const map=$('depth-occlude').checked?depths.get(index):null;depthOccluder.visible=!!map;
   const weatherDepth=$('weather-mod').checked?depths.get(index):null;
   if(map||weatherDepth){depthOccluder.material.uniforms.depthMap.value=map||weatherDepth;const e=camera.projectionMatrix.elements;depthOccluder.material.uniforms.proj.value.set(e[10],e[14]);}
@@ -194,7 +203,7 @@ function paint(){
 const SHOW={video:{persistent:'video-twins',opportunistic:'video-objects'},twin:{persistent:'twin-persistent',opportunistic:'twin-objects'}};
 const shownIn=view=>inst=>{const id=SHOW[view][components.categoryOf(inst.spec)];return (!id||$(id).checked)&&!outlineHidden.has(inst.spec.id);};
 const visibleInVideo=shownIn('video'),visibleInTwin=shownIn('twin');
-twin.setHidden(()=>components.instances.filter(i=>!visibleInTwin(i)).map(i=>i.root));
+twin.setHidden(()=>[...components.instances.filter(i=>!visibleInTwin(i)).map(i=>i.root),lidarMesh]);
 for(const id of Object.values(SHOW).flatMap(Object.values)){try{$(id).checked=localStorage.getItem('spatial-take:'+id)!=='false';}catch{}
   $(id).onchange=()=>{try{localStorage.setItem('spatial-take:'+id,$(id).checked);}catch{}update();twin.render();};}
 function texture(i){
@@ -339,7 +348,20 @@ for(const b of document.querySelectorAll('[data-mode]'))b.onclick=()=>showCut(tw
 document.addEventListener('click',e=>{for(const d of document.querySelectorAll('details.menu[open]'))if(!d.contains(e.target))d.open=false;});
 $('cut').oninput=()=>showCut(twin.setView({cut:Number($('cut').value)}));
 $('cut-flip').onchange=()=>showCut(twin.setView({flip:$('cut-flip').checked}));
+$('cut-objects').onchange=()=>showCut(twin.setView({cutObjects:$('cut-objects').checked}));
 $('reset-view').onclick=()=>twin.resetView();
+// Full screen of the recorded camera: its column alone, centred; the video as tall as fits above its timeline and ask box (Esc leaves).
+const cameraCol=$('camera-col');
+function fitCameraFull(){const full=document.fullscreenElement===cameraCol,stage=$('stage');
+  if(!full){cameraCol.style.removeProperty('--camera-w');cameraCol.style.removeProperty('--camera-h');return;}
+  const cs=getComputedStyle(cameraCol),padY=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom),padX=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight);
+  let others=0;for(const el of cameraCol.children)if(el!==stage&&el.offsetParent!==null){const m=getComputedStyle(el);others+=el.offsetHeight+parseFloat(m.marginTop)+parseFloat(m.marginBottom);}
+  const aspect=stage.width/stage.height||16/9;let h=Math.max(120,innerHeight-padY-others-2),w=h*aspect;
+  if(w>innerWidth-padX){w=innerWidth-padX;h=w/aspect;}
+  cameraCol.style.setProperty('--camera-w',w+'px');cameraCol.style.setProperty('--camera-h',h+'px');update();}
+$('camera-full').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else (cameraCol.requestFullscreen||cameraCol.webkitRequestFullscreen).call(cameraCol)?.catch?.(fail);};
+document.addEventListener('fullscreenchange',()=>{$('camera-full').setAttribute('aria-pressed',document.fullscreenElement===cameraCol);fitCameraFull();requestAnimationFrame(fitCameraFull);});
+addEventListener('resize',()=>{if(document.fullscreenElement===cameraCol)fitCameraFull();});
 $('timeline').oninput=()=>{pause();at(Number($('timeline').value)).catch(fail);};
 // Components: what is placed in this recording besides the scan. Persistent objects (digital twins of the scene's furniture, scope
 // 'scene', in every recording) are listed in the Layout outline under their zone and moved there in Layout Edit mode. Obj library objects
@@ -362,6 +384,13 @@ function remember(id,key=null){if(key&&key===lastEditKey)return;lastEditKey=key;
   compHistory.push({id,before:components.transform(s)});if(compHistory.length>200)compHistory.shift();}
 function withdraw(){const h=compHistory.pop();lastEditKey=null;if(!h||!components.get(h.id))return;
   select(h.id);components.set(h.id,h.before);showComponents();update();saveComposition();}
+// Alt-drag on a handle: a copy stays where the component was and the drag carries on with it (library objects are placed once: no copy).
+// An object of the scene's library is placed once per recording, so its copy is a new library object ("… copy", same shape) placed there.
+twin.gizmo.addEventListener('duplicate',()=>{const inst=!fine&&components.get(selected);if(!inst||groupOf(inst)==='persistent')return;
+  const spec=JSON.parse(JSON.stringify(inst.spec)),m=libraryObject(inst);delete spec.id;spec.name=(spec.name||spec.component)+' copy';
+  (async()=>{if(m){const r=await api('/api/objects/duplicate',{space:here[0],id:m.id,name:spec.name,origin:here[1],pose:{position:spec.position,rotation:spec.rotation}});
+      await components.loadLibrary(here[0]);spec.component=r.id;spec.initial=components.transform(spec);}
+    await components.add(spec);showComponents();update();saveComposition();})().catch(fail);});
 for(const g of [twin.gizmo]){g.addEventListener('mouseDown',()=>{dragBefore=selected&&components.transform(components.get(selected).spec);});
   g.addEventListener('mouseUp',()=>{const s=selected&&components.get(selected)?.spec;if(dragBefore&&s&&JSON.stringify(dragBefore)!==JSON.stringify(components.transform(s))){compHistory.push({id:selected,before:dragBefore});lastEditKey=null;}dragBefore=null;});}
 /** Change the selected component (transform, visibility, name) and save; transform changes go into the undo history unless they come
@@ -505,15 +534,23 @@ async function newObject(kind,file){const fallback=kind==='box'?'Box':file.name.
 // A box object replaced by a .glb model in its place: its bounding box centre where the box's centre was, scaled to fit in the box (here
 // and, on the server, in every recording and the baseline: scripts/composition.py replace_object).
 async function replaceWithModel(m,file){
-  const scene3=(await loader.parseAsync(await file.arrayBuffer(),'')).scene,bounds=new THREE.Box3().setFromObject(scene3);
-  const size=bounds.getSize(new THREE.Vector3()).toArray().map(v=>+v.toFixed(5)),pivot=bounds.getCenter(new THREE.Vector3()).toArray().map(v=>+v.toFixed(5));
-  if(bounds.isEmpty()||size.some(v=>!(v>0)))throw Error('The model has no geometry.');
-  const src=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});
+  const {size,center:pivot,src}=await readModel(file,loader);
   await saveComposition(true);const r=await api('/api/objects/replace',{space:here[0],id:m.id,src,size,pivot});await components.loadLibrary(here[0]);
-  const fit=sc=>Array.isArray(sc)?Math.max(.0001,+Math.min(...sc.map((v,i)=>v/size[i])).toFixed(4)):sc,was=selected;
-  for(const inst of components.instances.filter(i=>i.spec.component===m.id)){const spec=structuredClone(inst.spec);components.remove(spec.id);
-    spec.scale=fit(spec.scale);if(spec.initial)spec.initial.scale=fit(spec.initial.scale);await components.add(spec);}
-  if(r.revisions?.[here[1]])compositionRevision=r.revisions[here[1]];select(components.get(was)?was:null);}
+  const fit=sc=>Array.isArray(sc)?+fitScale(sc,size).toFixed(4):sc;
+  await respawn(m.id,spec=>{spec.scale=fit(spec.scale);if(spec.initial)spec.initial.scale=fit(spec.initial.scale);});
+  if(r.revisions?.[here[1]])compositionRevision=r.revisions[here[1]];}
+// A model object replaced by a box of its bounds, in its place (here and, on the server, in every recording and the baseline:
+// scripts/composition.py model_to_box).
+async function replaceWithBox(m){
+  const {size,center}=modelBounds((await loader.loadAsync(new URL(m.entry,m.base).href)).scene),pivot=m.pivot||[0,0,0];
+  await saveComposition(true);const r=await api('/api/objects/to-box',{space:here[0],id:m.id,size,center});await components.loadLibrary(here[0]);
+  const box=t=>{const b=boxFromModel(t,{size,center,pivot});t.position=b.position;t.scale=b.scale;};
+  await respawn(m.id,spec=>{box(spec);if(spec.initial?.position)box(spec.initial);});
+  if(r.revisions?.[here[1]])compositionRevision=r.revisions[here[1]];}
+// The placements of a library object rebuilt from the reloaded library, each spec changed first; the selection is kept.
+async function respawn(id,change){const was=selected;
+  for(const inst of components.instances.filter(i=>i.spec.component===id)){const spec=structuredClone(inst.spec);components.remove(spec.id);change(spec);await components.add(spec);}
+  select(components.get(was)?was:null);showComponents();update();}
 // The baseline follows the object as saved in the recording it was made in (one made before origins were kept: the first recording it is
 // saved in).
 function keepObjectBaselines(){for(const inst of components.instances){const m=libraryObject(inst);if(!m||(m.origin&&m.origin!==here[1]))continue;
@@ -531,17 +568,17 @@ function editName(span,current,onDone){const input=document.createElement('input
   input.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();finish(true);}if(e.key==='Escape')finish(false);};input.onblur=()=>finish(true);input.onclick=e=>e.stopPropagation();}
 const TRASH='<svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg>';
 function unplace(inst){components.remove(inst.spec.id);if(selected===inst.spec.id)select(null);showComponents();update();saveComposition();}
-const MODEL='<svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12v9M4 7.5l8 4.5 8-4.5"/><path d="M17 1v4M15 3h4"/></svg>';
 // One row: [tick] name kind [eye] [model] [remove]. Only while editing objects (the Edit button): tick, rename, replace, remove, and
 // clicking a placed row to select it (handles in the 3D view).
-function objectRow({name,kind,inst,tick,onTick,onRename,onRemove,onModel}){const edit=objectsEditing;
+function objectRow({name,kind,inst,tick,onTick,onRename,onRemove,swap=null,onModel,onBox}){const edit=objectsEditing;
   const li=document.createElement('li');li.className='item obj'+(inst?' placed':'');if(inst&&inst.spec.id===selected)li.setAttribute('aria-current','true');
   li.innerHTML=`${tick?`<input type="checkbox" class="here" title="Placed in this recording" ${inst?'checked':''} ${edit?'':'disabled'}>`:''}<span class="name"></span><span class="n">${kind}</span>${inst?eye(inst.spec.visible):''}`
-    +`${edit&&onModel?`<label class="swap" aria-label="Replace with a 3D model" title="Replace the box with a 3D model (.glb)">${MODEL}<input type="file" accept=".glb"></label>`:''}${edit&&onRemove?`<button class="del" aria-label="Remove" title="Remove from the scene's objects">${TRASH}</button>`:''}`;
+    +`${edit?swapHTML(swap):''}${edit&&onRemove?`<button class="del" aria-label="Remove" title="Remove from the scene's objects">${TRASH}</button>`:''}`;
   li.querySelector('.name').textContent=name;
   li.onclick=e=>{if(e.target.closest('label,button,input'))return;if(inst&&edit)select(inst.spec.id);};
-  if(onRename&&edit)li.querySelector('.name').ondblclick=e=>{e.stopPropagation();editName(e.target,name,onRename);};
-  li.querySelector('.swap input')?.addEventListener('change',e=>{const f=e.target.files[0];if(f)Promise.resolve(onModel(f)).catch(err=>{$('take-status').textContent=err.message;});});
+  if(inst)li.ondblclick=e=>{if(!e.target.closest('label,button,input'))frameItem(OBJ+inst.spec.id);};
+  if(onRename&&edit)li.querySelector('.name').ondblclick=e=>{e.stopPropagation();if(inst)frameItem(OBJ+inst.spec.id);editName(e.target,name,onRename);};
+  wireSwap(li,{onModel,onBox,onError:err=>{$('take-status').textContent=err.message;}});
   li.querySelector('.here')?.addEventListener('change',e=>Promise.resolve(onTick(e.target.checked)).catch(err=>{$('take-status').textContent=err.message;}));
   li.querySelector('.eye input')?.addEventListener('change',e=>{components.set(inst.spec.id,{visible:e.target.checked});showComponents();update();saveComposition();});
   li.querySelector('.del')?.addEventListener('click',()=>Promise.resolve(onRemove()).catch(err=>{$('take-status').textContent=err.message;}));
@@ -552,7 +589,7 @@ function showObjects(){
   list.replaceChildren();
   for(const m of all){const inst=placedObject(m.id);
     list.append(objectRow({name:m.name,kind:m.kind==='box'?'box':'glb',inst,tick:true,onTick:on=>on?placeObject(m.id):unplace(inst),onRename:name=>renameObject(m.id,name),
-      onModel:m.kind==='box'?file=>replaceWithModel(m,file):null,
+      swap:m.kind==='box'?'box':m.kind==='gltf'?'model':null,onModel:file=>replaceWithModel(m,file),onBox:()=>replaceWithBox(m),
       onRemove:async()=>{if(!confirm(`Remove ${m.name} from this scene?`))return;if(inst){unplace(inst);await saveComposition(true);}
         await api('/api/objects/delete',{space:here[0],id:m.id});await components.loadLibrary(here[0]);showComponents();update();}}));}
   // .glb files imported into this recording alone (before the library): untick to remove.
@@ -577,7 +614,7 @@ $('object-create').onclick=async()=>{const file=$('opportunistic-import').files[
 function occlusion(){if(!room)return;room.traverse(o=>{if(o.isMesh){
   // Keep a scan's texture for the 3D view before the occluder material replaces it.
   if(!('scanMap' in o.userData))o.userData.scanMap=o.material.map||null;o.material=new THREE.MeshBasicMaterial({color:0x888888,wireframe:!$('occlude').checked,colorWrite:!$('occlude').checked&&$('room-wireframe').checked,depthWrite:$('occlude').checked,side:THREE.DoubleSide});o.renderOrder=-1;}});update();}
-$('occlude').onchange=occlusion;$('shadows').onchange=update;$('depth-occlude').onchange=()=>setFrame(index).catch(fail);$('room-wireframe').onchange=occlusion;// Save: a self-contained file (imported .glb files embedded as data URLs, wherever they are stored).
+$('occlude').onchange=occlusion;$('shadows').onchange=update;$('depth-occlude').onchange=()=>setFrame(index).catch(fail);$('room-wireframe').onchange=occlusion;$('video-lidar-mesh').onchange=update;// Save: a self-contained file (imported .glb files embedded as data URLs, wherever they are stored).
 $('save').onclick=async()=>{const doc=placement();for(const c of doc.components)if(c.src&&!c.src.startsWith('data:')){const blob=await(await fetch(new URL(c.src,sessionURL))).blob();c.src=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(blob);});}
   const u=URL.createObjectURL(new Blob([JSON.stringify(doc,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='placement.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);};
 async function loadPlacement(p){
@@ -695,6 +732,7 @@ $('space').onchange=showSpace;
 let layoutLoaded=false,layoutTimer=null,layoutRevision=0,layoutRooms=[];
 // The scan under a ray from the 3D view; in plan and elevation views, only what the section plane leaves visible.
 function pickRoom(ray){return room?ray.intersectObject(room,true).find(h=>!['plan','elevation-x','elevation-z'].includes(twin.mode)||twin.clip.distanceToPoint(h.point)>=0):null;}
+twin.setCuttable(()=>[twin.semantic,components.group]);   // what Cut objects clips in section views
 const layout=createLayoutEditor({group:twin.semantic,getRooms:()=>layoutRooms,canvas:$('twin'),getCamera:()=>twin.camera,render:()=>twin.render(),pickScene:pickRoom,
   pickOther:ray=>{const hit=components.pick(ray,i=>groupOf(i)==='persistent'&&visibleInTwin(i)&&!outlineLocked.has(i.spec.id));if(hit)select(hit.instance.spec.id);else if(selected)select(null);return !!hit;},
     // Saves carry the revision this page loaded; one saved from another window since is refused (409) instead of overwritten.
@@ -713,12 +751,25 @@ const layout=createLayoutEditor({group:twin.semantic,getRooms:()=>layoutRooms,ca
 const OBJ='obj:';let outlineHidden=new Set(),outlineLocked=new Set();
 const isObj=id=>id.startsWith(OBJ),objId=id=>id.slice(OBJ.length);
 let groupBy=(()=>{try{return localStorage.getItem('spatial-take:layout-group')==='type'?'type':'zone';}catch{return 'zone';}})();
+// Furniture as a 3D model or its box (src/model-fit.mjs; scripts/spaces.py set_furniture_model): the model fits inside the box, which
+// stays the layout's (placement, surfaces and alignment keep using it).
+async function furnitureToModel(id,file){const m=await readModel(file,loader);
+  const r=await api('/api/layout/model',{space:here[0],id,src:m.src,size:m.size,center:m.center});layoutRevision=r.revision;
+  layout.setModel(id,m.scene,{size:m.size,center:m.center});showOutline();}
+async function furnitureToBox(id){const r=await api('/api/layout/model',{space:here[0],id});layoutRevision=r.revision;layout.setModel(id,null);showOutline();}
+async function loadFurnitureModels(sem){
+  for(const [id,info] of Object.entries(sem?.models||{}))loader.loadAsync(new URL(`${info.src}?v=${info.at||0}`,spaceURL).href)
+    .then(g=>layout.setModel(id,g.scene,{size:info.size,center:info.center}),e=>console.warn('furniture model',id,e));}
+// Double-click in a panel: the 3D view frames that object (its component) or piece of furniture (its layout box).
+function frameItem(id){const o=isObj(id)?components.get(objId(id))?.root:layout.boxes.find(b=>b.id===id)?.object;if(!o)return;
+  o.updateWorldMatrix(true,true);twin.frame(new THREE.Box3().setFromObject(o));showCut(null);}
 const outlineView=here[0]?createOutline({root:$('layout-outline'),scene:here[0],
   onSelect:(id,locked)=>{
     if(isObj(id)&&layout.enabled&&!locked){select(objId(id));return;}
     if(!isObj(id)&&!locked){layout.select(layout.boxes.find(b=>b.id===id));return;}
     if(selected)select(null);layout.select(null);outlineView.setSelected(id);},   // highlighted only
-  onHidden:()=>applyOutline(),onLocked:()=>applyOutline(),
+  onHidden:()=>applyOutline(),onLocked:()=>applyOutline(),onFrame:id=>frameItem(id),
+  swapOf:id=>layout.hasModel(id)?'model':'box',onModel:(id,file)=>furnitureToModel(id,file),onBox:id=>furnitureToBox(id),onError:e=>{$('take-status').textContent=e.message;},
   onDelete:id=>{if(isObj(id)){const inst=components.get(objId(id));if(!inst||!confirm(`Delete ${inst.spec.name} from this scene?`))return;
       components.remove(inst.spec.id);if(selected===inst.spec.id)select(null);showComponents();update();saveComposition();return;}
     const b=layout.boxes.find(x=>x.id===id);if(b){layout.select(b);layout.remove();}},
@@ -896,12 +947,12 @@ roomParts=new THREE.Group();roomParts.userData.parts={};
 if(space?.scan?.mesh&&toSpace){const g=(await loader.loadAsync(new URL(space.scan.mesh,spaceURL).href)).scene;g.name='space-scan';roomParts.add(g);roomParts.userData.parts.space=g;}
 else if(space?.scan?.mesh){alignScan=(await loader.loadAsync(new URL(space.scan.mesh,spaceURL).href)).scene;twin.setAlignScan(alignScan);}
 if(session.roomMesh){const g=(await loader.loadAsync(new URL(session.roomMesh,sessionURL).href)).scene;if(toSpace){g.applyMatrix4(toSpace);g.updateMatrixWorld(true);}g.name='recording-mesh';roomParts.add(g);roomParts.userData.parts.recording=g;}
-if(roomParts.children.length)setRoom(roomParts,null,null);
+if(roomParts.children.length)setRoom(roomParts,null,null);buildLidarMesh();
 // 3D view: the scan by default, the recording's own mesh when there is no scan.
 const hasPart=k=>!!roomParts.userData.parts[k];$('debug-spaceScan').disabled=!hasPart('space');$('debug-recordingMesh').disabled=!hasPart('recording');
 $('debug-recordingMesh').checked=!hasPart('space');twin.setDebug({spaceScan:true,recordingMesh:!hasPart('space')});
 // Layout boxes (scan/semantic.json), shown and edited in the 3D view.
-if(space?.scan?.semantic&&toSpace){try{const sem=await(await fetch(new URL(space.scan.semantic,spaceURL))).json();layoutRevision=sem.revision||0;layoutRooms=sem.rooms||[];layout.setData(sem);structure.setData(sem);weatherScene.setLayout(sem);setTextLayout(sem);layoutLoaded=true;showOutline();showSpace();}catch(e){console.warn('layout',e);}}
+if(space?.scan?.semantic&&toSpace){try{const sem=await(await fetch(new URL(space.scan.semantic,spaceURL))).json();layoutRevision=sem.revision||0;layoutRooms=sem.rooms||[];layout.setData(sem);structure.setData(sem);weatherScene.setLayout(sem);setTextLayout(sem);loadFurnitureModels(sem);layoutLoaded=true;showOutline();showSpace();}catch(e){console.warn('layout',e);}}
 if(!(session.depth&&session.frames.every(f=>f.depth)))$('depth-occlude').checked=false;
 else{$('depth-occlude').disabled=false;}
 await setFrame(0);
