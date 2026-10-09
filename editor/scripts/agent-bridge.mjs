@@ -30,7 +30,7 @@ for(;;){
   console.log(`? #${q.id}: ${q.text}`);
   try{
     const ask=createJev({apiKey,model:process.env.TYPESAFE_MODEL||config.jevModel||'jev-latest',trace});
-    const result=await runPipeline({question:q,ask,trace,publish:async part=>{await api('/api/agent/responses',part);if(!seenParts.has(part.part)||part.stream?.status==='complete'){trace('show_'+part.part,part.stream?.status==='complete'?'Text stream complete':part.title||'Mod UI ready');seenParts.add(part.part);}},readContext:groups=>api(`/api/agent/context?question_id=${q.id}&${groups.length?'groups='+encodeURIComponent(groups.join(',')):'catalog=1'}`),answer:(question,context,options)=>provider==='gemini'?geminiAnswer(question,context,{apiKey:geminiApiKey,model,effort,trace,...options}):lunaAnswer(question,context,{model,effort,trace})});
+    const result=await runPipeline({question:q,ask,trace,checkVisible:ids=>api(`/api/agent/visible?question_id=${q.id}&ids=${ids.map(encodeURIComponent).join(',')}`),publish:async part=>{await api('/api/agent/responses',part);if(!seenParts.has(part.part)||part.stream?.status==='complete'){trace('show_'+part.part,part.stream?.status==='complete'?'Text stream complete':part.title||'Mod UI ready');seenParts.add(part.part);}},readContext:groups=>api(`/api/agent/context?question_id=${q.id}&${groups.length?'groups='+encodeURIComponent(groups.join(',')):'catalog=1'}`),answer:(question,context,options)=>provider==='gemini'?geminiAnswer(question,context,{apiKey:geminiApiKey,model,effort,trace,...options}):lunaAnswer(question,context,{model,effort,trace})});
     message=result.message||result.title||'Response ready';
   }catch(e){message=e.message;trace('pipeline_error',message);}
   await sending;

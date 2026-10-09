@@ -18,7 +18,9 @@ export const MODS={
  findmy:{label:'FindMy mod',title:'Find stored items: highlight their container and guide you when it is out of view',owns:r=>!!r?.findmy,
   overrides:['textResponse','autoHide','fixedText','resumeOnResponse','fallback'],
   options:{removeOnHandApproach:{label:'Remove effect when hand approaches box',kind:'bool',default:false,title:'Hide the highlight and arrow as soon as a detected hand with valid recorded depth enters the approach range, including on a paused frame. Text stays visible.'},
-   handApproachDistance:{label:'Hand approach distance',kind:'range',default:.25,min:.05,max:.5,step:.01,format:v=>`${Math.round(v*100)} cm`,title:'Distance to the box surface, with tolerance for recording depth and alignment. Default 25 cm; increase if touches are missed.'}}}
+   handApproachDistance:{label:'Hand approach distance',kind:'range',default:.25,min:.05,max:.5,step:.01,format:v=>`${Math.round(v*100)} cm`,title:'Distance to the box surface, with tolerance for recording depth and alignment. Default 25 cm; increase if touches are missed.'}}},
+ ego:{label:'Object mod',title:'Answers about a thing in the room are told by it: a bubble above the object, the object highlighted (its model bounces or changes colour; else its box)',owns:r=>!!r?.ego,
+  overrides:['textResponse','autoHide','fixedText','resumeOnResponse','fallback']}
 };
 const KEY='spatial-take:response-settings',VERSION=2;
 

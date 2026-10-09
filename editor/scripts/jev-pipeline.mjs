@@ -59,6 +59,34 @@ export async function jev_call_mod(ask,question,context,trace=()=>{}){
   if(!allowed){trace('mod_fallback',JSON.stringify({proposed:selected,probability,confidence,selected:'none',reason:!Object.hasOwn(mods,selected)?'Required mod data is unavailable':'Mod judgment below threshold',minimum_probability:MOD_MIN_PROBABILITY,minimum_confidence:MOD_MIN_CONFIDENCE}));return 'none';}
   return selected;
 }
+// Object-egocentric mod (scripts/ego.py, src/ego.mjs): the answer carried by objects of the scene, spoken by the main one. Decided apart
+// from jev_call_mod (its own 0-1 score); when both it and another mod fit, the main object decides: in view at the question's frame
+// (and not hidden), the objects carry it, else the other mod does. Exactly one mod runs.
+export const EGO_MIN=.5,EGO_VISIBLE=.5,EGO_MAX_OBJECTS=6,EGO_ALSO_MAX_CANDIDATES=40;
+export const EGO_EFFECTS={bounce:'A short bounce: draws the eye to an object the user should act on, use or go to now.',color:'A colour wash: marks an object whose state or information the answer is about.'};
+export const EGO_COLORS={calm:'Calm teal: neutral information, all is well.',attention:'Warm yellow: worth noticing or doing soon.',warning:'Red: a problem, urgent or unsafe.'};
+const egoAvailable=context=>!!(context.interaction?.ego_mod&&context.ego_catalog?.length);
+export async function jev_call_is_ego(ask,question,context){
+  const a=await ask('jev_call_is_ego',{user_question:question,objects:context.ego_catalog.map(o=>({label:o.label,kind:o.kind,zone:o.zone})),conversation:context.conversation,reference_resolution:context.reference_resolution},
+    {ego:noul('Would the answer to user_question be best carried by one or more physical objects listed in objects: shown above them and told by them in their own voice? Yes when the question is about, uses or acts on such an object (its contents, state, use or care), e.g. "What can I cook with what is in the fridge?", "Does the plant need water?", "Is the window closed?". No for general questions not tied to a listed object (plans, explanations, news), and when the object is not in the list.')});
+  return a.ego.noul;
+}
+export async function jev_ego_UI_dec(ask,question,context){
+  const items=context.ego_catalog;
+  if(items.length>253)throw Error('The object mod supports at most 253 objects per selection.');
+  const criteria={none:'No listed object fits.'};
+  items.forEach((o,i)=>criteria[`obj_${i}`]={label:o.label,kind:o.kind,zone:o.zone});
+  const questions={main:choice('Which listed object should carry the answer to user_question: the one it is most about? Use reference_resolution for pronouns. none when no listed object fits.',criteria),
+    effect:choice('Which visual effect suits the main object, given what the answer is about?',EGO_EFFECTS),
+    color:choice('Which colour fits what the answer means for the object?',EGO_COLORS)};
+  // Other objects that are part of the answer too (comparing, gathering, using together); asked only for a modest number of candidates.
+  if(items.length<=EGO_ALSO_MAX_CANDIDATES)items.forEach((o,i)=>questions[`also_${i}`]=noul(`Is "${o.label}" (${o.kind}${o.zone?', '+o.zone:''}) itself directly part of the answer to user_question (several things to compare, gather or use together)? Not merely nearby or related.`));
+  const a=await ask('jev_ego_UI_dec',{user_question:question,reference_resolution:context.reference_resolution,conversation:context.conversation,requirement:'Choose only listed objects. Never infer ids, geometry or rendering.'},questions);
+  if(a.main.choice==='none')return null;
+  const m=Number(a.main.choice.slice(4)),main=items[m];if(!main)throw Error('Unknown object choice.');
+  const others=items.map((o,i)=>({o,score:i===m?0:a[`also_${i}`]?.noul??0})).filter(x=>x.score>=.5).sort((x,y)=>y.score-x.score).slice(0,EGO_MAX_OBJECTS-1).map(x=>x.o.id);
+  return {objects:[main.id,...others],main:main.id,effect:{type:a.effect.choice,color:a.color.choice}};
+}
 export function compactContext(context){
   if(!context.weather)return context;
   return {...context,weather:{...context.weather,forecast:context.weather.forecast.map(e=>({id:e.id,date:e.date,period:e.period,time:e.time,summary:e.summary,temp_c:e.temp_c,wind_kph:e.wind_kph,samples:e.samples?.map(s=>({id:s.id,time:s.local_time||s.time,summary:s.summary,temp_c:s.temp_c,wind_kph:s.wind_kph}))}))}};
@@ -99,7 +127,7 @@ export async function jev_findmy_UI_dec(ask,question,context){
   if(!Object.hasOwn(criteria,id))throw Error('Unknown FindMy choice.');
   return {status:'found',item_id:criteria[id].item_id};
 }
-export async function runPipeline({question,readContext,ask,answer,trace=()=>{},publish=async()=>{}}){
+export async function runPipeline({question,readContext,ask,answer,trace=()=>{},publish=async()=>{},checkVisible=async()=>({})}){
   const catalog=await readContext([]);
   const {groups,reference}=await jev_read_request(ask,question.text,catalog);
   if(catalog.conversation)trace('conversation_reference',JSON.stringify(reference));
@@ -114,11 +142,22 @@ export async function runPipeline({question,readContext,ask,answer,trace=()=>{},
   // branches start after retrieval; otherwise the language branch waits for the mod decision. Off: the language model never runs.
   const wants=question.text_response||{},textFor=mod=>(mod&&mod in wants?wants[mod]:wants.default)!==false;
   const modDecision=Promise.resolve().then(()=>jev_call_mod(ask,question.text,compactContext(context),trace));
-  const modsText=[...new Set(Object.keys(availableMods(context)).map(mod=>textFor(mod==='none'?null:mod)))];
-  const textWanted=modsText.length===1?Promise.resolve(modsText[0]):modDecision.then(mod=>textFor(mod==='none'?null:mod),()=>textFor(null));
+  // The object mod: its score alongside jev_call_mod; the route is the one mod that runs ({mod, ego?}).
+  const egoOn=egoAvailable(context);
+  const egoScore=egoOn?Promise.resolve().then(()=>jev_call_is_ego(ask,question.text,context)).catch(e=>{trace('ego_error',e.message);return 0;}):Promise.resolve(0);
+  const route=Promise.all([modDecision.catch(e=>{trace('mod_error',e.message);return 'none';}),egoScore]).then(async([mod,score])=>{
+    if(score<EGO_MIN)return {mod};
+    const ego=await jev_ego_UI_dec(ask,question.text,context).catch(e=>{trace('ego_error',e.message);return null;});
+    if(!ego)return {mod};
+    let chosen={mod:'ego',ego},visible=null;
+    if(mod!=='none'){visible=(await checkVisible([ego.main]).catch(()=>({})))[ego.main]??0;if(visible<EGO_VISIBLE)chosen={mod};}
+    trace('ego_route',JSON.stringify({score,other:mod,main:ego.main,visible,chosen:chosen.mod}));return chosen;
+  });
+  const modsText=[...new Set([...Object.keys(availableMods(context)),...(egoOn?['ego']:[])].map(mod=>textFor(mod==='none'?null:mod)))];
+  const textWanted=modsText.length===1?Promise.resolve(modsText[0]):route.then(r=>textFor(r.mod==='none'?null:r.mod),()=>textFor(null));
   // Errors in visuals must not discard a useful language answer.
-  const visual=modDecision.then(async mod=>{
-    const data=mod==='weather'?await jev_UI_dec(ask,question.text,context):mod==='findmy'?await jev_findmy_UI_dec(ask,question.text,context):null;
+  const visual=route.then(async({mod,ego})=>{
+    const data=mod==='ego'?ego:mod==='weather'?await jev_UI_dec(ask,question.text,context):mod==='findmy'?await jev_findmy_UI_dec(ask,question.text,context):null;
     const visual=data?{[mod]:data}:null;
     if(visual)await publish({question_id:question.id,part:'ui',...(textFor(mod)||(textFor(null)&&mod==='findmy'&&data.status!=='found')?{reserve_text:true}:{}),...visual});
     return visual;
@@ -126,13 +165,18 @@ export async function runPipeline({question,readContext,ask,answer,trace=()=>{},
   const language=textWanted.then(async on=>{
     if(!on&&textFor(null)){
       const result=await visual;
-      if(!result?.weather&&result?.findmy?.status!=='found'){on=true;trace('text_fallback','Mod could not provide a usable result; use the default text response setting');}
+      if(!result?.weather&&!result?.ego&&result?.findmy?.status!=='found'){on=true;trace('text_fallback','Mod could not provide a usable result; use the default text response setting');}
     }
     if(!on){trace('text_skipped','Text response off for this mod');return null;}
     let sequence=0;
     const publishText=text=>publish({...text,question_id:question.id,part:'text',layout_slot:context.weather&&context.interaction?.weather_mod?1:0});
+    // An answer the objects carry is told by the main one, in the first person: the language model waits for the route only when the
+    // object mod is likely (otherwise it starts at once).
+    const ego=(await egoScore)>=EGO_MIN?(await route.catch(()=>({}))).ego:null;
+    const speaker=ego&&context.ego_catalog.find(o=>o.id===ego.main);
+    const answerContext=speaker?{...compactContext(context),voice:{speak_as:speaker.label,kind:speaker.kind,zone:speaker.zone}}:compactContext(context);
     try{
-      let text=await answer(question,compactContext(context),{onPartial:async partial=>{
+      let text=await answer(question,answerContext,{onPartial:async partial=>{
         if(!partial.title&&!partial.body)return;
         await publishText({title:partial.title||'',body:partial.body||'',reserve_text:true,stream:{seq:++sequence,status:'streaming'},referenced_item_ids:[]});
       }});

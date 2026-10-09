@@ -28,6 +28,7 @@ POST /api/agent/conversations/rename|import         {session,conversation,name} 
 POST /api/agent/questions {session,conversation,frame,t,text,live?}   ask at a frame (live = asked during playback); POST /api/agent/questions/delete
 GET  /api/agent/status?session=&conversation=       bridge connected + the conversation's questions and responses
 GET  /api/agent/questions/next?session=            bridge long-poll (≤25 s); POST /api/agent/questions/trace {session,id,step}, …/done {session,id,message,duration}
+GET  /api/agent/visible?session=&question_id=&ids=a,b  share of each object (scripts/ego.py id) in view, not hidden, at the question's frame
 GET  /api/agent/context?session=                   household context (scenario or space context.json, else agent/mock-context.json) + the user's pose
                                                    at the question being answered, else at the frame the editor shows (POST /api/agent/state)
 POST /api/agent/responses {session,…}              UI/full text; text streams use {part:'text',stream:{seq,status}} snapshots
@@ -40,7 +41,7 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
-import agent_store as store, spaces, composition, weather, findmy, hand_cache
+import agent_store as store, spaces, composition, weather, findmy, ego, hand_cache
 busy = threading.Lock()
 MOCK_CONTEXT = ROOT/'agent'/'mock-context.json'
 
@@ -86,7 +87,8 @@ def agent_context(session, groups=None, question_id=None):
         if question_id is not None and running is None: raise ValueError('Unknown question.')
         live = store.editor_state.get(str(d))
         ctx['conversation'] = store.conversation_context.snapshot(conversation, running)
-    ctx['interaction'] = dict(weather_mod=bool((running or live or {}).get('weather_mod', False)),findmy_mod=bool((running or live or {}).get('findmy_mod', False)))
+    ctx['interaction'] = dict(weather_mod=bool((running or live or {}).get('weather_mod', False)),findmy_mod=bool((running or live or {}).get('findmy_mod', False)),ego_mod=bool((running or live or {}).get('ego_mod', False)))
+    if ctx['interaction']['ego_mod']: ctx['ego_catalog'] = ego.for_jev(ego.catalog(d))
     if 'storage' in ctx.get('loaded_groups',[]): ctx['findmy_catalog'] = findmy.catalog(d,ctx)[0]
     if running:
         ctx['question'] = dict(id=running['id'], text=running['text'], asked_at_s=running['t'])
@@ -109,7 +111,7 @@ def ask(body):
     if not text: raise ValueError('Empty question.')
     frames = len(json.loads((d/'session.json').read_text())['frames']); frame = int(body.get('frame', 0))
     if not 0 <= frame < frames: raise ValueError('Frame out of range.')
-    with store.lock: return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), body.get('weather_mod', False), body.get('text_response'), body.get('findmy_mod', False))
+    with store.lock: return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), body.get('weather_mod', False), body.get('text_response'), body.get('findmy_mod', False), body.get('ego_mod', False))
 
 def agent_get(path, session, q):
     if path == '/api/agent/questions/next': return next_question(session)
@@ -119,6 +121,12 @@ def agent_get(path, session, q):
         if path == '/api/agent/conversations': return store.listing(d)
         if path == '/api/agent/conversations/export': return store.read(d, cid)
         if path == '/api/agent/status': return store.status(d, cid)
+        if path == '/api/agent/visible':
+            # Whether objects are in view (and not hidden) at the question's frame (scripts/ego.py visibility).
+            _, question = store._find_question(d, int(q.get('question_id', ['-1'])[0]))
+            if not question: raise ValueError('Unknown question.')
+            frame = question['frame']
+    if path == '/api/agent/visible': return ego.visibility(d, frame, [i for i in q.get('ids', [''])[0].split(',') if i])
     raise KeyError(path)
 
 def agent_post(path, body):
@@ -126,7 +134,7 @@ def agent_post(path, body):
     d = session_dir(body.get('session')); cid = body.get('conversation')
     with store.lock:
         store._prepare(d)
-        if path == '/api/agent/state': store.editor_state[str(d)] = {k: body.get(k) for k in ('conversation', 'frame', 't', 'position', 'quaternion', 'forward', 'weather_mod', 'findmy_mod')}; return dict(ok=True)
+        if path == '/api/agent/state': store.editor_state[str(d)] = {k: body.get(k) for k in ('conversation', 'frame', 't', 'position', 'quaternion', 'forward', 'weather_mod', 'findmy_mod', 'ego_mod')}; return dict(ok=True)
         if path == '/api/agent/conversations': return store.create(d, body.get('name'))
         if path == '/api/agent/conversations/delete': return store.delete_conversation(d, cid)
         if path == '/api/agent/conversations/rename': return store.rename(d, cid, body.get('name'))

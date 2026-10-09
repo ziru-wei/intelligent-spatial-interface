@@ -114,7 +114,7 @@ export async function createResponseWidget(r,ctx,stack=0,frame=r.frame,previous=
   const glass=new THREE.Mesh(new THREE.PlaneGeometry(inner.x+2*feather,inner.y+2*feather,...SEGMENTS),glassMaterial());glass.renderOrder=2;glass.visible=false;
   glass.position.set(((box.x0+box.x1)/2/PX-.5)*width,(.5-(box.y0+box.y1)/2/H)*height,-.002);
   glass.material.uniforms.size.value.set(inner.x+2*feather,inner.y+2*feather);glass.material.uniforms.inner.value.copy(inner);glass.material.uniforms.feather.value=feather;group.add(glass);
-  group.userData={response:r,text,glass,width,height,aspect,pose,rating:null,kind:pose.kind};bend(text,pose.surface,shift);bend(glass,pose.surface,shift);
+  group.userData={response:r,text,glass,width,height,aspect,pose,rating:null,kind:pose.kind};bend(text,pose.surface,shift);bend(glass,pose.surface,shift);syncTail(group);
   // The initial style is selected from the composed scene immediately before its first draw.
   return group;
 }
@@ -149,7 +149,16 @@ function moveResponseWidget(w,pose,stack){
  d.glass.geometry.dispose();d.glass.geometry=new THREE.PlaneGeometry(inner.x+2*feather,inner.y+2*feather,...SEGMENTS);delete d.glass.userData.flat;
  d.glass.position.set(((box.x0+box.x1)/2/PX-.5)*width,(.5-(box.y0+box.y1)/2/H)*height,-.002);
  const uniforms=d.glass.material.uniforms;uniforms.size.value.set(inner.x+2*feather,inner.y+2*feather);uniforms.inner.value.copy(inner);uniforms.feather.value=feather;
- Object.assign(d,{width,height,pose,kind:pose.kind});bend(d.text,pose.surface,shift);bend(d.glass,pose.surface,shift);
+ Object.assign(d,{width,height,pose,kind:pose.kind});bend(d.text,pose.surface,shift);bend(d.glass,pose.surface,shift);syncTail(w);
+}
+// A bubble above an object (object mod): a thin line from under its ink down to the object's top (pose.anchor); nothing otherwise.
+function syncTail(w){
+ const d=w.userData,anchor=d.pose?.kind==='bubble'&&d.pose.anchor;
+ if(!anchor){if(d.tail)d.tail.visible=false;return;}
+ if(!d.tail){d.tail=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.85,depthTest:false,depthWrite:false,toneMapped:false}));d.tail.renderOrder=3;w.add(d.tail);}
+ const map=d.text.material.map,bottom=(.5-map.image.box.y1/map.image.height)*d.height-.01;
+ const end=new THREE.Vector3(...anchor).sub(w.position).applyQuaternion(w.quaternion.clone().invert());
+ d.tail.geometry.dispose();d.tail.geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,bottom,0),end]);d.tail.visible=true;
 }
 // On a curved surface the text (and its glass) follows the fitted surface: each vertex of the subdivided plane moves along the
 // text's +Z to surface(x, y), in metres in the placement frame (shift: the group's offset along +Y from it). Flat otherwise.
@@ -270,7 +279,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
       const k=w.userData.replay?Math.min(1,(now-w.userData.replay)/REPLAY_MS):1;
       if(k<1){o*=THREE.MathUtils.smootherstep(k,0,.45);w.scale.setScalar(1+.06*Math.sin(Math.PI*k));}else{w.scale.setScalar(1);w.userData.replay=0;}
       if(r.id!==latest?.id)o=0;
-      w.visible=o>0;w.userData.text.material.opacity=o;w.userData.glass.material.uniforms.opacity.value=o;
+      w.visible=o>0;w.userData.text.material.opacity=o;if(w.userData.tail)w.userData.tail.material.opacity=.85*o;w.userData.glass.material.uniforms.opacity.value=o;
     }
   }
   // Pinned in the recorded view (Fixed text, and the Fixed fallback when no surface fits).
@@ -443,7 +452,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     setTarget(target,frameTexture,resolution){for(const w of widgets.values()){const u=w.userData.glass.material.uniforms;u.useFrame.value=target==='video'&&frameTexture?1:0;u.tFrame.value=frameTexture||null;if(resolution)u.resolution.value.copy(resolution);}},
     // The response under a pointer (normalised device coordinates) for a camera, if any.
     pick(ndc,cam){const ray=new THREE.Raycaster();ray.setFromCamera(ndc,cam);const hit=ray.intersectObjects([...widgets.values()].filter(w=>w.visible).map(w=>w.userData.text),false)[0];return hit?hit.object.parent.userData.response:null;},
-    ask:(frame,t,text,live,weather_mod=false,text_response,findmy_mod=false)=>post('/api/agent/questions',{frame,t,text,live,weather_mod,text_response,findmy_mod}).then(q=>{layer.sync();return q;}),
+    ask:(frame,t,text,live,weather_mod=false,text_response,findmy_mod=false,ego_mod=false)=>post('/api/agent/questions',{frame,t,text,live,weather_mod,text_response,findmy_mod,ego_mod}).then(q=>{layer.sync();return q;}),
     deleteQuestion:id=>post('/api/agent/questions/delete',{id}).then(()=>layer.sync()),
     // The frame the editor shows is the simulated user's state for terminal questions; send it at most every 200 ms.
     report(state){pending=state;if(!reportTimer)reportTimer=setTimeout(()=>{reportTimer=null;post('/api/agent/state',pending).catch(()=>{});},200);}};
