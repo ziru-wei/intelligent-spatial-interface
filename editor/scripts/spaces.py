@@ -19,7 +19,7 @@ spaces/names.json.
 
 Every step is a command (python scripts/spaces.py --help); the editor server calls the same functions.
 """
-import json, re, shutil, struct, subprocess, time
+import base64, json, math, re, shutil, struct, subprocess, time
 from pathlib import Path
 import import_record3d, layout, hand_cache
 
@@ -273,12 +273,38 @@ def save_layout(space, objects, openings, revision=None):
     if not m.get('semantic'): raise ValueError('This scene has no layout yet.')
     p = d/m['semantic']; current = json.loads(p.read_text())
     if revision is not None and revision < current.get('boxesRevision', current.get('revision', 0)): raise Conflict('The layout was changed in another window. Reload to get it.')
-    rev = current.get('revision', 0)+1; data = dict(layout.update(current, objects, openings), revision=rev, boxesRevision=rev); p.write_text(json.dumps(data, indent=1))
+    rev = current.get('revision', 0)+1; data = dict(layout.update(current, objects, openings), revision=rev, boxesRevision=rev); _prune_models(d, data); p.write_text(json.dumps(data, indent=1))
     # Doors and windows moved: the walls' cut-outs follow (bumps `revision` only, so this save's boxesRevision stays valid).
     try: cut_openings(space)
     except ValueError: pass
     data = json.loads(p.read_text())
     return dict(objects=len(data['objects']), openings=len(data['openings']), revision=data['revision'], boxesRevision=data['boxesRevision'])
+
+def set_furniture_model(space, box_id, src=None, size=None, center=None):
+    """A piece of furniture (a layout box) shown as a 3D model, fitted inside its box (src: a .glb data URL; size and center: the
+    model's bounding box in its own units), or as its box again (src None). The box itself is unchanged: placement, surfaces and
+    alignment keep using it. Kept in scan/semantic.json `models` {box id: {src, size, center}}, the file in scan/models/<id>.glb."""
+    d = space_dir(space); m = manifest(d)
+    if not m.get('semantic'): raise ValueError('This scene has no layout yet.')
+    p = d/m['semantic']; sem = json.loads(p.read_text())
+    if not NAME.match(str(box_id)) or not any(b.get('id') == box_id for b in sem.get('objects', [])+sem.get('openings', [])): raise ValueError('Unknown box: '+str(box_id))
+    models = sem.setdefault('models', {}); f = d/'scan'/'models'/f'{box_id}.glb'
+    if src is None:
+        models.pop(box_id, None); f.unlink(missing_ok=True)
+    else:
+        if not (isinstance(src, str) and src.startswith('data:')): raise ValueError('A 3D model must be an embedded .glb.')
+        ok = lambda v: isinstance(v, list) and len(v) == 3 and all(isinstance(x, (int, float)) and math.isfinite(x) for x in v)
+        if not (ok(size) and min(size) > 0 and ok(center)): raise ValueError('Bad model bounds.')
+        f.parent.mkdir(exist_ok=True); f.write_bytes(base64.b64decode(src.split(',', 1)[1]))
+        models[box_id] = dict(src=f'scan/models/{box_id}.glb', size=[round(v, 5) for v in size], center=[round(v, 5) for v in center], at=time.time())
+    sem['revision'] = sem.get('revision', 0)+1; p.write_text(json.dumps(sem, indent=1))
+    return dict(models=models, revision=sem['revision'], boxesRevision=sem.get('boxesRevision', sem['revision']))
+
+def _prune_models(d, sem):
+    """Models of boxes no longer in the layout go with them."""
+    ids = {b.get('id') for b in sem.get('objects', [])+sem.get('openings', [])}
+    for bid in [k for k in sem.get('models', {}) if k not in ids]:
+        sem['models'].pop(bid); (d/'scan'/'models'/f'{bid}.glb').unlink(missing_ok=True)
 
 def add_scenario(space, take):
     """Everything a recording needs to be used in the space: import, its own mesh, alignment to the scan (if there is one)."""

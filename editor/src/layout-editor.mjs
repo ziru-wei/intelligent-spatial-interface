@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {path,resolveParents,childrenOf,arrange,numberDuplicates} from './layout-tree.mjs';
 import {makeLabel,zoneColorAt} from './palette.mjs';
+import {fitScale} from './model-fit.mjs';
 
 // Scene layout in the 3D view: labelled boxes (furniture and appliances, doors and windows; scan/semantic.json) drawn over whichever
 // scan is chosen. RoomPlan's boxes are a first guess, so in edit mode they can be corrected on the scan:
@@ -29,17 +30,26 @@ export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onCh
   let boxes=[],hiddenIds=new Set(),lockedIds=new Set(),enabled=false,selected=null,drag=null,serial=0,undoStack=[],redoStack=[],lastKey=null;
   const ray=new THREE.Raycaster(),handles=new THREE.Group();handles.renderOrder=20;
 
-  function dispose(o){o.traverse(c=>{if(c.material){c.material.map?.dispose();c.material.dispose();}});}
+  // A model shown for a box shares its loaded geometry and materials (setModel): not disposed with the box.
+  function dispose(o){const walk=c=>{if(c.userData.sharedModel)return;if(c.material){c.material.map?.dispose();c.material.dispose();}c.children.forEach(walk);};walk(o);}
+  // Furniture shown as a 3D model (src/model-fit.mjs): box id → {object, size, center}. The model sits inside its box, fitted and turned
+  // with it; the box stays what is edited, picked and saved.
+  const models=new Map();
+  function attachModel(b){const g=b.object;if(g.userData.model){g.remove(g.userData.model);g.userData.model=null;}const m=models.get(b.id);if(!m)return;
+    const o=m.object.clone();o.userData.sharedModel=true;g.add(o);g.userData.model=o;fitModel(b);}
+  function fitModel(b){const o=b.object.userData.model,m=models.get(b.id);if(!o||!m)return;const s=fitScale(b.size,m.size);o.scale.setScalar(s);o.position.set(...m.center.map(c=>-c*s));}
+  /** Show a box as a model (object: its loaded scene; info: {size, center} in its own units), or as its box again (object null). */
+  function setModel(id,object,info){if(object)models.set(id,{object,...info});else models.delete(id);const b=boxes.find(x=>x.id===id);if(b){attachModel(b);style();}render();}
 
   // One box: a group at the centre turned by yaw; edges and a (normally invisible) fill for picking, scaled to the size.
   function build(b){
     const g=new THREE.Group(),edges=new THREE.LineSegments(unitEdges,new THREE.LineBasicMaterial({color:COLOR[b.kind],depthTest:!enabled}));
     const fill=new THREE.Mesh(unitBox,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
-    fill.userData.box=b;g.add(edges,fill);g.userData={edges,fill};b.object=g;group.add(g);place(b);
+    fill.userData.box=b;g.add(edges,fill);g.userData={edges,fill};b.object=g;group.add(g);attachModel(b);place(b);
   }
   function place(b){
     const g=b.object;g.visible=!hiddenIds.has(b.id);g.position.fromArray(b.center);g.rotation.y=THREE.MathUtils.degToRad(b.yaw||0);
-    g.userData.edges.scale.fromArray(b.size);g.userData.fill.scale.fromArray(b.size);
+    g.userData.edges.scale.fromArray(b.size);g.userData.fill.scale.fromArray(b.size);fitModel(b);
     // A nested box shows only its own name (the last part of its path), on a light capsule; a parent on a dark one; both in the colour of
     // the zone the outermost parent stands in (src/palette.mjs).
     let top=b;while(parents.has(top.id))top=parents.get(top.id);
@@ -50,7 +60,7 @@ export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onCh
   }
   let focus=null;   // ids picked for aligning a recording: drawn in cyan
   function style(){const kids=new Set(selected&&enabled?childrenOf(boxes,selected):[]);
-    for(const b of boxes){const on=b===selected,color=focus?.has(b.id)?0x5ce1ff:on?COLOR.selected:kids.has(b)?COLOR.child:COLOR[b.kind];b.object.userData.edges.material.color.set(color);b.object.userData.edges.material.depthTest=!enabled;const f=b.object.userData.fill.material;f.color.set(color);f.opacity=on?.28:kids.has(b)?.22:enabled?.14:0;}}
+    for(const b of boxes){const on=b===selected,color=focus?.has(b.id)?0x5ce1ff:on?COLOR.selected:kids.has(b)?COLOR.child:COLOR[b.kind];b.object.userData.edges.material.color.set(color);b.object.userData.edges.visible=!b.object.userData.model||on||enabled||!!focus?.has(b.id);b.object.userData.edges.material.depthTest=!enabled;const f=b.object.userData.fill.material;f.color.set(color);f.opacity=on?.28:kids.has(b)?.22:enabled?.14:0;}}
   function placeHandles(){
     handles.clear();if(!selected||!enabled)return;selected.object.add(handles);
     FACES.forEach((a,i)=>{const h=new THREE.Mesh(handleGeo,new THREE.MeshBasicMaterial({color:a.y?0x9be7a4:0xffffff,depthTest:false,transparent:true}));h.renderOrder=20;
@@ -154,5 +164,5 @@ export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onCh
   return {setFocus(ids){focus=ids?new Set(ids):null;style();render();},
     /** The top-level box under a ray (visible boxes; a nested one counts as its outermost parent). */
     pickBox(ray){const hit=ray.intersectObjects(boxes.filter(b=>b.object.visible).map(b=>b.object.userData.fill),false)[0];let b=hit?.object.userData.box;while(b&&parents.has(b.id))b=parents.get(b.id);return b?.id??null;},
-    relabel,renumber,setData,setHidden,setLocked,setEnabled,update,remove,add,duplicate,arrangeChildren,children,undo,redo,select,data,get history(){return history();},get boxes(){return boxes;},get selected(){return selected;},get enabled(){return enabled;}};
+    setModel,hasModel:id=>models.has(id),relabel,renumber,setData,setHidden,setLocked,setEnabled,update,remove,add,duplicate,arrangeChildren,children,undo,redo,select,data,get history(){return history();},get boxes(){return boxes;},get selected(){return selected;},get enabled(){return enabled;}};
 }

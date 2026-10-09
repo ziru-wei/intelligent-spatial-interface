@@ -22,7 +22,15 @@ export function createTwin({canvas,scene,camera,anchor,onMove,getRoom}){
   // Moved, turned or scaled: the whole object (position, rotation, scale) goes back to the editor; hover highlights redraw.
   gizmo.addEventListener('objectChange',()=>gizmo.object&&onMove(gizmo.object));gizmo.addEventListener('change',()=>render());
   orbit.addEventListener('change',()=>render());
-  let loaded=false,mode='follow',cut=0,flip=false;
+  // Trackpad: two-finger scrolling pans (the content follows the fingers); a pinch (ctrl + wheel) and a mouse wheel still zoom.
+  const panBy=(dx,dy)=>{const cam=active(),h=canvas.clientHeight||1,w=canvas.clientWidth||1;let sx,sy;
+    if(cam.isPerspectiveCamera){const k=2*cam.position.distanceTo(orbit.target)*Math.tan(THREE.MathUtils.degToRad(cam.fov/2))/h;sx=dx*k;sy=dy*k;}
+    else{sx=dx*(cam.right-cam.left)/cam.zoom/w;sy=dy*(cam.top-cam.bottom)/cam.zoom/h;}
+    cam.updateMatrixWorld();const offset=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,0).multiplyScalar(sx).addScaledVector(new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,1),-sy);
+    cam.position.add(offset);orbit.target.add(offset);orbit.update();render();};
+  const trackpadScroll=e=>!e.ctrlKey&&e.deltaMode===0&&(e.deltaX!==0||!Number.isInteger(e.deltaY)||Math.abs(e.deltaY)<40);
+  canvas.addEventListener('wheel',e=>{if(!orbit.enabled||gizmo.dragging||!trackpadScroll(e))return;e.preventDefault();e.stopImmediatePropagation();panBy(e.deltaX,e.deltaY);},{capture:true,passive:false});
+  let loaded=false,mode='follow',cut=0,flip=false,cutObjects=false,cuttable=()=>[];
   const viewCenter=new THREE.Vector3(),clip=new THREE.Plane(),renderHooks=[];let hidden=null;   // objects left out of this view (setHidden)
   const videoTexture=new THREE.CanvasTexture(document.getElementById('stage'));videoTexture.colorSpace=THREE.SRGBColorSpace;
   const videoPanel=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1),new THREE.MeshBasicMaterial({map:videoTexture,side:THREE.DoubleSide,toneMapped:false}));
@@ -76,6 +84,7 @@ export function createTwin({canvas,scene,camera,anchor,onMove,getRoom}){
     }
     if(changed&&mode==='walk')enterWalk(previous);
     if('flip' in options)flip=options.flip;
+    if('cutObjects' in options)cutObjects=!!options.cutObjects;
     const section=SECTION[mode];let range=null;
     if(section){
       // Flat rooms (a single plane) would give an empty slider range; keep at least ±1 m.
@@ -90,7 +99,7 @@ export function createTwin({canvas,scene,camera,anchor,onMove,getRoom}){
     orbit.object=active();gizmo.camera=active();orbit.enableRotate=mode==='orbit';orbit.enabled=mode!=='follow'&&mode!=='walk';
     if(changed&&mode==='orbit'&&(previous===follow||previous===walker)){orbit.update();render();}
     else if(changed||'flip' in options)resetView();else render();
-    return range;
+    return range&&{...range,cutObjects};
   }
   // Walk: a 10 cm grid of the scanned floor. Walkable cells have room vertices at floor height and none between 0.25 m and 1.7 m above it
   // (walls, furniture), shrunk by a 0.2 m body radius. Without a room mesh, anywhere within 1 m of the recorded path.
@@ -169,7 +178,10 @@ export function createTwin({canvas,scene,camera,anchor,onMove,getRoom}){
     const overlayVisible=overlay?.group.visible;if(overlay)overlay.group.visible=false;
     const textGroup=presentation?.group,controls=presentation?.controls,controlsVisible=controls?.visible;if(textGroup)textGroup.visible=false;if(controls)controls.visible=false;
     const hide=(hidden?.()||[]).filter(o=>o.visible);for(const o of hide)o.visible=false;
-    renderer.render(scene,active());for(const o of hide)o.visible=true;if(overlay){overlay.group.visible=overlayVisible;overlay.render(renderer,active());}
+    // Section views may cut objects and furniture too (Cut objects): their materials take the plane for this render only.
+    const clipped=new Map();
+    if(SECTION[mode]&&cutObjects)for(const root of cuttable())root?.traverse(o=>{for(const m of [].concat(o.material||[]))if(!clipped.has(m)){clipped.set(m,m.clippingPlanes);m.clippingPlanes=[...(m.clippingPlanes||[]),clip];}});
+    renderer.render(scene,active());for(const [m,planes] of clipped)m.clippingPlanes=planes;for(const o of hide)o.visible=true;if(overlay){overlay.group.visible=overlayVisible;overlay.render(renderer,active());}
     if(controls)controls.visible=controlsVisible;presentation?.render(renderer,active());
     for(const [o,m] of swapped)o.material=m;
     if(parts.space)parts.space.visible=true;if(parts.recording)parts.recording.visible=true;
@@ -185,5 +197,11 @@ export function createTwin({canvas,scene,camera,anchor,onMove,getRoom}){
   /** Orbit view around a point, from far enough to see a sphere of the given radius (keeps the current viewing direction). */
   function focusOn(point,radius=1.5){if(mode!=='orbit')setView({mode:'orbit'});const dir=view.position.clone().sub(orbit.target);if(dir.lengthSq()<1e-6)dir.set(1,.8,1);
     dir.normalize().multiplyScalar(radius/Math.tan(THREE.MathUtils.degToRad(view.fov/2))*1.1);orbit.target.copy(point);view.position.copy(point).add(dir);orbit.update();render();}
-  return {focusOn,setHidden:fn=>{hidden=fn;},setPresentation:value=>{presentation=value;},setOverlay:value=>{overlay=value;},onRender:hook=>renderHooks.push(hook),attach,render,setSession,setDebug,setView,resetView,walkGrid,setLidar,setAlignScan,lidar,semantic,walker,walkKeys:walk.keys,videoPanel,trajectory,frustum,renderer,view,helper,gizmo,clip,get mode(){return mode;},get camera(){return active();}};
+  /** Orbit view framing a box (an object or a piece of furniture): from the south-east (+x, +z; the plan view's top is north, -z),
+   *  looking down at 45°, from just far enough that its bounding sphere fits the view. */
+  function frame(box){if(!box||box.isEmpty())return;if(mode!=='orbit')setView({mode:'orbit'});
+    const c=box.getCenter(new THREE.Vector3()),r=Math.max(.2,box.getSize(new THREE.Vector3()).length()/2),half=THREE.MathUtils.degToRad(view.fov/2);
+    const fit=Math.min(half,Math.atan(Math.tan(half)*(view.aspect||1)));
+    orbit.target.copy(c);view.position.copy(c).addScaledVector(new THREE.Vector3(1,Math.SQRT2,1).normalize(),r/Math.sin(fit)*1.1);orbit.update();render();}
+  return {focusOn,frame,panBy,setCuttable:fn=>{cuttable=fn;},setHidden:fn=>{hidden=fn;},setPresentation:value=>{presentation=value;},setOverlay:value=>{overlay=value;},onRender:hook=>renderHooks.push(hook),attach,render,setSession,setDebug,setView,resetView,walkGrid,setLidar,setAlignScan,lidar,semantic,walker,walkKeys:walk.keys,videoPanel,trajectory,frustum,renderer,view,helper,gizmo,clip,get mode(){return mode;},get camera(){return active();}};
 }

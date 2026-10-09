@@ -1,6 +1,6 @@
 // How agent responses behave: global settings, which every mod (weather, …) can override one by one. An override left at "Default"
 // follows the global value. A response belongs to a mod when the mod is on and the response carries its data (r.weather).
-// Mods are on unless switched off. Saved in localStorage ('spatial-take:response-settings'): {global:{textResponse, resumeOnResponse, autoHide, fallback, fixedText, stability}, mods:{weather:{enabled, overrides}}}.
+// Mods are on unless switched off. Saved in localStorage ('spatial-take:response-settings'): {version, global:{textResponse, resumeOnResponse, autoHide, fallback, fixedText, stability}, mods:{weather:{enabled, overrides}}}.
 // No dependencies: used by the editor (src/app.mjs) and tests.
 
 export const SETTINGS={
@@ -20,7 +20,7 @@ export const MODS={
   options:{removeOnHandApproach:{label:'Remove effect when hand approaches box',kind:'bool',default:false,title:'Hide the highlight and arrow as soon as a detected hand with valid recorded depth enters the approach range, including on a paused frame. Text stays visible.'},
    handApproachDistance:{label:'Hand approach distance',kind:'range',default:.25,min:.05,max:.5,step:.01,format:v=>`${Math.round(v*100)} cm`,title:'Distance to the box surface, with tolerance for recording depth and alignment. Default 25 cm; increase if touches are missed.'}}}
 };
-const KEY='spatial-take:response-settings';
+const KEY='spatial-take:response-settings',VERSION=2;
 
 const cleanValue=(setting,v)=>setting.kind==='bool'?!!v:setting.kind==='choice'?(Object.hasOwn(setting.choices,v)?v:setting.default):Math.min(setting.max??1,Math.max(setting.min??0,Number(v)||0));
 const clean=(key,v)=>cleanValue(SETTINGS[key],v);
@@ -32,11 +32,14 @@ function withoutFloatSwitch(raw){
 export const modOverrides=mod=>MODS[mod]?.overrides??Object.keys(SETTINGS);
 export function normalize(raw={}){
   raw=withoutFloatSwitch(raw);
+  // Every mod is on by default. Settings saved before version 2 (or the older per-mod keys) start with all mods on once; a mod
+  // switched off after that stays off.
+  const allOn=!(raw.version>=VERSION);
   const global=Object.fromEntries(Object.keys(SETTINGS).map(k=>[k,k in (raw.global||{})?clean(k,raw.global[k]):SETTINGS[k].default]));
   const mods=Object.fromEntries(Object.keys(MODS).map(m=>{const r=raw.mods?.[m]||{},o=r.overrides||{};
-    return [m,{enabled:r.enabled!==false,overrides:Object.fromEntries(modOverrides(m).filter(k=>k in o&&o[k]!=null).map(k=>[k,clean(k,o[k])])),
+    return [m,{enabled:allOn||r.enabled!==false,overrides:Object.fromEntries(modOverrides(m).filter(k=>k in o&&o[k]!=null).map(k=>[k,clean(k,o[k])])),
       options:Object.fromEntries(Object.entries(MODS[m].options||{}).map(([k,s])=>[k,r.options?.[k]==null?s.default:cleanValue(s,r.options[k])]))}];}));
-  return {global,mods};
+  return {version:VERSION,global,mods};
 }
 /** The mod a response belongs to (null: none, global settings apply). */
 export const modOf=(settings,r)=>Object.keys(MODS).find(m=>settings.mods[m]?.enabled&&MODS[m].owns(r))??null;

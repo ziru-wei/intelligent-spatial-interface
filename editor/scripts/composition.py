@@ -148,6 +148,56 @@ def replace_object(scene_dir, oid, src, size, pivot):
         if changed: doc['revision'] = doc.get('revision', 0)+1; p.write_text(json.dumps(doc, indent=1)); revisions[p.parent.name] = doc['revision']
     return dict(id=oid, component=entry, revisions=revisions)
 
+def _rotate(rotation, v):
+    """v turned by an Euler XYZ rotation in degrees (three.js order: R = Rx·Ry·Rz)."""
+    x, y, z = v; rx, ry, rz = (math.radians(a) for a in rotation)
+    x, y = x*math.cos(rz)-y*math.sin(rz), x*math.sin(rz)+y*math.cos(rz)
+    x, z = x*math.cos(ry)+z*math.sin(ry), -x*math.sin(ry)+z*math.cos(ry)
+    y, z = y*math.cos(rx)-z*math.sin(rx), y*math.sin(rx)+z*math.cos(rx)
+    return [x, y, z]
+
+def model_box(position, rotation, scale, size, center, pivot):
+    """A placed model as a box: (centre, size). Its size at the placed scale; its centre where the model's bounding-box centre is.
+    Mirrors src/model-fit.mjs boxFromModel."""
+    s = [scale]*3 if _num(scale) else list(scale)
+    offset = _rotate(rotation or [0, 0, 0], [(c-p)*k for c, p, k in zip(center, pivot, s)])
+    return [round(p+o, 4) for p, o in zip(position, offset)], [round(max(.001, v*k), 4) for v, k in zip(size, s)]
+
+def model_to_box(scene_dir, oid, size, center):
+    """A model object becomes a box of its size (size and center: the model's bounding box in its own units), in the same place: every
+    placement's box is the model's bounds at that placement's scale (here, in every recording of the scene and in the baseline)."""
+    d, entry = _object(scene_dir, oid)
+    if entry.get('kind') != 'gltf': raise ValueError('Only a model object can be replaced by a box.')
+    if not (_num(size, 3) and min(size) > 0 and _num(center, 3)): raise ValueError('Bad model bounds.')
+    pivot = entry.get('pivot') or [0, 0, 0]
+    def convert(spec):   # a placement or the baseline {position, rotation} with its scale
+        if not _num(spec.get('position'), 3): return
+        spec['position'], spec['scale'] = model_box(spec['position'], spec.get('rotation'), spec.get('scale', 1), size, center, pivot)
+    if isinstance(entry.get('pose'), dict):
+        pose = dict(entry['pose'], scale=entry.get('defaultScale', 1)); convert(pose); entry['pose'] = dict(position=pose['position'], rotation=entry['pose'].get('rotation', [0, 0, 0]))
+    entry['defaultScale'] = model_box([0, 0, 0], [0, 0, 0], entry.get('defaultScale', 1), size, center, pivot)[1]
+    entry.update(kind='box'); entry.pop('entry', None); entry.pop('pivot', None)
+    (d/'model.glb').unlink(missing_ok=True); (d/'component.json').write_text(json.dumps(entry, indent=1)); revisions = {}
+    for p in Path(scene_dir).glob('scenarios/*/composition.json'):
+        doc = json.loads(p.read_text()); changed = False
+        for c in doc.get('components', []):
+            if c.get('component') != oid: continue
+            convert(c); changed = True
+            if isinstance(c.get('initial'), dict): convert(c['initial'])
+        if changed: doc['revision'] = doc.get('revision', 0)+1; p.write_text(json.dumps(doc, indent=1)); revisions[p.parent.name] = doc['revision']
+    return dict(id=oid, component=entry, revisions=revisions)
+
+def duplicate_object(scene_dir, oid, name=None, origin=None, pose=None):
+    """A copy of an opportunistic object (the same shape and model) under a new name, its baseline pose where the copy is made."""
+    d, entry = _object(scene_dir, oid)
+    name = str(name or entry.get('name', oid)+' copy').strip()[:80]; base = d.parent; slug = _slug(name); new = slug; n = 1
+    while (base/new).exists() or (LIBRARY/new).exists(): n += 1; new = f'{slug}-{n}'
+    shutil.copytree(d, base/new); entry = dict(entry, name=name)
+    if origin is not None: entry['origin'] = str(origin)[:120]
+    if pose is not None: entry['pose'] = _pose(pose)
+    (base/new/'component.json').write_text(json.dumps(entry, indent=1))
+    return dict(id=new, path=_rel(base/new), component=entry)
+
 def remove_object(scene_dir, oid):
     """Drop an opportunistic object from the scene's library, once no recording of the scene places it."""
     d, _ = _object(scene_dir, oid)

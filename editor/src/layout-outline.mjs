@@ -1,10 +1,12 @@
 import {path} from './layout-tree.mjs';
+import {swapHTML,wireSwap} from './model-fit.mjs';
 
 // The layout as a tree in the Scene panel: groups (zones, or types: furniture, doors and windows, objects; built by src/app.mjs) →
 // boxes → nested boxes. Each row can be collapsed, hidden and locked; hiding or locking a group or a box does the same to everything under
 // it. A locked row cannot be picked, moved or deleted. Clicking a row selects it. Which rows are collapsed, hidden or locked is a
 // per-viewer setting, kept in localStorage per scene (not in the layout). In edit mode (setEditing) rows that are not locked have a
-// delete button. Double-clicking a row's name renames it in place (onRename with the new last part of its label).
+// delete button. Double-clicking a row frames it in the 3D view (onFrame); on its name, it also renames it in place (onRename with the
+// new last part of its label).
 // A row's icon follows its kind: a layout box (furniture), a door or window (opening), or an object (a persistent object of the scene).
 const EYE='<svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const EYE_OFF='<svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
@@ -17,7 +19,9 @@ const ICONS={
   opening:'<svg class="kind" viewBox="0 0 24 24"><path d="M6 21V4h12v17M3 21h18M14 12.5v1"/></svg>',
   object:'<svg class="kind object" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg>'};
 
-export function createOutline({root,scene,onSelect,onHidden,onRename,onLocked=()=>{},onDelete=()=>{}}){
+// In edit mode a piece of furniture also offers its swap (src/model-fit.mjs): swapOf(id) 'box' (offer a model: onModel(id, file)) or 'model'
+// (offer its box back: onBox(id)); null for none.
+export function createOutline({root,scene,onSelect,onHidden,onRename,onLocked=()=>{},onDelete=()=>{},onFrame=()=>{},swapOf=()=>null,onModel=()=>{},onBox=()=>{},onError=()=>{}}){
   const key=`spatial-take:layout-view:${scene}`;let state={hidden:[],collapsed:[],locked:[]};
   try{state={...state,...JSON.parse(localStorage.getItem(key)||'{}')};}catch{}
   const hidden=new Set(state.hidden),collapsed=new Set(state.collapsed),locked=new Set(state.locked);let groups=[],selected=null,editing=false;
@@ -37,6 +41,7 @@ export function createOutline({root,scene,onSelect,onHidden,onRename,onLocked=()
     const el=document.createElement('div');el.className='node'+(isGroup?' zone':'')+(dim?' off':'')+(lockOn||lockInherited?' locked':'');el.style.setProperty('--depth',depth);el.dataset.key=key;
     if(id&&id===selected)el.setAttribute('aria-current','true');
     el.innerHTML=`${children?`<button class="twist" aria-label="${collapsed.has(key)?'Expand':'Collapse'}" aria-expanded="${!collapsed.has(key)}">${CHEVRON}</button>`:'<span class="twist"></span>'}${ICONS[kind]||''}<span class="name"></span>${n?`<span class="n">${n}</span>`:''}`
+      +`${editing&&id&&kind==='furniture'&&!lockOn&&!lockInherited?swapHTML(swapOf(id)):''}`
       +`${editing&&id&&!lockOn&&!lockInherited?`<button class="del" aria-label="Delete" title="Delete">${TRASH}</button>`:''}`
       +`<button class="lock" aria-label="${lockOn?'Unlock':'Lock'}" aria-pressed="${!!lockOn}" title="${lockInherited?'Locked with the row above':lockOn?'Unlock':'Lock'}" ${lockInherited?'disabled':''}>${lockOn||lockInherited?LOCK:UNLOCK}</button>`
       +`<button class="eye" aria-label="${off?'Show':'Hide'}" aria-pressed="${off}">${off?EYE_OFF:EYE}</button>`;
@@ -47,7 +52,10 @@ export function createOutline({root,scene,onSelect,onHidden,onRename,onLocked=()
       if(e.target.closest('.lock')){if(lockInherited)return;locked.has(key)?locked.delete(key):locked.add(key);save();render();onLocked(lockedBoxes());return;}
       if(e.target.closest('.del')){onDelete(id);return;}
       if(id)onSelect(id,!!(lockOn||lockInherited));};
-    if(id&&onRename)el.querySelector('.name').ondblclick=e=>{e.stopPropagation();const span=e.target,input=document.createElement('input');
+    // Double-click a row: the 3D view frames it (on the name, it also renames it).
+    if(id)el.ondblclick=e=>{if(!e.target.closest('button,input,label'))onFrame(id);};
+    if(id)wireSwap(el,{onModel:f=>onModel(id,f),onBox:()=>onBox(id),onError});
+    if(id&&onRename)el.querySelector('.name').ondblclick=e=>{e.stopPropagation();onFrame(id);const span=e.target,input=document.createElement('input');
       input.className='rename';input.value=label;span.replaceWith(input);input.focus();input.select();let done=false;
       const finish=save=>{if(done)return;done=true;input.replaceWith(span);const v=input.value.trim().replaceAll('/',' ');if(save&&v&&v!==label)onRename(id,v);};
       input.onkeydown=k=>{k.stopPropagation();if(k.key==='Enter'){k.preventDefault();finish(true);}if(k.key==='Escape')finish(false);};input.onblur=()=>finish(true);input.onclick=k=>k.stopPropagation();};

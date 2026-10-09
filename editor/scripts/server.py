@@ -10,6 +10,9 @@ POST /api/composition {session|space,scope,revision,components}  placed componen
 POST /api/objects {space,name,kind,size?,src?}  a new opportunistic object in the scene's library (box, or .glb data URL)
 POST /api/objects/update {space,id,name?,shape?,pose?}  rename, reshape (all recordings), or keep its pose for placing it elsewhere
 POST /api/objects/replace {space,id,src,size,pivot}  a box object becomes a .glb model in its place (every recording follows)
+POST /api/objects/duplicate {space,id,name?,origin?,pose?}  a copy of an object (same shape) under a new name
+POST /api/objects/to-box {space,id,size,center}    a model object becomes a box of its bounds in its place (every recording follows)
+POST /api/layout/model {space,id,src?,size,center}  a piece of furniture shown as a .glb model fitted in its box, or (no src) as its box again
 POST /api/objects/delete {space,id}  remove one that no recording places
 POST /api/layout {space,objects,openings}  the scene layout as edited (scan/semantic.json)
 POST /api/scan/primary {space,scan}  choose which of the space's scans is used (all are already in the space's coordinates)
@@ -201,6 +204,9 @@ class Handler(SimpleHTTPRequestHandler):
             '/api/objects': lambda: composition.add_object(spaces.space_dir(body.get('space')), body.get('name'), body.get('kind'), body.get('size'), body.get('src'), body.get('origin'), body.get('pose')),
             '/api/objects/update': lambda: composition.update_object(spaces.space_dir(body.get('space')), body.get('id'), body.get('name'), body.get('shape'), body.get('pose'), body.get('origin')),
             '/api/objects/replace': lambda: composition.replace_object(spaces.space_dir(body.get('space')), body.get('id'), body.get('src'), body.get('size'), body.get('pivot')),
+            '/api/objects/duplicate': lambda: composition.duplicate_object(spaces.space_dir(body.get('space')), body.get('id'), body.get('name'), body.get('origin'), body.get('pose')),
+            '/api/objects/to-box': lambda: composition.model_to_box(spaces.space_dir(body.get('space')), body.get('id'), body.get('size'), body.get('center')),
+            '/api/layout/model': lambda: spaces.set_furniture_model(body.get('space'), body.get('id'), body.get('src'), body.get('size'), body.get('center')),
             '/api/objects/delete': lambda: composition.remove_object(spaces.space_dir(body.get('space')), body.get('id')),
             '/api/scan/primary': lambda: spaces.set_primary(body.get('space'), body.get('scan')),
             '/api/align-manual': lambda: spaces.align_manually(body.get('space'), body.get('take'), body.get('toSpace'), body.get('info'))}.get(path)
