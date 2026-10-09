@@ -4,8 +4,8 @@ import {normalize,resolve,modOf,load,save,textResponses,resumeOnFirstResponse,di
 
 test('a mod follows the global settings unless it overrides one',()=>{
   const s=normalize({global:{autoHide:true,stability:.4},mods:{weather:{enabled:true,overrides:{fixedText:true,stability:.9}},findmy:{enabled:false}}});
-  assert.deepEqual(resolve(s),{textResponse:true,resumeOnResponse:false,autoHide:true,surfaceFallback:false,fixedText:false,stability:.4});
-  assert.deepEqual(resolve(s,'weather'),{textResponse:true,resumeOnResponse:false,autoHide:true,surfaceFallback:false,fixedText:true,stability:.9});
+  assert.deepEqual(resolve(s),{textResponse:true,resumeOnResponse:false,autoHide:true,fallback:'fixed',fixedText:false,stability:.4});
+  assert.deepEqual(resolve(s,'weather'),{textResponse:true,resumeOnResponse:false,autoHide:true,fallback:'fixed',fixedText:true,stability:.9});
   delete s.mods.weather.overrides.stability;
   s.mods.weather.overrides.textResponse=false;assert.deepEqual(textResponses(s),{default:true,weather:false});s.mods.weather.enabled=false;assert.deepEqual(textResponses(s),{default:true});s.mods.weather.enabled=true;
 assert.equal(resolve(s,'weather').stability,.4);
@@ -52,12 +52,14 @@ test('text-first delivery cannot bypass a mod override while mod selection is pe
  s.mods.weather.overrides.resumeOnResponse=true;assert.equal(resumeOnFirstResponse(s,{weather:{}},q),true);
 });
 
-test('surface fallback defaults off and persists independent mod overrides',()=>{
- const s=normalize({global:{surfaceFallback:true},mods:{weather:{overrides:{surfaceFallback:false}},findmy:{overrides:{surfaceFallback:true}}}});
- assert.equal(resolve(normalize()).surfaceFallback,false);
+test('no-surface fallback: Fixed by default, Floating by choice, per-mod overrides persist; the old Float switch carries over',()=>{
+ const s=normalize({global:{fallback:'floating'},mods:{weather:{overrides:{fallback:'fixed'}},findmy:{overrides:{fallback:'floating'}}}});
+ assert.equal(resolve(normalize()).fallback,'fixed');assert.equal(resolve(normalize({global:{fallback:'hidden'}})).fallback,'fixed');
  const m=new Map(),store={getItem:k=>m.get(k),setItem:(k,v)=>m.set(k,v)};save(s,store);const restored=load(store);
- assert.equal(resolve(restored).surfaceFallback,true);assert.equal(resolve(restored,'weather').surfaceFallback,false);assert.equal(resolve(restored,'findmy').surfaceFallback,true);
- delete restored.mods.weather.overrides.surfaceFallback;assert.equal(resolve(restored,'weather').surfaceFallback,true);
+ assert.equal(resolve(restored).fallback,'floating');assert.equal(resolve(restored,'weather').fallback,'fixed');assert.equal(resolve(restored,'findmy').fallback,'floating');
+ delete restored.mods.weather.overrides.fallback;assert.equal(resolve(restored,'weather').fallback,'floating');
+ const old=normalize({global:{surfaceFallback:true},mods:{findmy:{overrides:{surfaceFallback:false}}}});
+ assert.equal(resolve(old).fallback,'floating');assert.equal(resolve(old,'findmy').fallback,'fixed');assert.equal('surfaceFallback' in resolve(old),false);
 });
 
 test('mods are on unless switched off',()=>{

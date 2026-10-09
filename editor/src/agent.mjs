@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {responseReady,responseSlot,presentationResponses,latestPresentation} from './response-parts.mjs';
-import {place,projectedSurfaceBasis} from './placement.mjs';
+import {place,readableSurfaceBasis} from './placement.mjs';
 import {viewFixedPose} from './placement-stability.mjs';
 import {pickStyle} from './legibility.mjs';
 import {createLegibilityTracker} from './legibility-temporal.mjs';
@@ -273,32 +273,37 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
       w.visible=o>0;w.userData.text.material.opacity=o;w.userData.glass.material.uniforms.opacity.value=o;
     }
   }
+  // Pinned in the recorded view (Fixed text, and the Fixed fallback when no surface fits).
+  const fixedPose=(w,frame,i,camera=ctx.frameCamera(frame))=>{const d=w.userData;
+    return viewFixedPose(camera,d.aspect,responseSlot(d.response,i),d.aspect-Math.max(0,(d.text.material.map.image.weatherFooter||0)-192)/1024);};
+  // Drawn in the fixed pass (above hands and scene effects): Fixed text, or a response pinned because no surface fits.
+  const drawnFixed=w=>!!settingsOf(w.userData.response).fixedText||!!w.userData.fallbackFixed;
   const layer={group,widgets,thoughts,
     // Refit the existing placement strategy as the recording moves; never anchor text to the weather patch.
     adapt(frame){
       layer.currentFrame=frame;
       const visible=[...widgets.values()].filter(w=>w.visible),cfg=w=>settingsOf(w.userData.response),fixed=visible.filter(w=>cfg(w).fixedText);
       if(fixed.length){const camera=ctx.frameCamera(frame);for(const w of fixed){const i=visible.indexOf(w),stability=cfg(w).stability;
-        const d=w.userData,pose=viewFixedPose(camera,d.aspect,responseSlot(d.response,i),d.aspect-Math.max(0,(d.text.material.map.image.weatherFooter||0)-192)/1024);
+        const d=w.userData,pose=fixedPose(w,frame,i,camera);
         if(!d.fixedText||Math.abs(d.width-pose.width)>.0001)moveResponseWidget(w,pose,0);
         else{w.position.copy(pose.position);w.quaternion.copy(pose.quaternion);}
         if(d.adaptedFrame!==frame)d.compositeInitialized=false;
         Object.assign(d,{fixedText:true,placementHidden:false,adaptedFrame:frame,adaptedStability:stability});
       }}
       const viewport=ctx.viewport?.(),viewKey=viewport?`${viewport.width}:${viewport.height}`:'';
-      const todo=visible.filter(w=>!cfg(w).fixedText&&(w.userData.fixedText||w.userData.adaptedFrame!==frame||w.userData.adaptedView!==viewKey||w.userData.adaptedStability!==cfg(w).stability||w.userData.adaptedFallback!==cfg(w).surfaceFallback));
+      const todo=visible.filter(w=>!cfg(w).fixedText&&(w.userData.fixedText||w.userData.adaptedFrame!==frame||w.userData.adaptedView!==viewKey||w.userData.adaptedStability!==cfg(w).stability||w.userData.adaptedFallback!==cfg(w).fallback));
       if(!todo.length)return;
       if(adapting)return adapting;
       const gen=generation;
       adapting=Promise.all(todo.map(async w=>{
-        const d=w.userData,stability=cfg(w).stability,surfaceFallback=cfg(w).surfaceFallback;
+        const d=w.userData,stability=cfg(w).stability,fallback=cfg(w).fallback;
         d.anchorState||={};
         const previous=d.fixedText?null:(d.pendingSurfacePose||d.pose);
         const pose=await place({...d.response,frame,aspect:d.aspect,textMetrics:d.text.material.map.image.textMetrics,
           previousPose:previous,anchorState:d.anchorState,allowSearch:performance.now()-(d.lastSurfaceSearch??-Infinity)>=250,
           onSearch:()=>{d.lastSurfaceSearch=performance.now();}},ctx);
         if(previous===d.pendingSurfacePose)pose.reusedSurface=false;
-        return {w,pose,stability,surfaceFallback};
+        return {w,pose,stability,fallback};
       })).then(results=>{
         if(gen!==generation)return;
         if(layer.currentFrame!==frame){
@@ -307,13 +312,19 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
           for(const {w,pose} of results)if(widgets.get(w.userData.response.id)===w&&!pose.unreadable&&!pose.reusedSurface)w.userData.pendingSurfacePose=pose;
           return;
         }
-        for(const {w,pose,stability,surfaceFallback} of results)if(widgets.get(w.userData.response.id)===w&&!cfg(w).fixedText){
+        for(const {w,pose,stability,fallback} of results)if(widgets.get(w.userData.response.id)===w&&!cfg(w).fixedText){
           w.userData.pendingSurfacePose=null;
+          // No surface fits (and no floating pose either): the response still shows, pinned in the view like Fixed text, until one does.
+          if(pose.unreadable){const d=w.userData,fp=fixedPose(w,frame,visible.indexOf(w));
+            if(!d.fixedText||Math.abs(d.width-fp.width)>.0001)moveResponseWidget(w,fp,0);else{w.position.copy(fp.position);w.quaternion.copy(fp.quaternion);}
+            if(d.adaptedFrame!==frame)d.compositeInitialized=false;
+            Object.assign(d,{placementHidden:false,fixedText:true,fallbackFixed:true,adaptedFrame:frame,adaptedView:viewKey,adaptedStability:stability,adaptedFallback:fallback,
+              placementDecision:{hold:false,reason:'fixed-fallback',detail:pose.reason}});continue;}
           if(w.userData.adaptedFrame!=null&&Math.abs(frames[frame].t-frames[w.userData.adaptedFrame].t)>1){w.userData.legibility?.reset();w.userData.compositeInitialized=false;}
           // Search failure is presentation state, never a replacement world anchor.
           if(!pose.unreadable&&(!pose.reusedSurface||w.userData.fixedText)){moveResponseWidget(w,pose,responseSlot(w.userData.response,visible.indexOf(w)));w.userData.compositeInitialized=false;}
-          Object.assign(w.userData,{placementHidden:!!pose.unreadable,fixedText:false,adaptedFrame:frame,adaptedView:viewKey,adaptedStability:stability,adaptedFallback:surfaceFallback,
-            placementDecision:{hold:!!pose.reusedSurface,reason:pose.anchorGrace?'transient-loss':pose.reusedSurface?'world-anchor':pose.unreadable?'no-surface':'new-surface'}});
+          Object.assign(w.userData,{placementHidden:false,fixedText:false,fallbackFixed:false,adaptedFrame:frame,adaptedView:viewKey,adaptedStability:stability,adaptedFallback:fallback,
+            placementDecision:{hold:!!pose.reusedSurface,reason:pose.anchorGrace?'transient-loss':pose.reusedSurface?'world-anchor':pose.kind==='view-fallback'?'floating-fallback':'new-surface'}});
         }
       }).catch(e=>console.warn('live placement',e)).finally(()=>{adapting=null;onAnimate?.();});
       return adapting;
@@ -331,7 +342,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         layer.orient(camera);
         if(controls?.userData.responseOffset&&controls.userData.owner){const owner=controls.userData.owner;controls.quaternion.copy(owner.quaternion);controls.position.copy(owner.position).add(controls.userData.responseOffset.clone().applyQuaternion(owner.quaternion));}
       }
-      const excluded=[...widgets.values(),...thoughts.values()].filter(w=>w.visible&&pass!=='all'&&(pass==='fixed'?!settingsOf(w.userData.response).fixedText:settingsOf(w.userData.response).fixedText));
+      const excluded=[...widgets.values(),...thoughts.values()].filter(w=>w.visible&&pass!=='all'&&(pass==='fixed'?!drawnFixed(w):drawnFixed(w)));
       const originalControlsVisible=controls?.visible;
       for(const w of excluded)w.visible=false;
       if(controls?.userData.owner&&excluded.includes(controls.userData.owner))controls.visible=false;
@@ -383,7 +394,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
       for(const w of widgets.values()){
         const d=w.userData;if(!w.visible||settingsOf(d.response).fixedText||d.pose.unreadable||!d.pose.surfaceAnchor)continue;
         d.pose.surfaceNormal||=new THREE.Vector3(0,0,1).applyQuaternion(d.pose.quaternion);
-        const b=projectedSurfaceBasis(d.pose.surfaceNormal,w.position,camera),q=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(b.right,b.up,d.pose.surfaceNormal));
+        const b=readableSurfaceBasis(d.pose.surfaceNormal,camera.quaternion,w.position,camera.position,camera),q=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(b.right,b.up,d.pose.surfaceNormal));
         if(d.pose.surface&&w.quaternion.angleTo(q)>1e-6){
           d.pose.baseSurface||=d.pose.surface;d.pose.baseSurfaceQuaternion||=d.pose.quaternion.clone();
           const rotation=d.pose.baseSurfaceQuaternion.clone().invert().multiply(q),a=new THREE.Vector3(1,0,0).applyQuaternion(rotation),b=new THREE.Vector3(0,1,0).applyQuaternion(rotation),fn=d.pose.baseSurface;

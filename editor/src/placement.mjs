@@ -11,8 +11,9 @@ import {TEXT_VIEW,textViewMetrics,viewSizedWidth,footprintPoints,centeredPose} f
 //      the gaze, B the wall face or tall cabinet side faced, D the floor, window, door or object looked at. On that layout face
 //      (depth-corrected, src/layout-surfaces.mjs) src/text-surfaces.mjs picks the readable, supported, visible, uncluttered spot (near
 //      eye level on a faced wall).
-//   3. No relation, or its surface cannot hold readable text: floating in front of the view when "Float when no surface fits" is on,
-//      else hidden until a surface fits.
+//   3. No relation, or its surface cannot hold readable text: the response still shows, as "When no surface fits" says: Floating, in
+//      the room 1.25 m in front of the recorded view (here); Fixed (or Floating that does not fit the view), pinned in the view like
+//      the question caption (src/agent.mjs, on an unreadable pose). It returns to a surface when one fits.
 //
 // ctx = {frames, frameCamera(i), viewport(), relationAt(i), getStaticSurfaces(), getSettings(response), getSurfaceQuality(i),
 //        visible(i, points, {staticSurface}) -> booleans}. response.aspect: text height / width.
@@ -86,7 +87,7 @@ async function surfacePlacement(response,ctx){
 }
 export async function place(response,ctx){
   const surface=await surfacePlacement(response,ctx);
-  if(!surface.unreadable||!ctx.getSettings?.(response)?.surfaceFallback)return surface;
+  if(!surface.unreadable||ctx.getSettings?.(response)?.fallback!=='floating')return surface;
   const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),aspect=response.aspect||.45;
   const quaternion=camera.getWorldQuaternion(new THREE.Quaternion());
   const position=new THREE.Vector3(0,0,-1.25).applyMatrix4(camera.matrixWorld);

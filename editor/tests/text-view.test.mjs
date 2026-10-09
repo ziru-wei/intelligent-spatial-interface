@@ -26,10 +26,10 @@ test('screen-readable text goes on the surface the person relates to, with only 
  const pose=await place({frame:0,aspect:.4,textMetrics:metrics},surfaceContext());
  assert.equal(pose.unreadable,undefined);assert.equal(pose.kind,'plane');assert.equal(pose.surfaceId,'wall:front');assert.equal(pose.relation,'B');assert.ok(Math.abs(pose.position.z+2)<=.04);assert.ok(pose.viewMetrics.minPx>=TEXT_VIEW.minPx&&pose.viewMetrics.maxPx<=TEXT_VIEW.maxPx);
 });
-test('no relation: nothing to place on (hidden, or floating with the fallback)',async()=>{
+test('no relation: no surface pose (the agent pins it Fixed), or Floating when chosen',async()=>{
  const ctx=surfaceContext();ctx.relationSurface=null;
  const pose=await place({frame:0,aspect:.4,textMetrics:metrics},ctx);assert.equal(pose.unreadable,true);assert.equal(pose.kind,'unavailable');
- ctx.getSettings=()=>({surfaceFallback:true});assert.equal((await place({frame:0,aspect:.4,textMetrics:metrics},ctx)).kind,'view-fallback');
+ ctx.getSettings=()=>({fallback:'floating'});assert.equal((await place({frame:0,aspect:.4,textMetrics:metrics},ctx)).kind,'view-fallback');
 });
 test('blocked surfaces do not become a floating eye-facing panel',async()=>{
  const ctx=surfaceContext();ctx.visible=async(_,pts)=>pts.map(()=>false);
@@ -38,7 +38,7 @@ test('blocked surfaces do not become a floating eye-facing panel',async()=>{
 });
 
 test('optional fallback is readable, follows the recorded camera, and returns to a surface',async()=>{
- const ctx=surfaceContext();ctx.getSettings=()=>({surfaceFallback:true});
+ const ctx=surfaceContext();ctx.getSettings=()=>({fallback:'floating'});
  const visible=ctx.visible;ctx.visible=async(_,pts)=>pts.map(()=>false);
  const response={frame:0,aspect:.4,textMetrics:metrics};
  const fallback=await place(response,ctx);assert.equal(fallback.kind,'view-fallback');
@@ -48,7 +48,7 @@ test('optional fallback is readable, follows the recorded camera, and returns to
  assert.ok(p.distanceTo(new THREE.Vector3(0,0,-1.25))<1e-8);
  ctx.frameCamera=()=>camera();ctx.visible=visible;
  assert.equal((await place(response,ctx)).kind,'plane');
- ctx.visible=async(_,pts)=>pts.map(()=>false);ctx.getSettings=()=>({surfaceFallback:false});
+ ctx.visible=async(_,pts)=>pts.map(()=>false);ctx.getSettings=()=>({fallback:'fixed'});
  assert.equal((await place(response,ctx)).unreadable,true);
 });
 
