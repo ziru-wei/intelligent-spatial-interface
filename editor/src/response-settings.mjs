@@ -19,8 +19,10 @@ export const MODS={
   overrides:['textResponse','autoHide','fixedText','resumeOnResponse','fallback'],
   options:{removeOnHandApproach:{label:'Remove effect when hand approaches box',kind:'bool',default:false,title:'Hide the highlight and arrow as soon as a detected hand with valid recorded depth enters the approach range, including on a paused frame. Text stays visible.'},
    handApproachDistance:{label:'Hand approach distance',kind:'range',default:.25,min:.05,max:.5,step:.01,format:v=>`${Math.round(v*100)} cm`,title:'Distance to the box surface, with tolerance for recording depth and alignment. Default 25 cm; increase if touches are missed.'}}},
- ego:{label:'Object mod',title:'Answers about a thing in the room are told by it: a bubble above the object, the object highlighted (its model bounces or changes colour; else its box)',owns:r=>!!r?.ego,
-  overrides:['textResponse','autoHide','fixedText','resumeOnResponse','fallback']}
+ ego:{label:'Object mod',title:'Answers about a thing in the room are told by it: a bubble on the object, the object highlighted (its model bounces, grows or changes colour; else its box)',owns:r=>!!r?.ego,
+  overrides:['textResponse','autoHide','fixedText','resumeOnResponse','fallback'],
+  options:{removeOnHandTouch:{label:'Remove effect when hand touches object',kind:'bool',default:false,title:'Each highlighted object loses its effect or highlight once a detected hand with valid recorded depth touches it, including on a paused frame. Text stays visible.'},
+   handTouchDistance:{label:'Hand touch distance',kind:'range',default:.1,min:.02,max:.3,step:.01,format:v=>`${Math.round(v*100)} cm`,title:'Distance to the object\'s box surface that counts as a touch, with tolerance for recording depth and alignment. Default 10 cm.'}}}
 };
 const KEY='spatial-take:response-settings',VERSION=2;
 

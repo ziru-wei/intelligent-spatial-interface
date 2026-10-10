@@ -63,7 +63,7 @@ export async function jev_call_mod(ask,question,context,trace=()=>{}){
 // from jev_call_mod (its own 0-1 score); when both it and another mod fit, the main object decides: in view at the question's frame
 // (and not hidden), the objects carry it, else the other mod does. Exactly one mod runs.
 export const EGO_MIN=.5,EGO_VISIBLE=.5,EGO_MAX_OBJECTS=6,EGO_ALSO_MAX_CANDIDATES=40;
-export const EGO_EFFECTS={bounce:'A short bounce: draws the eye to an object the user should act on, use or go to now.',color:'A colour wash: marks an object whose state or information the answer is about.'};
+export const EGO_EFFECTS={bounce:'A short bounce: draws the eye to an object the user should act on, use or go to now.',grow:'A swell: the object briefly grows larger; stresses an object the answer is about, e.g. one to take, use or look at.',color:'A colour wash: marks an object whose state or information the answer is about.'};
 export const EGO_COLORS={calm:'Calm teal: neutral information, all is well.',attention:'Warm yellow: worth noticing or doing soon.',warning:'Red: a problem, urgent or unsafe.'};
 const egoAvailable=context=>!!(context.interaction?.ego_mod&&context.ego_catalog?.length);
 export async function jev_call_is_ego(ask,question,context){

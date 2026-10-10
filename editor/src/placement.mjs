@@ -5,8 +5,8 @@ import {TEXT_VIEW,textViewMetrics,viewSizedWidth,footprintPoints,centeredPose} f
 // Where an agent response appears in the room: the pose of a text plane (local +Z = the side it is read from, +Y = text up) and its
 // width in metres.
 //
-//   0. An answer the object mod carries (response.ego, src/ego.mjs) is a bubble just above its main object, turned to the viewer, with
-//      a line down to the object; while that object is out of the recorded view, the fallback of step 3 shows it instead.
+//   0. An answer the object mod carries (response.ego, src/ego.mjs) is a bubble on its main object, turned to the viewer: above it with
+//      a line down to it, else on its side facing the viewer; while no spot on it is in the recorded view, the fallback of step 3 shows it.
 //   1. A placed answer keeps its world anchor while it stays readable, visible, on its surface and uncluttered (a short grace period,
 //      longer with Stability, rides out brief losses).
 //   2. Otherwise it goes on the surface the person relates to at the response's frame (src/spatial-relations.mjs): A the desk top under
@@ -87,23 +87,37 @@ async function surfacePlacement(response,ctx){
  if(!pose)return retained||unavailable(eye,viewQ,`No readable spot on ${relation.surfaceId} (${relation.relation})`);
  state.badSince=null;return {...pose,relation:relation.relation,relationKind:relation.kind};
 }
-// An answer the objects carry (object mod): a bubble above its main object, upright and turned to the viewer, sized for the view like
-// any answer. It stays put while the viewer's direction to it turns less than BUBBLE_TURN; out of view, the fallback (Fixed / Floating)
-// shows it until the object is back. ctx.egoTarget(id) → {center, size} in the scene.
+// An answer the objects carry (object mod): a bubble on its main object, upright and turned to the viewer, sized for the view like any
+// answer. Best just above the object, with a line down to its top; when that is not in the recorded view (a tall object, a close one,
+// the view cut off above it), the bubble comes down onto the object's side that faces the viewer, then sideways along it, wherever it
+// fits in the view first. It stays put while it is in view and the viewer's direction to the object turns less than BUBBLE_TURN. When
+// no spot on the object is in view, the fallback (Fixed / Floating) shows it until the object is back. ctx.egoTarget(id) → {center, size, yaw}.
 const BUBBLE_GAP=.06,BUBBLE_TURN=THREE.MathUtils.degToRad(4);
 function bubblePlacement(response,ctx){
   const t=ctx.egoTarget?.(response.ego.main);if(!t)return null;
   const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),aspect=response.aspect||.45,eye=camera.position;
-  const top=new THREE.Vector3(t.center[0],t.center[1]+t.size[1]/2,t.center[2]),yaw=Math.atan2(eye.x-top.x,eye.z-top.z);
+  const center=new THREE.Vector3(...t.center),top=center.clone().setY(t.center[1]+t.size[1]/2),yaw=Math.atan2(eye.x-center.x,eye.z-center.z);
+  const quaternion=new THREE.Quaternion().setFromAxisAngle(UP,yaw),inView=pose=>textViewMetrics(centeredPose(pose,aspect),camera,viewport,response.textMetrics);
   const previous=response.previousPose;
-  if(previous?.kind==='bubble'&&previous.anchor&&new THREE.Vector3(...previous.anchor).distanceTo(top)<1e-4&&Math.abs(Math.atan2(Math.sin(yaw-previous.yaw),Math.cos(yaw-previous.yaw)))<BUBBLE_TURN){
-    const m=textViewMetrics(centeredPose(previous,aspect),camera,viewport,response.textMetrics);
-    if(m.inView)return {...previous,reusedSurface:true,viewMetrics:{...m,points:undefined}};
+  if(previous?.kind==='bubble'&&previous.objectId===response.ego.main&&previous.objectCenter&&center.distanceTo(new THREE.Vector3(...previous.objectCenter))<1e-4
+    &&Math.abs(Math.atan2(Math.sin(yaw-previous.yaw),Math.cos(yaw-previous.yaw)))<BUBBLE_TURN){
+    const m=inView(previous);if(m.inView)return {...previous,reusedSurface:true,viewMetrics:{...m,points:undefined}};
   }
-  const quaternion=new THREE.Quaternion().setFromAxisAngle(UP,yaw),width=viewSizedWidth(top,quaternion,camera,viewport,response.textMetrics,aspect);
-  const pose={position:top.clone().addScaledVector(UP,BUBBLE_GAP+width*aspect/2),quaternion,width,align:'center',kind:'bubble',anchor:top.toArray(),yaw,objectId:response.ego.main};
-  const m=textViewMetrics(centeredPose(pose,aspect),camera,viewport,response.textMetrics);
-  return m.inView?{...pose,viewMetrics:{...m,points:undefined}}:unavailable(eye,camera.getWorldQuaternion(new THREE.Quaternion()),'The object is out of view');
+  // The object's footprint seen from the eye: its half depth toward the viewer and half width across (yaw-rotated box).
+  const a=THREE.MathUtils.degToRad(t.yaw||0),toEye=new THREE.Vector3(eye.x-center.x,0,eye.z-center.z).normalize(),across=new THREE.Vector3(toEye.z,0,-toEye.x);
+  const half=dir=>Math.abs(dir.x*Math.cos(a)-dir.z*Math.sin(a))*t.size[0]/2+Math.abs(dir.x*Math.sin(a)+dir.z*Math.cos(a))*t.size[2]/2;
+  const front=half(toEye)+.02,side=half(across);
+  const candidates=[{at:top,above:true}];
+  for(const k of [.25,.5,.75])candidates.push({at:center.clone().addScaledVector(toEye,front).setY(top.y-k*t.size[1])});
+  for(const k of [-.5,.5,-1,1])candidates.push({at:center.clone().addScaledVector(toEye,front).addScaledVector(across,k*side).setY(top.y-.25*t.size[1])});
+  for(const c of candidates){
+    const width=viewSizedWidth(c.at,quaternion,camera,viewport,response.textMetrics,aspect),height=width*aspect;
+    // Above: its lower edge just over the top. On the side: centred there, but never lower than the object's bottom.
+    const position=c.above?c.at.clone().addScaledVector(UP,BUBBLE_GAP+height/2):c.at.clone().setY(Math.max(c.at.y,center.y-t.size[1]/2+height/2));
+    const pose={position,quaternion,width,align:'center',kind:'bubble',anchor:c.above?top.toArray():null,yaw,objectId:response.ego.main,objectCenter:center.toArray()};
+    const m=inView(pose);if(m.inView)return {...pose,viewMetrics:{...m,points:undefined}};
+  }
+  return unavailable(eye,camera.getWorldQuaternion(new THREE.Quaternion()),'No spot on the object is in view');
 }
 export async function place(response,ctx){
   const bubble=response.ego?.main?bubblePlacement(response,ctx):null;
