@@ -249,11 +249,12 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
       for(const r of list){
         const old=widgets.get(r.id);
         if(old&&old.userData.response.component_key===r.component_key)continue;
-        if(old&&r.reserve_text&&updateResponseWidget(old,r)){changed=true;continue;}
+        // Streamed text updates in place; an object mod part that arrives meanwhile (or changes) places the answer again, on its object.
+        if(old&&r.reserve_text&&(old.userData.response.ego?.main||null)===(r.ego?.main||null)&&updateResponseWidget(old,r)){changed=true;continue;}
         const q=questions.find(q=>q.id===r.question_id),frame=q?.frame??r.frame;
         const w=await createResponseWidget(r,ctx,list.filter(o=>o.id<r.id&&o.frame===r.frame).length,frame,old);
         const current=presentationResponses(sourceResponses,questions,hold,deliveryClocks()).find(p=>p.id===r.id);
-        if(gen!==generation||epoch!==placementEpoch||!current||(current.component_key!==r.component_key&&!updateResponseWidget(w,current))){dispose(w);continue;}
+        if(gen!==generation||epoch!==placementEpoch||!current||(current.component_key!==r.component_key&&((current.ego?.main||null)!==(r.ego?.main||null)||!updateResponseWidget(w,current)))){dispose(w);continue;}
         if(old){group.remove(old);dispose(old);}
         widgets.set(r.id,w);group.add(w);changed=true;
       }

@@ -48,7 +48,7 @@ def for_jev(items):
     """The catalog as Jev sees it: names, kinds and zones; no geometry."""
     return [dict(id=i['id'], label=i['label'], kind=i['kind'], zone=i['zone'], has_model=i['has_model']) for i in items]
 
-EFFECTS = ('bounce', 'color'); COLORS = ('calm', 'attention', 'warning')
+EFFECTS = ('bounce', 'grow', 'color'); COLORS = ('calm', 'attention', 'warning')
 
 def resolve(d, selection):
     """selection: {objects: [ids], main: id, effect: {type, color?}}: the ids must be in the catalog; main among objects."""

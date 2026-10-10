@@ -93,7 +93,9 @@ function egoTarget(id){
   if(id.startsWith('comp:')){const i=components.get(id.slice(5));if(!i)return null;i.root.updateWorldMatrix(true,true);const box=new THREE.Box3().setFromObject(i.root);if(box.isEmpty())return null;
     const m=components.library.get(i.spec.component);return {center:box.getCenter(new THREE.Vector3()).toArray(),size:box.getSize(new THREE.Vector3()).toArray(),yaw:0,root:i.root,model:m?.kind==='box'?null:i.root};}
   return null;}
-const egoScene=createEgo({getTarget:egoTarget});
+const egoScene=createEgo({getTarget:egoTarget,lighting:{environment:scene.environment,lights:scene.children.filter(o=>o.isLight).map(l=>l.clone())}});
+const egoApproach=createApproachRemoval();
+const egoStatus=Object.assign(document.createElement('p'),{className:'muted',id:'ego-status',hidden:true});
 const findmyApproach=createApproachRemoval();
 const findmyStatus=Object.assign(document.createElement('p'),{className:'muted',id:'findmy-status',hidden:true});
 const handPerception=createHandPerception();
@@ -143,7 +145,7 @@ const responseSettings=loadResponseSettings(),forResponse=r=>resolveSettings(res
 const weatherScene=createWeatherScene({scene,getStability:()=>resolveSettings(responseSettings,'weather').stability,getCamera:()=>camera,getRoom:()=>roomParts?.userData.parts.space||room,getOccluders:()=>[roomParts?.userData.parts.space,roomParts?.userData.parts.recording].filter(Boolean),getDepthOccluder:c=>c===camera&&depths.has(index)?depthOccluder:null,getObjects:()=>components.instances.filter(i=>i.root.visible).map(i=>i.root),onAnimate:()=>update(),
   onLabel:info=>{weatherPreview?.render(info);const el=$('weather-status');el.hidden=!info;if(info){const e=info.entry,label=`${e.label} · ${e.summary} · ${e.temp_c} °C${info.total>1?` · ${info.index}/${info.total}`:''}${info.target?'':' · Look at a layout surface'}`;if(el.textContent!==label)el.textContent=label;}}});
 weatherPreview=createWeatherPreview($('weather-preview'),weatherScene.playback,()=>update());
-createResponseSettingsPanel({root:$('response-settings'),settings:responseSettings,extra:{weather:[$('weather-preview'),$('weather-status')],findmy:[findmyStatus]},
+createResponseSettingsPanel({root:$('response-settings'),settings:responseSettings,extra:{weather:[$('weather-preview'),$('weather-status')],findmy:[findmyStatus],ego:[egoStatus]},
   onChange:async(_,{mod,enabled,option})=>{
     if(mod==='weather'&&enabled!=null){if(enabled&&session?.frames[index].depth)await depthMap(index);weatherScene.setEnabled(enabled);agent?.report(userState());}
     if(mod==='findmy'){
@@ -151,10 +153,15 @@ createResponseSettingsPanel({root:$('response-settings'),settings:responseSettin
       if(responseSettings.mods.findmy.enabled&&resolveSettings(responseSettings,'findmy').removeOnHandApproach&&session?.frames[index].depth)await depthMap(index);
       if(enabled!=null)agent?.report(userState());
     }
+    if(mod==='ego'){
+      if(enabled===false||option==='removeOnHandTouch'||option==='handTouchDistance')egoApproach.reset();
+      if(responseSettings.mods.ego.enabled&&resolveSettings(responseSettings,'ego').removeOnHandTouch&&session?.frames[index].depth)await depthMap(index);
+      if(enabled!=null)agent?.report(userState());
+    }
     agent?.refreshSettings();update();}});
 $('enable-response-mod').onclick=()=>{const mod=$('enable-response-mod').dataset.mod;if(MODS[mod]&&!responseSettings.mods[mod].enabled)$(`${mod}-mod`).click();};
 weatherScene.setEnabled($('weather-mod').checked);
-twin.setOverlay(weatherScene);twin.setPresentation({get group(){return agent?.group;},get controls(){return weatherSurfacePreview?.mesh;},render:(r,c)=>{agent?.renderAfter(r,c,weatherSurfacePreview?.mesh,index,false);findmyScene.render(r,c);egoScene.render(r,c,{bounce:false});}});
+twin.setOverlay(weatherScene);twin.setPresentation({get group(){return agent?.group;},get controls(){return weatherSurfacePreview?.mesh;},render:(r,c)=>{agent?.renderAfter(r,c,weatherSurfacePreview?.mesh,index,false);findmyScene.render(r,c);egoScene.render(r,c,{copies:false});}});
 /** A gizmo moved, turned or scaled the selected component: its spec follows (scale stays one number while uniform; a box's stays its size). */
 function fromGizmo(o){if(fine&&o===fine.object){fineMoved(o);return;}const r=v=>+v.toFixed(4),d=v=>+THREE.MathUtils.radToDeg(v).toFixed(2),sc=o.scale.toArray().map(r);
   setSelected({position:o.position.toArray().map(r),rotation:[d(o.rotation.x),d(o.rotation.y),d(o.rotation.z)],scale:!Array.isArray(components.get(selected)?.spec.scale)&&Math.abs(sc[0]-sc[1])<1e-4&&Math.abs(sc[1]-sc[2])<1e-4?sc[0]:sc},{history:false});}
@@ -189,7 +196,17 @@ function paint(){
   }
   findmyScene.setResponse(responseSettings.mods.findmy.enabled&&!removed?found:null);
   const egoAnswer=currentResponses.find(r=>r.question_id===latestQuestion&&r.ego);
-  egoScene.setResponse(responseSettings.mods.ego.enabled?egoAnswer:null);if(egoScene.active)requestAnimationFrame(update);   // effects animate
+  egoScene.setResponse(responseSettings.mods.ego.enabled?egoAnswer:null);
+  // Each object's effect goes once a hand (with valid recorded depth) touches its box, when Remove effect on touch is on.
+  const touch=resolveSettings(responseSettings,'ego');egoStatus.hidden=true;
+  if(responseSettings.mods.ego.enabled&&touch.removeOnHandTouch&&egoAnswer){
+    const handData=spatialHands(),gone=[];let nearest=null;
+    for(const o of egoAnswer.ego.objects){const t=egoTarget(o.id),distance=t?handBoxDistance(handData,t):null;if(distance!=null)nearest=Math.min(nearest??Infinity,distance);
+      if(egoApproach.update({key:JSON.stringify([agent.conversation,egoAnswer.question_id,o.id]),frame:index,enabled:true,distance,distanceM:touch.handTouchDistance}))gone.push(o);}
+    egoScene.setRemoved(gone.map(o=>o.id));
+    egoStatus.hidden=false;egoStatus.textContent=gone.length?`Effect removed · ${gone.map(o=>o.label).join(', ')} touched`:handData.status==='no-depth'?'Hand touch needs recorded depth':nearest==null?'Waiting for a hand with valid depth':`Hand to object · ${nearest.toFixed(2)} m`;
+  }else egoScene.setRemoved([]);
+  if(egoScene.active)requestAnimationFrame(update);   // effects animate
   const latest=weatherResponse(currentResponses);
   weatherScene.setResponse($('weather-mod').checked&&latest?.weather?latest:null);weatherScene.refresh();
   agent?.orient(camera);
@@ -197,7 +214,7 @@ function paint(){
   weatherSurfacePreview?.update(weatherWidget?.userData.text?weatherWidget:null,responses);
   // Hide only during the recorded-camera render, including its shadow pass.
   const hidden=components.instances.filter(i=>i.root.visible&&!visibleInVideo(i)).map(i=>i.root);
-  for(const r of hidden)r.visible=false;hidden.push(...egoScene.hideBouncing());
+  for(const r of hidden)r.visible=false;hidden.push(...egoScene.hideOriginals());
   try{renderer.shadowMap.enabled=$('shadows').checked;if(renderer.shadowMap.enabled)aimShadow();catchers.visible=$('shadows').checked&&components.instances.some(i=>i.root.visible);ground.visible=!components.instances.some(i=>i.root.visible&&i.spec.mount==='wall');
     const weatherVisible=weatherScene.group.visible,controls=weatherSurfacePreview?.mesh,controlVisible=controls?.visible;
     if(agent)agent.group.visible=false;if(controls)controls.visible=false;weatherScene.group.visible=false;
@@ -275,7 +292,7 @@ async function setFrame(i,{realtime=false,preparedHands=null,generation=null}={}
  if(generation!=null&&generation!==playbackGeneration)return;
  if(!preparedHands)playbackGeneration++;
  const epoch=playbackGeneration,ticket=++requested;
- const needDepth=($('depth-occlude').checked||$('weather-mod').checked||(responseSettings.mods.findmy.enabled&&resolveSettings(responseSettings,'findmy').removeOnHandApproach))&&session.frames[i].depth;
+ const needDepth=($('depth-occlude').checked||$('weather-mod').checked||(responseSettings.mods.findmy.enabled&&resolveSettings(responseSettings,'findmy').removeOnHandApproach)||(responseSettings.mods.ego.enabled&&resolveSettings(responseSettings,'ego').removeOnHandTouch))&&session.frames[i].depth;
  const [tx,,hands]=await Promise.all([texture(i),needDepth?depthMap(i):null,preparedHands||handJobs.request(i)]);
  if(ticket!==requested||epoch!==playbackGeneration||!hands)return;
  index=i;currentHandData=hands;
@@ -980,4 +997,4 @@ if(saved||sceneSpecs.length)await setComposition([...sceneSpecs,...takeSpecs],nu
 if(!saved&&!params.has('placement')&&!toSpace){await addComponent({component:'calibration-cube',position:[0,0,-2.5]});}
 if(params.has('placement')){const u=new URL(params.get('placement'),location.href);if(u.origin!==location.origin)throw Error('Placement URL must use this server');const response=await fetch(u);if(!response.ok)throw Error('Placement not found');await loadPlacement(await response.json());}
 weatherSurfacePreview=await createWeatherSurfacePreview(scene,weatherScene.playback,()=>update());weatherSurfacePreview.attach($('stage'),()=>camera);weatherSurfacePreview.attach($('twin'),()=>twin.camera);
-await startAgent();new ResizeObserver(()=>update()).observe($('stage'));window.replay={ready:true,agent,get textSurfaces(){return textSurfaces;},get surfaceOffsets(){return surfaceOffsets;},relationAt,get handData(){return currentHandData;},handPerception,recordingHands,handCompositor,spatialHands,findmyApproach,findmyScene,weatherScene,weatherSurfacePreview,layout,editLayout,components,addComponent,loadGLB:glb,select,setSelected,editObjects,get selected(){return selected;},get anchor(){return anchor;},fineTune:{start:startFineTune,end:endFineTune,get state(){return fine;}},setFrame,at,placement,applyPlacement,loadPlacement,depthMap,surfaceAt,visibleIn,session,renderer,camera,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}
+await startAgent();new ResizeObserver(()=>update()).observe($('stage'));window.replay={ready:true,agent,get textSurfaces(){return textSurfaces;},get surfaceOffsets(){return surfaceOffsets;},relationAt,get handData(){return currentHandData;},handPerception,recordingHands,handCompositor,spatialHands,findmyApproach,findmyScene,egoScene,egoApproach,egoTarget,weatherScene,weatherSurfacePreview,layout,editLayout,components,addComponent,loadGLB:glb,select,setSelected,editObjects,get selected(){return selected;},get anchor(){return anchor;},fineTune:{start:startFineTune,end:endFineTune,get state(){return fine;}},setFrame,at,placement,applyPlacement,loadPlacement,depthMap,surfaceAt,visibleIn,session,renderer,camera,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}
