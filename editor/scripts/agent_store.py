@@ -101,7 +101,7 @@ def running_question(d):
     if not running: return None, None
     _, c, q = max(running, key=lambda x: x[0]); return c, q
 
-def ask(d, cid, frame, t, text, live=None, weather_mod=False, text_response=None, findmy_mod=False, ego_mod=False):
+def ask(d, cid, frame, t, text, live=None, weather_mod=False, text_response=None, findmy_mod=False, ego_mod=False, selection=None):
     """live = {read_s}: asked in the editor, which held the video on the question's frame while the agent answered and for `read_s`
     real seconds after the answer appeared; replays hold the same way, using the measured latency.
     text_response = {default: bool, <mod>: bool}: whether a text answer is wanted, for answers in no mod and per mod that is on
@@ -113,6 +113,7 @@ def ask(d, cid, frame, t, text, live=None, weather_mod=False, text_response=None
         if not 0 <= read_s <= 30: raise ValueError('Bad live timing.')
         q['live'] = dict(read_s=read_s)
     if isinstance(text_response, dict): q['text_response'] = {str(k): v is not False for k, v in text_response.items()}
+    if selection: q['selection'] = selection   # an information box the user looked at, pointed at or touched (scripts/info_context.py selection)
     c['questions'].append(q); _write(d, c); lock.notify_all(); return dict(q, conversation=cid)
 
 def take_next(d):
@@ -127,6 +128,44 @@ def take_next(d):
     if not queued: return None
     _, c, q = min(queued, key=lambda x: x[0]); q.update(status='running', started=time.time()); _write(d, c)
     return dict(q, conversation=c['id'])
+
+def set_info(d, qid, info_key, interaction_id=None, source=None):
+    """The info key a question was answered with (scripts/jev-pipeline.mjs info route) and the language model's interaction id, so a
+    follow-up about the same item continues from it instead of sending the info again."""
+    c, q = _find_question(d, qid)
+    if not q: raise ValueError('Unknown question.')
+    if not isinstance(info_key, str) or not info_key.strip() or len(info_key) > 48: raise ValueError('Bad info key.')
+    if interaction_id is not None and (not isinstance(interaction_id, str) or len(interaction_id) > 200): raise ValueError('Bad interaction id.')
+    q['info'] = dict(key=info_key, source=source if source in ('selection', 'follow-up') else 'selection', **({'interaction_id': interaction_id} if interaction_id else {}))
+    _write(d, c); return q['info']
+
+def active_info(conversation, current):
+    """The info item of the conversation's last answered question before this one ({key, question_id, interaction_id?}), if it used one."""
+    if not conversation or not current: return None
+    earlier = [q for q in conversation.get('questions', []) if q.get('created', 0) < current.get('created', 0) and q.get('status') == 'answered']
+    last = earlier[-1] if earlier else None
+    return dict(last['info'], question_id=last['id']) if last and last.get('info') else None
+
+def response_info(c, q, value):
+    """What an info answer is about, for placing it next to its box (src/placement.mjs): {key, box_id}. The box is the one the user
+    selected when asking, else the one selected for the same key earlier in the conversation, else None (the editor takes the nearest
+    box of that key)."""
+    if value is None: return None
+    k = value.get('key') if isinstance(value, dict) else None
+    if not isinstance(k, str) or not k.strip() or len(k) > 48: raise ValueError('Bad response info.')
+    asked = [x for x in c.get('questions', []) if x.get('created', 0) <= q.get('created', 0)]
+    box = next((x['selection']['box_id'] for x in reversed(asked) if x.get('selection', {}).get('key') == k), None)
+    return dict(key=k, box_id=box)
+
+def log_placement(d, qid, event):
+    """One placement event of a question's answer, appended to agent/placement-log/q<id>.jsonl (a debug record: where the answer was
+    put, from where, what was weighed, when it locked; src/app.mjs). Kept apart from the conversations; at most 64 KB per event."""
+    if type(qid) is not int or qid < 0: raise ValueError('Bad question id.')
+    line = json.dumps(event, ensure_ascii=False)
+    if not isinstance(event, dict) or len(line) > 65536: raise ValueError('Bad placement event.')
+    f = folder(d)/'placement-log'/f'q{qid}.jsonl'; f.parent.mkdir(parents=True, exist_ok=True)
+    with f.open('a') as out: out.write(line+'\n')
+    return dict(ok=True)
 
 def add_trace(d, qid, step):
     """One step of the agent's work on a question (tool call, message, error), with ms since the turn started."""
@@ -185,6 +224,9 @@ def add_response(d, body):
         question=q['text'] if q else str(body.get('question') or ''), question_id=q['id'] if q else None, title=str(body.get('title') or ''),
         body=str(body.get('body') or ''), items=[str(i) for i in body.get('items') or []][:12], anchor=body.get('anchor') or None)
     if body.get('reserve_text') is True: r['reserve_text'] = True
+    if body.get('info') is not None:
+        if part != 'text' or not q: raise ValueError('Only a text part of a question can carry info.')
+        r['info'] = response_info(c, q, body['info'])
     if sum(body.get(k) is not None for k in ('weather', 'findmy', 'ego')) > 1: raise ValueError('Only one mod per response.')
     if body.get('ego') is not None:
         if not at.get('ego_mod'): raise ValueError('Object mod was not enabled for this question.')
@@ -247,6 +289,7 @@ def _add_stream(d, c, q, body):
         c['responses'].append(r)
         q.setdefault('parts', {})['text'] = dict(response=r['id'], latency=at)
     r.update(title=title, body=text, items=[], anchor=anchor, referenced_entities=refs, reserve_text=True)
+    if body.get('info') is not None: r['info'] = response_info(c, q, body['info'])
     r['stream'].update(seq=stream['seq'], status=stream['status'])
     q['parts']['text']['status'] = stream['status']
     r['stream']['updates'].append(dict(seq=stream['seq'], status=stream['status'], at=at, created=now, title=title, body=text, anchor=anchor, referenced_entities=refs))
@@ -255,4 +298,8 @@ def _add_stream(d, c, q, body):
 
 def status(d, cid):
     c = read(d, cid); busy = running_question(d)[1] is not None
-    return dict(connected=busy or time.time()-bridge_seen.get(str(d), 0) < 40, questions=c['questions'], responses=c['responses'])
+    # A text answer of an info question published without its item (an older bridge) still gets it from the question.
+    questions = {q['id']: q for q in c['questions']}
+    responses = [dict(r, info=response_info(c, questions[r['question_id']], dict(key=questions[r['question_id']]['info']['key'])))
+                 if r.get('part') == 'text' and not r.get('info') and questions.get(r.get('question_id'), {}).get('info') else r for r in c['responses']]
+    return dict(connected=busy or time.time()-bridge_seen.get(str(d), 0) < 40, questions=c['questions'], responses=responses)

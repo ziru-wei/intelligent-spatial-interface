@@ -34,3 +34,9 @@ test('repeated names are numbered in zone order then along x; children follow th
   const boxes=[box('c1','cabinet',5),box('c2','cabinet',1),box('c3','Cabinet 7',2),box('k','cabinet/layer1',5,[.3,.1,.3]),box('t','table',3)];
   assert.deepEqual(numberDuplicates(boxes,rooms),{c2:'cabinet 1',c3:'Cabinet 2',c1:'cabinet 3',k:'cabinet 3/layer1'});
   assert.deepEqual(numberDuplicates([box('t','table',1)],rooms),{});});
+test('furniture carrying info is numbered like any furniture; its info key is its own and stays',async()=>{
+  const {numberDuplicates}=await import('../src/layout-tree.mjs');
+  const box=(id,label,x,info)=>({id,label,center:[x,1,0],size:[.4,.6,.4],yaw:0,kind:'object',...(info?{info}:{})});
+  const boxes=[box('s1','lab shelf',0,'lab philosophy'),box('s2','lab shelf',2,'lab philosophy')];
+  assert.deepEqual(numberDuplicates(boxes),{s1:'lab shelf 1',s2:'lab shelf 2'});
+  assert.ok(boxes.every(b=>b.info==='lab philosophy'));});

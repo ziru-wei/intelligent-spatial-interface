@@ -5,17 +5,24 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const recording=process.argv[2];if(!recording)throw Error('Usage: node scripts/prepare-recording-hands.mjs ./spaces/<scene>/scenarios/<take>/session.json');
-const server=spawn(root+'.venv/bin/python',[root+'scripts/server.py','0'],{cwd:root,stdio:['ignore','pipe','pipe']});let browser;
+const server=spawn(root+'.venv/bin/python',[root+'scripts/server.py','0'],{cwd:root,stdio:['ignore','pipe','pipe']});let browser,watchdog;
+// Drain access logs continuously: an unread pipe fills and blocks HTTP replies.
+let serverErrors='';server.stderr.on('data',chunk=>{serverErrors=(serverErrors+chunk).slice(-8000);});
 try{
  const base=await new Promise((resolve,reject)=>{
   let output='';const timer=setTimeout(()=>reject(Error('Local preparation server did not start')),15000);
   server.stdout.on('data',chunk=>{output+=chunk;const match=output.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0]);}});
-  server.once('error',e=>{clearTimeout(timer);reject(e);});server.once('exit',code=>{clearTimeout(timer);reject(Error(`Preparation server exited (${code})`));});
+  server.once('error',e=>{clearTimeout(timer);reject(e);});server.once('exit',code=>{clearTimeout(timer);reject(Error(`Preparation server exited (${code}): ${serverErrors}`));});
  });
  browser=await chromium.launch({channel:'chrome',headless:true});
  const page=await browser.newPage();
  await page.route('**/__prepare_hands',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>Offline hand preparation</title>'}));
- await page.exposeFunction('handProgress',value=>console.log(JSON.stringify({progress:value})));
+ let stalled=false;
+ const heartbeat=()=>{clearTimeout(watchdog);watchdog=setTimeout(()=>{stalled=true;browser.close().catch(()=>{});},90000);};
+ await page.exposeFunction('handProgress',value=>{
+  heartbeat();if(value.cached%100===0||value.cached===value.total)console.log(JSON.stringify({progress:value}));
+ });
+ heartbeat();
  await page.goto(base+'/__prepare_hands');
  const result=await page.evaluate(async recording=>{
   const {createHandPerception}=await import('/src/hand-perception/index.mjs');
@@ -29,10 +36,10 @@ try{
     const image=new Image();image.src=new URL(manifest.frames[i].image,session).href;await image.decode();
     const data=await service.request(`${session.href}#${i}`,image);if(data.status!=='ready')throw Error(`Frame ${i}: ${data.error}`);
     await cache.write(i,data);if(cache.status.error)throw Error(cache.status.error);
-    if(i%100===0)await window.handProgress(cache.status);
+    await window.handProgress(cache.status);
    }
    return cache.status;
   }finally{service.dispose();}
- },recording);
+ },recording).catch(error=>{if(stalled)throw Error('Offline hand preparation made no progress for 90 seconds; retry to resume cached frames.');throw error;});
  if(result.cached!==result.total)throw Error('Hand cache is incomplete');console.log(JSON.stringify({ok:true,...result}));
-}finally{await browser?.close();server.kill();}
+}finally{clearTimeout(watchdog);try{await browser?.close();}finally{server.kill();}}

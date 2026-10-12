@@ -5,12 +5,31 @@ import {viewFixedPose} from './placement-stability.mjs';
 import {pickStyle} from './legibility.mjs';
 import {createLegibilityTracker} from './legibility-temporal.mjs';
 import {questionCaption,captionQuestion} from './question-caption.mjs';
+import {bubbleOutline} from './ego.mjs';
+import {drawWritten,writtenLength,loadOutlines,outlinesReady} from './text-writing.mjs';
 // The agent on a real surface, replayed in scenario time: from the frame a question is asked, its thinking streams as faint text on
 // input area (each step when it really happened); responses alone appear as softly glowing text,
 // followed by reading time, while the video holds on the question's frame (see holdLength()). The text glows in one muted colour
 // picked for the video behind it; only where no colour is legible there does it get a frosted-glass backing (legibility.mjs).
 
 const PX=1024,PAD=64,FONT='system-ui,-apple-system,"PingFang SC","Hiragino Sans GB",sans-serif';
+// Info answers (response.info: about a thing carrying info) are hand-lettered: Mansalva (Google Fonts, linked in index.html), loaded before
+// their first texture is drawn.
+const INFO_FONT=`Mansalva,${FONT}`;let infoFont=null;
+const fontFor=r=>r.info?.key?INFO_FONT:FONT;
+// How answer text is set (Behavior panel, src/app.mjs; setTextBehavior): bodySize scales the whole answer in the room (the body's x-height
+// on screen, src/text-view.mjs), headingSize the heading against the body, showHeading shows or hides the title and markdown headings
+// ("# …", "## …" lines) in the body. writing: an answer that appears while the user waits for it (asked, or replayed) is written
+// character by character at writingSpeed characters per second, writingStrokes drawing each with a pen (src/text-writing.mjs).
+export const TEXT_BEHAVIOR={bodySize:1,headingSize:1,showHeading:true,writing:true,writingStrokes:true,writingSpeed:30};
+let textBehavior={...TEXT_BEHAVIOR};
+export function setTextBehavior(b){textBehavior={...TEXT_BEHAVIOR,...b};}
+function infoFontReady(){
+  if(infoFont)return infoFont;
+  // The font face is declared by the Google stylesheet: wait for it (3 s at most; offline, the system font stands in), then for the face.
+  const link=document.querySelector('link[href*="family=Mansalva"]'),sheet=link&&!link.sheet?new Promise(r=>{link.addEventListener('load',r,{once:true});link.addEventListener('error',r,{once:true});setTimeout(r,3000);}):Promise.resolve();
+  return infoFont=sheet.then(()=>document.fonts?.load('72px Mansalva')).catch(()=>{});
+}
 const AUTO_HIDE_S=5,FADE_S=.4;
 // Clutter rating of the frame region behind the text: share of pixels with a strong luminance gradient (Sobel magnitude > 48/255).
 // Plain walls score about 0-0.03; posters, shelves and clutter well above. It raises the contrast the text colour needs.
@@ -24,35 +43,55 @@ function wrap(ctx,text,width){
   }
   if(line.trim())lines.push(line.trimEnd());return lines;
 }
+// The body's x-height (px): the size measure of a canvas with no text yet (an answer still to stream in).
+function bodyXHeight(ctx,font){ctx.font=`500 46px ${font}`;const m=ctx.measureText('x');return m.actualBoundingBoxAscent+m.actualBoundingBoxDescent||22;}
 // White text with a soft cool glow on a transparent canvas.
+// previousBudget.columns: the canvas width (the line length; the type size is the same in every width, LAYOUT_COLUMNS).
+// An answer objects carry (r.ego: a speech bubble) wraps at EGO_COLUMNS and its canvas is only as wide and tall as its text, so the
+// bubble fits the text (no room kept while it streams).
+const EGO_COLUMNS=640;
 function glowTexture(r,dark=false,previousBudget=null){
-  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),inner=PX-2*PAD,lines=[];
+  const FONT=fontFor(r),ego=!!r.ego,COLS=previousBudget?.columns||(ego?EGO_COLUMNS:PX),reserve=r.reserve_text&&!ego;let W=COLS;
+  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),inner=W-2*PAD,lines=[];
   const add=(text,weight,size,gap,item=false)=>{ctx.font=`${weight} ${size}px ${FONT}`;for(const [i,l] of wrap(ctx,text,inner-(item?48:0)).entries())lines.push({text:l,weight,size,gap:i?6:gap,indent:item,bullet:item&&!i});};
   if(r.findmy?.status==='not_found')add('No mapped location found',600,46,0);
   if(r.findmy?.status==='ambiguous')add('Which item do you mean?',600,46,0);
-  const titleStart=lines.length;if(r.title)add(r.title,700,72,0);
-  const titleCount=lines.length-titleStart,titleLines=r.reserve_text?Math.max(2,titleCount,previousBudget?.titleLines||0):titleCount;
-  for(let i=titleCount;i<titleLines;i++)lines.push({text:'',weight:700,size:72,gap:i?6:0});
-  const bodyStart=lines.length;if(r.body)add(r.body,500,46,18);
-  const bodyCount=lines.length-bodyStart,bodyLines=r.reserve_text?Math.max(4,bodyCount,previousBudget?.bodyLines||0):bodyCount;
+  const {headingSize:hs,showHeading,bodySize}=textBehavior,heading=72*hs;
+  const titleStart=lines.length;if(r.title&&showHeading)add(r.title,700,heading,0);
+  const titleCount=lines.length-titleStart,titleLines=reserve&&showHeading?Math.max(2,titleCount,previousBudget?.titleLines||0):titleCount;   // no room kept for a hidden heading
+  for(let i=titleCount;i<titleLines;i++)lines.push({text:'',weight:700,size:heading,gap:i?6:0});
+  // The body, paragraph by paragraph; a markdown heading line ("# …": the heading size, "## …" and deeper: a little smaller) unless
+  // headings are hidden.
+  const bodyStart=lines.length;
+  if(r.body){let first=true;for(const para of String(r.body).split(/\n+/)){const h=/^\s*(#{1,6})\s+(.*)$/.exec(para);
+    if(h){if(showHeading){add(h[2],700,h[1].length===1?heading:heading*.82,first?18:24);first=false;}continue;}
+    if(para.trim()){add(para,500,46,first?18:14);first=false;}}}
+  const bodyCount=lines.length-bodyStart,bodyLines=reserve?Math.max(4,bodyCount,previousBudget?.bodyLines||0):bodyCount;
   for(let i=bodyCount;i<bodyLines;i++)lines.push({text:'',weight:500,size:46,gap:i?6:18});
   for(const item of r.items||[])add(item,500,46,12,true);
+  // A bubble whose words are still coming (the objects' UI comes first): "…" in it, so the bubble shows at once. Not ink: never written.
+  if(ego&&r.reserve_text&&!lines.some(l=>l.text)){add('…',500,46,0);lines.at(-1).placeholder=true;}
   const footer=Math.max(previousBudget?.footer||0,r.weather&&(r.weather.timeline||r.weather.forecast||[]).length>1&&r.weather.preview?.component!=='weather-single'?352:0);
-  canvas.width=PX;canvas.height=Math.ceil(PAD*2+lines.reduce((h,l)=>h+l.gap+l.size*1.22,0)+footer);canvas.weatherFooter=footer;
-  canvas.layoutBudget={titleLines,bodyLines,footer};
+  if(ego){let widest=0;for(const l of lines){ctx.font=`${l.weight} ${l.size}px ${FONT}`;widest=Math.max(widest,(l.indent?48:0)+ctx.measureText(l.text).width);}W=Math.max(2*PAD+1,Math.ceil(2*PAD+widest));}
+  canvas.width=W;canvas.height=Math.ceil(PAD*2+lines.reduce((h,l)=>h+l.gap+l.size*1.22,0)+footer);canvas.weatherFooter=footer;
+  canvas.layoutBudget={titleLines,bodyLines,footer,columns:COLS};
   // The ink's box in canvas pixels (the glass backs exactly this): widest line, first line's top to last line's baseline area.
   let right=PAD,bottom=PAD;{let y=PAD;for(const l of lines){y+=l.gap;ctx.font=`${l.weight} ${l.size}px ${FONT}`;right=Math.max(right,PAD+(l.indent?48:0)+ctx.measureText(l.text).width);bottom=y+l.size;y+=l.size*1.22;}}
-  const box={x0:PAD,x1:footer||r.reserve_text?PX-PAD:right,y0:PAD,y1:footer||r.reserve_text?canvas.height-32:bottom};
+  const box={x0:PAD,x1:footer||reserve?W-PAD:right,y0:PAD,y1:footer||reserve?canvas.height-32:bottom};
   ctx.textBaseline='top';
   // White: the material's colour tints text and glow alike (one glowing colour, picked per answer in legibility.mjs).
   // Dark text: the halo is a faint soft shadow; a full glow would read as a grey haze around the letters.
-  for(const [blur,color] of dark?[[10,'rgba(255,255,255,.25)']]:[[28,'rgba(255,255,255,.8)'],[8,'rgba(255,255,255,.9)']]){
-    let y=PAD;ctx.shadowBlur=blur;ctx.shadowColor=color;ctx.fillStyle='#ffffff';
-    for(const l of lines){y+=l.gap;ctx.font=`${l.weight} ${l.size}px ${FONT}`;if(l.bullet)ctx.fillText('·',PAD+8,y);ctx.fillText(l.text,PAD+(l.indent?48:0),y);y+=l.size*1.22;}
+  const glow=dark?[[10,'rgba(255,255,255,.25)']]:[[28,'rgba(255,255,255,.8)'],[8,'rgba(255,255,255,.9)']],ink=[];
+  {let y=PAD;for(const l of lines){y+=l.gap;if(l.text&&!l.placeholder)ink.push({text:l.text,font:`${l.weight} ${l.size}px ${FONT}`,size:l.size,x:PAD+(l.indent?48:0),y,bullet:l.bullet,bulletX:PAD+8});y+=l.size*1.22;}}
+  for(const [blur,color] of glow){
+    ctx.shadowBlur=blur;ctx.shadowColor=color;ctx.fillStyle='#ffffff';
+    for(const l of ink){ctx.font=l.font;if(l.bullet)ctx.fillText('·',l.bulletX,l.y);ctx.fillText(l.text,l.x,l.y);}
   }
+  canvas.ink={lines:ink,glow};   // for the writing effect (src/text-writing.mjs)
+  {let y=PAD;for(const l of lines){y+=l.gap;if(l.placeholder){ctx.shadowBlur=0;ctx.font=`${l.weight} ${l.size}px ${FONT}`;ctx.fillStyle='rgba(255,255,255,.75)';ctx.fillText(l.text,PAD,y);}y+=l.size*1.22;}}
   canvas.box=box;
   const xHeights=lines.map(l=>{ctx.font=`${l.weight} ${l.size}px ${FONT}`;const m=ctx.measureText('x');return m.actualBoundingBoxAscent+m.actualBoundingBoxDescent;});
-  canvas.textMetrics={xHeightRatio:(xHeights.length?Math.min(...xHeights):32)/PX,box:{x0:box.x0/PX,x1:box.x1/PX,y0:box.y0/canvas.height,y1:box.y1/canvas.height}};
+  canvas.textMetrics={scale:bodySize,xHeightRatio:(xHeights.length?Math.min(...xHeights):bodyXHeight(ctx,FONT))/W,box:{x0:box.x0/W,x1:box.x1/W,y0:box.y0/canvas.height,y1:box.y1/canvas.height}};
   const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=8;return map;
 }
 // Frosted glass: the video frame behind it, blurred in screen space and mixed with a tint computed from it (legibility.mjs),
@@ -101,20 +140,43 @@ function styleFor(rating){
   if(!rating?.sample)return {text:[1,1,1],glass:null};
   const {pixels,w,h}=rating.sample;return pickStyle(pixels,w,h,rating.clutter);
 }
+// Line lengths an answer may be set in (canvas widths; same type size): the default, three wider and shorter, three narrower and taller. Placement
+// (src/text-surfaces.mjs) takes the one that fits the cleanest spot, e.g. a short wide block in a whiteboard's blank strip. Measured once
+// per text; not for answers with weather controls or carried by an object.
+export const LAYOUT_COLUMNS=[PX,1280,1600,1920,832,640,512];
+const layoutCache=new WeakMap();
+export function textLayouts(r){
+  if(r.weather||r.ego||r.reserve_text&&!r.title&&!r.body)return null;
+  const key=JSON.stringify([r.title,r.body,r.items,textBehavior,!!r.info?.key]),hit=layoutCache.get(r);if(hit?.key===key)return hit.layouts;
+  const layouts=LAYOUT_COLUMNS.map(columns=>{const m=glowTexture(r,false,{columns});const out={columns,aspect:m.image.height/m.image.width,textMetrics:m.image.textMetrics};m.dispose();return out;});
+  layoutCache.set(r,{key,layouts});return layouts;
+}
 // `frame`: where the answer is placed, the frame at which it appears (the user may have turned while the agent was thinking).
 export async function createResponseWidget(r,ctx,stack=0,frame=r.frame,previous=null){
-  const map=glowTexture(r,false,previous?.userData.text.material.map.image.layoutBudget),aspect=map.image.height/map.image.width,pose=await place({...r,frame,aspect,textMetrics:map.image.textMetrics,previousPose:previous?.userData.pose},ctx),width=pose.width,height=width*aspect;
+  if(r.info?.key)await infoFontReady();
+  let map=glowTexture(r,false,previous?.userData.text.material.map.image.layoutBudget),aspect=map.image.height/map.image.width;
+  // A bubble set again as its text streams in: its canvas is as wide as the text (glowTexture), so the same type size takes a width in
+  // proportion to the canvas's (bubbleWidthScale). Its first words (after the "…" it showed while they came) must fit the view wholly
+  // where it is (bubbleRequireInView), else it is placed afresh.
+  const was=previous?.userData.text.material.map.image.width,placeholder=previous?.userData.response.ego&&!previous.userData.response.title&&!previous.userData.response.body;
+  const anchorState=previous?.userData.anchorState||{};
+  const pose=await place({...r,frame,aspect,textMetrics:map.image.textMetrics,layouts:textLayouts(r),previousPose:previous?.userData.pose,anchorState,
+    bubbleWidthScale:was?map.image.width/was:1,bubbleRequireInView:!!placeholder},ctx);
+  if(pose.layout&&pose.layout!==map.image.width){map.dispose();map=glowTexture(r,false,{columns:pose.layout});aspect=map.image.height/map.image.width;}
+  ctx.onPlacement?.(r,pose,frame);
+  const width=pose.width,height=width*aspect;
   const group=new THREE.Group();group.name=`agent-response-${r.id}`;group.position.copy(pose.position);group.quaternion.copy(pose.quaternion);
   // Standing on a surface: position is the bottom edge. Several answers at the same moment stack along the text's up axis.
   const shift=(pose.align==='bottom'?height/2:0)+stack*(r.part?height+.55*width:height*1.15);group.translateY(shift);
   const text=new THREE.Mesh(new THREE.PlaneGeometry(width,height,...SEGMENTS),new THREE.MeshBasicMaterial({map,transparent:true,toneMapped:false,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-8}));
   text.renderOrder=3;group.add(text);
   // Glass: solid exactly over the ink (no margin), then a soft blurred edge fading out beyond it (about one body line).
-  const box=map.image.box,u=width/PX,H=map.image.height,inner=new THREE.Vector2((box.x1-box.x0)*u,(box.y1-box.y0)*height/H),feather=46*1.1*u;
+  const box=map.image.box,WX=map.image.width,u=width/WX,H=map.image.height,inner=new THREE.Vector2((box.x1-box.x0)*u,(box.y1-box.y0)*height/H),feather=46*1.1*u;
   const glass=new THREE.Mesh(new THREE.PlaneGeometry(inner.x+2*feather,inner.y+2*feather,...SEGMENTS),glassMaterial());glass.renderOrder=2;glass.visible=false;
-  glass.position.set(((box.x0+box.x1)/2/PX-.5)*width,(.5-(box.y0+box.y1)/2/H)*height,-.002);
+  glass.position.set(((box.x0+box.x1)/2/WX-.5)*width,(.5-(box.y0+box.y1)/2/H)*height,-.002);
   glass.material.uniforms.size.value.set(inner.x+2*feather,inner.y+2*feather);glass.material.uniforms.inner.value.copy(inner);glass.material.uniforms.feather.value=feather;group.add(glass);
-  group.userData={response:r,text,glass,width,height,aspect,pose,rating:null,kind:pose.kind};bend(text,pose.surface,shift);bend(glass,pose.surface,shift);syncTail(group);
+  // anchorState: carried over when set again (a streamed update).
+  group.userData={response:r,text,glass,width,height,aspect,pose,rating:null,kind:pose.kind,anchorState};bend(text,pose.surface,shift);bend(glass,pose.surface,shift);syncTail(group);
   // The initial style is selected from the composed scene immediately before its first draw.
   return group;
 }
@@ -128,37 +190,82 @@ export function updateResponseWidget(widget,response){
   old.dispose();d.text.material.map=newMap;d.text.material.needsUpdate=true;d.response=response;
   return true;
 }
+// A bubble's fixed look: white text (its light texture), no glass, the dark fill.
+function bubbleStyle(widget){
+ const d=widget.userData;if(d.style?.side==='dark'){const old=d.text.material.map;d.text.material.map=glowTexture(d.response,false,old.image.layoutBudget);old.dispose();d.text.material.needsUpdate=true;}
+ d.style=null;d.legibility?.reset();d.text.material.color.setRGB(1,1,1);d.glass.visible=false;d.bubble?.userData.fill.material.color.set(0x000000);
+}
+const isBubble=w=>w.userData.pose?.kind==='bubble';
 function applyResponseStyle(widget,rating){
+ if(isBubble(widget)){bubbleStyle(widget);return;}
  if(!rating.sample)return;const d=widget.userData;d.legibility||=createLegibilityTracker();
  const style=d.legibility.sample(rating.sample,rating.clutter,performance.now());delete rating.sample;d.rating=rating;paintResponseStyle(widget,style);
 }
 function paintResponseStyle(widget,style){
+ if(isBubble(widget)){bubbleStyle(widget);return;}
  if(!style)return;const d=widget.userData;
   if(d.style?.side!==style.side){const old=d.text.material.map;d.text.material.map=glowTexture(d.response,style.side==='dark',old.image.layoutBudget);old.dispose();d.text.material.needsUpdate=true;}
- d.style=style;d.text.material.color.setRGB(...style.text);d.glass.visible=!!style.glass&&style.glassAlpha>.002;d.glass.material.uniforms.styleOpacity.value=style.glassAlpha;
+ d.style=style;d.text.material.color.setRGB(...style.text);
+ if(d.bubble){const {fill,line}=d.bubble.userData,[r,g,b]=style.text;line.material.color.setRGB(r,g,b);fill.material.color.setScalar(.2126*r+.7152*g+.0722*b>.5?0:1);}d.glass.visible=!!style.glass&&style.glassAlpha>.002;d.glass.material.uniforms.styleOpacity.value=style.glassAlpha;
  if(style.glass){d.glass.material.uniforms.tint.value.setRGB(...style.glass.tint);d.glass.material.uniforms.mixAmount.value=style.glass.mix;}
 }
 function moveResponseWidget(w,pose,stack){
+ // A new line length (pose.layout, src/text-surfaces.mjs): the text is set again in it, in its current style.
+ if(pose.layout&&pose.layout!==w.userData.text.material.map.image.width){const d=w.userData,old=d.text.material.map;
+   const map=glowTexture(d.response,d.style?.side==='dark',{footer:old.image.layoutBudget?.footer||0,columns:pose.layout});
+   d.text.material.map=map;d.text.material.needsUpdate=true;d.aspect=map.image.height/map.image.width;old.dispose();}
  const d=w.userData,width=pose.width,height=width*d.aspect,shift=(pose.align==='bottom'?height/2:0)+stack*(d.response.part?height+.55*width:height*1.15);
  const sameSurface=d.pose?.surfaceId&&d.pose.surfaceId===pose.surfaceId;
  const from=w.position.clone(),fromQ=w.quaternion.clone();
  w.position.copy(pose.position);w.quaternion.copy(pose.quaternion);w.translateY(shift);
  d.surfaceMotion=sameSurface&&(from.distanceTo(w.position)>.002||fromQ.angleTo(w.quaternion)>.01)?{from,fromQ,to:w.position.clone(),toQ:w.quaternion.clone(),start:performance.now(),duration:220}:null;
  d.text.geometry.dispose();d.text.geometry=new THREE.PlaneGeometry(width,height,...SEGMENTS);delete d.text.userData.flat;
- const map=d.text.material.map,box=map.image.box,u=width/PX,H=map.image.height,inner=new THREE.Vector2((box.x1-box.x0)*u,(box.y1-box.y0)*height/H),feather=46*1.1*u;
+ const map=d.text.material.map,box=map.image.box,WX=map.image.width,u=width/WX,H=map.image.height,inner=new THREE.Vector2((box.x1-box.x0)*u,(box.y1-box.y0)*height/H),feather=46*1.1*u;
  d.glass.geometry.dispose();d.glass.geometry=new THREE.PlaneGeometry(inner.x+2*feather,inner.y+2*feather,...SEGMENTS);delete d.glass.userData.flat;
- d.glass.position.set(((box.x0+box.x1)/2/PX-.5)*width,(.5-(box.y0+box.y1)/2/H)*height,-.002);
+ d.glass.position.set(((box.x0+box.x1)/2/WX-.5)*width,(.5-(box.y0+box.y1)/2/H)*height,-.002);
  const uniforms=d.glass.material.uniforms;uniforms.size.value.set(inner.x+2*feather,inner.y+2*feather);uniforms.inner.value.copy(inner);uniforms.feather.value=feather;
  Object.assign(d,{width,height,pose,kind:pose.kind});bend(d.text,pose.surface,shift);bend(d.glass,pose.surface,shift);syncTail(w);
 }
-// A bubble above an object (object mod): a thin line from under its ink down to the object's top (pose.anchor); nothing otherwise.
+// A speech bubble (object mod, pose.kind 'bubble'): a rounded box around the ink, filled (no outline), with a tail to pose.tail (the
+// object, or toward it from the edge of the view: src/placement.mjs). Always white text on a dark fill: no colour adaptation (bubbleStyle).
+// When the
+// object is wholly out of the view (pose.offscreen), a small copy of its 3D model turns slowly at the tail's tip, so one knows who speaks.
+const BUBBLE_FILL=.78,BUBBLE_LINE=0,ICON=.45;   // ICON: the model's size, of the bubble's height
+let modelOf=()=>null;   // object id → its model (Object3D) in the room (createAgentLayer: ctx.egoTarget)
+// A copy of a model for the bubble: its geometry shared (userData.sharedGeometry: not disposed with the widget), unlit materials (the
+// answers' pass has no lights), drawn over everything like the bubble, scaled to fit a unit cube about its centre.
+function modelIcon(model){
+  const root=model.clone(true),box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),c=box.getCenter(new THREE.Vector3());
+  root.traverse(o=>{if(!o.isMesh)return;o.userData.sharedGeometry=true;o.castShadow=o.receiveShadow=false;
+    const lit=m=>new THREE.MeshBasicMaterial({map:m.map||null,color:m.color?m.color.clone():0xffffff,transparent:true,depthTest:false,depthWrite:false,toneMapped:false,side:THREE.DoubleSide});
+    o.material=Array.isArray(o.material)?o.material.map(lit):lit(o.material);o.renderOrder=4;});
+  // The copy keeps the model's world transform, so it sits in the room: undo it, centred at the origin.
+  model.updateWorldMatrix(true,false);const inv=new THREE.Matrix4().makeTranslation(-c.x,-c.y,-c.z);
+  const holder=new THREE.Group(),inner=new THREE.Group();inner.add(root);root.matrixAutoUpdate=false;root.matrix.copy(inv.multiply(model.matrixWorld));
+  inner.scale.setScalar(1/Math.max(1e-3,size.x,size.y,size.z));holder.add(inner);holder.userData.spin=inner;return holder;
+}
 function syncTail(w){
- const d=w.userData,anchor=d.pose?.kind==='bubble'&&d.pose.anchor;
- if(!anchor){if(d.tail)d.tail.visible=false;return;}
- if(!d.tail){d.tail=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.85,depthTest:false,depthWrite:false,toneMapped:false}));d.tail.renderOrder=3;w.add(d.tail);}
- const map=d.text.material.map,bottom=(.5-map.image.box.y1/map.image.height)*d.height-.01;
- const end=new THREE.Vector3(...anchor).sub(w.position).applyQuaternion(w.quaternion.clone().invert());
- d.tail.geometry.dispose();d.tail.geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,bottom,0),end]);d.tail.visible=true;
+ const d=w.userData;
+ if(d.pose?.kind!=='bubble'){if(d.bubble)d.bubble.visible=false;return;}
+ if(!d.bubble){
+  const material=(M,o)=>new M({color:0xffffff,transparent:true,opacity:o,depthTest:false,depthWrite:false,toneMapped:false});
+  const fill=new THREE.Mesh(new THREE.BufferGeometry(),material(THREE.MeshBasicMaterial,BUBBLE_FILL)),line=new THREE.LineLoop(new THREE.BufferGeometry(),material(THREE.LineBasicMaterial,BUBBLE_LINE));
+  fill.material.color.set(0x000000);fill.renderOrder=1;line.renderOrder=3;line.visible=false;d.bubble=new THREE.Group();d.bubble.add(fill,line);Object.assign(d.bubble.userData,{fill,line});w.add(d.bubble);
+ }
+ const {fill,line}=d.bubble.userData,map=d.text.material.map,b=map.image.box,H=map.image.height,WX=map.image.width,u=d.width/WX,pad=46*.6*u;
+ const box={x0:(b.x0/WX-.5)*d.width-pad,x1:(b.x1/WX-.5)*d.width+pad,y0:(.5-b.y1/H)*d.height-pad,y1:(.5-b.y0/H)*d.height+pad};
+ const tip=d.pose.tail&&new THREE.Vector3(...d.pose.tail).sub(w.position).applyQuaternion(w.quaternion.clone().invert());
+ const pts=bubbleOutline(box,1.4*pad,tip&&{x:tip.x,y:tip.y},Math.min(.22*(box.y1-box.y0),.12*(box.x1-box.x0)));
+ fill.geometry.dispose();fill.geometry=new THREE.ShapeGeometry(new THREE.Shape(pts));
+ line.geometry.dispose();line.geometry=new THREE.BufferGeometry().setFromPoints(pts.map(p=>new THREE.Vector3(p.x,p.y,.001)));
+ fill.position.z=-.003;d.bubble.visible=true;
+ // The object's model at the tip when the object is out of the view, a little beyond the tip along the tail.
+ const key=d.pose.offscreen&&tip?d.pose.objectId:null;
+ if(d.bubble.userData.iconKey!==key){if(d.bubble.userData.icon){d.bubble.remove(d.bubble.userData.icon);dispose(d.bubble.userData.icon);d.bubble.userData.icon=null;}
+   const model=key&&modelOf(key);if(model){d.bubble.userData.icon=modelIcon(model);d.bubble.add(d.bubble.userData.icon);}d.bubble.userData.iconKey=key;}
+ const icon=d.bubble.userData.icon;
+ if(icon){const size=ICON*(box.y1-box.y0),c=new THREE.Vector2((box.x0+box.x1)/2,(box.y0+box.y1)/2),dir=new THREE.Vector2(tip.x,tip.y).sub(c).normalize();
+   icon.scale.setScalar(size);icon.position.set(tip.x+dir.x*size*.6,tip.y+dir.y*size*.6,.01);}
 }
 // On a curved surface the text (and its glass) follows the fitted surface: each vertex of the subdivided plane moves along the
 // text's +Z to surface(x, y), in metres in the placement frame (shift: the group's offset along +Y from it). Flat otherwise.
@@ -168,7 +275,7 @@ function bend(mesh,surface,shift=0){
   for(let i=0;i<pos.count;i++){const x=base[3*i]*s.x+o.x,y=base[3*i+1]*s.y+o.y+shift;pos.setZ(i,surface?surface(x,y)/s.z:base[3*i+2]);}
   pos.needsUpdate=true;mesh.geometry.computeBoundingBox();mesh.geometry.computeBoundingSphere();
 }
-function dispose(group){group.traverse(o=>{if(o.isMesh){o.material.map?.dispose();o.material.dispose();o.geometry.dispose();}});}
+function dispose(group){group.traverse(o=>{if(o.isMesh||o.isLine){for(const m of [o.material].flat()){if(!o.userData.sharedGeometry)m.map?.dispose();m.dispose();}if(!o.userData.sharedGeometry)o.geometry.dispose();}});}
 
 const REPLAY_MS=900;
 // Asking holds the video on the question's frame while the agent works: its real time runs on a hold clock h (real seconds since the
@@ -203,7 +310,7 @@ function captionTexture(text,shown=text){
   const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;return map;
 }
 export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onAnimate,...ctx}){
-  ctx.frames=frames;
+  ctx.frames=frames;modelOf=id=>ctx.egoTarget?.(id)?.model||null;
   const group=new THREE.Group();group.name='agent-responses';scene.add(group);
   const widgets=new Map(),thoughts=new Map();let hold=null,conversation=null,generation=0,time=0,timer=null,reportTimer=null,pending=null,syncing=null,questions=[],lastQuestionsKey='';
   let sourceResponses=[],reconciling=false;
@@ -227,7 +334,31 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
   function clearCaption(){caption.visible=waitingDot.visible=false;captionText='';captionId=null;captionKey='';}
   const url=p=>{const u=new URL(p,location.href);u.searchParams.set('session',sessionPath);if(conversation)u.searchParams.set('conversation',conversation);return u;};
   const post=(p,body)=>fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:sessionPath,conversation,...body})}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;});
-  function removeAll(){deliveries.clear();sourceResponses=[];for(const w of [...widgets.values(),...thoughts.values()]){group.remove(w);dispose(w);}widgets.clear();thoughts.clear();}
+  // Writing (TEXT_BEHAVIOR.writing): per response id, how far its text is written ({n: characters, last: ms}; n Infinity: complete).
+  // An answer starts written from nothing when it first shows while the user waits for it (its question's hold, asked or replayed, or
+  // its delivery after playback went on); one seen any other way (scrubbing) shows complete.
+  const writers=new Map();
+  function startWriting(id){if(!textBehavior.writing){writers.set(id,{n:Infinity});return;}loadOutlines().then(()=>onAnimate?.());writers.set(id,{n:0,last:performance.now()});}
+  // Advances every visible writing answer and redraws its texture; true while one is still writing.
+  function write(){
+    const now=performance.now();let active=false;
+    for(const w of widgets.values()){
+      const d=w.userData,wr=writers.get(d.response.id);if(!wr||wr.n===Infinity)continue;
+      const canvas=d.text.material.map.image;
+      if(!textBehavior.writing){wr.n=Infinity;drawWritten(canvas,Infinity);d.text.material.map.needsUpdate=true;continue;}
+      if(!w.visible){wr.last=now;continue;}
+      const total=writtenLength(canvas),streaming=d.response.stream?.status==='streaming';
+      if(!total&&d.response.reserve_text){wr.last=now;continue;}   // words still to come: nothing to write yet
+      wr.n=Math.min(total,wr.n+(now-wr.last)/1000*textBehavior.writingSpeed);wr.last=now;
+      if(wr.n>=total&&!streaming)wr.n=Infinity;
+      const key=`${wr.n}|${textBehavior.writingStrokes}|${outlinesReady()}`;
+      if(canvas.writtenKey!==key){drawWritten(canvas,wr.n,{strokes:textBehavior.writingStrokes});canvas.writtenKey=key;d.text.material.map.needsUpdate=true;}
+      if(wr.n!==Infinity)active=true;
+    }
+    if(active)onAnimate?.();
+    return active;
+  }
+  function removeAll(){deliveries.clear();writers.clear();sourceResponses=[];for(const w of [...widgets.values(),...thoughts.values()]){group.remove(w);dispose(w);}widgets.clear();thoughts.clear();}
   // One poll returns the conversation's questions and responses; widgets follow the responses.
   async function sync(){
     if(!conversation)return null;const gen=generation;
@@ -280,7 +411,8 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
       const k=w.userData.replay?Math.min(1,(now-w.userData.replay)/REPLAY_MS):1;
       if(k<1){o*=THREE.MathUtils.smootherstep(k,0,.45);w.scale.setScalar(1+.06*Math.sin(Math.PI*k));}else{w.scale.setScalar(1);w.userData.replay=0;}
       if(r.id!==latest?.id)o=0;
-      w.visible=o>0;w.userData.text.material.opacity=o;if(w.userData.tail)w.userData.tail.material.opacity=.85*o;w.userData.glass.material.uniforms.opacity.value=o;
+      if(o>0&&!writers.has(r.id)){if(q&&(hold?.id===q.id||delivery))startWriting(r.id);else writers.set(r.id,{n:Infinity});}
+      w.visible=o>0;w.userData.text.material.opacity=o;if(w.userData.bubble){const {fill,line}=w.userData.bubble.userData;fill.material.opacity=BUBBLE_FILL*o;line.material.opacity=BUBBLE_LINE*o;w.userData.bubble.userData.icon?.traverse(c=>{if(c.isMesh)for(const m of [c.material].flat())m.opacity=o;});}w.userData.glass.material.uniforms.opacity.value=o;
     }
   }
   // Pinned in the recorded view (Fixed text, and the Fixed fallback when no surface fits).
@@ -309,7 +441,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         const d=w.userData,stability=cfg(w).stability,fallback=cfg(w).fallback;
         d.anchorState||={};
         const previous=d.fixedText?null:(d.pendingSurfacePose||d.pose);
-        const pose=await place({...d.response,frame,aspect:d.aspect,textMetrics:d.text.material.map.image.textMetrics,
+        const pose=await place({...d.response,frame,aspect:d.aspect,textMetrics:d.text.material.map.image.textMetrics,layouts:textLayouts(d.response),
           previousPose:previous,anchorState:d.anchorState,allowSearch:performance.now()-(d.lastSurfaceSearch??-Infinity)>=250,
           onSearch:()=>{d.lastSurfaceSearch=performance.now();}},ctx);
         if(previous===d.pendingSurfacePose)pose.reusedSurface=false;
@@ -328,13 +460,14 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
           if(pose.unreadable){const d=w.userData,fp=fixedPose(w,frame,visible.indexOf(w));
             if(!d.fixedText||Math.abs(d.width-fp.width)>.0001)moveResponseWidget(w,fp,0);else{w.position.copy(fp.position);w.quaternion.copy(fp.quaternion);}
             if(d.adaptedFrame!==frame)d.compositeInitialized=false;
+            if(!d.fallbackFixed)ctx.onPlacement?.(d.response,pose,frame);
             Object.assign(d,{placementHidden:false,fixedText:true,fallbackFixed:true,adaptedFrame:frame,adaptedView:viewKey,adaptedStability:stability,adaptedFallback:fallback,
               placementDecision:{hold:false,reason:'fixed-fallback',detail:pose.reason}});continue;}
           if(w.userData.adaptedFrame!=null&&Math.abs(frames[frame].t-frames[w.userData.adaptedFrame].t)>1){w.userData.legibility?.reset();w.userData.compositeInitialized=false;}
           // Search failure is presentation state, never a replacement world anchor.
-          if(!pose.unreadable&&(!pose.reusedSurface||w.userData.fixedText)){moveResponseWidget(w,pose,responseSlot(w.userData.response,visible.indexOf(w)));w.userData.compositeInitialized=false;}
+          if(!pose.unreadable&&(!pose.reusedSurface||w.userData.fixedText)){moveResponseWidget(w,pose,responseSlot(w.userData.response,visible.indexOf(w)));w.userData.compositeInitialized=false;ctx.onPlacement?.(w.userData.response,pose,frame);}
           Object.assign(w.userData,{placementHidden:false,fixedText:false,fallbackFixed:false,adaptedFrame:frame,adaptedView:viewKey,adaptedStability:stability,adaptedFallback:fallback,
-            placementDecision:{hold:!!pose.reusedSurface,reason:pose.anchorGrace?'transient-loss':pose.reusedSurface?'world-anchor':pose.kind==='view-fallback'?'floating-fallback':'new-surface'}});
+            placementDecision:{hold:!!pose.reusedSurface,reason:pose.anchorGrace?'transient-loss':pose.reusedSurface?'world-anchor':pose.kind==='view-fallback'?'floating-fallback':pose.kind==='info-float'?'info-float':pose.infoSettled?'info-surface':'new-surface'}});
         }
       }).catch(e=>console.warn('live placement',e)).finally(()=>{adapting=null;onAnimate?.();});
       return adapting;
@@ -342,6 +475,10 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     // Response content draws after hand protection, including surface-anchored text.
     // Each pass samples its current background before drawing its own text and controls.
     renderAfter(renderer,camera,controls,frame,sample=true,pass='all'){
+      write();
+      // The model at an off-view bubble's tip turns slowly (one turn in 8 s).
+      let spinning=false;for(const w of widgets.values()){const icon=w.visible&&w.userData.bubble?.visible&&w.userData.bubble.userData.icon;if(icon){icon.userData.spin.rotation.y=performance.now()/8000*2*Math.PI;spinning=true;}}
+      if(spinning)onAnimate?.();
       for(const w of widgets.values()){
         const m=w.userData.surfaceMotion;if(!m)continue;
         const t=Math.min(1,(performance.now()-m.start)/m.duration),ease=t*t*(3-2*t);
@@ -364,7 +501,10 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         if([...widgets.values(),...thoughts.values()].filter(w=>w.visible).every(w=>pendingBeforeSample.includes(w))&&(!controls?.visible||pendingBeforeSample.includes(controls.userData.owner)))return;
         const revision=ctx.getStyleRevision?.();
         if(performance.now()-bg.last>180||sample&&(bg.frame!==frame||bg.revision!==revision||[...widgets.values()].some(w=>w.visible&&(!w.userData.compositeInitialized||w.userData.compositePass!==pass)))){bg.frame=frame;bg.revision=revision;const source=renderer.domElement;bg.canvas.width=Math.min(768,source.width);bg.canvas.height=Math.max(1,Math.round(bg.canvas.width*source.height/source.width));bg.ctx.drawImage(source,0,0,bg.canvas.width,bg.canvas.height);bg.texture.needsUpdate=true;bg.last=performance.now();
-          if(sample)for(const w of widgets.values())if(w.visible){if(!w.userData.compositeInitialized||w.userData.compositePass!==pass){w.userData.legibility?.reset();w.userData.compositeInitialized=true;w.userData.compositePass=pass;}applyResponseStyle(w,rateBackgroundImage(w,bg.canvas,camera));w.userData.backgroundSource='composited-scene';w.userData.styleFrame=frame;}
+          // A locked answer (settled in the room, src/placement.mjs infoSettled) keeps the colour and glass it had when it locked: sampled
+          // once more there, then frozen (styleLocked).
+          if(sample)for(const w of widgets.values())if(w.visible&&!w.userData.styleLocked){if(!w.userData.compositeInitialized||w.userData.compositePass!==pass){w.userData.legibility?.reset();w.userData.compositeInitialized=true;w.userData.compositePass=pass;}applyResponseStyle(w,rateBackgroundImage(w,bg.canvas,camera));w.userData.backgroundSource='composited-scene';w.userData.styleFrame=frame;
+            if(w.userData.pose?.infoSettled&&w.userData.style)w.userData.styleLocked=true;}
           if(controls?.visible&&controls.userData.owner){controls.material.color.copy(controls.userData.owner.userData.text.material.color);}
           else if(controls?.visible){const rating=rateBackgroundImage({updateMatrixWorld:()=>controls.updateWorldMatrix(true,true),userData:{text:controls}},bg.canvas,camera);if(rating.sample){const style=styleFor(rating);controls.material.color.setRGB(...style.text);const glass=controls.userData.adaptiveGlass;if(glass){glass.visible=!!style.glass;if(style.glass){glass.material.uniforms.tint.value.setRGB(...style.glass.tint);glass.material.uniforms.mixAmount.value=style.glass.mix;}}}}
         }
@@ -381,15 +521,19 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
       }finally{for(const w of excluded)w.visible=true;if(controls)controls.visible=originalControlsVisible;}
     },
     get conversation(){return conversation;},
+    get ctx(){return ctx;},   // placement context, for inspection (window.replay.agent.ctx)
     get questions(){return questions;},
     get responses(){return sourceResponses;},
     get caption(){return caption.visible?captionText:null;},
     get hold(){return hold;},
+    /** Whether an answer to this question is still being written (TEXT_BEHAVIOR.writing). */
+    writing(questionId){return [...widgets.values()].some(w=>w.visible&&w.userData.response.question_id===questionId&&(writers.get(w.userData.response.id)?.n??Infinity)!==Infinity);},
     // Hold state from the editor's playback (null when not holding).
     setHold(h,{continueDelivery=false}={}){
       if(continueDelivery&&hold)deliveries.set(hold.id,{...hold,start:performance.now()});
       if(h)deliveries.delete(h.id);
-      if(h&&h.id!==hold?.id){clearCaption();captionOwner=h.id;dismissedCaption=null;}
+      // A new hold (asked, or replayed): its answers are written again.
+      if(h&&h.id!==hold?.id){clearCaption();captionOwner=h.id;dismissedCaption=null;for(const w of widgets.values())if(w.userData.response.question_id===h.id)writers.delete(w.userData.response.id);}
       if(!h&&hold&&!continueDelivery){dismissedCaption=hold.id;clearCaption();}
       hold=h;apply();
       onAnimate?.();
@@ -453,7 +597,8 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     setTarget(target,frameTexture,resolution){for(const w of widgets.values()){const u=w.userData.glass.material.uniforms;u.useFrame.value=target==='video'&&frameTexture?1:0;u.tFrame.value=frameTexture||null;if(resolution)u.resolution.value.copy(resolution);}},
     // The response under a pointer (normalised device coordinates) for a camera, if any.
     pick(ndc,cam){const ray=new THREE.Raycaster();ray.setFromCamera(ndc,cam);const hit=ray.intersectObjects([...widgets.values()].filter(w=>w.visible).map(w=>w.userData.text),false)[0];return hit?hit.object.parent.userData.response:null;},
-    ask:(frame,t,text,live,weather_mod=false,text_response,findmy_mod=false,ego_mod=false)=>post('/api/agent/questions',{frame,t,text,live,weather_mod,text_response,findmy_mod,ego_mod}).then(q=>{layer.sync();return q;}),
+    // extra: {selection, selection_mode}: the thing carrying info the user selects at that frame (src/user-selection.mjs).
+    ask:(frame,t,text,live,weather_mod=false,text_response,findmy_mod=false,ego_mod=false,extra={})=>post('/api/agent/questions',{frame,t,text,live,weather_mod,text_response,findmy_mod,ego_mod,...extra}).then(async q=>{await layer.sync().catch(()=>{});return q;}),
     deleteQuestion:id=>post('/api/agent/questions/delete',{id}).then(()=>layer.sync()),
     // The frame the editor shows is the simulated user's state for terminal questions; send it at most every 200 ms.
     report(state){pending=state;if(!reportTimer)reportTimer=setTimeout(()=>{reportTimer=null;post('/api/agent/state',pending).catch(()=>{});},200);}};

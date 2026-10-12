@@ -51,6 +51,8 @@ def _spec(s, d, known):
         if category != 'widget': out['scope'] = 'scene' if category == 'persistent' else 'recording'
     for k in ('start', 'end'):
         if _num(s.get(k)): out[k] = s[k]
+    # An info key the object carries (scripts/info_context.py).
+    if isinstance(s.get('info'), str) and s['info'].strip() and len(s['info'].strip()) <= 48 and '/' not in s['info']: out['info'] = s['info'].strip()
     if s['component'] == 'file':
         src = str(s.get('src') or '')
         if src.startswith('data:'):
@@ -115,9 +117,16 @@ def _object(scene_dir, oid):
     if entry.get('category') != 'opportunistic': raise ValueError('Only opportunistic objects can be changed here.')
     return d, entry
 
-def update_object(scene_dir, oid, name=None, shape=None, pose=None, origin=None):
-    """Rename an object, change its shape (in every recording) or the pose kept for placing it in more recordings."""
+_UNSET = object()
+def update_object(scene_dir, oid, name=None, shape=None, pose=None, origin=None, info=_UNSET):
+    """Rename an object, change its shape (in every recording), the pose kept for placing it in more recordings, or the info key it
+    carries (scripts/info_context.py; every recording placing it shares it; None or '' removes it)."""
     d, entry = _object(scene_dir, oid)
+    if info is not _UNSET:
+        k = str(info or '').strip()[:48]
+        if '/' in k: raise ValueError('Bad info key.')
+        if k: entry['info'] = k
+        else: entry.pop('info', None)
     if name is not None:
         name = str(name).strip()[:80]
         if not name: raise ValueError('Give the object a name.')

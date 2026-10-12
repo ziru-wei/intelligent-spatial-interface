@@ -22,6 +22,7 @@ Every step is a command (python scripts/spaces.py --help); the editor server cal
 import base64, json, math, re, shutil, struct, subprocess, time
 from pathlib import Path
 import import_record3d, layout, hand_cache
+from record3d_source import part
 
 ROOT = Path(__file__).resolve().parents[1]; PRIVATE = ROOT/'private'; SPACES = ROOT/'spaces'
 MESH_PYTHON = ROOT/'.venv-mesh'/'bin'/'python'
@@ -47,6 +48,26 @@ def manifest(d): return json.loads((d/'space.json').read_text())
 def write_manifest(d, m): (d/'space.json').write_text(json.dumps(m, indent=2))
 def session_path(space, take): return f'./spaces/{space}/scenarios/{take}/session.json'
 
+def private_scenes():
+    return [d for d in sorted(PRIVATE.iterdir()) if d.is_dir() and NAME.fullmatch(d.name)
+            and ((d/'scans').is_dir() or (d/'recordings').is_dir())] if PRIVATE.is_dir() else []
+
+def raw_scans(name, m):
+    used = {x.get('source') for x in m.get('scans', [])} | {(m.get('layout') or {}).get('source')}
+    return [dict(name=p.name, label=p.stem) for p in sorted((PRIVATE/name/'scans').glob('*'))
+            if p.is_file() and p.suffix.lower() in ('.glb', '.fbx') and p.name not in used]
+
+def ensure_scene(name):
+    if not (SPACES/str(name)/'space.json').is_file():
+        if name not in {d.name for d in private_scenes()}: raise ValueError('Unknown scene: '+str(name))
+        create(name)
+    return space_dir(name)
+
+def import_scan(space, filename):
+    d = ensure_scene(space)
+    if filename not in {s['name'] for s in raw_scans(space, manifest(d))}: raise ValueError('Unknown scan source')
+    return add_scan(space, PRIVATE/space/'scans'/filename)
+
 def listing():
     out = []
     for d in sorted(SPACES.iterdir()) if SPACES.is_dir() else []:
@@ -62,7 +83,18 @@ def listing():
         scans = [dict(id=x['id'], label=x['label'], registration=x.get('registration'), primary=bool(scan) and x['mesh'] == scan['mesh']) for x in m.get('scans', []) if not x.get('archived')]
         sem = json.loads((d/m['semantic']).read_text()) if m.get('semantic') and (d/m['semantic']).is_file() else None
         layout_info = sem and dict(objects=len(sem.get('objects', [])), openings=len(sem.get('openings', [])), rooms=len(sem.get('rooms', [])), edited=bool(sem.get('edited')))
-        out.append(dict(name=d.name, scan=scan, scans=scans, semantic=bool(sem), layout=layout_info, scenarios=scenarios))
+        out.append(dict(name=d.name, scan=scan, scans=scans, semantic=bool(sem), layout=layout_info, scenarios=scenarios, pendingScans=raw_scans(d.name, m), objects=object_names(d)))
+    known = {s['name'] for s in out}
+    for d in private_scenes():
+        if d.name not in known:
+            out.append(dict(name=d.name, scan=None, scans=[], semantic=False, layout=None, scenarios=[], pendingScans=raw_scans(d.name, {}), objects=[]))
+    return sorted(out, key=lambda s: s['name'])
+
+def object_names(d):
+    out = []
+    for p in sorted((d/'components').glob('*/component.json')):
+        m = json.loads(p.read_text())
+        if m.get('category') == 'opportunistic': out.append(m.get('name') or p.parent.name)
     return out
 
 def create(name):
@@ -82,16 +114,16 @@ def takes():
     for d in scenes:
         for sc in (d/'scenarios').iterdir() if (d/'scenarios').is_dir() else []:
             if (sc/'session.json').is_file(): added.setdefault(json.loads((sc/'session.json').read_text()).get('sourcePath') or sc.name, []).append(d.name)
-    found = [(d.name, d) for d in sorted(PRIVATE.glob('*/recordings/*'))]+[(None, d) for d in sorted(PRIVATE.iterdir()) if (d/'metadata.json').is_file()] if PRIVATE.is_dir() else []
+    found = [(d.name, d) for d in sorted(PRIVATE.glob('*/recordings/*'))]+[(None, d) for d in sorted(PRIVATE.iterdir()) if part(d, 'metadata.json').is_file()] if PRIVATE.is_dir() else []
     out = []
     for scene_dir, d in found:
-        if not (d/'metadata.json').is_file() or d.name in sources: continue
+        if not part(d, 'metadata.json').is_file() or d.name in sources: continue
         rel = d.relative_to(ROOT).as_posix(); scene = d.parent.parent.name if scene_dir else None
-        out.append(dict(name=d.name, label=label(d.name), scene=scene, path=rel, depthSource=(d/'depth').is_dir(), spaces=sorted(set(added.get(rel, [])+added.get(d.name, [])))))
+        out.append(dict(name=d.name, label=label(d.name), scene=scene, path=rel, depthSource=part(d, 'depth').is_dir(), spaces=sorted(set(added.get(rel, [])+added.get(d.name, [])))))
     return out
 
-def _take(name):
-    t = next((t for t in takes() if t['name'] == name), None)
+def _take(name, space=None):
+    t = next((t for t in takes() if t['name'] == name and (space is None or t['scene'] in (None, space))), None)
     if not t: raise ValueError('Unknown recording: '+str(name))
     return ROOT/t['path']
 
@@ -108,18 +140,18 @@ def _mesh(args):
 
 def import_take(space, take):
     """Add a recording to a scene (frames, poses, depth)."""
-    d, src = space_dir(space), _take(take); dest = d/'scenarios'/take
+    d, src = ensure_scene(space), _take(take, space); dest = d/'scenarios'/take
     if not (dest/'session.json').is_file():
-        import_record3d.convert(src, dest, depth=(src/'depth').is_dir())
+        import_record3d.convert(src, dest, depth=part(src, 'depth').is_dir())
         p = dest/'session.json'; sm = json.loads(p.read_text()); sm['sourcePath'] = src.relative_to(ROOT).as_posix(); p.write_text(json.dumps(sm, indent=2))
-    elif not json.loads((dest/'session.json').read_text()).get('depth') and (src/'depth').is_dir(): import_record3d.add_depth(src, dest)
+    elif not json.loads((dest/'session.json').read_text()).get('depth') and part(src, 'depth').is_dir(): import_record3d.add_depth(src, dest)
     return dict(session=session_path(space, take))
 
 def build_mesh(space, take):
     """The scenario's own fused mesh (its frame), registered in its session.json as roomMesh."""
     d = space_dir(space); dest = d/'scenarios'/take
     if not (dest/'session.json').is_file(): raise ValueError('Add the recording to the space first.')
-    return _mesh([ROOT/'scripts'/'fuse_record3d.py', _take(take), dest/'room.glb'])
+    return _mesh([ROOT/'scripts'/'fuse_record3d.py', _take(take, space), dest/'room.glb'])
 
 def build_scan(space, source, sid=None, primary=False):
     """Fuse a slow, thorough Record3D pass (a raw export folder) into a scan of the scene (scripts/fuse_record3d.py), then add it like
@@ -264,7 +296,7 @@ def cut_openings(space):
 
 class Conflict(ValueError): pass
 
-def save_layout(space, objects, openings, revision=None):
+def save_layout(space, objects, openings, revision=None, information=None):
     """The layout as edited in the editor (boxes added, removed, moved, resized, relabelled). revision is the one the editor loaded. The
     save is refused only if the boxes were changed since (another editor tab, or a script moving boxes: boxesRevision); structural
     writes that leave the boxes alone (doors and windows cut into walls, zones, ceiling and wall fixes) bump only `revision`, so editing
@@ -273,12 +305,26 @@ def save_layout(space, objects, openings, revision=None):
     if not m.get('semantic'): raise ValueError('This scene has no layout yet.')
     p = d/m['semantic']; current = json.loads(p.read_text())
     if revision is not None and revision < current.get('boxesRevision', current.get('revision', 0)): raise Conflict('The layout was changed in another window. Reload to get it.')
-    rev = current.get('revision', 0)+1; data = dict(layout.update(current, objects, openings), revision=rev, boxesRevision=rev); _prune_models(d, data); p.write_text(json.dumps(data, indent=1))
+    rev = current.get('revision', 0)+1; data = dict(layout.update(current, objects, openings, information), revision=rev, boxesRevision=rev); _prune_models(d, data); p.write_text(json.dumps(data, indent=1))
     # Doors and windows moved: the walls' cut-outs follow (bumps `revision` only, so this save's boxesRevision stays valid).
     try: cut_openings(space)
     except ValueError: pass
     data = json.loads(p.read_text())
     return dict(objects=len(data['objects']), openings=len(data['openings']), revision=data['revision'], boxesRevision=data['boxesRevision'])
+
+def set_zone_info(space, zone, info=None):
+    """A zone's info key (scripts/info_context.py), or none. Bumps `revision` only (zones are not boxes)."""
+    import info_context
+    d = space_dir(space); m = manifest(d)
+    if not m.get('semantic'): raise ValueError('This scene has no layout yet.')
+    p = d/m['semantic']; sem = json.loads(p.read_text())
+    room = next((r for r in sem.get('rooms', []) if r.get('id') == zone), None)
+    if not room: raise ValueError('Unknown zone: '+str(zone))
+    k = info_context.clean_key(info)
+    if k: room['info'] = k
+    else: room.pop('info', None)
+    sem['revision'] = sem.get('revision', 0)+1; p.write_text(json.dumps(sem, indent=1))
+    return dict(zone=zone, info=k, revision=sem['revision'], boxesRevision=sem.get('boxesRevision', sem['revision']))
 
 def set_furniture_model(space, box_id, src=None, size=None, center=None):
     """A piece of furniture (a layout box) shown as a 3D model, fitted inside its box (src: a .glb data URL; size and center: the

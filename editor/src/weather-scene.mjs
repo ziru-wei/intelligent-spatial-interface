@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {chooseStablePlacement,posePoints} from './placement-stability.mjs';
 import {createWeatherPlayback} from './weather-preview.mjs';
 import {celestialBody,createSunlight,createNightfall,receiverGeometry} from './weather-art.mjs';
+import {shapedFaces} from './layout-shape.mjs';
 
 // World-space storybook weather. The source forecast is validated by the server.
 // Only the target selection uses the recorded camera; every effect is a real scene mesh.
@@ -50,6 +51,11 @@ export function buildWeatherTargets(sem={}){
  }
  for(const o of [...(sem.objects||[]),...(sem.openings||[])]){if(windows.includes(o)||!o.center||!o.size)continue;
   const yaw=new THREE.Quaternion().setFromAxisAngle(UP,THREE.MathUtils.degToRad(o.yaw||0)),center=V(o.center);
+  if(o.shape){for(const f of shapedFaces(o)){
+    const points=f.points.map(p=>V(p).multiply(V(o.size)).applyQuaternion(yaw).add(center));
+    const t=polygonTarget(`${o.id}:${f.name}`,f.normal[1]?'horizontal':'vertical',points,V(f.normal).normalize().applyQuaternion(yaw),o.room);
+    t.surface='box';t.objectId=o.id;t.label=o.label||o.category||o.id;t.opening=(sem.openings||[]).includes(o);targets.push(t);
+  }continue;}
   for(const [name,axis,sign] of [['right',0,1],['left',0,-1],['top',1,1],['bottom',1,-1],['front',2,1],['back',2,-1]]){
    const normal=new THREE.Vector3().setComponent(axis,sign),b=basis(normal),half=o.size[axis]/2;
    const extent=v=>v.toArray().reduce((sum,n,i)=>sum+Math.abs(n)*o.size[i],0),width=extent(b.right),height=extent(b.up);
@@ -271,7 +277,7 @@ function buildPatch(target,entry,seed=1,collide,viewer){
  if(ceiling)Object.assign(mat,{stencilWrite:true,stencilRef:1,stencilFunc:THREE.NotEqualStencilFunc,stencilFuncMask:1,stencilWriteMask:1,stencilZPass:THREE.ReplaceStencilOp});
  animate(0);return {root,animate};
 }
-export function createWeatherScene({scene,getCamera,getRoom,getOccluders=()=>[getRoom()],getObjects=()=>[],getDepthOccluder=()=>null,getStability=()=>0,onAnimate,onLabel}){
+export function createWeatherScene({scene,getCamera,getRoom,getOccluders=()=>[getRoom()],getObjects=()=>[],getDepthOccluder=()=>null,getStability=()=>0,getLock=()=>false,onAnimate,onLabel}){
  const playback=createWeatherPlayback();
  const group=new THREE.Group();group.name='weather-environment';scene.add(group);let enabled=false,surfaceTargets=[],patches=[],response=null,signature='',target=null,lastPose='',lastStability=-1,started=0,raf=0,lastPaint=0;
 
@@ -319,7 +325,8 @@ export function createWeatherScene({scene,getCamera,getRoom,getOccluders=()=>[ge
   if(!enabled||!response?.weather?.forecast?.length){if(patches.length)clear();group.visible=false;return;}
   group.visible=true;const camera=getCamera();camera.updateMatrixWorld(true);const pose=[...camera.position.toArray(),...camera.quaternion.toArray()].map(v=>v.toFixed(3)).join();
   const stability=getStability();
-  if(pose!==lastPose||stability!==lastStability||!target){
+  // Locked (Weather mod: Lock location): once the weather has a place, it stays there until the next weather answer.
+  if(!(target&&getLock())&&(pose!==lastPose||stability!==lastStability||!target)){
    const next=selectWeatherTarget(camera,surfaceTargets),decision=chooseStablePlacement({current:target,candidate:next,camera,stability,kind:'weather',occlusion:stability>0?visibleFraction(target,camera):1});lastPose=pose;lastStability=stability;group.userData.placementDecision=decision;
    if(!decision.hold){
    if(next&&(!target||next.id!==target.id||next.origin.distanceTo(target.origin)>.18||next.n.dot(target.n)<.98))target=next;

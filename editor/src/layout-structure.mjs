@@ -32,13 +32,17 @@ export function createStructure({group,twin}){
     const ax=new THREE.Vector3().subVectors(pts[1],pts[0]).normalize(),ay=new THREE.Vector3().crossVectors(n,ax);
     const to2=p=>new THREE.Vector2(p.clone().sub(pts[0]).dot(ax),p.clone().sub(pts[0]).dot(ay)),all=[...pts,...holes.flat()];
     const pos=[];for(const [a,b,c] of THREE.ShapeUtils.triangulateShape(pts.map(to2),holes.map(h=>h.map(to2))))pos.push(...all[a].toArray(),...all[b].toArray(),...all[c].toArray());
-    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.userData.geometry=geo;
     g.add(new THREE.Mesh(geo,material(THREE.MeshBasicMaterial,{color,transparent:true,opacity,depthWrite:false,side:THREE.DoubleSide})));
     for(const ring of [pts,...holes])g.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(ring),material(THREE.LineBasicMaterial,{color,transparent:true,opacity:.9})));return g;
   }
   const tagged=(g,id)=>{g.traverse(o=>{if(o.isMesh)o.userData.surface=id;});return g;};
+  // Walls as depth only (nothing drawn), whatever the Walls layer shows, doors and windows cut out: what hides layout boxes behind a wall
+  // (src/twin.mjs setWallPass). Clipped by the section plane like the rest; the twin adds the floor planes.
+  const occluders=new THREE.Group();occluders.name='layout-wall-occluders';
+  const occluderMaterial=new THREE.MeshBasicMaterial({colorWrite:false,side:THREE.DoubleSide,clippingPlanes:[plane]});
   let list=[];
-  function clear(){for(const g of Object.values(layers)){g.traverse(o=>{o.geometry?.dispose();if(o.isSprite){o.material.map.dispose();o.material.dispose();}});g.clear();}materials.forEach(m=>m.dispose());materials.length=0;tags.length=0;}
+  function clear(){occluders.clear();for(const g of Object.values(layers)){g.traverse(o=>{o.geometry?.dispose();if(o.isSprite){o.material.map.dispose();o.material.dispose();}});g.clear();}materials.forEach(m=>m.dispose());materials.length=0;tags.length=0;}
   function setData(sem){
     clear();
     const rooms=sem?.rooms||[];
@@ -59,7 +63,8 @@ export function createStructure({group,twin}){
     // Walls with their doors and windows cut out (`region`, scripts/wall_openings.py); the full outline before any cut.
     const ws=shader(rooms),cs=shader(rooms);
     for(const w of sem?.walls||[]){const {zone,k}=ws(w.rooms?.[0],WALL_SHADES),color=shade(zone,k);
-      for(const [outer,...holes] of w.region||[[w.outline||[]]])layers.walls.add(tagged(face(outer,color,.22,holes),w.id));
+      for(const [outer,...holes] of w.region||[[w.outline||[]]]){const f=face(outer,color,.22,holes);layers.walls.add(tagged(f,w.id));
+        if(f.userData.geometry)occluders.add(new THREE.Mesh(f.userData.geometry,occluderMaterial));}
       if(w.outline?.length)tag(layers.walls,pretty(w.id),'wall',zone,centroid(w.outline));}
     for(const c of sem?.ceilings||[]){const {zone,k}=cs(c.room,CEILING_TINTS);layers.ceilings.add(tagged(face(c.outline||[],shade(zone,k),.2),c.id));
       if(c.outline?.length)tag(layers.ceilings,pretty(c.id),'ceiling',zone,centroid(c.outline));}
@@ -73,5 +78,5 @@ export function createStructure({group,twin}){
   /** The surface id under a ray (shown layers only). */
   function pickSurface(ray){const hit=ray.intersectObjects(faces().filter(m=>{let o=m;while(o){if(!o.visible)return false;o=o.parent;}return true;}),false)[0];return hit?.object.userData.surface??null;}
   function setVisible(kinds){for(const k of KINDS)if(k in kinds)layers[k].visible=!!kinds[k];twin.render();}
-  return {setData,setVisible,setFocus,pickSurface,layers,get surfaces(){return list;}};
+  return {setData,setVisible,setFocus,pickSurface,layers,occluders,occluderMaterial,get surfaces(){return list;}};
 }

@@ -5,7 +5,7 @@ import {normalize,resolve,modOf,load,save,textResponses,resumeOnFirstResponse,di
 test('a mod follows the global settings unless it overrides one',()=>{
   const s=normalize({version:2,global:{autoHide:true,stability:.4},mods:{weather:{enabled:true,overrides:{fixedText:true,stability:.9}},findmy:{enabled:false}}});
   assert.deepEqual(resolve(s),{textResponse:true,resumeOnResponse:false,autoHide:true,fallback:'fixed',fixedText:false,stability:.4});
-  assert.deepEqual(resolve(s,'weather'),{textResponse:true,resumeOnResponse:false,autoHide:true,fallback:'fixed',fixedText:true,stability:.9});
+  assert.deepEqual(resolve(s,'weather'),{textResponse:true,resumeOnResponse:false,autoHide:true,fallback:'fixed',fixedText:true,stability:.9,lockLocation:false});
   delete s.mods.weather.overrides.stability;
   s.mods.weather.overrides.textResponse=false;assert.deepEqual(textResponses(s),{default:true,weather:false,ego:true});s.mods.weather.enabled=false;assert.deepEqual(textResponses(s),{default:true,ego:true});s.mods.weather.enabled=true;
 assert.equal(resolve(s,'weather').stability,.4);

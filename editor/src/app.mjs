@@ -1,9 +1,15 @@
+import {createTransformHistory} from './transform-history.mjs';
 import {surfaceQuality} from './surface-quality.mjs';
 import {createRecordingHandCache} from './hand-perception/recording-cache.mjs';
 import {createLatestFrameJob} from './latest-frame-job.mjs';
 import {createHandCompositor} from './hand-perception/compositor.mjs';
 import {createHandPerception} from './hand-perception/index.mjs';
 import {locateHands,handBoxDistance} from './hand-perception/spatial.mjs';
+import {selectInfoBox,FOVEA} from './user-selection.mjs';
+import {createSelectionMarks} from './selection-marks.mjs';
+import {createInfoVisual,arrowBetween} from './info-visual.mjs';
+import {pickStyle,accentStyle} from './legibility.mjs';
+import {labelRoom} from './layout-labels.mjs';
 import {createApproachRemoval} from './findmy-approach.mjs';
 import {createFindMy} from './findmy.mjs';
 import {weatherResponse} from './response-parts.mjs';
@@ -19,12 +25,12 @@ import {createWeatherScene} from './weather-scene.mjs';
 import {createTwin} from './twin.mjs';
 import {createLayoutEditor,dropCenter} from './layout-editor.mjs';
 import {createOutline} from './layout-outline.mjs';
-import {outline as layoutOutline,roomOf} from './layout-tree.mjs';
+import {outline as layoutOutline,roomOf,path as labelPath} from './layout-tree.mjs';
 import {createStructure} from './layout-structure.mjs';
 import {createAlignPanel} from './align-panel.mjs';
 import {load as loadResponseSettings,resolve as resolveSettings,modOf,textResponses,disabledResponseMods,MODS,resumeOnFirstResponse,createResponseSettingsPanel} from './response-settings.mjs';
 import {createComponentHost} from './components.mjs';
-import {createAgentLayer,READING,formatSpeed,stepsAt} from './agent.mjs';
+import {createAgentLayer,READING,formatSpeed,stepsAt,setTextBehavior,TEXT_BEHAVIOR} from './agent.mjs';
 import {questionClock} from './question-caption.mjs';
 import {readModel,modelBounds,fitScale,boxFromModel,swapHTML,wireSwap} from './model-fit.mjs';
 import {createEgo} from './ego.mjs';
@@ -88,11 +94,111 @@ let weatherPreview=null,weatherSurfacePreview=null;
 const findmyScene=createFindMy();
 // Object mod (src/ego.mjs): what an answer's object ids are in the scene. layout:<box> (furniture, doors, windows; its model when shown as one)
 // or comp:<instance> (a placed object: its bounds, its model unless it is kept as a box).
+// Things in the room a bubble held in the view should not cover (src/placement.mjs edgeBubble): objects and furniture, as boxes.
+function sceneBoxes(){const out=[];for(const i of components.instances){if(!i.root.visible)continue;const t=egoTarget('comp:'+i.spec.id);if(t)out.push({id:'comp:'+i.spec.id,center:t.center,size:t.size,yaw:t.yaw});}
+  for(const b of layout?.boxes||[])out.push({id:'layout:'+b.id,center:b.center,size:b.size,yaw:b.yaw||0});return out;}
 function egoTarget(id){
   if(id.startsWith('layout:')){const b=layout.boxes.find(x=>x.id===id.slice(7));return b&&{center:b.center,size:b.size,yaw:b.yaw||0,model:b.object?.userData.model||null};}
   if(id.startsWith('comp:')){const i=components.get(id.slice(5));if(!i)return null;i.root.updateWorldMatrix(true,true);const box=new THREE.Box3().setFromObject(i.root);if(box.isEmpty())return null;
     const m=components.library.get(i.spec.component);return {center:box.getCenter(new THREE.Vector3()).toArray(),size:box.getSize(new THREE.Vector3()).toArray(),yaw:0,root:i.root,model:m?.kind==='box'?null:i.root};}
   return null;}
+// An info answer's target (src/placement.mjs): the thing the user selected when asking (layout:<box>, comp:<object>; an id without a
+// prefix is a layout box of an older answer), else the nearest thing carrying the same key; {id, center, size, yaw}. A zone has no box:
+// null (its answer is placed as any other).
+function infoTarget(r){
+  const id=r.info?.box_id&&(r.info.box_id.includes(':')?r.info.box_id:'layout:'+r.info.box_id);if(id?.startsWith('zone:'))return null;
+  const box=t=>{const g=egoTarget(t);return g&&{id:t,center:g.center,size:g.size,yaw:g.yaw||0};};
+  if(id){const t=box(id);if(t)return t;}
+  const eye=frameCamera(r.frame).position,cands=infoCarriers().filter(c=>c.key===r.info?.key&&!c.id.startsWith('zone:')).map(c=>box(c.id)).filter(Boolean);
+  return cands.length?cands.reduce((x,y)=>eye.distanceTo(new THREE.Vector3(...y.center))<eye.distanceTo(new THREE.Vector3(...x.center))?y:x):null;
+}
+// An info answer's corners on its box and, once it is fixed in the room, its arrow to the box (src/info-visual.mjs).
+const infoVisual=createInfoVisual({scene,onAnimate:()=>update()});
+function showInfoVisuals(){
+  const answers=!agent||!session?[]:[...agent.widgets.values()].filter(w=>w.visible&&w.userData.response.info?.key&&!w.userData.pose?.unreadable).map(w=>{
+    const d=w.userData,box=infoTarget({...d.response,frame:index});if(!box)return null;
+    w.updateWorldMatrix(true,true);const q=w.getWorldQuaternion(new THREE.Quaternion());
+    // The ink's rectangle (src/agent.mjs canvas.box: pixels of the text canvas), not the padded panel.
+    const img=d.text.material.map.image,b=img.box,ink=new THREE.Vector3(((b.x0+b.x1)/2/img.width-.5)*d.width,(.5-(b.y0+b.y1)/2/img.height)*d.height,0);
+    return {id:d.response.id,box,color:d.text.material.color,fixed:!d.fixedText&&!!(d.pose.infoSettled||d.pose.kind==='info-float'),locked:!!d.pose.infoSettled,
+      panel:{center:d.text.localToWorld(ink),right:new THREE.Vector3(1,0,0).applyQuaternion(q),up:new THREE.Vector3(0,1,0).applyQuaternion(q),width:(b.x1-b.x0)/img.width*d.width,height:(b.y1-b.y0)/img.height*d.height}};}).filter(Boolean);
+  showLocks();
+  camera.updateMatrixWorld();drawInfoArrows(infoVisual.update(answers,new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld),{colorAt:markColor,frame:index}));
+}
+// Locked answers (settled in the room: src/placement.mjs infoSettled) get a lock beside their text's top-right corner in the 3D view
+// (twin.helper: not drawn in the recorded camera), and their lock goes to the placement log once.
+const lockGroup=new THREE.Group();lockGroup.name='answer-locks';twin.helper.add(lockGroup);
+const lockMap=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle='rgba(14,14,14,.85)';x.beginPath();x.arc(32,32,30,0,2*Math.PI);x.fill();
+  x.strokeStyle='#7fe0c6';x.fillStyle='#7fe0c6';x.lineWidth=5;x.beginPath();x.arc(32,26,9,Math.PI,0);x.stroke();x.fillRect(19,27,26,19);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;})();
+const locks=new Map(),lockLogged=new Set();
+function showLocks(){
+  const on=new Set();
+  for(const w of agent?.widgets.values()||[]){const d=w.userData;if(!w.visible||!d.pose?.infoSettled)continue;const id=d.response.id;on.add(id);
+    if(!lockLogged.has(id)){lockLogged.add(id);logPlacement(d.response,d.pose,index,'locked');}
+    let s=locks.get(id);if(!s){s=new THREE.Sprite(new THREE.SpriteMaterial({map:lockMap,depthTest:false,transparent:true}));s.renderOrder=31;lockGroup.add(s);locks.set(id,s);}
+    w.updateWorldMatrix(true,true);const size=Math.max(.03,d.width*.08);s.scale.set(size,size,1);
+    s.position.copy(d.text.localToWorld(new THREE.Vector3(d.width/2+size*.7,d.height/2,0)));}
+  for(const [id,s] of locks)if(!on.has(id)){lockGroup.remove(s);s.material.dispose();locks.delete(id);}
+}
+// Placement log (debug, scripts/agent_store.py log_placement): each new placement of an answer and its lock, with the scenario, the
+// recorded camera at that frame, the pose (kind, surface, line length, size, spot score, view metrics), the info shortlist weighed and
+// the answer text settings. One page load is one run (logRun).
+const logRun=new Date().toISOString();let logLast=new Map();
+function logPlacement(r,pose,frame,type='placed'){
+  if(r?.question_id==null||!session)return;
+  const r3=v=>v&&(Array.isArray(v)?v:v.toArray()).map(x=>+(+x).toFixed(3)),cam=frameCamera(frame),fwd=new THREE.Vector3(0,0,-1).applyQuaternion(cam.quaternion);
+  const p={kind:pose.kind,surface:pose.surfaceId??null,layout:pose.layout??null,position:r3(pose.position),width:pose.width&&+pose.width.toFixed(3),
+    settled:!!pose.infoSettled,unreadable:!!pose.unreadable,reason:pose.reason??null,spot:pose.infoSpot??null,
+    view:pose.viewMetrics&&{inView:pose.viewMetrics.inView,minPx:+(pose.viewMetrics.minPx??0).toFixed(2),visible:pose.viewMetrics.visible??null}};
+  const key=JSON.stringify([type,p.kind,p.position,p.width,p.settled]);if(logLast.get(r.id)===key)return;logLast.set(r.id,key);
+  const event={type,run:logRun,at:new Date().toISOString(),scenario:sessionURL.pathname,question_id:r.question_id,response_id:r.id,info:r.info??null,
+    frame,t:+session.frames[frame].t.toFixed(3),camera:{position:r3(cam.position),forward:r3(fwd)},pose:p,shortlist:pose.infoShortlist??null,
+    text:{...textBehavior},view:answerView()};
+  fetch(new URL('/api/agent/placement-log',location.href),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:sessionURL.pathname,question_id:r.question_id,event})}).catch(()=>{});
+}
+// The view answers are sized for (src/text-view.mjs): a reference view ARROW_VIEW px wide with the camera panel's aspect, not the panel's
+// own pixels, so an answer covers the same part of the picture in the normal and the full-screen camera view.
+function answerView(){const c=$('stage'),w=c.clientWidth||ARROW_VIEW,h=c.clientHeight||ARROW_VIEW*.75;return {width:ARROW_VIEW,height:ARROW_VIEW*h/w};}
+// Info answers' arrows, drawn flat over the recorded camera's view (SVG over the stage): each frame the text's ink rectangle and the box's
+// face are projected, and a short straight arrow laid out on the line from the text's centre to the face's centre (src/info-visual.mjs
+// arrowBetween). One path: its ink over its own soft border (the same path, wider and blurred), so the border is one piece. Sizes are for
+// a 686-px-wide view, scaled with it. Behavior: arrow thickness, arrow halo (border width and blur; 0: none). Not drawn if any part would
+// leave the view.
+const ARROW_VIEW=686,ARROW_PEN=2.6;
+function drawInfoArrows(arrows){
+  const svg=$('info-arrows'),c=$('stage'),W=c.offsetWidth,H=c.offsetHeight,k=W/ARROW_VIEW;
+  const pen=ARROW_PEN*(textBehavior.arrowWidth??1),halo=textBehavior.arrowHalo??1;
+  for(const e of [...svg.querySelectorAll(':scope > g')])e.remove();
+  Object.assign(svg.style,{left:c.offsetLeft+'px',top:c.offsetTop+'px',width:W+'px',height:H+'px'});svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const w=W/k,h=H/k,toRef=p=>{const q=p.clone().project(camera);return q.z>1||q.z<-1?null:new THREE.Vector2((q.x+1)/2*w,(1-q.y)/2*h);};
+  const inView=v=>v.x>=2&&v.y>=2&&v.x<=w-2&&v.y<=h-2;
+  $('info-blur').setAttribute('stdDeviation',(1.6*halo).toFixed(2));
+  let drawn=0;
+  for(const a of arrows){
+    const text=a.text.map(toRef),box=a.box.map(toRef);if(text.some(v=>!v)||box.some(v=>!v))continue;
+    const aim=toRef(a.aim),r=aim&&arrowBetween(text,box,{aim});if(!r||![r.start,r.end,...r.barbs].every(inView))continue;
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('transform',`scale(${k})`);g.setAttribute('opacity',a.opacity.toFixed(3));
+    g.innerHTML=(halo>0?`<path d="${r.d}" fill="none" stroke="${a.border.getStyle()}" stroke-width="${(pen*(1+2.2*halo)).toFixed(2)}" stroke-opacity="${Math.min(.9,.55+.35*halo).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" filter="url(#info-blur-f)"/>`:'')
+      +`<path d="${r.d}" fill="none" stroke="${a.color.getStyle()}" stroke-width="${pen.toFixed(2)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    svg.append(g);drawn++;
+  }
+  svg.toggleAttribute('hidden',!drawn);
+}
+// Colours for marks over some world points, against what the recorded camera shows there (the frame's image inside the points' screen
+// rectangle, a little larger; src/legibility.mjs): an info answer's corners like answer text ({color}); its arrow a vivid accent and a
+// border to put under it ({color, halo}). null until the frame is loaded.
+function markColor(points,kind='corners'){
+  const img=textures.get(index)?.image;if(!img?.width||!points?.length)return null;
+  camera.updateMatrixWorld();const ndc=points.map(p=>p.clone().project(camera)).filter(p=>p.z>-1&&p.z<1);if(!ndc.length)return null;
+  const W=img.width,H=img.height,xs=ndc.map(p=>(p.x+1)/2*W),ys=ndc.map(p=>(1-p.y)/2*H),pad=.02*W;
+  const x0=Math.max(0,Math.min(...xs)-pad),x1=Math.min(W,Math.max(...xs)+pad),y0=Math.max(0,Math.min(...ys)-pad),y1=Math.min(H,Math.max(...ys)+pad);
+  if(x1-x0<2||y1-y0<2)return null;
+  const w=24,h=Math.max(4,Math.min(24,Math.round(24*(y1-y0)/(x1-x0)))),c=new OffscreenCanvas(w,h).getContext('2d',{willReadFrequently:true});
+  c.drawImage(img,x0,y0,x1-x0,y1-y0,0,0,w,h);
+  const px=c.getImageData(0,0,w,h).data;
+  if(kind==='arrow'){const a=accentStyle(px,w,h);return {color:new THREE.Color().setRGB(...a.color),halo:new THREE.Color().setRGB(...a.halo)};}
+  return {color:new THREE.Color().setRGB(...pickStyle(px,w,h,0).text)};
+}
 const egoScene=createEgo({getTarget:egoTarget,lighting:{environment:scene.environment,lights:scene.children.filter(o=>o.isLight).map(l=>l.clone())}});
 const egoApproach=createApproachRemoval();
 const egoStatus=Object.assign(document.createElement('p'),{className:'muted',id:'ego-status',hidden:true});
@@ -142,7 +248,7 @@ function showHandStatus(){
 const spatialHands=()=>locateHands({perception:currentHandData,depth:depths.get(index)?.image,camera,intrinsics:session.intrinsics});
 // Response settings: global, each mod (weather) able to override them (src/response-settings.mjs).
 const responseSettings=loadResponseSettings(),forResponse=r=>resolveSettings(responseSettings,modOf(responseSettings,r));
-const weatherScene=createWeatherScene({scene,getStability:()=>resolveSettings(responseSettings,'weather').stability,getCamera:()=>camera,getRoom:()=>roomParts?.userData.parts.space||room,getOccluders:()=>[roomParts?.userData.parts.space,roomParts?.userData.parts.recording].filter(Boolean),getDepthOccluder:c=>c===camera&&depths.has(index)?depthOccluder:null,getObjects:()=>components.instances.filter(i=>i.root.visible).map(i=>i.root),onAnimate:()=>update(),
+const weatherScene=createWeatherScene({scene,getStability:()=>resolveSettings(responseSettings,'weather').stability,getLock:()=>!!resolveSettings(responseSettings,'weather').lockLocation,getCamera:()=>camera,getRoom:()=>roomParts?.userData.parts.space||room,getOccluders:()=>[roomParts?.userData.parts.space,roomParts?.userData.parts.recording].filter(Boolean),getDepthOccluder:c=>c===camera&&depths.has(index)?depthOccluder:null,getObjects:()=>components.instances.filter(i=>i.root.visible).map(i=>i.root),onAnimate:()=>update(),
   onLabel:info=>{weatherPreview?.render(info);const el=$('weather-status');el.hidden=!info;if(info){const e=info.entry,label=`${e.label} · ${e.summary} · ${e.temp_c} °C${info.total>1?` · ${info.index}/${info.total}`:''}${info.target?'':' · Look at a layout surface'}`;if(el.textContent!==label)el.textContent=label;}}});
 weatherPreview=createWeatherPreview($('weather-preview'),weatherScene.playback,()=>update());
 createResponseSettingsPanel({root:$('response-settings'),settings:responseSettings,extra:{weather:[$('weather-preview'),$('weather-status')],findmy:[findmyStatus],ego:[egoStatus]},
@@ -163,7 +269,7 @@ $('enable-response-mod').onclick=()=>{const mod=$('enable-response-mod').dataset
 weatherScene.setEnabled($('weather-mod').checked);
 twin.setOverlay(weatherScene);twin.setPresentation({get group(){return agent?.group;},get controls(){return weatherSurfacePreview?.mesh;},render:(r,c)=>{agent?.renderAfter(r,c,weatherSurfacePreview?.mesh,index,false);findmyScene.render(r,c);egoScene.render(r,c,{copies:false});}});
 /** A gizmo moved, turned or scaled the selected component: its spec follows (scale stays one number while uniform; a box's stays its size). */
-function fromGizmo(o){if(fine&&o===fine.object){fineMoved(o);return;}const r=v=>+v.toFixed(4),d=v=>+THREE.MathUtils.radToDeg(v).toFixed(2),sc=o.scale.toArray().map(r);
+function fromGizmo(o){if(fine&&o===fine.object){fineMoved(o);return;}if(layout.selected&&o===layout.selected.object){layout.fromGizmo();return;}const r=v=>+v.toFixed(4),d=v=>+THREE.MathUtils.radToDeg(v).toFixed(2),sc=o.scale.toArray().map(r);
   setSelected({position:o.position.toArray().map(r),rotation:[d(o.rotation.x),d(o.rotation.y),d(o.rotation.z)],scale:!Array.isArray(components.get(selected)?.spec.scale)&&Math.abs(sc[0]-sc[1])<1e-4&&Math.abs(sc[1]-sc[2])<1e-4?sc[0]:sc},{history:false});}
 // The saved state (Save / Load, ?placement=): the components and the compositing switches. Version 1 (one object) still loads.
 function placement(){return {version:2,components:components.specs(),selected,room:roomName,roomData,occlude:$('occlude').checked,depthOcclude:$('depth-occlude').checked,shadows:$('shadows').checked,roomWireframe:$('room-wireframe').checked,videoTwins:$('video-twins').checked};}
@@ -177,6 +283,7 @@ function paint(){
   const weatherDepth=$('weather-mod').checked?depths.get(index):null;
   if(map||weatherDepth){depthOccluder.material.uniforms.depthMap.value=map||weatherDepth;const e=camera.projectionMatrix.elements;depthOccluder.material.uniforms.proj.value.set(e[10],e[14]);}
   agent?.update(session?session.frames[index].t:0);if(session)agent?.adapt(index);
+  showInfoVisuals();
   const responses=agent?[...agent.widgets.values()].filter(w=>w.visible):[];
   $('response-readability').hidden=!responses.some(w=>w.userData.placementHidden||w.userData.pose?.unreadable);
   const currentResponses=responses.map(w=>w.userData.response);
@@ -224,9 +331,54 @@ function paint(){
     handCompositor.render(renderer,scene.background,currentHandData);
     // Response text/controls intentionally draw over hands; effects remain protected.
     agent?.renderAfter(renderer,camera,controls,index,true);
-    agent?.renderHud(renderer);showHandStatus();showTrace();
+    agent?.renderHud(renderer);showHandStatus();showTrace();showSelection();
   }finally{for(const r of hidden)r.visible=true;depthOccluder.visible=false;catchers.visible=false;}
   const now=performance.now();if(!playing||now-lastTwinPaint>=1000/15){lastTwinPaint=now;twin.render();}
+}
+// User selection of a thing carrying info (src/user-selection.mjs) at the shown frame, from the fovea zone (the view's centre), a pointing
+// finger and a touching hand; sent with each question. The fovea zone is drawn over the recorded camera (Video options: Fovea zone, on by
+// default). How the agent uses it (Agent panel, Info selection): Jev judgement or the score alone. Both remembered in this browser.
+const pref=(k,fallback)=>{try{return localStorage.getItem('spatial-take:'+k)??fallback;}catch{return fallback;}},keep=(k,v)=>{try{localStorage.setItem('spatial-take:'+k,v);}catch{}};
+let selectionMode=pref('selection-mode','jev')==='score'?'score':'jev',lastSelection='',lastMarks='';
+$('show-selection').checked=pref('show-selection','on')!=='off';$('show-selection').onchange=()=>{keep('show-selection',$('show-selection').checked?'on':'off');selectionMarks.setEnabled($('show-selection').checked);twin.render();};
+$('fovea-zone').checked=pref('fovea-zone','on')!=='off';$('fovea-zone').onchange=()=>{keep('fovea-zone',$('fovea-zone').checked?'on':'off');update();};
+for(const b of document.querySelectorAll('[data-selection]')){b.setAttribute('aria-pressed',b.dataset.selection===selectionMode);
+  b.onclick=()=>{selectionMode=b.dataset.selection;keep('selection-mode',selectionMode);for(const x of document.querySelectorAll('[data-selection]'))x.setAttribute('aria-pressed',x===b);};}
+function computeSelection(){
+  if(!session||!layoutLoaded)return null;const carriers=infoCarriers();if(!carriers.length)return null;
+  camera.updateMatrixWorld();const inv=camera.matrixWorld.clone().invert(),dm=depths.get(index)?.image,v=new THREE.Vector3();
+  // In the view and not behind something this frame's depth saw more than 25 cm nearer.
+  const visible=p=>{v.copy(p).applyMatrix4(inv);const d=-v.z;if(d<=.05)return false;v.applyMatrix4(camera.projectionMatrix);if(Math.abs(v.x)>1||Math.abs(v.y)>1)return false;
+    if(dm?.data){const x=Math.min(dm.width-1,Math.floor((v.x+1)/2*dm.width)),y=Math.min(dm.height-1,Math.floor((1-v.y)/2*dm.height)),z=dm.data[y*dm.width+x];if(z>.05&&z<d-.25)return false;}
+    return true;};
+  // Things with boxes (furniture, doors and windows, persistent objects) by gaze, pointing and touch.
+  const targets=carriers.filter(c=>!c.id.startsWith('zone:')).map(c=>{const g=egoTarget(c.id);return g&&{id:c.id,key:c.key,center:g.center,size:g.size,yaw:g.yaw||0};}).filter(Boolean);
+  const eye=new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld);
+  const result=selectInfoBox({view:{position:eye.toArray(),forward:new THREE.Vector3(0,0,-1).transformDirection(camera.matrixWorld).toArray()},
+    boxes:targets,hands:spatialHands(),visible,keyOf:t=>t.key,
+    // Pointing is judged in the image: MediaPipe's 2D joints against the boxes projected with the recorded camera (same image size).
+    image:currentHandData?.landmarks?.length?{landmarks:currentHandData.landmarks,mask:currentHandData,width:session.intrinsics.width,height:session.intrinsics.height,
+      project:p=>{const q=p.clone().project(camera);return q.z>1||q.z<-1?null:new THREE.Vector2((q.x+1)/2*session.intrinsics.width,(1-q.y)/2*session.intrinsics.height);}}:null});
+  // A zone carrying info that the user stands in: a weak candidate when nothing else is selected (Jev judges it, scripts/info_context.py).
+  const zone=layoutRooms.find(r=>r.info&&r.id===labelRoom(layoutRooms,eye));
+  if(zone&&!result.selected)result.selected={box_id:'zone:'+zone.id,key:zone.info,score:ZONE_SELECTION,cues:{gaze:0,point:0,touch:0,zone:1}};
+  result.targets=targets;return result;
+}
+const ZONE_SELECTION=.4;
+function showSelection(){
+  const result=computeSelection(),sel=result?.selected,svg=$('fovea'),c=$('stage'),on=$('fovea-zone').checked&&!!session;
+  // What is selected is marked in the 3D view; the recorded camera only shows the fovea zone changing colour.
+  const marks=JSON.stringify(result?.scores?.map(x=>[x.box_id,x.score])||[]);if(marks!==lastMarks){lastMarks=marks;selectionMarks.set(result,result?.targets||[]);twin.render();}
+  const more=result?.selectedAll?.length>1?` · ${result.selectedAll.length} selected`:'';
+  const text=!result?'Nothing in this scene carries info.':sel?`Selected · ${sel.key} (${sel.score.toFixed(2)}: gaze ${sel.cues.gaze.toFixed(2)}, point ${sel.cues.point.toFixed(2)}, touch ${sel.cues.touch.toFixed(2)})${more}`:
+    result.candidates[0]?`None selected · nearest ${result.candidates[0].key} ${result.candidates[0].score.toFixed(2)}`:'None selected';
+  if(text!==lastSelection){lastSelection=text;$('selection-status').textContent=text;}
+  svg.toggleAttribute('hidden',!on);if(!on)return;   // an <svg> has no hidden property
+  const w=c.offsetWidth,h=c.offsetHeight,f=camera.projectionMatrix.elements[5]*h/2,r=a=>f*Math.tan(THREE.MathUtils.degToRad(a));
+  Object.assign(svg.style,{left:c.offsetLeft+'px',top:c.offsetTop+'px',width:w+'px',height:h+'px'});svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  // The ring the selection falls in lights: the inner circle when the box is inside it, only the outer one when it is in the ring.
+  svg.classList.toggle('inner-on',!!sel&&sel.cues.gaze>=1);svg.classList.toggle('outer-on',!!sel&&sel.cues.gaze>0&&sel.cues.gaze<1);
+  for(const [cls,a] of [['inner',FOVEA.inner],['outer',FOVEA.outer]]){const e=svg.querySelector('.'+cls);e.setAttribute('cx',w/2);e.setAttribute('cy',h/2);e.setAttribute('r',r(a));}
 }
 // Persistent objects and Obj library objects can each be left out of the recorded camera and of the 3D view (remembered in this browser).
 const SHOW={video:{persistent:'video-twins',opportunistic:'video-objects'},twin:{persistent:'twin-persistent',opportunistic:'twin-objects'}};
@@ -272,7 +424,8 @@ function trackRelation(i){if(!textSurfaces.length)return null;const cam=frameCam
 function relationAt(i){if(relationByFrame.has(i))return relationByFrame.get(i);if(!textSurfaces.length)return null;
   const t=session.frames[i].t,tracker=createRelationTracker();let start=i,r=null;while(start>0&&session.frames[start-1].t>=t-2)start--;
   for(let j=start;j<=i;j++){const cam=frameCamera(j);cam.updateMatrixWorld(true);r=tracker.update(session.frames[j].t,viewOf(cam),textSurfaces,{depth:depthAlong(j,cam)});}
-  relationByFrame.set(i,r);return r;}
+  // Kept only once this frame's depth is in (judged without it, the relation may differ: e.g. none, then the desk top).
+  if(depths.has(i))relationByFrame.set(i,r);return r;}
 async function setFrame(i,{realtime=false,preparedHands=null,generation=null}={}){
  if(realtime){
   if(i===index||preparingFrames.has(i))return;
@@ -340,19 +493,24 @@ function startHold(q,{resume=true,live=false}={}){
 function endHold(continueDelivery=false){if(!hold)return;hold=null;agent?.setHold(null,{continueDelivery});setAskStatus('');}
 function holdStep(now){
   const q=agent?.questions.find(q=>q.id===hold.id);
+  // Asked here, the question reaches agent.questions only with the next status poll: wait for it (10 s at most) instead of ending the hold.
+  if(!q&&hold.live&&now-hold.start<10000)return true;
   if(!q||q.status==='failed'){const resume=hold.resume;endHold();return resume;}
   Object.assign(hold,questionClock(q,(now-hold.start)/1000,{live:hold.live,typingDuration:hold.typingDuration}));
   // The answer shows after its real latency; live, it can only show once it has arrived (the next status poll).
   if(q.status==='answered'&&hold.shownAt==null)hold.shownAt=hold.live?Math.max(q.latency||0,hold.h):q.latency||0;
   if(hold.shownAt!=null&&!hold.pulsed&&hold.h>=hold.shownAt){hold.pulsed=true;agent.replay(q.response);}
   const end=hold.shownAt==null?Infinity:hold.shownAt+(q.live?.read_s??READ_S);
-  const writing=(hold.live&&q.parts?.text?.status==='streaming')||[...agent.widgets.values()].some(w=>w.visible&&w.userData.response.question_id===q.id&&w.userData.response.stream?.status==='streaming');
-  setAskStatus(hold.h<0?'Typing question…':hold.shownAt==null||hold.h<hold.shownAt?(writing?'Writing answer…':!hold.live?'Agent thinking':q.parts?.ui&&q.parts?.text?'Response ready…':q.parts?.ui?'UI ready · generating text…':q.parts?.text?'Text ready · preparing UI…':'Agent thinking'):`Reading… ${Math.max(1,Math.ceil(end-hold.h))} s`);
+  const writing=agent.writing(q.id)||(hold.live&&q.parts?.text?.status==='streaming')||[...agent.widgets.values()].some(w=>w.visible&&w.userData.response.question_id===q.id&&w.userData.response.stream?.status==='streaming');
+  setAskStatus(hold.h<0?'Typing question…':writing&&hold.shownAt!=null&&hold.h>=hold.shownAt?'Writing answer…':hold.shownAt==null||hold.h<hold.shownAt?(writing?'Writing answer…':!hold.live?'Agent thinking':q.parts?.ui&&q.parts?.text?'Response ready…':q.parts?.ui?'UI ready · generating text…':q.parts?.text?'Text ready · preparing UI…':'Agent thinking'):`Reading… ${Math.max(1,Math.ceil(end-hold.h))} s`);
   agent.setHold({id:hold.id,h:hold.h,typingElapsed:hold.typingElapsed,typingDuration:hold.typingDuration,shownAt:hold.shownAt,live:hold.live});
   const first=[...agent.widgets.values()].find(w=>w.visible&&w.userData.response.question_id===q.id&&
-    (w.userData.response.weather||w.userData.response.findmy||!w.userData.pose?.unreadable));
-  if(hold.h>=0&&first&&currentHandData?.status==='ready'&&resumeOnFirstResponse(responseSettings,first.userData.response,q,agent.responses)){endHold(true);return true;}
-  if(hold.h>=end){const resume=hold.resume;endHold();return resume;}
+    (hold.live||w.userData.response.weather||w.userData.response.findmy||!w.userData.pose?.unreadable));
+  // Asked here (live): playback goes on as soon as the answer shows, whether the video was playing or paused when asking.
+  // (Live, the frame's hands need not be ready: the user is waiting on the answer, not on the hand overlay.)
+  if(hold.h>=0&&first&&(hold.live||currentHandData?.status==='ready'&&resumeOnFirstResponse(responseSettings,first.userData.response,q,agent.responses))){endHold(true);return true;}
+  // A replay holds on until the answer is written (Behavior › Writing) as well.
+  if(hold.h>=end&&!agent.writing(q.id)){const resume=hold.resume||hold.live;endHold();return resume;}
   return true;
 }
 async function tick(){if(!playing)return;const now=performance.now();
@@ -371,7 +529,7 @@ async function showLidar(){
   for(let y=0;y<h;y+=2)for(let x=0;x<w;x+=2){const d=data[y*w+x];if(!(d>0))continue;const u=(x+.5)/w*k.width,vv=(y+.5)/h*k.height;v.set((u-k.cx)/k.fx*d,-(vv-k.cy)/k.fy*d,-d).applyMatrix4(cam.matrixWorld);pts.push(v.x,v.y,v.z);}
   twin.setLidar(new Float32Array(pts));
 }
-function showCut(range){for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',b.dataset.mode===twin.mode);$('cut-controls').hidden=!range;$('cut-flip-label').hidden=twin.mode==='plan';if(!range)return;Object.assign($('cut'),{min:range.min,max:range.max,value:range.value});$('cut-label').textContent=range.label;$('cut-value').textContent=range.value.toFixed(2);}
+function showCut(range){showFloor();for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',b.dataset.mode===twin.mode);$('cut-controls').hidden=!range;$('cut-flip-label').hidden=twin.mode==='plan';if(!range)return;Object.assign($('cut'),{min:range.min,max:range.max,value:range.value});$('cut-label').textContent=range.label;$('cut-value').textContent=range.value.toFixed(2);}
 for(const b of document.querySelectorAll('[data-mode]'))b.onclick=()=>showCut(twin.setView({mode:b.dataset.mode}));
 // Close open option menus on any click outside them.
 document.addEventListener('click',e=>{for(const d of document.querySelectorAll('details.menu[open]'))if(!d.contains(e.target))d.open=false;});
@@ -379,6 +537,10 @@ $('cut').oninput=()=>showCut(twin.setView({cut:Number($('cut').value)}));
 $('cut-flip').onchange=()=>showCut(twin.setView({flip:$('cut-flip').checked}));
 $('cut-objects').onchange=()=>showCut(twin.setView({cutObjects:$('cut-objects').checked}));
 $('reset-view').onclick=()=>twin.resetView();
+function saveFloor(){const f=twin.floorSettings();try{localStorage.setItem('spatial-take:floors:'+spaceURL.pathname,JSON.stringify({level:f.level,split:f.split,automatic:f.automatic}));}catch{}}
+function showFloor(){const f=twin.floorSettings();$('floor-view').value=String(f.visibleLevel);$('floor-view').title=twin.mode==='follow'?'Camera follow shows all floors. Choose 1F or 2F to inspect it in Orbit.':'Show only the selected floor';$('floor-split-wrap').hidden=!f.visibleLevel;$('floor-split').value=f.split.toFixed(2);$('floor-split').min=(f.min+.01).toFixed(2);$('floor-split').max=(f.max-.01).toFixed(2);}
+$('floor-view').onchange=()=>{showCut(twin.setFloor({level:Number($('floor-view').value),inspect:true}));saveFloor();};
+$('floor-split').onchange=()=>{const split=Number($('floor-split').value);if(Number.isFinite(split)){showCut(twin.setFloor({split}));saveFloor();}};
 // Full screen of the recorded camera: its column alone, centred; the video as tall as fits above its timeline and ask box (Esc leaves).
 const cameraCol=$('camera-col');
 function fitCameraFull(){const full=document.fullscreenElement===cameraCol,stage=$('stage');
@@ -400,11 +562,14 @@ $('timeline').oninput=()=>{pause();at(Number($('timeline').value)).catch(fail);}
 let fine=null;   // fine-tuning the open recording's alignment (see startFineTune)
 let selected=null,compositionRevision=0,sceneRevision=0,compositionTimer=null;
 const groupOf=inst=>components.categoryOf(inst.spec);
-function select(id){selected=components.get(id)?id:null;anchor=components.get(selected)?.root||noSelection;
+function select(id){selected=components.get(id)?id:null;anchor=components.get(selected)?.root||noSelection;if(selected)$('zone-info').value='';queueMicrotask(()=>showInfo());
   if(selected&&layout.selected)layout.select(null);if(selected&&groupOf(components.get(selected))==='persistent')outlineView?.setSelected(OBJ+selected);showComponents();update();}
 // The handles only on a selected component that is showing (its eye on, inside its time span, its kind shown in the 3D view).
-function syncGizmo(){const inst=components.get(selected),want=fine?fine.object:inst&&anchor.visible&&twin.gizmo.enabled&&visibleInTwin(inst)?anchor:null;
-  const modes=!fine&&inst&&groupOf(inst)==='persistent'?['translate','rotate']:['translate','rotate','scale'];
+// A layout box being edited with the gizmo (Box handles: Move · rotate): moved on three axes and turned about the vertical only.
+function syncGizmo(){const inst=components.get(selected),box=!fine&&layout.enabled&&layout.handleMode==='gizmo'&&layout.selected?.object?.visible?layout.selected:null;
+  const want=fine?fine.object:box?box.object:inst&&anchor.visible&&twin.gizmo.enabled&&visibleInTwin(inst)?anchor:null;
+  const modes=fine||box||inst&&groupOf(inst)==='persistent'?['translate','rotate']:['translate','rotate','scale'];
+  const axes=box?['Y']:['X','Y','Z'];if(String(twin.gizmo.rotateAxes)!==String(axes)&&!twin.gizmo.dragging)twin.gizmo.setRotateAxes(axes);
   if(String([...twin.gizmo.modes])!==String(modes)&&!twin.gizmo.dragging)twin.gizmo.setModes(modes);
   if(twin.gizmo.object!==want)twin.attach(want);}
 // Undo history of component transforms (⌘Z): the transform before each change; a handle drag is one step (its state at the press).
@@ -420,7 +585,8 @@ twin.gizmo.addEventListener('duplicate',()=>{const inst=!fine&&components.get(se
   (async()=>{if(m){const r=await api('/api/objects/duplicate',{space:here[0],id:m.id,name:spec.name,origin:here[1],pose:{position:spec.position,rotation:spec.rotation}});
       await components.loadLibrary(here[0]);spec.component=r.id;spec.initial=components.transform(spec);}
     await components.add(spec);showComponents();update();saveComposition();})().catch(fail);});
-for(const g of [twin.gizmo]){g.addEventListener('mouseDown',()=>{dragBefore=selected&&components.transform(components.get(selected).spec);});
+for(const g of [twin.gizmo]){g.addEventListener('mouseDown',()=>{if(layout.selected&&g.object===layout.selected.object)layout.beginGizmo();dragBefore=selected&&components.transform(components.get(selected).spec);});
+  g.addEventListener('mouseUp',()=>{if(layout.selected&&g.object===layout.selected.object)layout.endGizmo();});
   g.addEventListener('mouseUp',()=>{const s=selected&&components.get(selected)?.spec;if(dragBefore&&s&&JSON.stringify(dragBefore)!==JSON.stringify(components.transform(s))){compHistory.push({id:selected,before:dragBefore});lastEditKey=null;}dragBefore=null;});}
 /** Change the selected component (transform, visibility, name) and save; transform changes go into the undo history unless they come
  *  from a handle drag (recorded as one step at the press). */
@@ -455,7 +621,7 @@ const EYES='<svg class="on" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 1
 function eye(on){return `<label class="eye" aria-label="${on?'Hide':'Show'}"><input type="checkbox" ${on?'checked':''}>${EYES}</label>`;}
 // Lists that show components: the Objects section and (persistent objects) the Layout outline.
 function showComponents(){showObjects();showOutline();}
-addEventListener('keydown',e=>{if(e.key==='Escape'&&selected&&groupOf(components.get(selected))!=='widget'){e.preventDefault();select(null);return;}if(layout?.enabled||e.target.matches?.('input,select,textarea'))return;if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!e.shiftKey&&compHistory.length){e.preventDefault();withdraw();}});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&selected&&groupOf(components.get(selected))!=='widget'){e.preventDefault();select(null);return;}if(e.target.matches?.('input,select,textarea,[contenteditable=true]'))return;if(fine&&(e.metaKey||e.ctrlKey)){const key=e.key.toLowerCase();if(key==='z'||key==='y'){e.preventDefault();if(!twin.gizmo.dragging)$(key==='y'||e.shiftKey?'fine-redo':'fine-withdraw').click();return;}}if(layout?.enabled)return;if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!e.shiftKey&&compHistory.length){e.preventDefault();withdraw();}});
 // The recorded camera of any frame (the live camera for the frame on screen).
 function frameCamera(i){const snapshot=new THREE.PerspectiveCamera();setPose(snapshot,session.frames[i],session.intrinsics);return snapshot;}
 // Surface under (px,py) in frame i (default: the frame on screen), world space, normal facing the camera, with where it came from.
@@ -613,8 +779,19 @@ function objectRow({name,kind,inst,tick,onTick,onRename,onRemove,swap=null,onMod
   li.querySelector('.del')?.addEventListener('click',()=>Promise.resolve(onRemove()).catch(err=>{$('take-status').textContent=err.message;}));
   return li;}
 function showObjects(){
+  const selected=$('space').value||here[0],foreign=selected!==here[0];
+  $('objects-wrap').querySelector('.outline-tools').hidden=foreign;
+  if(foreign){
+    const names=spaceData.spaces.find(s=>s.name===selected)?.objects||[];
+    $('objects-count').textContent=`${names.length} object${names.length===1?'':'s'} · ${selected}`;
+    $('objects-edit').hidden=$('object-add-menu').hidden=true;
+    const list=$('object-library');list.replaceChildren();
+    for(const name of names){const li=document.createElement('li');li.className='item';li.textContent=name;list.append(li);}
+    const hint=document.createElement('li');hint.className='item muted';hint.textContent='Open a recording in this scene to place or edit its objects.';list.append(hint);
+    return;
+  }
   const list=$('object-library'),all=sceneObjects(),loose=components.instances.filter(i=>groupOf(i)==='opportunistic'&&!libraryObject(i)),widgets=components.instances.filter(i=>groupOf(i)==='widget');
-  const n=all.length+loose.length;$('objects-count').textContent=`${n} object${n===1?'':'s'}`;$('objects-edit').hidden=$('object-add-menu').hidden=!here[0];
+  const n=all.length+loose.length;$('objects-count').textContent=`${n} object${n===1?'':'s'} · ${selected||'scene'}`;$('objects-edit').hidden=$('object-add-menu').hidden=!here[0];
   list.replaceChildren();
   for(const m of all){const inst=placedObject(m.id);
     list.append(objectRow({name:m.name,kind:m.kind==='box'?'box':'glb',inst,tick:true,onTick:on=>on?placeObject(m.id):unplace(inst),onRename:name=>renameObject(m.id,name),
@@ -642,7 +819,7 @@ $('object-create').onclick=async()=>{const file=$('opportunistic-import').files[
   try{await newObject(newType,file);$('object-name').value='';$('opportunistic-import').value='';fileLabel();$('object-add-menu').open=false;}catch(err){$('take-status').textContent=err.message;}};
 function occlusion(){if(!room)return;room.traverse(o=>{if(o.isMesh){
   // Keep a scan's texture for the 3D view before the occluder material replaces it.
-  if(!('scanMap' in o.userData))o.userData.scanMap=o.material.map||null;o.material=new THREE.MeshBasicMaterial({color:0x888888,wireframe:!$('occlude').checked,colorWrite:!$('occlude').checked&&$('room-wireframe').checked,depthWrite:$('occlude').checked,side:THREE.DoubleSide});o.renderOrder=-1;}});update();}
+  if(!('scanMap' in o.userData)){o.userData.scanMap=o.material.map||null;o.userData.scanColor=o.material.color?.clone()||new THREE.Color(0xffffff);o.userData.scanOpacity=o.material.opacity??1;o.userData.scanTransparent=!!o.material.transparent;o.userData.scanAlphaTest=o.material.alphaTest||0;}o.material=new THREE.MeshBasicMaterial({color:0x888888,wireframe:!$('occlude').checked,colorWrite:!$('occlude').checked&&$('room-wireframe').checked,depthWrite:$('occlude').checked,side:THREE.DoubleSide});o.renderOrder=-1;}});update();}
 $('occlude').onchange=occlusion;$('shadows').onchange=update;$('depth-occlude').onchange=()=>setFrame(index).catch(fail);$('room-wireframe').onchange=occlusion;$('video-lidar-mesh').onchange=update;// Save: a self-contained file (imported .glb files embedded as data URLs, wherever they are stored).
 $('save').onclick=async()=>{const doc=placement();for(const c of doc.components)if(c.src&&!c.src.startsWith('data:')){const blob=await(await fetch(new URL(c.src,sessionURL))).blob();c.src=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(blob);});}
   const u=URL.createObjectURL(new Blob([JSON.stringify(doc,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='placement.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);};
@@ -674,6 +851,13 @@ function showSpace(){
   const scan=$('scan');scan.replaceChildren();scan.disabled=!sp.scans.length||!!busy;
   if(!sp.scans.length)scan.add(new Option('No scan',''));
   for(const x of sp.scans){scan.add(new Option(x.label+(x.kind==='layout'?' · layout':''),x.id));if(x.primary)scan.value=x.id;}
+  const sources=$('scan-sources');sources.replaceChildren();
+  for(const source of sp.pendingScans||[]){
+    const li=row('scan-source','add',source.label),button=document.createElement('button');button.textContent='Import scan';button.disabled=!!busySpace;
+    button.onclick=()=>run('/api/scan/import',{space:sp.name,source:source.name},'scan');li.append(button);sources.append(li);
+  }
+  if(sp.name!==here[0]){if(objectsEditing)editObjects(false);select(null);}
+  showObjects();
   // Layout: labelled boxes over the scan (RoomPlan's first guess, corrected here). Editable for the scene that is open.
   const L=sp.layout;$('layout-count').textContent=L?`${L.objects+L.openings} boxes`:'None';$('layout-count').disabled=!(L&&here[0]===sp.name);if($('layout-count').disabled)$('layout-outline-wrap').hidden=true;
   $('layout-edit').disabled=!(L&&here[0]===sp.name&&layoutLoaded);
@@ -686,8 +870,8 @@ function showSpace(){
     const manual=current&&sp.scan&&!aligning?`<button class="state manual" aria-label="Align" title="Align: pick what this recording shows">${svg('target')}</button>`:'';
     // How well it is aligned: the error left, and what it was aligned to.
     const r=sc.registration,quality=sc.registered&&r?.rmse!=null&&!aligning?`<span class="state q" title="${r.target?'aligned to the parts picked':'aligned to the whole scan'} · ${r.method||''}${r.explained!=null?` · ${Math.round(r.explained*100)}% explained`:''}">${(r.rmse*100).toFixed(1)} cm${r.target?'':' ·?'}</span>`:'';
-    const li=row('scenario','scenario',sc.label,quality+state+manual);if(current)li.setAttribute('aria-current','true');
-    li.onclick=e=>{if(e.target.closest('.manual')){e.stopPropagation();openAlign();return;}if(e.target.closest('.warn')){e.stopPropagation();run('/api/register',{space:sp.name,take:sc.name},'align');return;}if(!current)openScenario(sc.session);};
+    const li=row('scenario','scenario',sc.label,quality+state+manual+(current&&sp.scan&&sc.roomMesh?'<button class="tune" title="Drag this recording into place without automatic alignment">Tune</button>':''));if(current)li.setAttribute('aria-current','true');
+    li.onclick=e=>{if(e.target.closest('.tune')){e.stopPropagation();startFineTune();return;}if(e.target.closest('.manual')){e.stopPropagation();openAlign();return;}if(e.target.closest('.warn')){e.stopPropagation();run('/api/register',{space:sp.name,take:sc.name},'align');return;}if(!current)openScenario(sc.session);};
     // Rename the open scenario's recording by double-clicking its name.
     if(current)li.querySelector('.name').ondblclick=()=>renameInline(li.querySelector('.name'),sc.name,sc.label);
     list.append(li);
@@ -695,7 +879,11 @@ function showSpace(){
   if(busy?.kind==='add')list.append(row('scenario','scenario',busy.take,spinner));
   // Add recording: this scene's recordings in private/<scene>/recordings/ that are not added yet.
   const free=spaceData.takes.filter(t=>(!t.scene||t.scene===sp.name)&&!t.spaces.includes(sp.name)&&busy?.take!==t.name);
-  if(free.length)list.append(picker(row('add','add','Add recording'),free,take=>run('/api/scenarios',{space:sp.name,take},'add')));
+  for(const take of free){
+    const li=row('recording-source','scenario',take.label),button=document.createElement('button');button.textContent='Prepare';button.disabled=!!busySpace;
+    button.title='Import recording, build its mesh, align to the scene and prepare hands';
+    button.onclick=()=>run('/api/scenarios',{space:sp.name,take:take.name},'add');li.append(button);list.append(li);
+  }
 }
 function renameInline(span,take,current){
   const input=document.createElement('input');input.className='rename';input.value=current;span.replaceWith(input);input.focus();input.select();
@@ -710,7 +898,7 @@ async function loadSpaces(){
   showSpace();
 }
 async function run(path,body,kind){
-  if(busySpace)return;busySpace={...body,kind};$('take-status').textContent=kind==='add'?'Preparing recording · import, mesh, alignment and offline hands…':'';showSpace();
+  if(busySpace)return;busySpace={...body,kind};$('take-status').textContent=kind==='add'?'Preparing recording · import, mesh, alignment and offline hands…':kind==='scan'?'Importing scan…':'';showSpace();
   let polling=false;
   const progress=kind==='add'?setInterval(async()=>{
     if(polling||!busySpace)return;polling=true;
@@ -734,31 +922,38 @@ function applyToSpace(M){toSpace=M.clone();
 // mesh hanging under it; toSpace is the mesh's resulting world matrix.
 function fineToSpace(){fine.mesh.updateMatrixWorld(true);return fine.mesh.matrixWorld.clone();}
 function setFineMatrix(M){const o=fine.object;M.decompose(o.position,o.quaternion,o.scale);o.scale.set(1,1,1);o.updateMatrix();o.updateMatrixWorld(true);applyToSpace(fineToSpace());showFine();}
-function showFine(){$('fine-bar').hidden=!fine;if(!fine)return;$('fine-withdraw').disabled=!fine.history.length;$('fine-reset').disabled=fine.object.matrix.equals(fine.saved);$('fine-save').disabled=$('fine-reset').disabled;}
-function startFineTune(){const g=roomParts?.userData.parts.recording;
-  if(!g||!toSpace){$('take-status').textContent='Fine-tuning needs the recording aligned once and its own mesh (room.glb).';return;}
+function showFine(){$('fine-bar').hidden=!fine;if(!fine)return;$('fine-withdraw').disabled=!fine.history.canUndo;$('fine-redo').disabled=!fine.history.canRedo;$('fine-reset').disabled=fine.object.matrix.equals(fine.saved);$('fine-save').disabled=$('fine-reset').disabled&&!fine.initialPlacement;}
+function startFineTune(){if(fine)return;const g=roomParts?.userData.parts.recording;
+  if(!g){$('take-status').textContent='Prepare this recording first to create its mesh, then drag it into place.';return;}
+  const originalToSpace=toSpace?.clone()||null;
+  alignPanel.hide();if(layout.enabled)editLayout(false);if(objectsEditing)editObjects(false);
   pause();select(null);
   const pivot=new THREE.Group();pivot.name='recording-pivot';new THREE.Box3().setFromObject(g).getCenter(pivot.position);g.parent.add(pivot);pivot.updateMatrixWorld(true);pivot.attach(g);
-  fine={object:pivot,mesh:g,saved:pivot.matrix.clone(),history:[],before:null};
+  fine={object:pivot,mesh:g,saved:pivot.matrix.clone(),history:createTransformHistory(),before:null,originalToSpace,initialPlacement:!originalToSpace};
+  if(!toSpace)applyToSpace(new THREE.Matrix4());
   $('debug-recordingMesh').checked=true;$('debug-spaceScan').checked=true;twin.setDebug({recordingMesh:true,spaceScan:true});
   // Look at the whole recording mesh, the gizmo in the middle.
   const sphere=new THREE.Box3().setFromObject(g).getBoundingSphere(new THREE.Sphere());for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',b.dataset.mode==='orbit');
-  twin.focusOn(sphere.center,Math.max(.8,sphere.radius));showFine();update();}
+  twin.focusOn(sphere.center,Math.max(.8,sphere.radius));showCut(twin.setView({}));showFine();update();}
 function endFineTune(restore){if(!fine)return;if(restore)setFineMatrix(fine.saved);
-  const {object:pivot,mesh:g}=fine;pivot.parent.attach(g);pivot.removeFromParent();fine=null;showFine();update();}
+  const {object:pivot,mesh:g}=fine;if(restore&&!fine.originalToSpace)toSpace=null;pivot.parent.attach(g);pivot.removeFromParent();fine=null;showFine();update();}
 // The gizmo reports the pivot moved: scale is not part of an alignment.
 function fineMoved(o){o.scale.set(1,1,1);o.updateMatrix();o.updateMatrixWorld(true);applyToSpace(fineToSpace());showFine();}
 for(const g of [twin.gizmo]){g.addEventListener('mouseDown',()=>{if(fine)fine.before=fine.object.matrix.clone();});
-  g.addEventListener('mouseUp',()=>{if(fine?.before&&!fine.before.equals(fine.object.matrix))fine.history.push(fine.before);if(fine)fine.before=null;showFine();});}
-$('fine-withdraw').onclick=()=>{const M=fine?.history.pop();if(M)setFineMatrix(M);};
-$('fine-reset').onclick=()=>{if(!fine)return;fine.history.push(fine.object.matrix.clone());setFineMatrix(fine.saved);};
+  g.addEventListener('mouseUp',()=>{if(fine?.before&&!fine.before.equals(fine.object.matrix))fine.history.record(fine.before,fine.object.matrix);if(fine)fine.before=null;showFine();});}
+$('fine-withdraw').onclick=()=>{const M=fine?.history.undo(fine.object.matrix);if(M)setFineMatrix(M);};
+$('fine-redo').onclick=()=>{const M=fine?.history.redo(fine.object.matrix);if(M)setFineMatrix(M);};
+$('fine-reset').onclick=()=>{if(!fine)return;fine.history.record(fine.object.matrix,fine.saved);setFineMatrix(fine.saved);};
 $('fine-cancel').onclick=()=>endFineTune(true);
 $('fine-save').onclick=async()=>{const e=fineToSpace().elements,rowMajor=[e[0],e[4],e[8],e[12],e[1],e[5],e[9],e[13],e[2],e[6],e[10],e[14],e[3],e[7],e[11],e[15]];
-  try{await api('/api/align-manual',{space:here[0],take:here[1],toSpace:rowMajor.map(v=>+v.toFixed(6)),info:{method:'fine-tune'}});fine.saved=fine.object.matrix.clone();fine.history=[];showFine();loadSpaces();}
+  try{await api('/api/align-manual',{space:here[0],take:here[1],toSpace:rowMajor.map(v=>+v.toFixed(6)),info:{method:'fine-tune'}});if(fine.initialPlacement){location.reload();return;}fine.originalToSpace=toSpace.clone();fine.saved=fine.object.matrix.clone();fine.history.clear();showFine();loadSpaces();}
   catch(err){$('take-status').textContent=err.message;}};
 $('space').onchange=showSpace;
+$('space-refresh').onclick=()=>loadSpaces();
+window.addEventListener('focus',()=>{if(!busySpace)loadSpaces();});
+setInterval(()=>{if(!document.hidden&&!busySpace&&!document.querySelector('#space-panel input:focus'))loadSpaces();},10000);
 // Layout editing (src/layout-editor.mjs). Saved half a second after the last change.
-let layoutLoaded=false,layoutTimer=null,layoutRevision=0,layoutRooms=[];
+let layoutLoaded=false,layoutTimer=null,layoutRevision=0,layoutRooms=[],layoutURL=null;
 // The scan under a ray from the 3D view; in plan and elevation views, only what the section plane leaves visible.
 function pickRoom(ray){return room?ray.intersectObject(room,true).find(h=>!['plan','elevation-x','elevation-z'].includes(twin.mode)||twin.clip.distanceToPoint(h.point)>=0):null;}
 twin.setCuttable(()=>[twin.semantic,components.group]);   // what Cut objects clips in section views
@@ -767,12 +962,17 @@ const layout=createLayoutEditor({group:twin.semantic,getRooms:()=>layoutRooms,ca
     // Saves carry the revision this page loaded; one saved from another window since is refused (409) instead of overwritten.
   onChange:data=>{showOutline();clearTimeout(layoutTimer);layoutTimer=setTimeout(async()=>{try{const r=await api('/api/layout',{space:here[0],revision:layoutRevision,...data});
     // The saved layout, with the doors and windows the server cut into the walls again: walls, effects and text surfaces follow.
-    const sem=await(await fetch(new URL(space.scan.semantic,spaceURL),{cache:'no-store'})).json();structure.setData(sem);weatherScene.setLayout(sem);setTextLayout(sem);
+    const sem=await(await fetch(layoutURL,{cache:'no-store'})).json();structure.setData(sem);weatherScene.setLayout(sem);setTextLayout(sem);
     layoutRevision=r.revision;$('take-status').textContent='';await loadSpaces();}catch(e){$('take-status').textContent=e.message;}},500);},
   onHistory:h=>{$('layout-undo').disabled=!h.undo;$('layout-redo').disabled=!h.redo;},
-  onSelect:b=>{if(b&&selected)select(null);outlineView?.setSelected(b?.id??null);for(const id of ['box-label','box-yaw','box-delete','box-duplicate'])$(id).disabled=!b;
+  onSelect:b=>{if(b&&selected)select(null);update();outlineView?.setSelected(b?.id??null);for(const id of ['box-label','box-yaw','box-type','box-delete','box-duplicate'])$(id).disabled=!b;
+    $('box-type').value=b?.kind||'object';if(b)$('zone-info').value='';showInfo();
+    $('box-destination-row').hidden=b?.category?.toLowerCase()!=='door';if(document.activeElement!==$('box-destination'))$('box-destination').value=b?.destination||'';
     const kids=b?layout.children().length:0;$('box-arrange').disabled=!kids;$('box-arrange').title=kids?`Arrange ${kids} children: same rotation, centred, evenly spaced`:'Arrange children';
     if(document.activeElement!==$('box-label'))$('box-label').value=b?.label||'';if(document.activeElement!==$('box-yaw'))$('box-yaw').value=b?Math.round(b.yaw||0):'';}});
+// Info selection marked in the 3D view (src/selection-marks.mjs; Display options: Info selection), hidden outside the room the view is in.
+const selectionMarks=createSelectionMarks({group:twin.helper});selectionMarks.setEnabled($('show-selection').checked);
+twin.onRender(view=>layout.setLabelView(view));
 // The layout's outline (src/layout-outline.mjs), grouped by zone (the room each top-level box stands in) or by type (furniture, doors and
 // windows, objects): the seg control above it, remembered in this browser. Persistent objects are in it too (rows with an object icon,
 // ids OBJ + the component's): in Edit mode, selected there or clicked in the 3D view, they get the move and turn handles. Hidden rows are
@@ -813,6 +1013,7 @@ function byZone(){const groups=layoutOutline(layout.boxes,layoutRooms);
   for(const g of groups)g.nodes.sort(byName);return groups;}
 function byType(){const top=layoutOutline(layout.boxes,layoutRooms).flatMap(g=>g.nodes);
   return [['furniture','Furniture',top.filter(n=>n.box.kind!=='opening')],['openings','Doors & windows',top.filter(n=>n.box.kind==='opening')],
+
     ['objects','Objects',components.instances.filter(i=>groupOf(i)==='persistent').map(persistentNode)]]
     .map(([id,name,nodes])=>({zone:{id:'type:'+id,name},nodes:nodes.sort(byName)})).filter(g=>g.nodes.length);}
 function applyOutline(){if(!outlineView)return;const hidden=[...outlineView.hiddenBoxes()],locked=[...outlineView.lockedBoxes()];
@@ -823,11 +1024,14 @@ function showOutline(){if(!outlineView||!layoutLoaded)return;outlineView.setTree
 for(const b of document.querySelectorAll('.outline-group [data-group]')){b.setAttribute('aria-pressed',b.dataset.group===groupBy);
   b.onclick=()=>{groupBy=b.dataset.group;try{localStorage.setItem('spatial-take:layout-group',groupBy);}catch{}for(const x of document.querySelectorAll('.outline-group [data-group]'))x.setAttribute('aria-pressed',x===b);showOutline();};}
 $('layout-count').onclick=()=>{const open=$('layout-outline-wrap').hidden;$('layout-outline-wrap').hidden=!open;$('layout-count').setAttribute('aria-expanded',open);};
-function editLayout(on){layout.setEnabled(on);outlineView?.setEditing(on);$('layout-edit').setAttribute('aria-pressed',on);$('layout-tools').hidden=!on;
+function editLayout(on){layout.setEnabled(on);$('box-handles').hidden=!on;outlineView?.setEditing(on);$('layout-edit').setAttribute('aria-pressed',on);$('layout-tools').hidden=!on;
   // Edit mode edits the layout and the persistent objects; editing objects (the Objects section) the others.
   if(on&&objectsEditing)editObjects(false);
   const inst=components.get(selected);if(inst&&(groupOf(inst)==='persistent')!==on)select(null);if(on){$('show-boxes').checked=true;twin.setDebug({semantic:true});}update();}
 $('layout-edit').onclick=()=>editLayout(!layout.enabled);
+// Box handles under the 3D view while editing the layout: the move/rotate gizmo or the face handles. Remembered in this browser.
+function setBoxHandles(mode){layout.setHandleMode(mode);keep('box-handles',layout.handleMode);for(const b of document.querySelectorAll('[data-handles]'))b.setAttribute('aria-pressed',b.dataset.handles===layout.handleMode);update();}
+for(const b of document.querySelectorAll('[data-handles]'))b.onclick=()=>setBoxHandles(b.dataset.handles);setBoxHandles(pref('box-handles','gizmo'));
 // Layout layers in the 3D view (src/layout-structure.mjs): boxes, zones, walls, ceilings. Remembered in this browser.
 const structure=createStructure({group:twin.helper,twin});const LAYERS=['boxes','zones','walls','ceilings'];
 try{const v=JSON.parse(localStorage.getItem('spatial-take:layout-layers')||'null');if(v)for(const k of LAYERS)if(k in v)$('show-'+k).checked=!!v[k];}catch{}
@@ -835,6 +1039,10 @@ function showLayers(){const v=Object.fromEntries(LAYERS.map(k=>[k,$('show-'+k).c
 for(const k of LAYERS)$('show-'+k).onchange=showLayers;showLayers();
 // Align panel (src/align-panel.mjs): pick what the open recording shows, then align it to those parts of the scan. While it is open the
 // 3D view shows surfaces and boxes; the layer switches come back as they were when it closes.
+// Walls hide the layout's boxes, labels and selection marks when the 3D view is inside a room (src/twin.mjs setWallPass); from outside
+// (orbit overview, plan) everything shows, as the scan's near walls drop away.
+twin.setWallPass({occluders:structure.occluders,material:structure.occluderMaterial,objects:()=>[twin.semantic,selectionMarks.group],
+  active:cam=>cam.isPerspectiveCamera&&!!labelRoom(layoutRooms,cam.position)});
 const ALIGN_LAYERS=['boxes','zones','walls','ceilings'];let layersBeforeAlign=null;
 const alignPanel=createAlignPanel({root:$('align-panel'),canvas:$('twin'),getCamera:()=>twin.camera,structure,layout,
   onOpen(){layersBeforeAlign=Object.fromEntries(ALIGN_LAYERS.map(k=>[k,$('show-'+k).checked]));for(const k of ALIGN_LAYERS)$('show-'+k).checked=true;showLayers();},
@@ -846,10 +1054,67 @@ const alignPanel=createAlignPanel({root:$('align-panel'),canvas:$('twin'),getCam
 function openAlign(){const parents=new Map();for(const b of layout.boxes){const m=/^(.*)\/[^/]+$/.exec(b.label);if(m)parents.set(b.id,m[1]);}
   const boxes=layout.boxes.filter(b=>!parents.has(b.id)).map(b=>({id:b.id,label:b.label,zone:layoutRooms.find(r=>r.id===b.room)?.name||'No zone'}));
   alignPanel.show({title:here[1],surfaces:structure.surfaces,boxes,target:session.alignTarget});}
+// Info (scripts/info_context.py) attached to a thing: the selected piece of furniture or door/window, the selected persistent object, or
+// the zone picked in the Zone list (it wins while picked). Attach puts a key on it (by default its own name; several things can share a
+// key: the list suggests the ones in use); the key's value is text (saved half a second after typing stops) or a file of the space's
+// info lib (one can be added here).
+let info={entries:{},lib:[]},infoMode='text',infoTimer=null,infoShown=null;
+const infoKey=b=>b?.info||null;   // a layout box's key
+const cleanKey=v=>String(v||'').replaceAll('/',' ').trim().slice(0,48)||null;
+async function setZoneInfo(z,k){try{const r=await api('/api/layout/zone',{space:here[0],zone:z.id,info:k});z.info=r.info||undefined;layoutRevision=Math.max(layoutRevision,r.boxesRevision??layoutRevision);}catch(e){$('info-status').textContent=e.message;}showInfo();update();}
+function infoOwner(){
+  const zid=$('zone-info').value,z=zid&&layoutRooms.find(r=>r.id===zid);
+  if(z)return {kind:'zone',name:z.name||z.id,key:z.info||null,set:k=>setZoneInfo(z,k)};
+  const b=layout.selected;if(b)return {kind:'layout',name:labelPath(b.label).at(-1)||b.id,key:infoKey(b),set:k=>{layout.update({info:k||undefined});showInfo();}};
+  const inst=components.get(selected);if(inst&&groupOf(inst)==='persistent')return {kind:'comp',name:inst.spec.name,key:inst.spec.info||null,set:k=>{setSelected({info:k||undefined});showInfo();}};
+  // A scene object (the Scene objects library): its info is the library object's, shared by every recording placing it.
+  const m=libraryObject(inst);if(m)return {kind:'lib',name:m.name,key:m.info||null,set:async k=>{try{await api('/api/objects/update',{space:here[0],id:m.id,info:k});m.info=k||undefined;}catch(e){$('info-status').textContent=e.message;}showInfo();}};
+  return null;
+}
+// Everything carrying info: [{id (layout:, comp:, zone:), key}].
+function infoCarriers(){return [...layout.boxes.filter(infoKey).map(b=>({id:'layout:'+b.id,key:b.info})),
+  ...components.instances.filter(i=>groupOf(i)==='persistent'&&i.spec.info).map(i=>({id:'comp:'+i.spec.id,key:i.spec.info})),
+  ...components.instances.filter(i=>libraryObject(i)?.info).map(i=>({id:'comp:'+i.spec.id,key:libraryObject(i).info})),...layoutRooms.filter(r=>r.info).map(r=>({id:'zone:'+r.id,key:r.info}))];}
+const currentKey=()=>infoOwner()?.key||null;
+async function loadInfo(){if(!here[0])return;try{info=await api(`/api/info?space=${encodeURIComponent(here[0])}`);}catch(e){console.warn('info',e);}showInfo();}
+async function saveInfo(key,value){try{info=await api('/api/info',{space:here[0],key,value});$('info-status').textContent='Saved';}catch(e){$('info-status').textContent=e.message;}}
+function showInfo(){
+  const zs=$('zone-info'),zv=zs.value;zs.replaceChildren(new Option('Choose a zone for its info…',''),...layoutRooms.map(r=>new Option((r.name||r.id)+(r.info?` · ${r.info}`:''),r.id)));zs.value=layoutRooms.some(r=>r.id===zv)?zv:'';
+  const owner=infoOwner();
+  // The panel sits with what it edits: under the Scene objects list for a scene object, in the layout tools otherwise.
+  const home=owner?.kind==='lib'?$('objects-wrap'):$('layout-tools'),panel=$('box-info');if(panel.parentElement!==home)owner?.kind==='lib'?home.append(panel):home.insertBefore(panel,$('box-destination-row'));
+  panel.hidden=!owner;if(!owner){infoShown=null;return;}
+  const key=owner.key;$('info-owner').textContent=owner.name;$('info-attach').checked=!!key;$('info-key-row').hidden=$('info-value-row').hidden=!key;
+  $('info-keys').replaceChildren(...[...new Set([...Object.keys(info.entries),...infoCarriers().map(c=>c.key)])].map(k=>new Option(k)));
+  if(document.activeElement!==$('info-key-input'))$('info-key-input').value=key||'';
+  $('info-text').hidden=$('info-file-row').hidden=true;if(!key){$('info-status').textContent='';infoShown=null;return;}
+  const v=info.entries[key],shared=infoCarriers().filter(c=>c.key===key).length;
+  if(key!==infoShown){infoShown=key;infoMode=v?.file?'file':'text';}   // another key: shown as what its value is
+  $('info-key').textContent=shared>1?`Shared by ${shared}`:'';
+  $('info-mode-text').setAttribute('aria-pressed',infoMode==='text');$('info-mode-file').setAttribute('aria-pressed',infoMode==='file');
+  $('info-text').hidden=infoMode!=='text';$('info-file-row').hidden=infoMode!=='file';
+  if(document.activeElement!==$('info-text'))$('info-text').value=v?.text||'';
+  const sel=$('info-file');sel.replaceChildren(new Option('Choose a file…',''),...info.lib.map(f=>new Option(f,f)),new Option('Add a file to the lib…','+'));sel.value=v?.file||'';
+  $('info-status').textContent=v?.file&&!info.lib.includes(v.file)?`${v.file} is not in the lib`:v?'':'No value yet';}
+$('zone-info').onchange=()=>showInfo();
+$('info-attach').onchange=()=>{const o=infoOwner();if(o)o.set($('info-attach').checked?cleanKey(o.name):null);};
+$('info-key-input').onchange=()=>{const o=infoOwner(),k=cleanKey($('info-key-input').value);if(o&&k&&k!==o.key)o.set(k);else showInfo();};
+$('info-mode-text').onclick=()=>{infoMode='text';showInfo();};
+$('info-mode-file').onclick=()=>{infoMode='file';showInfo();loadInfo();};   // files copied into the lib by hand show up
+$('info-text').oninput=()=>{const key=currentKey(),text=$('info-text').value;clearTimeout(infoTimer);$('info-status').textContent='';
+  infoTimer=setTimeout(()=>saveInfo(key,{text}),500);};
+$('info-text').onblur=()=>showInfo();
+$('info-file').onchange=()=>{const v=$('info-file').value,key=currentKey();if(v==='+'){$('info-upload').click();showInfo();return;}if(v)saveInfo(key,{file:v}).then(()=>showInfo());};
+$('info-upload').onchange=async()=>{const f=$('info-upload').files[0],key=currentKey();$('info-upload').value='';if(!f||!key)return;
+  try{const src=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f);});
+    info=await api('/api/info/lib',{space:here[0],name:f.name,src});await saveInfo(key,{file:f.name});}catch(e){$('info-status').textContent=e.message;}showInfo();};
+$('box-destination').oninput=()=>layout.update({destination:$('box-destination').value});
 $('box-label').oninput=()=>layout.update({label:$('box-label').value});
 $('box-label').onchange=()=>layout.renumber();   // typed name committed: repeats get numbers
 $('box-yaw').oninput=()=>{const v=parseFloat($('box-yaw').value);if(Number.isFinite(v))layout.update({yaw:v});};
-$('box-add').onclick=()=>layout.add();$('box-duplicate').onclick=()=>layout.duplicate();$('box-delete').onclick=()=>layout.remove();
+$('box-add').onclick=()=>layout.add();
+// A box's type: furniture or a door or window.
+$('box-type').onchange=()=>{const b=layout.selected,kind=$('box-type').value;if(!b||b.kind===kind)return;layout.update({kind});layout.renumber();showOutline();};$('box-duplicate').onclick=()=>layout.duplicate();$('box-delete').onclick=()=>layout.remove();
 $('box-arrange').onclick=()=>layout.arrangeChildren();$('layout-undo').onclick=()=>layout.undo();$('layout-redo').onclick=()=>layout.redo();
 $('scan').onchange=async()=>{const space=$('space').value;$('scan').disabled=true;
   try{await api('/api/scan/primary',{space,scan:$('scan').value});if(here[0]===space)location.reload();else await loadSpaces();}catch(e){$('take-status').textContent=e.message;await loadSpaces();}};
@@ -861,12 +1126,44 @@ $('space-create').onsubmit=async e=>{e.preventDefault();try{const r=await api('/
 loadSpaces();
 // Local coding agent as the spatial assistant (scripts/agent-bridge.mjs + scripts/mcp.mjs); only when served by scripts/server.py.
 // Questions and answers belong to a session of this scene (agent conversations, scripts/agent_store.py); each starts with an empty timeline.
-// Side panel: Scene (scene, its scan, layout, objects and recordings; the components placed here) or Agent, one at a time.
+// Side panel: Scene (scene, its scan, layout, objects and recordings; the components placed here), Agent or Behavior (how answers are
+// lettered), one at a time.
 const agentTab=document.querySelector('[data-tab=agent]');
 function showTab(tab){if(tab==='agent'&&agentTab.disabled)tab='scene';for(const b of document.querySelectorAll('[data-tab]'))b.setAttribute('aria-pressed',b.dataset.tab===tab);
-  $('tab-scene').hidden=tab!=='scene';$('tab-agent').hidden=tab!=='agent';store.set('spatialTake.sideTab',tab);}
+  for(const t of ['scene','agent','behavior'])$('tab-'+t).hidden=tab!==t;store.set('spatialTake.sideTab',tab);}
 for(const b of document.querySelectorAll('[data-tab]'))b.onclick=()=>showTab(b.dataset.tab);
 const convKey='spatialTake.conversation:'+sessionURL.pathname,store={get:k=>{try{return localStorage.getItem(k);}catch{return null;}},set:(k,v)=>{try{localStorage.setItem(k,v);}catch{}}};
+// Behavior: answer text (src/agent.mjs setTextBehavior), remembered in this browser; a change letters and places the answers again.
+let textBehavior={...TEXT_BEHAVIOR};try{textBehavior={...TEXT_BEHAVIOR,...JSON.parse(store.get('spatialTake.textBehavior')||'{}')};}catch{}
+let textRelayout=null;
+function showTextBehavior(){$('text-body-size').value=textBehavior.bodySize;$('text-body-size-value').textContent=`${(+textBehavior.bodySize).toFixed(2)}×`;
+  $('text-show-heading').checked=textBehavior.showHeading;$('text-heading-size').value=textBehavior.headingSize;$('text-heading-size-value').textContent=`${(+textBehavior.headingSize).toFixed(2)}×`;
+  $('text-heading-row').classList.toggle('off',!textBehavior.showHeading);$('text-heading-size').disabled=!textBehavior.showHeading;
+  $('info-min-shrink').value=textBehavior.infoMinShrink??.55;$('info-min-shrink-value').textContent=`${Math.round((textBehavior.infoMinShrink??.55)*100)}%`;
+  $('float-parallel').value=textBehavior.floatParallel??80;$('float-parallel-value').textContent=`${Math.round(textBehavior.floatParallel??80)}°`;
+  $('arrow-halo').value=textBehavior.arrowHalo??1;$('arrow-halo-value').textContent=`${(+(textBehavior.arrowHalo??1)).toFixed(2)}×`;
+  $('arrow-width').value=textBehavior.arrowWidth??1;$('arrow-width-value').textContent=`${(+(textBehavior.arrowWidth??1)).toFixed(2)}×`;
+  $('text-writing').checked=textBehavior.writing;$('text-writing-strokes').checked=textBehavior.writingStrokes;$('text-writing-speed').value=textBehavior.writingSpeed;
+  $('text-writing-speed-value').textContent=`${Math.round(textBehavior.writingSpeed)} chars/s`;
+  for(const id of ['text-strokes-row','text-speed-row'])$(id).classList.toggle('off',!textBehavior.writing);$('text-writing-strokes').disabled=$('text-writing-speed').disabled=!textBehavior.writing;}
+function changeTextBehavior(fields){textBehavior={...textBehavior,...fields};store.set('spatialTake.textBehavior',JSON.stringify(textBehavior));setTextBehavior(textBehavior);showTextBehavior();
+  clearTimeout(textRelayout);textRelayout=setTimeout(()=>{agent?.relayout();update();},150);}
+setTextBehavior(textBehavior);showTextBehavior();
+$('text-body-size').oninput=()=>changeTextBehavior({bodySize:+$('text-body-size').value});
+$('text-heading-size').oninput=()=>changeTextBehavior({headingSize:+$('text-heading-size').value});
+$('text-show-heading').onchange=()=>changeTextBehavior({showHeading:$('text-show-heading').checked});
+// Writing changes no layout: applied from the next frame on.
+function changeWriting(fields){textBehavior={...textBehavior,...fields};store.set('spatialTake.textBehavior',JSON.stringify(textBehavior));setTextBehavior(textBehavior);showTextBehavior();update();}
+$('text-writing').onchange=()=>changeWriting({writing:$('text-writing').checked});
+$('text-writing-strokes').onchange=()=>changeWriting({writingStrokes:$('text-writing-strokes').checked});
+$('text-writing-speed').oninput=()=>changeWriting({writingSpeed:+$('text-writing-speed').value});
+$('text-reset').onclick=()=>changeTextBehavior({...TEXT_BEHAVIOR,arrowWidth:1,arrowHalo:1,floatParallel:80,infoMinShrink:.55});
+$('info-min-shrink').oninput=()=>{textBehavior={...textBehavior,infoMinShrink:+$('info-min-shrink').value};store.set('spatialTake.textBehavior',JSON.stringify(textBehavior));showTextBehavior();
+  clearTimeout(textRelayout);textRelayout=setTimeout(()=>{agent?.relayout();update();},250);};   // info answers are placed again
+$('float-parallel').oninput=()=>{textBehavior={...textBehavior,floatParallel:+$('float-parallel').value};store.set('spatialTake.textBehavior',JSON.stringify(textBehavior));showTextBehavior();
+  clearTimeout(textRelayout);textRelayout=setTimeout(()=>{agent?.relayout();update();},250);};   // floating answers are placed again
+$('arrow-halo').oninput=()=>{textBehavior={...textBehavior,arrowHalo:+$('arrow-halo').value};store.set('spatialTake.textBehavior',JSON.stringify(textBehavior));showTextBehavior();update();};
+$('arrow-width').oninput=()=>{textBehavior={...textBehavior,arrowWidth:+$('arrow-width').value};store.set('spatialTake.textBehavior',JSON.stringify(textBehavior));showTextBehavior();update();};   // drawn every frame
 const agentApi=async(path,body)=>{const u=new URL(path,location.href);u.searchParams.set('session',sessionURL.pathname);const r=await fetch(u,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:sessionURL.pathname,...body})}:{});const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;};
 const userState=()=>({conversation:agent?.conversation,frame:index,t:session.frames[index].t,position:session.frames[index].position,quaternion:session.frames[index].quaternion,weather_mod:$('weather-mod').checked,findmy_mod:$('findmy-mod').checked,ego_mod:$('ego-mod').checked});
 async function showConversations(select){
@@ -877,8 +1174,8 @@ async function showConversations(select){
 async function openConversation(id){if(agent.conversation!==id){pause();replayFrom=null;}store.set(convKey,id);$('conv').value=id;await agent.setConversation(id);agent.report(userState());update();}
 async function startAgent(){
   let command;try{const setup=await agentApi('/api/agent/command');command=setup.command;$('agent-command').textContent=command;$('agent-config-path').textContent=setup.config_path;$('editor-restart-command').textContent=setup.restart_command;$('gemini-setup-command').textContent=setup.gemini_setup_command||'';$('gemini-setup-copy').onclick=()=>navigator.clipboard.writeText(setup.gemini_setup_command||'');}catch{return;}
-  agent=createAgentLayer({scene,getStyleRevision:()=>weatherScene.playback.state.entry?.id,getSettings:forResponse,frames:session.frames,sessionPath:sessionURL.pathname,intrinsics:session.intrinsics,frameCamera,viewport:()=>({width:$('stage').clientWidth,height:$('stage').clientHeight}),
-    visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,relationAt,egoTarget,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
+  agent=createAgentLayer({scene,getStyleRevision:()=>weatherScene.playback.state.entry?.id,getSettings:forResponse,frames:session.frames,sessionPath:sessionURL.pathname,intrinsics:session.intrinsics,frameCamera,viewport:answerView,
+    visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,relationAt,egoTarget,sceneBoxes,infoTarget,onPlacement:logPlacement,infoFloatParallel:()=>textBehavior.floatParallel??80,infoMinShrink:()=>textBehavior.infoMinShrink??.55,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
     onChange:()=>update(),onAnimate:()=>update(),onStatus:showAgentStatus});
   $('agent-panel').hidden=false;$('ask').hidden=false;agentTab.disabled=false;agentTab.title='';showTab(store.get('spatialTake.sideTab')||'scene');
   let id=await showConversations(store.get(convKey));if(!id)id=await showConversations((await agentApi('/api/agent/conversations',{})).id);
@@ -941,12 +1238,13 @@ function showTrace(){
 }
 setInterval(()=>{if(agent?.questions.some(q=>q.status==='running'))showTrace();},1000);
 // Asking holds the video on this frame until the agent has answered and READ_S seconds of reading have passed; a playing video then
-// continues, a paused one stays paused.
+// continues; asked here (live), playback goes on once the answer shows, even if the video was paused when asking.
 const READ_S=READING.read_s;let askStatus='';
 function setAskStatus(text){if(text!==askStatus){askStatus=text;$('ask-status').textContent=text;}}
 $('ask').onsubmit=async e=>{e.preventDefault();const text=$('ask-input').value.trim();if(!text||!agent||!connected)return;
   const wasPlaying=playing;
-  try{const q=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},$('weather-mod').checked,textResponses(responseSettings),$('findmy-mod').checked,$('ego-mod').checked);$('ask-input').value='';startHold(q,{resume:wasPlaying,live:true});
+  try{const sel=computeSelection()?.selected||null;
+    const q=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},$('weather-mod').checked,textResponses(responseSettings),$('findmy-mod').checked,$('ego-mod').checked,{selection:sel,selection_mode:selectionMode});$('ask-input').value='';startHold(q,{resume:wasPlaying,live:true});
   }catch(err){$('ask-status').textContent='Error: '+err.message;}};
 function fail(e){$('status').textContent='Error: '+e.message;console.error(e);}
 async function sessionLoadError(status){
@@ -981,7 +1279,8 @@ if(roomParts.children.length)setRoom(roomParts,null,null);buildLidarMesh();
 const hasPart=k=>!!roomParts.userData.parts[k];$('debug-spaceScan').disabled=!hasPart('space');$('debug-recordingMesh').disabled=!hasPart('recording');
 $('debug-recordingMesh').checked=!hasPart('space');twin.setDebug({spaceScan:true,recordingMesh:!hasPart('space')});
 // Layout boxes (scan/semantic.json), shown and edited in the 3D view.
-if(space?.scan?.semantic&&toSpace){try{const sem=await(await fetch(new URL(space.scan.semantic,spaceURL))).json();layoutRevision=sem.revision||0;layoutRooms=sem.rooms||[];layout.setData(sem);structure.setData(sem);weatherScene.setLayout(sem);setTextLayout(sem);loadFurnitureModels(sem);layoutLoaded=true;showOutline();showSpace();}catch(e){console.warn('layout',e);}}
+if(space?.scan?.semantic&&toSpace){try{layoutURL=new URL(space.scan.semantic,spaceURL);const sem=await(await fetch(layoutURL)).json();layoutRevision=sem.boxesRevision??sem.revision??0;layoutRooms=sem.rooms||[];twin.setFloorRooms(layoutRooms);layout.setData(sem);loadInfo();structure.setData(sem);weatherScene.setLayout(sem);setTextLayout(sem);loadFurnitureModels(sem);layoutLoaded=true;showOutline();showSpace();}catch(e){console.warn('layout',e);}}
+try{const floor=JSON.parse(localStorage.getItem('spatial-take:floors:'+spaceURL.pathname)||'null');if(floor)showCut(twin.restoreFloor(floor));showFloor();}catch{}
 if(!(session.depth&&session.frames.every(f=>f.depth)))$('depth-occlude').checked=false;
 else{$('depth-occlude').disabled=false;}
 await setFrame(0);

@@ -2,12 +2,17 @@ import * as THREE from 'three';
 import {path,resolveParents,childrenOf,arrange,numberDuplicates} from './layout-tree.mjs';
 import {makeLabel,zoneColorAt} from './palette.mjs';
 import {fitScale} from './model-fit.mjs';
+import {labelRoom,labelInRoom} from './layout-labels.mjs';
+import {layoutGeometry,shapeData} from './layout-shape.mjs';
 
-// Scene layout in the 3D view: labelled boxes (furniture and appliances, doors and windows; scan/semantic.json) drawn over whichever
-// scan is chosen. RoomPlan's boxes are a first guess, so in edit mode they can be corrected on the scan:
+// Scene layout in the 3D view: labelled boxes (furniture and appliances, doors and windows; scan/semantic.json) drawn over whichever scan
+// is chosen. Any box may carry `info`, a key of the space's info context (scripts/info_context.py). A box's kind (object, opening) can be
+// changed with update({kind}). Old layouts' information boxes load as furniture carrying their name as key. RoomPlan's boxes are a first guess, so in edit mode they can be corrected on the scan:
 //   click a box to select it; drag it to move (horizontally, or in the view plane when looking from the side);
-//   drag one of its six face handles to push or pull that face (the opposite face stays); the panel edits label and yaw;
-//   Add puts a new box where the view's centre meets the scan; Duplicate (⌘/Ctrl+D) copies the selected box next to it; Delete (or
+//   handles (setHandleMode): 'gizmo' (default) the shared move/rotate gizmo of the 3D view (src/gumball.mjs, attached by src/app.mjs;
+//   boxes stay upright, so it turns about the vertical only; fromGizmo/beginGizmo/endGizmo), or 'faces': drag one of its six face handles
+//   to push or pull that face (the opposite face stays); the panel edits label and yaw;
+//   Add (of a kind) puts a new box where the view's centre meets the scan; Duplicate (⌘/Ctrl+D) copies the selected box next to it; Delete (or
 //   the Delete key) removes it. Undo/redo (⌘/Ctrl+Z, ⇧⌘/Ctrl+Shift+Z) step through snapshots of the whole layout; typing in the label or
 //   yaw field of one box counts as one step.
 // Nesting: a label path with '/' ("fridge/shelf 1") puts a box inside its parent (src/layout-tree.mjs); a selected box's children are
@@ -27,11 +32,11 @@ export function dropCenter(ray,hit,size){
 // pickOther(ray): something else under the pointer where there is no box (e.g. a persistent object); true if it took the click.
 export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onChange,onSelect,onHistory,getRooms=()=>[],pickOther=()=>false}){
   let parents=new Map();   // child id → parent box, refreshed after every change (labels: object or nested, and their zone)
-  let boxes=[],hiddenIds=new Set(),lockedIds=new Set(),enabled=false,selected=null,drag=null,serial=0,undoStack=[],redoStack=[],lastKey=null;
+  let boxes=[],hiddenIds=new Set(),lockedIds=new Set(),enabled=false,selected=null,drag=null,serial=0,undoStack=[],redoStack=[],lastKey=null,handleMode='gizmo',gizmoBefore=null;
   const ray=new THREE.Raycaster(),handles=new THREE.Group();handles.renderOrder=20;
 
   // A model shown for a box shares its loaded geometry and materials (setModel): not disposed with the box.
-  function dispose(o){const walk=c=>{if(c.userData.sharedModel)return;if(c.material){c.material.map?.dispose();c.material.dispose();}c.children.forEach(walk);};walk(o);}
+  function dispose(o){const walk=c=>{if(c.userData.sharedModel)return;if(c.userData.ownedGeometry)c.geometry?.dispose();if(c.material){c.material.map?.dispose();c.material.dispose();}c.children.forEach(walk);};walk(o);}
   // Furniture shown as a 3D model (src/model-fit.mjs): box id → {object, size, center}. The model sits inside its box, fitted and turned
   // with it; the box stays what is edited, picked and saved.
   const models=new Map();
@@ -43,8 +48,10 @@ export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onCh
 
   // One box: a group at the centre turned by yaw; edges and a (normally invisible) fill for picking, scaled to the size.
   function build(b){
-    const g=new THREE.Group(),edges=new THREE.LineSegments(unitEdges,new THREE.LineBasicMaterial({color:COLOR[b.kind],depthTest:!enabled}));
-    const fill=new THREE.Mesh(unitBox,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
+    const geometry=b.shape?layoutGeometry(b):unitBox;
+    const g=new THREE.Group(),edges=new THREE.LineSegments(b.shape?new THREE.EdgesGeometry(geometry):unitEdges,new THREE.LineBasicMaterial({color:COLOR[b.kind],depthTest:!enabled}));
+    const fill=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
+    edges.userData.ownedGeometry=fill.userData.ownedGeometry=!!b.shape;
     fill.userData.box=b;g.add(edges,fill);g.userData={edges,fill};b.object=g;group.add(g);attachModel(b);place(b);
   }
   function place(b){
@@ -54,15 +61,22 @@ export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onCh
     // the zone the outermost parent stands in (src/palette.mjs).
     let top=b;while(parents.has(top.id))top=parents.get(top.id);
     const style=parents.has(b.id)?'nested':'object',color=zoneColorAt(getRooms(),top.center),text=path(b.label).at(-1)||b.id,key=`${text}|${style}|${color}`;
-    if(g.userData.labelKey!==key){if(g.userData.label){g.remove(g.userData.label);dispose(g.userData.label);}g.userData.label=makeLabel(text,style,color);g.userData.labelKey=key;g.add(g.userData.label);}
+    if(g.userData.labelKey!==key){if(g.userData.label){g.remove(g.userData.label);dispose(g.userData.label);}g.userData.label=makeLabel(text,style,color);g.userData.label.material.depthTest=true;g.userData.label.material.depthWrite=false;g.userData.labelKey=key;g.add(g.userData.label);}
     g.userData.label.position.set(0,b.size[1]/2+.1,0);
     if(b===selected)placeHandles();
   }
   let focus=null;   // ids picked for aligning a recording: drawn in cyan
   function style(){const kids=new Set(selected&&enabled?childrenOf(boxes,selected):[]);
     for(const b of boxes){const on=b===selected,color=focus?.has(b.id)?0x5ce1ff:on?COLOR.selected:kids.has(b)?COLOR.child:COLOR[b.kind];b.object.userData.edges.material.color.set(color);b.object.userData.edges.visible=!b.object.userData.model||on||enabled||!!focus?.has(b.id);b.object.userData.edges.material.depthTest=!enabled;const f=b.object.userData.fill.material;f.color.set(color);f.opacity=on?.28:kids.has(b)?.22:enabled?.14:0;}}
+  function setLabelView({camera,clip,floorClip=[]}){
+    const rooms=getRooms(),current=camera.isPerspectiveCamera?labelRoom(rooms,camera.position):null;
+    for(const b of boxes){const label=b.object.userData.label;if(!label)continue;
+      const center=new THREE.Vector3(...b.center),at=label.getWorldPosition(new THREE.Vector3());
+      label.visible=labelInRoom(b,rooms,current)&&(!clip||clip.distanceToPoint(center)>=0)&&floorClip.every(p=>p.distanceToPoint(at)>=0);
+    }
+  }
   function placeHandles(){
-    handles.clear();if(!selected||!enabled)return;selected.object.add(handles);
+    handles.clear();if(!selected||!enabled||handleMode!=='faces')return;selected.object.add(handles);
     FACES.forEach((a,i)=>{const h=new THREE.Mesh(handleGeo,new THREE.MeshBasicMaterial({color:a.y?0x9be7a4:0xffffff,depthTest:false,transparent:true}));h.renderOrder=20;
       h.onBeforeRender=(r,s,cam)=>{h.material.opacity=facing(h,cam)?0:1;};
       h.position.copy(a).multiply(new THREE.Vector3(...selected.size)).multiplyScalar(.5);h.scale.setScalar(HANDLE);h.userData.face=i;handles.add(h);});
@@ -70,16 +84,18 @@ export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onCh
   // A face seen head-on (its axis along the view, e.g. top and bottom in the plan view) cannot be dragged, and its handle would sit on
   // the box's middle where a drag should move the box: hidden and not picked.
   function facing(h,cam){return Math.abs(yawAxis(selected,FACES[h.userData.face]).dot(cam.getWorldDirection(new THREE.Vector3())))>.9;}
-  const grabbable=()=>handles.children.filter(h=>!facing(h,getCamera()));
+  const grabbable=()=>handleMode==='faces'?handles.children.filter(h=>!facing(h,getCamera())):[];
   function select(b){if(b!==selected)lastKey=null;selected=b;style();placeHandles();onSelect?.(b);render();}
 
   function load(data,selectId=null){
     for(const b of boxes){group.remove(b.object);dispose(b.object);}selected=null;
-    boxes=[...(data?.objects||[]).map(o=>({...o,kind:'object'})),...(data?.openings||[]).map(o=>({...o,kind:'opening'}))];
+    const legacy=(data?.information||[]).map(o=>({...o,category:o.category&&o.category!=='information'?o.category:'custom',info:o.info||path(o.label).at(-1)||o.id,kind:'object'}));
+    boxes=[...(data?.objects||[]).map(o=>({...o,kind:'object'})),...legacy,...(data?.openings||[]).map(o=>({...o,kind:'opening'}))];
     for(const b of boxes)build(b);relabel();selected=boxes.find(b=>b.id===selectId)||null;style();placeHandles();onSelect?.(selected);render();
   }
   function setData(data){load(data);undoStack=[];redoStack=[];lastKey=null;onHistory?.(history());}
-  function data(){const parents=resolveParents(boxes),out=b=>({id:b.id,label:b.label,category:b.category,center:[...b.center],size:[...b.size],yaw:b.yaw||0,parent:parents.get(b.id)?.id??null});
+  function data(){const parents=resolveParents(boxes),out=b=>({id:b.id,label:b.label,category:b.category,center:[...b.center],size:[...b.size],yaw:b.yaw||0,parent:parents.get(b.id)?.id??null,...shapeData(b),
+      ...(b.category?.toLowerCase()==='door'&&b.destination?.trim()?{destination:b.destination.trim()}:{}),...(b.info?{info:b.info}:{})});
     return {objects:boxes.filter(b=>b.kind==='object').map(out),openings:boxes.filter(b=>b.kind==='opening').map(out)};}
   // Repeated names get numbers (cabinet 1, cabinet 2…; children follow their parent's new name): src/layout-tree.mjs numberDuplicates.
   function numberLabels(){const m=numberDuplicates(boxes,getRooms());for(const [id,l] of Object.entries(m)){const b=boxes.find(x=>x.id===id);if(b)b.label=l;}return Object.keys(m).length>0;}
@@ -120,7 +136,7 @@ export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onCh
   function duplicate(){
     if(!selected)return null;const src=selected,base=src.id.replace(/_(copy_)?\d+$/,'');let n=0;while(boxes.some(b=>b.id===`${base}_${n}`))n++;
     const c=new THREE.Vector3(...src.center).addScaledVector(yawAxis(src,FACES[0]),src.size[0]+.05);
-    remember();const b={...src,id:`${base}_${n}`,center:c.toArray().map(v=>+v.toFixed(3)),size:[...src.size],object:undefined};
+    remember();const b={...src,...shapeData(src),id:`${base}_${n}`,center:c.toArray().map(v=>+v.toFixed(3)),size:[...src.size],object:undefined};
     boxes.push(b);build(b);numberLabels();relabel();select(b);onChange?.(data());return b;
   }
 
@@ -161,8 +177,16 @@ export function createLayoutEditor({group,canvas,getCamera,render,pickScene,onCh
     if(mod&&k==='d'){e.preventDefault();duplicate();return;}
     if((e.key==='Delete'||e.key==='Backspace')&&selected){e.preventDefault();remove();}if(e.key==='Escape')select(null);});
 
-  return {setFocus(ids){focus=ids?new Set(ids):null;style();render();},
+  function setHandleMode(mode){handleMode=mode==='faces'?'faces':'gizmo';placeHandles();render();}
+  // The gizmo moved or turned the selected box's group: its centre and yaw follow (pitch and roll are not offered). One drag is one step.
+  function fromGizmo(){if(!selected)return;const o=selected.object;
+    selected.center=o.position.toArray().map(v=>+v.toFixed(3));selected.yaw=+(((THREE.MathUtils.radToDeg(o.rotation.y)+180)%360+360)%360-180).toFixed(1);
+    place(selected);onSelect?.(selected);render();}
+  function beginGizmo(){gizmoBefore=selected?{data:data(),selected:selected.id}:null;}
+  function endGizmo(){const before=gizmoBefore;gizmoBefore=null;if(!before||JSON.stringify(before.data)===JSON.stringify(data()))return;
+    lastKey=null;undoStack.push(before);if(undoStack.length>100)undoStack.shift();redoStack=[];onHistory?.(history());changed();}
+  return {setHandleMode,get handleMode(){return handleMode;},fromGizmo,beginGizmo,endGizmo,setFocus(ids){focus=ids?new Set(ids):null;style();render();},
     /** The top-level box under a ray (visible boxes; a nested one counts as its outermost parent). */
     pickBox(ray){const hit=ray.intersectObjects(boxes.filter(b=>b.object.visible).map(b=>b.object.userData.fill),false)[0];let b=hit?.object.userData.box;while(b&&parents.has(b.id))b=parents.get(b.id);return b?.id??null;},
-    setModel,hasModel:id=>models.has(id),relabel,renumber,setData,setHidden,setLocked,setEnabled,update,remove,add,duplicate,arrangeChildren,children,undo,redo,select,data,get history(){return history();},get boxes(){return boxes;},get selected(){return selected;},get enabled(){return enabled;}};
+    setLabelView,setModel,hasModel:id=>models.has(id),relabel,renumber,setData,setHidden,setLocked,setEnabled,update,remove,add,duplicate,arrangeChildren,children,undo,redo,select,data,get history(){return history();},get boxes(){return boxes;},get selected(){return selected;},get enabled(){return enabled;}};
 }
