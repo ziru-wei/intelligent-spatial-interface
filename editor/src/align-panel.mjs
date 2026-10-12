@@ -33,7 +33,7 @@ export function createAlignPanel({root,canvas,getCamera,structure,layout,onOpen,
     const head=`<div class="align-head"><b>Align</b><span class="dim"></span><button class="icon close" aria-label="Close" title="Close">×</button></div>
       <p class="muted">Tick what this recording shows (or click it in the 3D view), including some floor; only those parts of the scan are used.</p>`;
     root.innerHTML=head+'<div class="outline align-list"></div>'+
-      `<div class="align-foot"><button class="go" ${busy||!count()?'disabled':''}>${busy?'Aligning…':`Align to ${count()} part${count()===1?'':'s'}`}</button><button class="fine" title="Then drag the recording's own mesh onto the scan with the move / rotate gizmo">Fine-tune</button></div><p class="muted result"></p>`;
+      `<div class="align-foot"><button class="go" ${busy||!count()?'disabled':''}>${busy?'Aligning…':`Align to ${count()} part${count()===1?'':'s'}`}</button><button class="fine" title="Drag the recording's own mesh directly onto the scan with the move / rotate gizmo">Fine-tune</button></div><p class="muted result"></p>`;
     root.querySelector('.dim').textContent=root.dataset.title||'';root.querySelector('.result').textContent=result;
     const list=root.querySelector('.align-list');
     for(const g of groups){const all=g.items.every(i=>picked[g.kind].has(i.id)),some=g.items.some(i=>picked[g.kind].has(i.id));

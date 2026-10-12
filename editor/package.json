@@ -12,6 +12,7 @@
     "@mediapipe/tasks-vision": "0.10.32",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "@techstark/opencv-js": "4.11.0-release.1",
+    "harfbuzzjs": "^1.6.3",
     "three": "0.180.0",
     "three-mesh-bvh": "^0.9.15",
     "zod": "^4.6.5"

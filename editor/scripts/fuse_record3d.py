@@ -8,6 +8,7 @@ Requires: open3d, OpenEXR and numpy<2 (open3d 0.18 segfaults with numpy 2); not 
 """
 import argparse, json
 from pathlib import Path
+from record3d_source import part
 import numpy as np, OpenEXR, open3d as o3d
 from PIL import Image
 
@@ -21,15 +22,16 @@ def c2w(pose):
     return T
 
 def fuse(source, out, stride=5, voxel=.02, trunc=3.0, max_triangles=200000):
-    source = Path(source); meta = json.loads((source/'metadata.json').read_text())
+    source = Path(source); meta = json.loads((part(source, 'metadata.json')).read_text())
+    rgb_dir, depth_dir = part(source, 'rgb'), part(source, 'depth')
     dw, dh, w = int(meta['dw']), int(meta['dh']), int(meta['w'])
     s = dw/w
     vol = o3d.pipelines.integration.ScalableTSDFVolume(voxel_length=voxel, sdf_trunc=4*voxel, color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8)
     used = 0
     for i in range(0, len(meta['poses']), stride):
-        d = OpenEXR.File(str(source/'depth'/f'{i}.exr')).channels()['R'].pixels.astype(np.float32)
+        d = OpenEXR.File(str(depth_dir/f'{i}.exr')).channels()['R'].pixels.astype(np.float32)
         d[~np.isfinite(d)] = 0
-        rgb = np.asarray(Image.open(source/'rgb'/f'{i}.jpg').convert('RGB').resize((dw, dh), Image.BILINEAR))
+        rgb = np.asarray(Image.open(rgb_dir/f'{i}.jpg').convert('RGB').resize((dw, dh), Image.BILINEAR))
         fx, fy, cx, cy = meta['perFrameIntrinsicCoeffs'][i] if 'perFrameIntrinsicCoeffs' in meta else (meta['K'][0], meta['K'][4], meta['K'][6], meta['K'][7])
         K = o3d.camera.PinholeCameraIntrinsic(dw, dh, fx*s, fy*s, cx*s, cy*s)
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(o3d.geometry.Image(np.ascontiguousarray(rgb)), o3d.geometry.Image(d), depth_scale=1.0, depth_trunc=trunc, convert_rgb_to_intensity=False)

@@ -6,6 +6,32 @@ import layout
 ROOMS = [dict(id='kitchen', triangles=[[[0, 0], [4, 0], [4, 4]], [[0, 0], [4, 4], [0, 4]]])]
 
 class LayoutTest(unittest.TestCase):
+    def test_custom_furniture_shapes_survive_save(self):
+        shape = dict(type='prism', footprint=[[.5,-.5],[.5,.5],[-.5,.5],[-.5,0],[0,0],[0,-.5]])
+        boxes = [dict(id='sofa', center=[1,1,1], size=[2,1,3], shape=shape),
+                 dict(id='table', center=[1,1,1], size=[1,.025,1], shape=dict(type='cylinder', surfaceOnly=True))]
+        out = layout.update(dict(rooms=ROOMS), boxes, [])
+        self.assertEqual(out['objects'][0]['shape'], shape)
+        self.assertEqual(out['objects'][1]['shape'], boxes[1]['shape'])
+        out['objects'][0]['shape']['footprint'][0][0] = 0
+        self.assertEqual(shape['footprint'][0][0], .5)
+
+    def test_optional_door_destination_roundtrip_and_clear(self):
+        door = dict(id='door', category='Door', center=[1,1,1], size=[1,2,.1], destination=' Kitchen ')
+        out = layout.update(dict(rooms=ROOMS), [], [door])
+        self.assertEqual(out['openings'][0]['destination'], 'Kitchen')
+        door['destination'] = ''
+        self.assertNotIn('destination', layout.update(dict(rooms=ROOMS), [], [door])['openings'][0])
+        door['destination'] = ['Kitchen']
+        with self.assertRaises(ValueError): layout.update(dict(rooms=ROOMS), [], [door])
+
+    def test_rejects_invalid_furniture_footprints(self):
+        for shape in [dict(type='unknown'), dict(type='prism', footprint=[[0,0],[1,0],[0,1]]),
+                      dict(type='prism', footprint=[[-.5,-.5],[.5,.5],[-.5,.5],[.5,-.5]]),
+                      dict(type='cylinder', surfaceOnly='true')]:
+            with self.assertRaises(ValueError):
+                layout.update(dict(rooms=ROOMS), [dict(id='bad', center=[0,0,0], size=[1,1,1], shape=shape)], [])
+
     def test_update_recomputes_room_and_cleans_boxes(self):
         out = layout.update(dict(version=1, rooms=ROOMS), [dict(id='fridge_0', label=' fridge ', center=[1, .9, 1], size=[.8, 1.8, 0], yaw=12.34)],
                             [dict(id='Door_0', center=[9, 1, 9], size=[.9, 2, .02])])

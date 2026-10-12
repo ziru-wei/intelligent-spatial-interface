@@ -38,6 +38,14 @@ class ContextTest(unittest.TestCase):
         self.assertEqual(events['badminton']['recurrence']['weekdays'],['Monday','Wednesday','Friday'])
         self.assertEqual(events['denver-hangout']['date'],'2026-10-10')
 
+    def test_today_resolves_recurring_and_dated_events(self):
+        friday=user_context.read(Path('/tmp/no-user-context-fixture'),['user_events'],datetime(2026,10,9,18,0,tzinfo=timezone.utc))
+        self.assertEqual(friday['today']['weekday'],'Friday')
+        self.assertIn('badminton',[e['what'] for e in friday['today']['events']])
+        self.assertEqual(friday['today']['next_7_days'][0]['events'],['hangout in Denver'])
+        thursday=user_context.read(Path('/tmp/no-user-context-fixture'),['user_events'],datetime(2026,10,8,18,0,tzinfo=timezone.utc))
+        self.assertNotIn('badminton',[e['what'] for e in thursday['today']['events']])
+
     def test_legacy_context_groups(self):
         with tempfile.TemporaryDirectory() as tmp:
             d=Path(tmp);(d/'context.json').write_text(json.dumps({'food':{'eggs':0},'weather':{'forecast':[]},'health':{'sleep':'good'}}))

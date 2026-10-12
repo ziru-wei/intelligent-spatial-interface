@@ -65,6 +65,9 @@ export class Gumball extends THREE.EventDispatcher {
   set enabled(value){if(!value)this.finish();this._enabled=value;for(const c of this.controls)c.enabled=value;}
   /** Which handles are offered: any of 'translate', 'rotate', 'scale' (default all). */
   setModes(modes){this.finish();this.modes=new Set(modes);for(const c of this.controls)c.getHelper().visible=this.modes.has(c.mode);}
+  /** Which rotation rings are offered: any of 'X', 'Y', 'Z' (default all; layout boxes turn about Y only). */
+  setRotateAxes(axes){const c=this.controls.find(x=>x.mode==='rotate'),on=new Set(axes);c.showX=on.has('X');c.showY=on.has('Y');c.showZ=on.has('Z');}
+  get rotateAxes(){const c=this.controls.find(x=>x.mode==='rotate');return ['X','Y','Z'].filter(a=>c['show'+a]);}
   getHelper(){return this.root;}
   attach(object){for(const c of this.controls)c.attach(object);return this;}
   detach(){this.finish();for(const c of this.controls)c.detach();return this;}

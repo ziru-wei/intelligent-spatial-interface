@@ -8,13 +8,17 @@ POST /api/scenarios {space,take} add a recording as a scenario: import, its own 
 GET  /api/components?space=       the component library (components/<id>/, spaces/<space>/components/<id>/)
 POST /api/composition {session|space,scope,revision,components}  placed components of a recording, or of the scene (scope 'scene')
 POST /api/objects {space,name,kind,size?,src?}  a new opportunistic object in the scene's library (box, or .glb data URL)
-POST /api/objects/update {space,id,name?,shape?,pose?}  rename, reshape (all recordings), or keep its pose for placing it elsewhere
+POST /api/objects/update {space,id,name?,shape?,pose?,info?}  rename, reshape (all recordings), or keep its pose for placing it elsewhere
 POST /api/objects/replace {space,id,src,size,pivot}  a box object becomes a .glb model in its place (every recording follows)
 POST /api/objects/duplicate {space,id,name?,origin?,pose?}  a copy of an object (same shape) under a new name
 POST /api/objects/to-box {space,id,size,center}    a model object becomes a box of its bounds in its place (every recording follows)
 POST /api/layout/model {space,id,src?,size,center}  a piece of furniture shown as a .glb model fitted in its box, or (no src) as its box again
 POST /api/objects/delete {space,id}  remove one that no recording places
-POST /api/layout {space,objects,openings}  the scene layout as edited (scan/semantic.json)
+POST /api/layout {space,objects,openings}  the scene layout as edited (scan/semantic.json; a box may carry `info`)
+POST /api/layout/zone {space,zone,info}  a zone's info key (null: none)
+GET  /api/info?space=            the space's info context (scripts/info_context.py): {entries: {key: {text}|{file}}, lib: [files]}
+POST /api/info {space,key,value}  a key's value: {text} or {file} (in the lib); null clears it
+POST /api/info/lib {space,name,src}  a file (data URL) added to the space's info lib
 POST /api/scan/primary {space,scan}  choose which of the space's scans is used (all are already in the space's coordinates)
 POST /api/register {space,take,target?}  align a recording again; target {surfaces, boxes}: what it shows (scripts/align_recording.py)
 POST /api/align-manual {space,take,toSpace,info}   toSpace from point pairs picked in the editor
@@ -25,12 +29,15 @@ Questions and responses live in conversations ("sessions" in the UI), see script
 GET  /api/agent/command?session=                   pastable shell command that starts the bridge for this scene
 GET  /api/agent/conversations?session=             list; POST /api/agent/conversations {session,name?} creates an empty one
 POST /api/agent/conversations/rename|import         {session,conversation,name} | {session,data}; GET …/export?session=&conversation=
-POST /api/agent/questions {session,conversation,frame,t,text,live?}   ask at a frame (live = asked during playback); POST /api/agent/questions/delete
+POST /api/agent/questions {session,conversation,frame,t,text,live?,selection?,selection_mode?}   ask at a frame (live = asked during playback); POST /api/agent/questions/delete
 GET  /api/agent/status?session=&conversation=       bridge connected + the conversation's questions and responses
 GET  /api/agent/questions/next?session=            bridge long-poll (≤25 s); POST /api/agent/questions/trace {session,id,step}, …/done {session,id,message,duration}
+GET  /api/agent/info?session=&question_id=&key=       one info key's value (scripts/info_context.py payload); POST /api/agent/questions/info
+                                                   {session,id,key,interaction_id?,source}: the info item a question was answered with
 GET  /api/agent/visible?session=&question_id=&ids=a,b  share of each object (scripts/ego.py id) in view, not hidden, at the question's frame
 GET  /api/agent/context?session=                   household context (scenario or space context.json, else agent/mock-context.json) + the user's pose
                                                    at the question being answered, else at the frame the editor shows (POST /api/agent/state)
+POST /api/agent/placement-log {session,question_id,event}  debug: one placement event of an answer (agent/placement-log/q<id>.jsonl)
 POST /api/agent/responses {session,…}              UI/full text; text streams use {part:'text',stream:{seq,status}} snapshots
 Binds to 127.0.0.1 only; recordings must exist in private/<scene>/recordings/; a session is a scenario's spaces/<space>/scenarios/<take>/session.json.
 """
@@ -41,7 +48,7 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
-import agent_store as store, spaces, composition, weather, findmy, ego, hand_cache
+import agent_store as store, spaces, composition, weather, findmy, ego, hand_cache, info_context, layout
 busy = threading.Lock()
 MOCK_CONTEXT = ROOT/'agent'/'mock-context.json'
 
@@ -87,6 +94,9 @@ def agent_context(session, groups=None, question_id=None):
         if question_id is not None and running is None: raise ValueError('Unknown question.')
         live = store.editor_state.get(str(d))
         ctx['conversation'] = store.conversation_context.snapshot(conversation, running)
+        # The information box the user selected when asking, and the info item of the previous turn (a follow-up may be about it).
+        if running and running.get('selection'): ctx['selection'] = running['selection']
+        if store.active_info(conversation, running): ctx['active_info'] = store.active_info(conversation, running)
     ctx['interaction'] = dict(weather_mod=bool((running or live or {}).get('weather_mod', False)),findmy_mod=bool((running or live or {}).get('findmy_mod', False)),ego_mod=bool((running or live or {}).get('ego_mod', False)))
     if ctx['interaction']['ego_mod']: ctx['ego_catalog'] = ego.for_jev(ego.catalog(d))
     if 'storage' in ctx.get('loaded_groups',[]): ctx['findmy_catalog'] = findmy.catalog(d,ctx)[0]
@@ -111,7 +121,10 @@ def ask(body):
     if not text: raise ValueError('Empty question.')
     frames = len(json.loads((d/'session.json').read_text())['frames']); frame = int(body.get('frame', 0))
     if not 0 <= frame < frames: raise ValueError('Frame out of range.')
-    with store.lock: return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), body.get('weather_mod', False), body.get('text_response'), body.get('findmy_mod', False), body.get('ego_mod', False))
+    space = d.parent.parent; m = json.loads((space/'space.json').read_text()); sem_path = space/(m.get('semantic') or 'scan/semantic.json')
+    sem = layout.migrate_information(json.loads(sem_path.read_text())) if sem_path.is_file() else {}
+    selection = info_context.selection(space, sem, body.get('selection'), body.get('selection_mode', 'jev'), session=d) if body.get('selection') else None
+    with store.lock: return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), body.get('weather_mod', False), body.get('text_response'), body.get('findmy_mod', False), body.get('ego_mod', False), selection)
 
 def agent_get(path, session, q):
     if path == '/api/agent/questions/next': return next_question(session)
@@ -126,6 +139,11 @@ def agent_get(path, session, q):
             _, question = store._find_question(d, int(q.get('question_id', ['-1'])[0]))
             if not question: raise ValueError('Unknown question.')
             frame = question['frame']
+    if path == '/api/agent/info':
+        # One info key's value for the bridge (scripts/info_context.py payload): text, or a file's text or bytes.
+        with store.lock:
+            if not store._find_question(d, q.get('question_id', [''])[0])[1]: raise ValueError('Unknown question.')
+        return info_context.payload(d, q.get('key', [''])[0])
     if path == '/api/agent/visible': return ego.visibility(d, frame, [i for i in q.get('ids', [''])[0].split(',') if i])
     raise KeyError(path)
 
@@ -141,6 +159,8 @@ def agent_post(path, body):
         if path == '/api/agent/conversations/import': return store.import_conversation(d, body.get('data'))
         if path == '/api/agent/questions/delete': return store.delete_question(d, cid, body.get('id'))
         if path == '/api/agent/questions/trace': store.bridge_seen[str(d)] = time.time(); return store.add_trace(d, body.get('id'), body.get('step'))
+        if path == '/api/agent/placement-log': return store.log_placement(d, body.get('question_id'), body.get('event'))
+        if path == '/api/agent/questions/info': return store.set_info(d, body.get('id'), body.get('key'), body.get('interaction_id'), body.get('source'))
         if path == '/api/agent/questions/done': store.bridge_seen[str(d)] = time.time(); return store.finish(d, body.get('id'), body.get('message'), body.get('duration'))
         if path == '/api/agent/responses': return store.add_response(d, body)
     raise KeyError(path)
@@ -181,6 +201,9 @@ class Handler(SimpleHTTPRequestHandler):
             space = q.get('space', [''])[0]
             try: return self.reply(200, dict(components=composition.library(spaces.space_dir(space) if space else None)))
             except ValueError as e: return self.reply(400, dict(error=str(e)))
+        if url.path == '/api/info':
+            try: return self.reply(200, info_context.read(spaces.space_dir(q.get('space', [''])[0])))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if url.path == '/api/spaces': return self.reply(200, dict(spaces=spaces.listing(), takes=spaces.takes(), meshAvailable=spaces.MESH_PYTHON.is_file()))
         if url.path == '/api/agent/command':
             try: return self.reply(200, dict(command=agent_command(session, self.headers.get('Host', '127.0.0.1:8766')), config_path=str(ROOT/'agent-config.local.json'), gemini_setup_command=' '.join(map(shlex.quote,[shutil.which('node') or 'node',str(ROOT/'scripts/gemini-setup.mjs')])), restart_command=' '.join(map(shlex.quote, ['npm', '--prefix', str(ROOT), 'start']))))
@@ -205,15 +228,18 @@ class Handler(SimpleHTTPRequestHandler):
             try: return self.reply(200, hand_cache.write(session_dir(body.get('session')), body.get('frame'), body.get('token'), body.get('data') or {}))
             except (ValueError, OSError, TypeError) as e: return self.reply(400, dict(error=str(e)))
         quick = {'/api/spaces': lambda: spaces.create(body.get('name')), '/api/rename': lambda: spaces.rename(body.get('take'), body.get('name')),
-            '/api/layout': lambda: spaces.save_layout(body.get('space'), body.get('objects'), body.get('openings'), body.get('revision')),
+            '/api/layout': lambda: spaces.save_layout(body.get('space'), body.get('objects'), body.get('openings'), body.get('revision'), body.get('information')),
+            '/api/info': lambda: info_context.set_value(spaces.space_dir(body.get('space')), body.get('key'), body.get('value')),
+            '/api/info/lib': lambda: info_context.add_file(spaces.space_dir(body.get('space')), body.get('name'), body.get('src')),
             # A recording's own components, or (scope 'scene') the scene's, shared by all its recordings.
             '/api/composition': lambda: composition.save(spaces.space_dir(body.get('space')), body.get('components'), body.get('revision')) if body.get('scope') == 'scene'
                 else composition.save(session_dir(body.get('session')), body.get('components'), body.get('revision')),
             '/api/objects': lambda: composition.add_object(spaces.space_dir(body.get('space')), body.get('name'), body.get('kind'), body.get('size'), body.get('src'), body.get('origin'), body.get('pose')),
-            '/api/objects/update': lambda: composition.update_object(spaces.space_dir(body.get('space')), body.get('id'), body.get('name'), body.get('shape'), body.get('pose'), body.get('origin')),
+            '/api/objects/update': lambda: composition.update_object(spaces.space_dir(body.get('space')), body.get('id'), body.get('name'), body.get('shape'), body.get('pose'), body.get('origin'), **({'info': body['info']} if 'info' in body else {})),
             '/api/objects/replace': lambda: composition.replace_object(spaces.space_dir(body.get('space')), body.get('id'), body.get('src'), body.get('size'), body.get('pivot')),
             '/api/objects/duplicate': lambda: composition.duplicate_object(spaces.space_dir(body.get('space')), body.get('id'), body.get('name'), body.get('origin'), body.get('pose')),
             '/api/objects/to-box': lambda: composition.model_to_box(spaces.space_dir(body.get('space')), body.get('id'), body.get('size'), body.get('center')),
+            '/api/layout/zone': lambda: spaces.set_zone_info(body.get('space'), body.get('zone'), body.get('info')),
             '/api/layout/model': lambda: spaces.set_furniture_model(body.get('space'), body.get('id'), body.get('src'), body.get('size'), body.get('center')),
             '/api/objects/delete': lambda: composition.remove_object(spaces.space_dir(body.get('space')), body.get('id')),
             '/api/scan/primary': lambda: spaces.set_primary(body.get('space'), body.get('scan')),
@@ -222,7 +248,7 @@ class Handler(SimpleHTTPRequestHandler):
             try: return self.reply(200, quick())
             except (spaces.Conflict, composition.Conflict) as e: return self.reply(409, dict(error=str(e)))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
-        action = {'/api/scenarios': spaces.add_scenario, '/api/register': lambda space, take: spaces.register(space, take, body.get('target'))}.get(path)
+        action = {'/api/scan/import': lambda space, take: spaces.import_scan(space, body.get('source')), '/api/scenarios': spaces.add_scenario, '/api/register': lambda space, take: spaces.register(space, take, body.get('target'))}.get(path)
         if not action: return self.reply(404, dict(error='Not found'))
         if not busy.acquire(blocking=False): return self.reply(409, dict(error='Another job is running.'))
         try:

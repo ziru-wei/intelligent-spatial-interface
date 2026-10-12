@@ -69,3 +69,17 @@ export function pickStyle(pixels,w,h,clutter=0,preferredSide=null,forceGlass=fal
   }
 }
 export const linToSrgb=c=>c.map(toSrgb);
+/** A vivid colour for a thin mark (an info answer's arrow, src/info-visual.mjs) over a background, and a halo to put under it. Text can
+ *  rely on frosted glass; a pen stroke cannot, so it stands out by colour instead: lightness away from most of the background (light over
+ *  dark, dark over light), a strongly saturated hue opposite the background's own (amber over a neutral dark, blue over a neutral light),
+ *  and the halo at the other end of lightness, the stroke's soft border. Returns {color, halo} in linear RGB. */
+export function accentStyle(pixels,w,h){
+  const lab=[];for(let i=0;i<w*h;i++)lab.push(linToOklab([toLin(pixels[4*i]/255),toLin(pixels[4*i+1]/255),toLin(pixels[4*i+2]/255)]));
+  const Ls=lab.map(p=>p[0]).sort((a,b)=>a-b),q=f=>Ls[Math.min(Ls.length-1,Math.floor(f*Ls.length))];
+  const mean=lab.reduce((s,p)=>[s[0]+p[0],s[1]+p[1],s[2]+p[2]],[0,0,0]).map(v=>v/lab.length);
+  // Light ink when most of the background is darker than the middle, else dark ink.
+  const light=q(.6)<.62,L=light?.86:.42,chromaBg=Math.hypot(mean[1],mean[2]);
+  const hue=chromaBg>.02?Math.atan2(mean[2],mean[1])+Math.PI:light?1.25:-1.85;   // ~amber over dark, ~blue over light
+  let color=null;for(let c=.2;c>=0;c-=.01){const rgb=oklabToLin([L,c*Math.cos(hue),c*Math.sin(hue)]);if(rgb.every(v=>v>=0&&v<=1)){color=rgb;break;}}
+  return {color:color||oklabToLin([L,0,0]),halo:oklabToLin(light?[.16,0,0]:[.98,0,0]),light};
+}

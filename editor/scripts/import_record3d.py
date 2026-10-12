@@ -12,6 +12,7 @@ frame) as PNG: uint16 millimeters split into R (high byte) and G (low byte),
 """
 import argparse, json, math, shutil, statistics
 from pathlib import Path
+from record3d_source import part
 from PIL import Image
 
 def write_depth(exr, png):
@@ -23,7 +24,8 @@ def write_depth(exr, png):
 
 def convert(source, dest, stride=1, depth=False, synthetic=False):
     source, dest = Path(source), Path(dest)
-    meta = json.loads((source/'metadata.json').read_text())
+    rgb_dir, depth_dir = part(source, 'rgb'), part(source, 'depth')
+    meta = json.loads((part(source, 'metadata.json')).read_text())
     w, h = int(meta['w']), int(meta['h'])
     poses, stamps = meta['poses'], meta.get('frameTimestamps')
     coeffs = meta.get('perFrameIntrinsicCoeffs')
@@ -33,9 +35,9 @@ def convert(source, dest, stride=1, depth=False, synthetic=False):
     accepted = []; rejected = []; prev = -1.0
     for i in range(0, len(poses), stride):
         try:
-            image = source/'rgb'/f'{i}.jpg'
+            image = rgb_dir/f'{i}.jpg'
             if not image.is_file(): raise ValueError('Missing image')
-            if depth and not (source/'depth'/f'{i}.exr').is_file(): raise ValueError('Missing depth')
+            if depth and not (depth_dir/f'{i}.exr').is_file(): raise ValueError('Missing depth')
             q, pos = poses[i][:4], poses[i][4:7]
             if not all(math.isfinite(v) for v in q+pos): raise ValueError('Non-finite pose')
             norm = math.sqrt(sum(v*v for v in q))
@@ -63,7 +65,7 @@ def convert(source, dest, stride=1, depth=False, synthetic=False):
         shutil.copyfile(image, dest/'frames'/f'{n:06d}.jpg')
         frame = dict(t=t-start, timestampUs=str(round(t*1e6)), image=f'frames/{n:06d}.jpg', sourceIndex=i, position=pos, quaternion=q)
         if depth:
-            write_depth(source/'depth'/f'{i}.exr', dest/'depth'/f'{n:06d}.png')
+            write_depth(depth_dir/f'{i}.exr', dest/'depth'/f'{n:06d}.png')
             frame['depth'] = f'depth/{n:06d}.png'
         frames.append(frame)
     gaps = [b['t']-a['t'] for a, b in zip(frames, frames[1:])]
@@ -80,12 +82,13 @@ def convert(source, dest, stride=1, depth=False, synthetic=False):
 def add_depth(source, dest):
     """Add per-frame depth to a session imported without --depth (frames, placements and room mesh are kept)."""
     source, dest = Path(source), Path(dest)
-    meta = json.loads((source/'metadata.json').read_text()); manifest = json.loads((dest/'session.json').read_text())
-    missing = [f['sourceIndex'] for f in manifest['frames'] if not (source/'depth'/f'{f["sourceIndex"]}.exr').is_file()]
+    rgb_dir, depth_dir = part(source, 'rgb'), part(source, 'depth')
+    meta = json.loads((part(source, 'metadata.json')).read_text()); manifest = json.loads((dest/'session.json').read_text())
+    missing = [f['sourceIndex'] for f in manifest['frames'] if not (depth_dir/f'{f["sourceIndex"]}.exr').is_file()]
     if missing: raise ValueError(f'Missing depth for {len(missing)} frames, e.g. {missing[:3]}')
     (dest/'depth').mkdir(exist_ok=True)
     for n, frame in enumerate(manifest['frames']):
-        write_depth(source/'depth'/f'{frame["sourceIndex"]}.exr', dest/'depth'/f'{n:06d}.png')
+        write_depth(depth_dir/f'{frame["sourceIndex"]}.exr', dest/'depth'/f'{n:06d}.png')
         frame['depth'] = f'depth/{n:06d}.png'
     manifest['depth'] = dict(encoding='png-rg-uint16-mm', kind='axial-meters', width=int(meta['dw']), height=int(meta['dh']), source='synthetic' if manifest.get('synthetic') else 'record3d-lidar')
     (dest/'session.json').write_text(json.dumps(manifest, indent=2))
