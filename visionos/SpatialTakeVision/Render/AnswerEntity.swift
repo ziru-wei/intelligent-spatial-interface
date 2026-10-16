@@ -122,12 +122,13 @@ final class TextLayout {
 
     /// The canvas with `written` glyphs (fractional: the current one partly drawn; nil: all). With `strokes` the current glyph is
     /// traced by a pen along its outline (inside its shape) and then fills in; without, each glyph just appears.
-    func render(written: Double? = nil, strokes: Bool = true) -> CGImage? {
+    /// ink: the letters' colour; glow: the halo around them (AnswerEntity: the opposite of the ink, so the letters stand out from anything).
+    func render(written: Double? = nil, strokes: Bool = true, ink: CGColor = CGColor(gray: 1, alpha: 1), glow: CGColor = CGColor(gray: 1, alpha: 0.85)) -> CGImage? {
         let w = Int(size.width), h = Int(size.height)
         guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w*4, space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
-        ctx.setFillColor(CGColor(gray: 1, alpha: 1)); ctx.setStrokeColor(CGColor(gray: 1, alpha: 1))
-        ctx.setShadow(offset: .zero, blur: 14, color: CGColor(gray: 1, alpha: 0.85))
+        ctx.setFillColor(ink); ctx.setStrokeColor(ink)
+        ctx.setShadow(offset: .zero, blur: 14, color: glow)
         let n = written ?? Double(glyphs.count), done = min(glyphs.count, Int(n)), p = CGFloat(n - Double(done))
         for g in glyphs.prefix(done) { ctx.addPath(g.path) }
         ctx.fillPath()
@@ -226,7 +227,7 @@ final class AnswerEntity: Entity {
     func setText(_ layout: TextLayout, streaming: Bool) async {
         guard placed != nil else { return }
         self.layout = layout; self.streaming = streaming
-        if writing.on { startWriting() } else { written = Double(layout.glyphs.count); await draw(layout.render()) }
+        if writing.on { startWriting() } else { written = Double(layout.glyphs.count); await draw(image(layout)) }
     }
 
     /// Moves to another place (the answer kept readable as the user moves), easing there; the text is set again at the new width.
@@ -234,7 +235,7 @@ final class AnswerEntity: Entity {
         let from = transform, to = Transform(matrix: p.transform)
         placed = p
         texture = nil   // drawn again in the new place's look: its colour, its backing (wrapping the text at the new width)
-        if let layout { await draw(writer == nil ? layout.render() : layout.render(written: written, strokes: writing.strokes)) }
+        if let layout { await draw(writer == nil ? image(layout) : image(layout, written: written)) }
         for k in 1...12 {
             let t = Float(k)/12, e = t*t*(3 - 2*t)
             transform = Transform(scale: .one, rotation: simd_slerp(from.rotation, to.rotation, e), translation: simd_mix(from.translation, to.translation, V3(repeating: e)))
@@ -250,7 +251,7 @@ final class AnswerEntity: Entity {
                 let now = Date(), total = Double(layout.glyphs.count)
                 self.written = min(total, self.written + now.timeIntervalSince(last)*self.writing.speed); last = now
                 let finished = self.written >= total && !self.streaming
-                await self.draw(finished ? layout.render() : layout.render(written: self.written, strokes: self.writing.strokes))
+                await self.draw(finished ? self.image(layout) : self.image(layout, written: self.written))
                 self.movePen(layout, written: self.written, active: !finished && self.writing.strokes && self.written < total)
                 if finished { self.writer = nil; self.pen.isEnabled = false; return }
                 try? await Task.sleep(for: .milliseconds(45))
@@ -263,6 +264,15 @@ final class AnswerEntity: Entity {
         guard let p = placed, abs(p.normal.y) > 0.7, let b = TextPlacement.basis(normal: p.normal, at: position, eye: eye) else { return }
         let want = simd_quatf(simd_float3x3(columns: (b.right, b.up, p.normal)))
         orientation = simd_slerp(orientation, want, 0.08)
+    }
+
+    /// The text drawn in its place's ink (the style's colour) with a glow of the opposite (dark around light letters, light around dark).
+    private func image(_ layout: TextLayout, written: Double? = nil) -> CGImage? {
+        let c = placed?.style.text ?? SIMD3(1, 1, 1), s = c.map { Legibility.toSrgb($0) }
+        let ink = CGColor(srgbRed: CGFloat(s.x), green: CGFloat(s.y), blue: CGFloat(s.z), alpha: 1)
+        let light = Legibility.linToOklab(c).x > 0.6
+        let glow = light ? CGColor(srgbRed: 0.03, green: 0.03, blue: 0.05, alpha: 0.9) : CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 0.9)
+        return written == nil ? layout.render(ink: ink, glow: glow) : layout.render(written: written, strokes: writing.strokes, ink: ink, glow: glow)
     }
 
     /// Writes the text in again from its first glyph (moved into a new look: the weather's).
@@ -281,7 +291,7 @@ final class AnswerEntity: Entity {
             guard let tex = try? await TextureResource(image: image, options: .init(semantic: .color)) else { return }
             texture = tex; textureSize = layout.size
             var m = UnlitMaterial()
-            m.color = .init(tint: UIColor(linear: p.style.text), texture: .init(tex))
+            m.color = .init(tint: .white, texture: .init(tex))   // the colours are in the texture: the ink and its opposite glow
             m.blending = .transparent(opacity: .init(floatLiteral: 1))
             m.readsDepth = false; m.writesDepth = false
             textPlane.components.set(ModelSortGroupComponent(group: group, order: baseOrder + 1))

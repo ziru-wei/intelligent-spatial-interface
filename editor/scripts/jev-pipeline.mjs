@@ -25,7 +25,7 @@ export async function jev_read_request(ask,question,catalog,extra={}){
   if(catalog.conversation){
     const criteria={standalone:'The current question names its own subject or does not need a previous physical item to be understood.',unresolved:'The question refers to an earlier item but no unique antecedent is supported, including pronouns after several equally plausible items.'};
     referents.forEach((item,i)=>criteria[`ref_${i}`]=item);
-    questions.conversation_reference=choice('Does user_question depend on a previously recommended or discussed physical item, such as "OK, where is it?" or "那它在哪里"? Select its unique referent from conversation.referents. Use standalone for a new explicit subject or a self-contained question. Use unresolved if the referent is missing or ambiguous. A recent recommendation is evidence; recency alone does not disambiguate multiple items in the same answer. Do not turn an unrelated new question into a follow-up.',criteria);
+    questions.conversation_reference=choice('Does user_question depend on a previously recommended or discussed physical item, such as "OK, where is it?" or "那它在哪里"? Select its unique referent from conversation.referents. Use standalone for a new explicit subject or a self-contained question, and when the words point at the place the user is in (context.location: "here", "this place", "this lab", "people here", "they" meaning its people, "what they work on") rather than at an item. Use unresolved if the referent is missing or ambiguous. A recent recommendation is evidence; recency alone does not disambiguate multiple items in the same answer. Do not turn an unrelated new question into a follow-up.',criteria);
   }
   Object.assign(questions,extra);
   const answers=await ask('jev_call_context_read',{user_question:question,time:catalog.time,context_groups:catalog.context_groups,conversation},questions);
@@ -225,7 +225,10 @@ export async function runInfo({question,info,catalog,readInfo,recordInfo=async()
 // Zone animations (played on the headset, part 'animation'): a zone may have some. When the user is in that zone, faces it from outside
 // (catalog.location: scripts/location.py), or has selected one of its info items (the lab's vision on the wall), one Jev call chooses
 // which animation the question calls for, or none (a text answer is enough), alongside the rest; the text answers as usual.
-export const ZONE_ANIMATIONS={'lab-2f':{about:'the Programmable Reality Lab (PRL), this lab',info_keys:['lab philosophy','vision_sean','Programmable Reality Lab'],
+export const ZONE_ANIMATIONS={'lab-2f':{about:'the Programmable Reality Lab (PRL), this lab',
+  // The lab's corridor counts as the lab. Info items that are about the lab (they bring its animations; the first two are the lab's own
+  // info, read in parts below; Sean's vision keeps its own).
+  zones:['lab-2f','lab-hall-2f'],info_keys:['lab philosophy','vision_sean','Programmable Reality Lab'],part_keys:['lab philosophy','Programmable Reality Lab'],
   // What the lab's info is made of (info keys, scripts/info_context.py): Jev chooses the parts a question about the lab needs, and the
   // answer reads only those.
   sections:{
@@ -241,7 +244,8 @@ export const ZONE_NO_ANIMATION='No animation: a text answer is enough. Facts suc
 export function zoneAnimation(catalog){
   const loc=catalog.location||{},sel=catalog.selection;
   for(const [zone,a] of Object.entries(ZONE_ANIMATIONS)){
-    const via=loc.in?.id===zone?'in':loc.facing?.id===zone?'facing':sel&&(sel.box_id==='zone:'+zone||a.info_keys.includes(sel.key))?'selection':null;
+    const zones=a.zones||[zone];
+    const via=zones.includes(loc.in?.id)?'in':zones.includes(loc.facing?.id)?'facing':sel&&(zones.some(z=>sel.box_id==='zone:'+z)||a.info_keys.includes(sel.key))?'selection':null;
     if(via)return {zone,via,...a};
   }
   return null;
@@ -267,7 +271,7 @@ export async function runPipeline(args){
     if(chosen.id)await publish({question_id:question.id,part:'animation',animation:{id:chosen.id,zone:anim.zone}});
   }).catch(e=>trace('animation_error',e.message)):null;
   // The parts of the zone's info the answer reads ({zone, keys: [{part, key}]}; none when the question is not about the zone).
-  const zoneInfo=zoneCall?zoneCall.then(c=>c.sections.length?{zone:anim.zone,about:anim.about,keys:c.sections.map(k=>({part:k,key:anim.sections[k].key})),info_keys:anim.info_keys}:null).catch(()=>null):Promise.resolve(null);
+  const zoneInfo=zoneCall?zoneCall.then(c=>c.sections.length?{zone:anim.zone,about:anim.about,keys:c.sections.map(k=>({part:k,key:anim.sections[k].key})),part_keys:anim.part_keys||[]}:null).catch(()=>null):Promise.resolve(null);
   try{return await answerPipeline({...args,catalog,zoneInfo});}
   finally{await animated;}   // the question is done only once the animation is decided (the headset stops polling then)
 }
@@ -286,10 +290,12 @@ async function answerPipeline({question,catalog,zoneInfo=Promise.resolve(null),r
   if(catalog.selection||catalog.active_info)trace('info_route',JSON.stringify({route:info?'info':'user',key:info?.key??null,source:info?.source??null,continue:!!info?.previous,
     selected:read?.answers?.info_selected?.noul??null,follow_up:read?.answers?.info_followup?.noul??null}));
   // An info item of a zone with parts (the lab's): the answer reads the parts Jev chose instead of the item alone.
-  if(info){const z=await zoneInfo;return runInfo({question,info,catalog,readInfo,recordInfo,answer,publish,trace,zone:z&&z.info_keys.includes(info.key)?await readZoneInfo(z,readInfo,trace):null});}
+  if(info){const z=await zoneInfo;return runInfo({question,info,catalog,readInfo,recordInfo,answer,publish,trace,zone:z&&z.part_keys.includes(info.key)?await readZoneInfo(z,readInfo,trace):null});}
   const {groups,reference}=read;
   if(catalog.conversation)trace('conversation_reference',JSON.stringify(reference));
-  if(reference.status==='unresolved'){
+  // Words that point at the zone the user is in ("they", "people here") are no item to name: the zone's parts answer them.
+  if(reference.status==='unresolved'&&await zoneInfo){trace('conversation_reference_zone','About the zone the user is in: no item to name');}
+  else if(reference.status==='unresolved'){
     const names=(catalog.conversation?.referents||[]).map(i=>i.label).slice(0,3);
     const text={question_id:question.id,part:'text',title:'Which item do you mean?',body:names.length?'Please name the item: '+names.join(' or ')+'.':'Please name the item you mean.',anchor:{object:'user-view',relation:'in-front'},referenced_item_ids:[]};
     await publish(text);return text;

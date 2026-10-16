@@ -32,13 +32,13 @@ test('no animation call outside the lab',async()=>{
 });
 
 test('facing the lab from the corridor, or its vision on the wall selected, counts too',()=>{
-  assert.equal(zoneAnimation({location:{in:{id:'lab-hall-2f'},facing:{id:'lab-2f',via:'door'}}}).via,'facing');
+  assert.equal(zoneAnimation({location:{in:{id:'central-hall-2f'},facing:{id:'lab-2f',via:'door'}}}).via,'facing');
   assert.equal(zoneAnimation({selection:{box_id:'layout:lab-shelf-3_1',key:'lab philosophy'}}).via,'selection');
   assert.equal(zoneAnimation({selection:{box_id:'layout:custom_0',key:"Poster of Anastasia's Talk"}}),null);
 });
 
 // The lab's info in parts: Jev's choice of them is what the answer reads.
-const texts={'Programmable Reality Lab':'Led by Prof. Ryo Suzuki; students …','PRL research theme':'Today we program computers we live with…','PRL philosophy':'Student success and happiness first…'};
+const texts={'Programmable Reality Lab':'Led by Prof. Ryo Suzuki; students …','PRL research theme':'Today we program computers we live with…','PRL philosophy':'Student success and happiness first…',vision_sean:"sean's research philosophy: self-efficacy matters"};
 function runParts(cat,sections,{text='What does this lab research?'}={}){
   const answers=[];
   return runPipeline({question:{id:11,text},readContext:async()=>cat,readInfo:async key=>({key,text:texts[key]}),recordInfo:async()=>{},
@@ -69,4 +69,22 @@ test('"where is it?" after a question about a book means the book, not the lab o
     answer:async(question,context)=>{answers.push(context);return {title:'Book',body:'On the sofa',anchor:{object:'user-view',relation:'in-front'},referenced_item_ids:[]};},
     publish:async()=>{}});
   assert.equal(answers[0].info,undefined);
+});
+
+test('Sean\'s vision on the wall keeps its own info (it still brings the lab\'s animation); the lab corridor counts as the lab',async()=>{
+  const [ctx]=await runParts({...catalog,location:lab,selection:{box_id:'layout:lab-shelf-3_0',key:'vision_sean',score:.9,cues:{gaze:1},mode:'score'}},['members','theme'],{text:'What is this?'});
+  assert.equal(ctx.info.parts,undefined);assert.equal(ctx.info.text,texts.vision_sean);
+  assert.equal(zoneAnimation({location:{in:{id:'lab-hall-2f'}}}).via,'in');
+});
+
+test('"what they are working on" in the lab answers from the lab, not asking which item',async()=>{
+  const answers=[],parts=[];
+  await runPipeline({question:{id:79,text:'Can you tell me more about what they are working on'},readContext:async()=>({...catalog,location:lab,conversation:{recent_turns:[],referents:[]}}),
+    readInfo:async key=>({key,text:texts[key]}),recordInfo:async()=>{},
+    ask:async(stage,state,questions)=>Object.fromEntries(Object.entries(questions).map(([k,q])=>[k,
+      k==='conversation_reference'?{type:'choice',choice:'unresolved',probabilities:{unresolved:.8},confidence:.6}:q.type==='choice'?{type:'choice',choice:'none',probabilities:{none:1}}:n(k==='section_theme'?.9:0)])),
+    answer:async(question,context)=>{answers.push(context);return {title:'PRL research',body:'…',anchor:{object:'user-view',relation:'in-front'},referenced_item_ids:[]};},
+    publish:async p=>parts.push(p)});
+  assert.equal(parts.some(p=>p.title==='Which item do you mean?'),false);
+  assert.deepEqual(answers[0].zone_info.parts,{theme:texts['PRL research theme']});
 });

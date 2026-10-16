@@ -97,7 +97,7 @@ The window has four pages (a segmented control on top, as in the web editor's si
   - A FindMy answer's text hangs under the ask bar, hand-lettered with no backing, and follows with it.
   - Gestures. Hold a hand out, palm down, every finger open. A glowing ball appears under the palm. Then close all the fingers into a fist; the ball draws in and turns the hand's colour as you close, then bursts. A tone plays.
     - Right hand: hold the fist while you speak, then let go. That is one voice episode. What you say floats over the back of your hand word by word while you speak, and it is asked when the hand opens.
-    - Left hand: the bars and buttons (ask bar, weather controls, settings) hide or show. Answers stay.
+    - Left hand: the controls (ask bar, settings) hide or show. The weather's controls and the answers stay.
     - It must start from an open hand and end with every finger curled. A pinch, scrolling a list or grabbing a panel never triggers it.
   - The settings panel has a grip on its top edge: drag it by hand. It keeps that place relative to the bar and still follows.
   - The panels move up and nearer when something real (a desk, a shelf) would hide any corner of them, and come back when clear.
@@ -107,7 +107,8 @@ The window has four pages (a segmented control on top, as in the web editor's si
 - **Questions**: the questions asked on the headset. Tap one to replay its stored answer as it came, placed where you look now.
 
 - Answers written stroke by stroke have a 3D pen whose tip follows the trace.
-- Every answer is hand-lettered.
+- The microphone is open only while listening: afterwards the audio goes back to playback only, so visionOS's microphone indicator goes away.
+- Every answer is hand-lettered, with a glow of the opposite colour around the letters (dark around light letters, light around dark). Text that moves (onto the bar, under it for FindMy, into the weather's place, off an animation) keeps being written where it was, never from the start again.
 - An ordinary answer (not info, weather or FindMy). When one is placed again (no longer readable, or an animation came), the same rules apply:
   - goes on the desk or table in front of you (A, or a top within 1.2 m across ±25° of where you face), lying and turning smoothly to read toward you;
   - else on the wall you face (B), near eye level;
@@ -122,7 +123,7 @@ The window has four pages (a segmented control on top, as in the web editor's si
 - **Where you are** (`Space/Location.swift` → `editor/scripts/location.py`): each question carries the zone you stand in, and a zone you face without being in it. The latter is found when your gaze, or a pointing finger, meets one of its doors, windows or openings, e.g. from the corridor; or when you stand within 1.2 m of its door, whichever way you look (about to go in). The agent gets both zones' names and info, and resolves "here", "this place", "this lab" and "where am I" to them. A pronoun the conversation resolves ("where is it?" after asking about a book) means that thing, not the zone you stand in. Zones may carry info; the lab's is "Programmable Reality Lab" (full name; short name PRL).
 - The ask bar shows, in small text under it, the zone you are in and the one you face.
 - **The lab's animations** (`Animations/ZoneAnimation.swift`; `LabDiorama.usdz` and `RealityDiorama.usdz` from `vision-animation-3d`):
-  - They apply when you are in the lab, face it, or have its vision on the wall selected.
+  - They apply when you are in the lab (its corridor counts as the lab, and carries its info too), face it, or have its vision on the wall selected. Sean's vision keeps its own info.
   - One Jev call (`jev_call_zone_animation`; response part `animation`) chooses what the question calls for:
     - LabDiorama: lab life, requirements, how the lab conducts research.
     - RealityDiorama: the lab's research content and vision.
@@ -132,6 +133,7 @@ The window has four pages (a segmented control on top, as in the web editor's si
   - The lab's info (zone and lab philosophy) is now text: the ATLAS Institute, led by Prof. Ryo Suzuki; students Hye-Young Jo, Keiichi Ihara, Ada Yi Zhao, Sean Xiaoan Liu and Ziru Wei.
   - Where it goes: on the lab's central square table (desk 5) when that is in view; else on the desk or table you are at; else floating within reach, in front of the ask bar and clear of it.
   - Nothing real hides it: the room's occlusion is off while it plays.
+  - Its answer's text sits beside it: upright and facing you at its middle height, on the side nearer the middle of your view, else above it. It stays beside it, and is placed there again if you move away.
   - Answer text never hides it. This covers text over or under the ask bar, info answers (settled or not) and the weather's text. Any text that would cover it from where you are is placed again by its own rules, clear of it, else floats aside. This is checked when text appears, when the animation comes, and twice a second as you move.
   - It loops. Touch one of the turntable's four sub-discs and that chapter plays, then the loop goes on.
 
