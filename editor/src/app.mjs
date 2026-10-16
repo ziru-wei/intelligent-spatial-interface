@@ -30,6 +30,7 @@ import {createStructure} from './layout-structure.mjs';
 import {createAlignPanel} from './align-panel.mjs';
 import {load as loadResponseSettings,resolve as resolveSettings,modOf,textResponses,disabledResponseMods,MODS,resumeOnFirstResponse,createResponseSettingsPanel} from './response-settings.mjs';
 import {createComponentHost} from './components.mjs';
+import {visionMode,createVisionPanel} from './vision-panel.mjs';
 import {createAgentLayer,READING,formatSpeed,stepsAt,setTextBehavior,TEXT_BEHAVIOR} from './agent.mjs';
 import {questionClock} from './question-caption.mjs';
 import {readModel,modelBounds,fitScale,boxFromModel,swapHTML,wireSwap} from './model-fit.mjs';
@@ -569,7 +570,7 @@ function select(id){selected=components.get(id)?id:null;anchor=components.get(se
 function syncGizmo(){const inst=components.get(selected),box=!fine&&layout.enabled&&layout.handleMode==='gizmo'&&layout.selected?.object?.visible?layout.selected:null;
   const want=fine?fine.object:box?box.object:inst&&anchor.visible&&twin.gizmo.enabled&&visibleInTwin(inst)?anchor:null;
   const modes=fine||box||inst&&groupOf(inst)==='persistent'?['translate','rotate']:['translate','rotate','scale'];
-  const axes=box?['Y']:['X','Y','Z'];if(String(twin.gizmo.rotateAxes)!==String(axes)&&!twin.gizmo.dragging)twin.gizmo.setRotateAxes(axes);
+  const axes=box||fine?.headset?['Y']:['X','Y','Z'];if(String(twin.gizmo.rotateAxes)!==String(axes)&&!twin.gizmo.dragging)twin.gizmo.setRotateAxes(axes);
   if(String([...twin.gizmo.modes])!==String(modes)&&!twin.gizmo.dragging)twin.gizmo.setModes(modes);
   if(twin.gizmo.object!==want)twin.attach(want);}
 // Undo history of component transforms (⌘Z): the transform before each change; a handle drag is one step (its state at the press).
@@ -921,8 +922,8 @@ function applyToSpace(M){toSpace=M.clone();
 // The gizmo sits on a pivot at the centre of the recording's mesh (its own origin is where the recording started, often far off), the
 // mesh hanging under it; toSpace is the mesh's resulting world matrix.
 function fineToSpace(){fine.mesh.updateMatrixWorld(true);return fine.mesh.matrixWorld.clone();}
-function setFineMatrix(M){const o=fine.object;M.decompose(o.position,o.quaternion,o.scale);o.scale.set(1,1,1);o.updateMatrix();o.updateMatrixWorld(true);applyToSpace(fineToSpace());showFine();}
-function showFine(){$('fine-bar').hidden=!fine;if(!fine)return;$('fine-withdraw').disabled=!fine.history.canUndo;$('fine-redo').disabled=!fine.history.canRedo;$('fine-reset').disabled=fine.object.matrix.equals(fine.saved);$('fine-save').disabled=$('fine-reset').disabled&&!fine.initialPlacement;}
+function setFineMatrix(M){const o=fine.object;M.decompose(o.position,o.quaternion,o.scale);o.scale.set(1,1,1);o.updateMatrix();o.updateMatrixWorld(true);if(!fine.headset)applyToSpace(fineToSpace());showFine();}
+function showFine(){$('fine-bar').hidden=!fine;if(!fine)return;$('fine-bar').querySelector('span').textContent=fine.headset?'Tune the headset: drag its room (blue points) onto the scan in the 3D view (move / turn). Save sends it to the headset.':"Tune: drag the recording's mesh onto the scan in the 3D view (move / rotate).";$('fine-withdraw').disabled=!fine.history.canUndo;$('fine-redo').disabled=!fine.history.canRedo;$('fine-reset').disabled=fine.object.matrix.equals(fine.saved);$('fine-save').disabled=$('fine-reset').disabled&&!fine.initialPlacement;}
 function startFineTune(){if(fine)return;const g=roomParts?.userData.parts.recording;
   if(!g){$('take-status').textContent='Prepare this recording first to create its mesh, then drag it into place.';return;}
   const originalToSpace=toSpace?.clone()||null;
@@ -935,19 +936,48 @@ function startFineTune(){if(fine)return;const g=roomParts?.userData.parts.record
   // Look at the whole recording mesh, the gizmo in the middle.
   const sphere=new THREE.Box3().setFromObject(g).getBoundingSphere(new THREE.Sphere());for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',b.dataset.mode==='orbit');
   twin.focusOn(sphere.center,Math.max(.8,sphere.radius));showCut(twin.setView({}));showFine();update();}
-function endFineTune(restore){if(!fine)return;if(restore)setFineMatrix(fine.saved);
+function endFineTune(restore){if(!fine)return;
+  if(fine.headset){fine.object.removeFromParent();fine.mesh.geometry.dispose();fine.mesh.material.dispose();fine=null;showFine();update();return;}
+  if(restore)setFineMatrix(fine.saved);
   const {object:pivot,mesh:g}=fine;if(restore&&!fine.originalToSpace)toSpace=null;pivot.parent.attach(g);pivot.removeFromParent();fine=null;showFine();update();}
 // The gizmo reports the pivot moved: scale is not part of an alignment.
-function fineMoved(o){o.scale.set(1,1,1);o.updateMatrix();o.updateMatrixWorld(true);applyToSpace(fineToSpace());showFine();}
+function fineMoved(o){if(fine.headset)levelHeadset(o);o.scale.set(1,1,1);o.updateMatrix();o.updateMatrixWorld(true);if(!fine.headset)applyToSpace(fineToSpace());showFine();}
 for(const g of [twin.gizmo]){g.addEventListener('mouseDown',()=>{if(fine)fine.before=fine.object.matrix.clone();});
   g.addEventListener('mouseUp',()=>{if(fine?.before&&!fine.before.equals(fine.object.matrix))fine.history.record(fine.before,fine.object.matrix);if(fine)fine.before=null;showFine();});}
 $('fine-withdraw').onclick=()=>{const M=fine?.history.undo(fine.object.matrix);if(M)setFineMatrix(M);};
 $('fine-redo').onclick=()=>{const M=fine?.history.redo(fine.object.matrix);if(M)setFineMatrix(M);};
 $('fine-reset').onclick=()=>{if(!fine)return;fine.history.record(fine.object.matrix,fine.saved);setFineMatrix(fine.saved);};
 $('fine-cancel').onclick=()=>endFineTune(true);
-$('fine-save').onclick=async()=>{const e=fineToSpace().elements,rowMajor=[e[0],e[4],e[8],e[12],e[1],e[5],e[9],e[13],e[2],e[6],e[10],e[14],e[3],e[7],e[11],e[15]];
+$('fine-save').onclick=async()=>{if(fine?.headset){saveHeadsetTune();return;}const e=fineToSpace().elements,rowMajor=[e[0],e[4],e[8],e[12],e[1],e[5],e[9],e[13],e[2],e[6],e[10],e[14],e[3],e[7],e[11],e[15]];
   try{await api('/api/align-manual',{space:here[0],take:here[1],toSpace:rowMajor.map(v=>+v.toFixed(6)),info:{method:'fine-tune'}});if(fine.initialPlacement){location.reload();return;}fine.originalToSpace=toSpace.clone();fine.saved=fine.object.matrix.clone();fine.history.clear();showFine();loadSpaces();}
   catch(err){$('take-status').textContent=err.message;}};
+// Vision Pro: the headset's alignment tuned the same way (Vision Pro tab › Tune). Its room's mesh as it sees it (points, world, sent by
+// the headset every 10 s: /api/vision/room) is placed in the scene by its alignment (space = alignment⁻¹ · world) and gets the gizmo:
+// moved on three axes, turned about the vertical only (both frames keep gravity). Save sends the new alignment
+// (/api/vision/alignment); the headset takes it within seconds and saves it as its world anchor.
+async function startHeadsetTune(){
+  if(fine)return;
+  let r;try{r=await api(`/api/vision/room?space=${encodeURIComponent(here[0])}`);}catch(e){$('vision-tune-status').textContent=e.message;return;}
+  if(layout.enabled)editLayout(false);if(objectsEditing)editObjects(false);select(null);
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(r.points,3));
+  const pts=new THREE.Points(geo,new THREE.PointsMaterial({color:0x5ab8ff,size:.035,sizeAttenuation:true,transparent:true,opacity:.85,depthWrite:false}));
+  pts.name='headset-room';pts.matrixAutoUpdate=true;
+  const worldFromSpace=new THREE.Matrix4().set(...r.worldFromSpace);
+  pts.applyMatrix4(worldFromSpace.clone().invert());scene.add(pts);pts.updateMatrixWorld(true);
+  const pivot=new THREE.Group();pivot.name='headset-pivot';new THREE.Box3().setFromObject(pts).getCenter(pivot.position);scene.add(pivot);pivot.updateMatrixWorld(true);pivot.attach(pts);
+  fine={object:pivot,mesh:pts,saved:pivot.matrix.clone(),history:createTransformHistory(),before:null,headset:true,initialPlacement:false};
+  for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',b.dataset.mode==='orbit');
+  const sphere=new THREE.Box3().setFromObject(pts).getBoundingSphere(new THREE.Sphere());twin.focusOn(sphere.center,Math.max(.8,Math.min(6,sphere.radius)));showCut(twin.setView({}));
+  $('vision-tune-status').textContent=`The headset's room: ${Math.round(r.points.length/3)} points, sent ${Math.round(Date.now()/1000-r.at)} s ago.`;
+  showFine();update();}
+// Turned about the vertical only: whatever tilt a drag gave is dropped (yaw kept).
+function levelHeadset(o){const e=new THREE.Euler().setFromQuaternion(o.quaternion,'YXZ');o.quaternion.setFromEuler(new THREE.Euler(0,e.y,0,'YXZ'));}
+async function saveHeadsetTune(){
+  fine.mesh.updateMatrixWorld(true);const worldFromSpace=fine.mesh.matrixWorld.clone().invert(),e=worldFromSpace.elements;
+  const rowMajor=[e[0],e[4],e[8],e[12],e[1],e[5],e[9],e[13],e[2],e[6],e[10],e[14],e[3],e[7],e[11],e[15]].map(v=>+v.toFixed(6));
+  try{await api('/api/vision/alignment',{space:here[0],worldFromSpace:rowMajor});fine.saved=fine.object.matrix.clone();fine.history.clear();showFine();
+    $('vision-tune-status').textContent='Sent: the headset takes it within a few seconds and saves it.';}
+  catch(err){$('vision-tune-status').textContent=err.message;}}
 $('space').onchange=showSpace;
 $('space-refresh').onclick=()=>loadSpaces();
 window.addEventListener('focus',()=>{if(!busySpace)loadSpaces();});
@@ -962,7 +992,7 @@ const layout=createLayoutEditor({group:twin.semantic,getRooms:()=>layoutRooms,ca
     // Saves carry the revision this page loaded; one saved from another window since is refused (409) instead of overwritten.
   onChange:data=>{showOutline();clearTimeout(layoutTimer);layoutTimer=setTimeout(async()=>{try{const r=await api('/api/layout',{space:here[0],revision:layoutRevision,...data});
     // The saved layout, with the doors and windows the server cut into the walls again: walls, effects and text surfaces follow.
-    const sem=await(await fetch(layoutURL,{cache:'no-store'})).json();structure.setData(sem);weatherScene.setLayout(sem);setTextLayout(sem);
+    const sem=await(await fetch(layoutURL,{cache:'no-store'})).json();structure.setData(sem);vision?.setLayout(sem);weatherScene.setLayout(sem);setTextLayout(sem);
     layoutRevision=r.revision;$('take-status').textContent='';await loadSpaces();}catch(e){$('take-status').textContent=e.message;}},500);},
   onHistory:h=>{$('layout-undo').disabled=!h.undo;$('layout-redo').disabled=!h.redo;},
   onSelect:b=>{if(b&&selected)select(null);update();outlineView?.setSelected(b?.id??null);for(const id of ['box-label','box-yaw','box-type','box-delete','box-duplicate'])$(id).disabled=!b;
@@ -1129,8 +1159,12 @@ loadSpaces();
 // Side panel: Scene (scene, its scan, layout, objects and recordings; the components placed here), Agent or Behavior (how answers are
 // lettered), one at a time.
 const agentTab=document.querySelector('[data-tab=agent]');
-function showTab(tab){if(tab==='agent'&&agentTab.disabled)tab='scene';for(const b of document.querySelectorAll('[data-tab]'))b.setAttribute('aria-pressed',b.dataset.tab===tab);
-  for(const t of ['scene','agent','behavior'])$('tab-'+t).hidden=tab!==t;store.set('spatialTake.sideTab',tab);}
+function showTab(tab){if(tab==='agent'&&agentTab.disabled)tab='scene';if(tab==='vision'&&!visionMode())tab='scene';for(const b of document.querySelectorAll('[data-tab]'))b.setAttribute('aria-pressed',b.dataset.tab===tab);
+  for(const t of ['scene','agent','behavior','vision'])$('tab-'+t).hidden=tab!==t;store.set('spatialTake.sideTab',tab);}
+// Vision Pro mode (?vision=1, /vision.html): the 3D view with the scan and boxes alone (the recorded camera hidden), and the headset's
+// settings in a tab of their own (src/vision-panel.mjs).
+const vision=visionMode()&&here[0]?createVisionPanel({space:here[0],$,onTune:()=>startHeadsetTune()}):null;
+if(vision){document.body.classList.add('vision');document.querySelector('[data-tab=vision]').hidden=false;vision.start();}
 for(const b of document.querySelectorAll('[data-tab]'))b.onclick=()=>showTab(b.dataset.tab);
 const convKey='spatialTake.conversation:'+sessionURL.pathname,store={get:k=>{try{return localStorage.getItem(k);}catch{return null;}},set:(k,v)=>{try{localStorage.setItem(k,v);}catch{}}};
 // Behavior: answer text (src/agent.mjs setTextBehavior), remembered in this browser; a change letters and places the answers again.
@@ -1279,7 +1313,7 @@ if(roomParts.children.length)setRoom(roomParts,null,null);buildLidarMesh();
 const hasPart=k=>!!roomParts.userData.parts[k];$('debug-spaceScan').disabled=!hasPart('space');$('debug-recordingMesh').disabled=!hasPart('recording');
 $('debug-recordingMesh').checked=!hasPart('space');twin.setDebug({spaceScan:true,recordingMesh:!hasPart('space')});
 // Layout boxes (scan/semantic.json), shown and edited in the 3D view.
-if(space?.scan?.semantic&&toSpace){try{layoutURL=new URL(space.scan.semantic,spaceURL);const sem=await(await fetch(layoutURL)).json();layoutRevision=sem.boxesRevision??sem.revision??0;layoutRooms=sem.rooms||[];twin.setFloorRooms(layoutRooms);layout.setData(sem);loadInfo();structure.setData(sem);weatherScene.setLayout(sem);setTextLayout(sem);loadFurnitureModels(sem);layoutLoaded=true;showOutline();showSpace();}catch(e){console.warn('layout',e);}}
+if(space?.scan?.semantic&&toSpace){try{layoutURL=new URL(space.scan.semantic,spaceURL);const sem=await(await fetch(layoutURL)).json();vision?.setLayout(sem);layoutRevision=sem.boxesRevision??sem.revision??0;layoutRooms=sem.rooms||[];twin.setFloorRooms(layoutRooms);layout.setData(sem);loadInfo();structure.setData(sem);weatherScene.setLayout(sem);setTextLayout(sem);loadFurnitureModels(sem);layoutLoaded=true;showOutline();showSpace();}catch(e){console.warn('layout',e);}}
 try{const floor=JSON.parse(localStorage.getItem('spatial-take:floors:'+spaceURL.pathname)||'null');if(floor)showCut(twin.restoreFloor(floor));showFloor();}catch{}
 if(!(session.depth&&session.frames.every(f=>f.depth)))$('depth-occlude').checked=false;
 else{$('depth-occlude').disabled=false;}
@@ -1296,4 +1330,5 @@ if(saved||sceneSpecs.length)await setComposition([...sceneSpecs,...takeSpecs],nu
 if(!saved&&!params.has('placement')&&!toSpace){await addComponent({component:'calibration-cube',position:[0,0,-2.5]});}
 if(params.has('placement')){const u=new URL(params.get('placement'),location.href);if(u.origin!==location.origin)throw Error('Placement URL must use this server');const response=await fetch(u);if(!response.ok)throw Error('Placement not found');await loadPlacement(await response.json());}
 weatherSurfacePreview=await createWeatherSurfacePreview(scene,weatherScene.playback,()=>update());weatherSurfacePreview.attach($('stage'),()=>camera);weatherSurfacePreview.attach($('twin'),()=>twin.camera);
-await startAgent();new ResizeObserver(()=>update()).observe($('stage'));window.replay={ready:true,agent,get textSurfaces(){return textSurfaces;},get surfaceOffsets(){return surfaceOffsets;},relationAt,get handData(){return currentHandData;},handPerception,recordingHands,handCompositor,spatialHands,findmyApproach,findmyScene,egoScene,egoApproach,egoTarget,weatherScene,weatherSurfacePreview,layout,editLayout,components,addComponent,loadGLB:glb,select,setSelected,editObjects,get selected(){return selected;},get anchor(){return anchor;},fineTune:{start:startFineTune,end:endFineTune,get state(){return fine;}},setFrame,at,placement,applyPlacement,loadPlacement,depthMap,surfaceAt,visibleIn,session,renderer,camera,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}
+await startAgent();new ResizeObserver(()=>update()).observe($('stage'));if(vision)showCut(twin.setView({mode:'orbit'}));   // Vision Pro mode: the whole space, to edit its boxes
+window.replay={ready:true,agent,get textSurfaces(){return textSurfaces;},get surfaceOffsets(){return surfaceOffsets;},relationAt,get handData(){return currentHandData;},handPerception,recordingHands,handCompositor,spatialHands,findmyApproach,findmyScene,egoScene,egoApproach,egoTarget,weatherScene,weatherSurfacePreview,layout,editLayout,components,addComponent,loadGLB:glb,select,setSelected,editObjects,get selected(){return selected;},get anchor(){return anchor;},fineTune:{start:startFineTune,end:endFineTune,get state(){return fine;}},setFrame,at,placement,applyPlacement,loadPlacement,depthMap,surfaceAt,visibleIn,session,renderer,camera,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}

@@ -21,15 +21,20 @@ export function createFindMy(){
  const group=new THREE.Group();group.name='findmy-highlight';scene.add(group);
  const fill=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),material(.13));fill.name='findmy-box-fill';
  const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),material(.95));outline.name='findmy-box-outline';group.add(fill,outline);
+ // A nested target's parent (the bookcase around the shelf): faintly, around it.
+ const parentGroup=new THREE.Group();parentGroup.name='findmy-parent';scene.add(parentGroup);
+ parentGroup.add(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),material(.04)),new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),material(.3)));
  const arrow=new THREE.Group();arrow.name='findmy-direction';hud.add(arrow);
  const shape=new THREE.Shape();shape.moveTo(.075,0);shape.lineTo(-.025,.052);shape.lineTo(-.025,.019);shape.lineTo(-.085,.019);shape.lineTo(-.085,-.019);shape.lineTo(-.025,-.019);shape.lineTo(-.025,-.052);shape.closePath();
  arrow.add(new THREE.Mesh(new THREE.ShapeGeometry(shape),material(1)));
  let response=null;
  return {group,arrow,uniforms,setResponse(r){response=r?.findmy?.status==='found'?r:null;},
   render(renderer,camera){
-   if(!response){group.visible=false;arrow.visible=false;return;}
+   if(!response){group.visible=false;parentGroup.visible=false;arrow.visible=false;return;}
    const target=response.findmy.target,g=targetGuidance(camera,target),size=renderer.getDrawingBufferSize(new THREE.Vector2());
    group.position.fromArray(target.center);group.scale.fromArray(target.size).multiplyScalar(1.015);group.rotation.y=THREE.MathUtils.degToRad(target.yaw||0);group.visible=true;
+   const parent=target.parent;parentGroup.visible=!!parent;
+   if(parent){parentGroup.position.fromArray(parent.center);parentGroup.scale.fromArray(parent.size).multiplyScalar(1.02);parentGroup.rotation.y=THREE.MathUtils.degToRad(parent.yaw||0);}
    arrow.visible=!g.visible;arrow.position.set(g.x,g.y,0);arrow.children[0].rotation.z=Math.atan2(g.y*size.y,g.x*size.x);
    // Keep arrow pixels square on non-square viewports.
    arrow.scale.set(.95*size.y/size.x,.95,1);

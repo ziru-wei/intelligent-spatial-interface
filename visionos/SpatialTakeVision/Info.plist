@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSWorldSensingUsageDescription</key>
+	<string>Spatial Take finds the room's walls, floor and tables to line its map of the room up with the real one, and to place answers on real surfaces.</string>
+	<key>NSHandsTrackingUsageDescription</key>
+	<string>Spatial Take uses your hands to know what you point at or touch when you ask.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Spatial Take listens when you tap the microphone, to ask the agent by voice.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Spatial Take turns what you say into the question it asks the agent.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Spatial Take talks to the Spatial Take agent running on your Mac.</string>
+	<!-- The agent runs on a Mac on the local network over plain HTTP (scripts/server.py --lan). Development only. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationPreferredDefaultSceneSessionRole</key>
+		<string>UIWindowSceneSessionRoleApplication</string>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<true/>
+		<key>UISceneConfigurations</key>
+		<dict/>
+	</dict>
+</dict>
+</plist>

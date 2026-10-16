@@ -39,16 +39,21 @@ GET  /api/agent/context?session=                   household context (scenario o
                                                    at the question being answered, else at the frame the editor shows (POST /api/agent/state)
 POST /api/agent/placement-log {session,question_id,event}  debug: one placement event of an answer (agent/placement-log/q<id>.jsonl)
 POST /api/agent/responses {session,…}              UI/full text; text streams use {part:'text',stream:{seq,status}} snapshots
-Binds to 127.0.0.1 only; recordings must exist in private/<scene>/recordings/; a session is a scenario's spaces/<space>/scenarios/<take>/session.json.
+Binds to 127.0.0.1 only (with --lan, also the local network, for the agent API only, with a token: the Vision Pro app, visionos/);
+GET  /api/vision/space?space=&revision=  /colors  /color?file=  /settings?headset=1  /room   POST /api/vision/settings {space, settings}
+     POST /api/vision/room {space, worldFromSpace, points} (the headset)   /alignment {space, worldFromSpace} (the editor's Tune)
+                                                   the Vision Pro app's live data (scripts/vision.py; settings page: /vision.html)
+POST /api/agent/questions in a live session (session.json live: true) carries {pose: {position, quaternion}} instead of a recorded frame;
+recordings must exist in private/<scene>/recordings/; a session is a scenario's spaces/<space>/scenarios/<take>/session.json.
 """
-import json, re, shlex, shutil, subprocess, sys, threading, time
+import hmac, ipaddress, json, math, re, secrets, shlex, shutil, subprocess, sys, threading, time
 from urllib.parse import urlsplit, parse_qs
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
-import agent_store as store, spaces, composition, weather, findmy, ego, hand_cache, info_context, layout
+import agent_store as store, spaces, composition, weather, findmy, ego, hand_cache, info_context, layout, vision, location
 busy = threading.Lock()
 MOCK_CONTEXT = ROOT/'agent'/'mock-context.json'
 
@@ -96,13 +101,15 @@ def agent_context(session, groups=None, question_id=None):
         ctx['conversation'] = store.conversation_context.snapshot(conversation, running)
         # The information box the user selected when asking, and the info item of the previous turn (a follow-up may be about it).
         if running and running.get('selection'): ctx['selection'] = running['selection']
+        # Where the user is: the zone they are in, one they face (scripts/location.py), and what "here" / "this lab" mean.
+        if running and running.get('location'): ctx['location'] = location.context(d, running['location'])
         if store.active_info(conversation, running): ctx['active_info'] = store.active_info(conversation, running)
     ctx['interaction'] = dict(weather_mod=bool((running or live or {}).get('weather_mod', False)),findmy_mod=bool((running or live or {}).get('findmy_mod', False)),ego_mod=bool((running or live or {}).get('ego_mod', False)))
     if ctx['interaction']['ego_mod']: ctx['ego_catalog'] = ego.for_jev(ego.catalog(d))
     if 'storage' in ctx.get('loaded_groups',[]): ctx['findmy_catalog'] = findmy.catalog(d,ctx)[0]
     if running:
         ctx['question'] = dict(id=running['id'], text=running['text'], asked_at_s=running['t'])
-        live = frame_pose(d, running['frame'])
+        live = dict(frame=running['frame'], t=running['t'], **running['pose']) if running.get('pose') else frame_pose(d, running['frame'])
     ctx['user'] = dict(ctx.get('user', {}), pose=live or 'editor not open on this scene')
     return ctx
 
@@ -116,15 +123,26 @@ def next_question(session):
             if time.time() >= deadline: return {}
             store.lock.wait(deadline-time.time())
 
+def live_pose(value):
+    """A head pose sent by a headset asking live: {position: [x, y, z], quaternion: [x, y, z, w]} in scene coordinates, with its forward."""
+    num = lambda v, n: isinstance(v, list) and len(v) == n and all(isinstance(x, (int, float)) and math.isfinite(x) for x in v)
+    if not isinstance(value, dict) or not num(value.get('position'), 3) or not num(value.get('quaternion'), 4): raise ValueError('Bad live pose.')
+    x, y, z, w = value['quaternion']
+    return dict(position=[float(v) for v in value['position']], quaternion=[float(v) for v in value['quaternion']],
+                forward=[-(2*(x*z+y*w)), -(2*(y*z-x*w)), -(1-2*(x*x+y*y))])
+
 def ask(body):
     d = session_dir(body.get('session')); text = str(body.get('text') or '').strip()
     if not text: raise ValueError('Empty question.')
-    frames = len(json.loads((d/'session.json').read_text())['frames']); frame = int(body.get('frame', 0))
+    sm = json.loads((d/'session.json').read_text()); frames = len(sm['frames']); frame = int(body.get('frame', 0))
     if not 0 <= frame < frames: raise ValueError('Frame out of range.')
+    # A live session (a headset, visionos/): no recording; the question carries the user's pose.
+    pose = live_pose(body.get('pose')) if sm.get('live') else None
     space = d.parent.parent; m = json.loads((space/'space.json').read_text()); sem_path = space/(m.get('semantic') or 'scan/semantic.json')
     sem = layout.migrate_information(json.loads(sem_path.read_text())) if sem_path.is_file() else {}
     selection = info_context.selection(space, sem, body.get('selection'), body.get('selection_mode', 'jev'), session=d) if body.get('selection') else None
-    with store.lock: return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), body.get('weather_mod', False), body.get('text_response'), body.get('findmy_mod', False), body.get('ego_mod', False), selection)
+    where = location.check(d, body.get('location'))
+    with store.lock: return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), body.get('weather_mod', False), body.get('text_response'), body.get('findmy_mod', False), body.get('ego_mod', False), selection, pose, where)
 
 def agent_get(path, session, q):
     if path == '/api/agent/questions/next': return next_question(session)
@@ -186,11 +204,22 @@ class Handler(SimpleHTTPRequestHandler):
         # Editor modules change while developing; never serve stale copies.
         self.send_header('Cache-Control', 'no-store'); super().end_headers()
     def log_message(self, fmt, *args):
-        if not any(p in self.path for p in ('/api/agent/state', '/api/agent/status', '/api/agent/questions/next')): super().log_message(fmt, *args)
+        # Polls (the editor, the agent bridge, the headset's live sync) would drown everything else.
+        polled = ('/api/agent/state', '/api/agent/status', '/api/agent/questions/next') + (('/api/vision/settings', '/api/vision/space') if self.command == 'GET' else ('/api/vision/room',))
+        if not any(p in self.path for p in polled): super().log_message(fmt, *args)
     def reply(self, status, body):
         data = json.dumps(body).encode(); self.send_response(status)
         self.send_header('Content-Type', 'application/json'); self.send_header('Content-Length', str(len(data))); self.end_headers(); self.wfile.write(data)
+    def lan_refused(self):
+        """With --lan, a client on another machine (the headset) may only use the agent API, and only with the token
+        (header X-Spatial-Token: agent-config.local.json visionToken); this machine's own clients are unrestricted."""
+        if ipaddress.ip_address(self.client_address[0].removeprefix('::ffff:')).is_loopback: return False
+        token = self.headers.get('X-Spatial-Token') or ''
+        if LAN_TOKEN and urlsplit(self.path).path.startswith(('/api/agent/', '/api/vision/')) and hmac.compare_digest(token, LAN_TOKEN): return False
+        if self.command == 'POST': self.rfile.read(int(self.headers.get('Content-Length', 0)))
+        self.reply(403, dict(error='Forbidden')); return True
     def do_GET(self):
+        if self.lan_refused(): return
         url = urlsplit(self.path); q = parse_qs(url.query); session = q.get('session', [''])[0]
         if url.path == '/api/hands':
             try:
@@ -201,6 +230,19 @@ class Handler(SimpleHTTPRequestHandler):
             space = q.get('space', [''])[0]
             try: return self.reply(200, dict(components=composition.library(spaces.space_dir(space) if space else None)))
             except ValueError as e: return self.reply(400, dict(error=str(e)))
+        if url.path.startswith('/api/vision/'):
+            # The Vision Pro app's live data (scripts/vision.py).
+            name = q.get('space', ['atlas'])[0]
+            try:
+                if url.path == '/api/vision/space': return self.reply(200, vision.space(name, q.get('revision', [None])[0]))
+                if url.path == '/api/vision/colors': return self.reply(200, vision.colors(name))
+                if url.path == '/api/vision/settings': return self.reply(200, vision.settings(name, headset=q.get('headset', [''])[0] == '1'))
+                if url.path == '/api/vision/room': return self.reply(200, vision.room(name))
+                if url.path == '/api/vision/color':
+                    data = vision.color_file(name, q.get('file', [''])[0]); self.send_response(200)
+                    self.send_header('Content-Type', 'image/png'); self.send_header('Content-Length', str(len(data))); self.end_headers(); self.wfile.write(data); return
+                return self.reply(404, dict(error='Not found'))
+            except (ValueError, OSError, subprocess.SubprocessError) as e: return self.reply(400, dict(error=str(e)))
         if url.path == '/api/info':
             try: return self.reply(200, info_context.read(spaces.space_dir(q.get('space', [''])[0])))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
@@ -217,7 +259,16 @@ class Handler(SimpleHTTPRequestHandler):
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         super().do_GET()
     def do_POST(self):
+        if self.lan_refused(): return
         path = urlsplit(self.path).path
+        if path in ('/api/vision/settings', '/api/vision/room', '/api/vision/alignment'):
+            body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
+            name = body.get('space') or 'atlas'
+            try:
+                if path == '/api/vision/room': return self.reply(200, vision.save_room(name, body))
+                if path == '/api/vision/alignment': return self.reply(200, vision.set_alignment(name, body))
+                return self.reply(200, vision.save_settings(name, body.get('settings')))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if path.startswith('/api/agent/'):
             try: return self.reply(200, agent_post(path, json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')))
             except KeyError: return self.reply(404, dict(error='Not found'))
@@ -256,7 +307,19 @@ class Handler(SimpleHTTPRequestHandler):
         except (ValueError, OSError) as e: self.reply(400, dict(error=str(e)))
         finally: busy.release()
 
+LAN_TOKEN = None
+def lan_token():
+    """The token a headset needs (--lan): agent-config.local.json visionToken, made once if missing."""
+    path = ROOT/'agent-config.local.json'; config = json.loads(path.read_text()) if path.is_file() else {}
+    if not isinstance(config.get('visionToken'), str) or len(config['visionToken']) < 16:
+        config['visionToken'] = secrets.token_urlsafe(24); path.write_text(json.dumps(config, indent=2))
+    return config['visionToken']
+
 if __name__ == '__main__':
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8766
-    http = Server(('127.0.0.1', port), partial(Handler, directory=str(ROOT)))
-    print(f'http://127.0.0.1:{http.server_port}', flush=True); http.serve_forever()
+    # server.py [port] [--lan]: --lan also listens on the local network, for the Vision Pro app (visionos/), which may then use the
+    # agent API only, with the token.
+    args = [a for a in sys.argv[1:] if a != '--lan']; lan = '--lan' in sys.argv[1:]
+    port = int(args[0]) if args else 8766
+    if lan: LAN_TOKEN = lan_token()
+    http = Server(('0.0.0.0' if lan else '127.0.0.1', port), partial(Handler, directory=str(ROOT)))
+    print(f'http://127.0.0.1:{http.server_port}'+(' (also on the local network: agent API only, token in agent-config.local.json visionToken)' if lan else ''), flush=True); http.serve_forever()
