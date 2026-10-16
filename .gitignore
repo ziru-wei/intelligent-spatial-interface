@@ -15,3 +15,8 @@ editor/agent-config.local.json
 
 # Rebuildable per-recording offline hand masks
 **/.hand-cache/
+
+# Vision Pro app (visionos/): the space data is exported from editor/spaces (private), so regenerate it with visionos/tools
+visionos/SpaceData/
+visionos/**/xcuserdata/
+visionos/**/*.xcuserstate

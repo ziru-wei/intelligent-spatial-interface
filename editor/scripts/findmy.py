@@ -23,4 +23,9 @@ def resolve(d,selection):
     if any(not isinstance(v,(int,float)) or not math.isfinite(v) for k in ('center','size') for v in box[k]) or any(v<=0 for v in box['size']): raise ValueError('Invalid FindMy box geometry.')
     yaw=box.get('yaw',0)
     if not isinstance(yaw,(int,float)) or not math.isfinite(yaw): raise ValueError('Invalid FindMy box rotation.')
-    return dict(version=1,mod='findmy',status='found',item_id=item['item_id'],label=item['label'],target=dict(id=box['id'],label=box.get('label',box['id']),center=box['center'],size=box['size'],yaw=yaw),visual='box-highlight',guidance='when-out-of-view',occlusion='hands-only')
+    target=dict(id=box['id'],label=box.get('label',box['id']),center=box['center'],size=box['size'],yaw=yaw)
+    # A nested box (a shelf of a bookcase): its parent goes along, highlighted faintly around it.
+    parent=boxes.get(box.get('parent')) if box.get('parent') else None
+    if parent and all(isinstance(v,(int,float)) and math.isfinite(v) for k in ('center','size') for v in parent[k]):
+        target['parent']=dict(id=parent['id'],label=parent.get('label',parent['id']),center=parent['center'],size=parent['size'],yaw=parent.get('yaw',0) or 0)
+    return dict(version=1,mod='findmy',status='found',item_id=item['item_id'],label=item['label'],target=target,visual='box-highlight',guidance='when-out-of-view',occlusion='hands-only')

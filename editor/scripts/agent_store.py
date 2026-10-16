@@ -101,7 +101,7 @@ def running_question(d):
     if not running: return None, None
     _, c, q = max(running, key=lambda x: x[0]); return c, q
 
-def ask(d, cid, frame, t, text, live=None, weather_mod=False, text_response=None, findmy_mod=False, ego_mod=False, selection=None):
+def ask(d, cid, frame, t, text, live=None, weather_mod=False, text_response=None, findmy_mod=False, ego_mod=False, selection=None, pose=None, location=None):
     """live = {read_s}: asked in the editor, which held the video on the question's frame while the agent answered and for `read_s`
     real seconds after the answer appeared; replays hold the same way, using the measured latency.
     text_response = {default: bool, <mod>: bool}: whether a text answer is wanted, for answers in no mod and per mod that is on
@@ -114,6 +114,8 @@ def ask(d, cid, frame, t, text, live=None, weather_mod=False, text_response=None
         q['live'] = dict(read_s=read_s)
     if isinstance(text_response, dict): q['text_response'] = {str(k): v is not False for k, v in text_response.items()}
     if selection: q['selection'] = selection   # an information box the user looked at, pointed at or touched (scripts/info_context.py selection)
+    if pose: q['pose'] = pose   # asked live on a headset (a live session, no recording): the user's head pose then, in scene coordinates
+    if location: q['location'] = location   # the zone the user is in and one they face (scripts/location.py)
     c['questions'].append(q); _write(d, c); lock.notify_all(); return dict(q, conversation=cid)
 
 def take_next(d):
@@ -202,11 +204,11 @@ def delete_question(d, cid, qid):
     _write(d, c); return dict(ok=True)
 
 def add_response(d, body):
-    if not (body.get('title') or body.get('body') or body.get('items') or (body.get('part') == 'ui' and (body.get('weather') or body.get('findmy') or body.get('ego')))): raise ValueError('A response needs a title, body or items.')
+    if not (body.get('title') or body.get('body') or body.get('items') or (body.get('part') == 'ui' and (body.get('weather') or body.get('findmy') or body.get('ego'))) or (body.get('part') == 'animation' and body.get('animation'))): raise ValueError('A response needs a title, body or items.')
     c, q = _find_question(d, body.get('question_id')) if body.get('question_id') is not None else (None, None)
     if body.get('question_id') is not None and not q: raise ValueError('Unknown question.')
     part = body.get('part')
-    if part not in (None, 'ui', 'text'): raise ValueError('Unknown response part.')
+    if part not in (None, 'ui', 'text', 'animation'): raise ValueError('Unknown response part.')
     if part and not q: raise ValueError('Response parts need a question_id.')
     if body.get('stream') is not None:
         if part != 'text' or body.get('weather') is not None or body.get('findmy') is not None or body.get('ego') is not None: raise ValueError('Only text parts can stream.')
@@ -224,6 +226,12 @@ def add_response(d, body):
         question=q['text'] if q else str(body.get('question') or ''), question_id=q['id'] if q else None, title=str(body.get('title') or ''),
         body=str(body.get('body') or ''), items=[str(i) for i in body.get('items') or []][:12], anchor=body.get('anchor') or None)
     if body.get('reserve_text') is True: r['reserve_text'] = True
+    # A zone's animation (scripts/jev-pipeline.mjs ZONE_ANIMATIONS: the lab's diorama), played on the headset beside the text.
+    if part == 'animation':
+        a = body.get('animation')
+        if not (isinstance(a, dict) and isinstance(a.get('id'), str) and re.fullmatch(r'[A-Za-z0-9_-]{1,64}', a['id'])): raise ValueError('Bad animation.')
+        r['animation'] = dict(id=a['id'], zone=str(a.get('zone') or '')[:64])
+    elif body.get('animation') is not None: raise ValueError('Only an animation part carries an animation.')
     if body.get('info') is not None:
         if part != 'text' or not q: raise ValueError('Only a text part of a question can carry info.')
         r['info'] = response_info(c, q, body['info'])

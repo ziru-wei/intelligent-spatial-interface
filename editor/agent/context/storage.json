@@ -165,10 +165,23 @@
         "current book",
         "reading book"
       ],
-      "location": "Inside the drawer of Table 2",
-      "box_id": "custom_11",
-      "container_detail": "drawer",
+      "location": "On the sofa in the lab",
+      "box_id": "lab-sofa",
+      "container_detail": "on the sofa",
       "progress": "Around page 68"
+    },
+    {
+      "id": "headphones",
+      "label": "Headphones",
+      "aliases": [
+        "headphones",
+        "headset",
+        "earphones",
+        "耳机"
+      ],
+      "location": "lab, shelf 3, bottom shelf",
+      "box_id": "lab-shelf-3-bottom",
+      "container_detail": "bottom shelf"
     }
   ]
 }

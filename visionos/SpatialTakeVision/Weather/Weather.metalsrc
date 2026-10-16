@@ -1,0 +1,152 @@
+#include <metal_stdlib>
+using namespace metal;
+
+// The web editor's storybook weather shaders (src/weather-scene.mjs groundMaterial and volumeMaterial, src/weather-art.mjs
+// createSunlight and celestialBody), ported to compute kernels that draw into textures (WeatherEffect.swift shows them on planes).
+// Outputs are premultiplied RGBA. Texture rows run top to bottom; uv.y = 0 is the bottom, as in the web's vUv.
+
+static float hash3(float3 p) { p = fract(p*.1031); p += dot(p, p.yzx + 33.33); return fract((p.x + p.y)*p.z); }
+static float noise3(float3 p) {
+    float3 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f);
+    return mix(mix(mix(hash3(i), hash3(i + float3(1,0,0)), f.x), mix(hash3(i + float3(0,1,0)), hash3(i + float3(1,1,0)), f.x), f.y),
+               mix(mix(hash3(i + float3(0,0,1)), hash3(i + float3(1,0,1)), f.x), mix(hash3(i + float3(0,1,1)), hash3(i + float3(1,1,1)), f.x), f.y), f.z);
+}
+
+struct GroundParams {
+    float time; float horizontal; float whole; float wet;
+    float snow; float night; float sunny; float ceiling;
+    float opacity; float intensity; float contacts; float flash;   // flash: lightning, 0…1 (brightens the patch within its feathered edge)
+    float2 patchSize;
+    float4 low; float4 high;
+};
+
+// The ground: the sky's gradient over the patch, a warm glow and bloom by day, a moonlit pool on a lying patch at night (rippling),
+// a warm pool of daylight with dappled leaf-light by day, its edge feathered. `contacts`: where rain and snow land (a lying patch, or the
+// floor below an upright patch or the ceiling): rain's impact ripples and settling snow (a floor patch has opacity 0: these alone).
+kernel void weatherGround(texture2d<half, access::write> out [[texture(0)]], constant GroundParams &g [[buffer(0)]], uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= out.get_width() || gid.y >= out.get_height()) return;
+    float2 uv = float2((gid.x + .5)/out.get_width(), 1. - (gid.y + .5)/out.get_height()), p = uv*2. - 1.;
+    float edge = mix(1. - smoothstep(.3, 1., pow(abs(p.x), 3.) + pow(abs(p.y), 3.)), 1. - smoothstep(.15, 1., length(p)), g.horizontal);
+    float border = min(min(uv.x, 1. - uv.x), min(uv.y, 1. - uv.y));
+    edge = mix(edge, mix(smoothstep(0., .015, border), 1., g.ceiling), g.whole);
+    float gradient = smoothstep(0., 1., uv.y);
+    float3 c = mix(g.high.rgb, g.low.rgb, mix(gradient*.8, .6, g.ceiling));
+    float glow = exp(-length(p - float2(-.3, .5))*3.)*(1. - g.night)*g.sunny; c += float3(.10, .065, .025)*glow;
+    float2 q = (uv - float2(.48, .55))*g.patchSize;
+    float alpha = g.opacity;
+    if (g.horizontal > .5) {
+        float ripple = sin(length(q)*65. - g.time*1.5)*.006;
+        float2 moon = q + float2(ripple, 0.);
+        float disc = 1. - smoothstep(.075, .091, length(moon)), shade = 1. - smoothstep(.072, .087, length(moon - float2(.035, .016)));
+        float reflection = disc*(1. - shade*.9), shimmer = pow(max(0., sin(q.y*100. + g.time*1.1)), 10.)*exp(-abs(q.x)*18. - abs(q.y)*5.);
+        c = mix(c, c + float3(.42, .52, .70)*reflection + float3(.04, .07, .12)*shimmer, g.night);
+        c += float3(.15, .09, .025)*(1. - g.night)*g.sunny*exp(-length(q)*3.);
+    }
+    if (g.horizontal < .5 && g.night < .5 && g.sunny > .5) {
+        float2 corner = (uv - float2(.12, .88))*float2(g.patchSize.x/g.patchSize.y, 1.); float bloom = exp(-dot(corner, corner)*15.);
+        c = mix(c, float3(1.8, 1.58, 1.28), bloom*.95);
+        alpha = mix(alpha, .94, bloom);
+    }
+    // Lightning lights the patch up, within its own soft edge (a separate plane would show a hard rectangle).
+    c = mix(c, float3(.92, .95, 1.), g.flash*.8); alpha = mix(alpha, max(alpha, .85), g.flash);
+    float4 col = float4(min(c, float3(1.))*alpha, alpha);   // no colour beyond white: a bright bloom must not clip into a hard white block
+    // Dappled sunlight through leaves on a lying patch by day (createSunlight: additive, swaying).
+    if (g.horizontal > .5 && g.night < .5 && g.sunny > .5) {
+        float3 w = float3(q.x, 0., q.y)*9. + float3(sin(g.time*.55)*.42, 0., cos(g.time*.43)*.35);
+        float leaves = noise3(w)*.65 + noise3(w*2.5)*.35, light = smoothstep(.36, .62, leaves);
+        float a = .06 + .36*light;
+        col.rgb += float3(1., .76, .36)*a; col.a = max(col.a, a);
+    }
+    // Rain's impacts: rings spreading from random points (one per 9 cm cell, each on its own cycle), more with intensity.
+    if (g.wet > .5 && g.contacts > .5) {
+        float2 m = uv*g.patchSize/.09, cell = floor(m); float ring = 0.;
+        for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
+            float2 k = cell + float2(dx, dy); float h = hash3(float3(k, 3.1));
+            if (h > .12 + .3*g.intensity) continue;
+            float period = .65 + hash3(float3(k, 7.7))*.6, life = fract(g.time/period + h*13.);
+            float2 at = k + float2(hash3(float3(k, 1.3)), hash3(float3(k, 2.9)));
+            float r = (.08 + life*.95)*.09, d = length((m - at)*.09);
+            ring += (1. - life)*exp(-pow((d - r)/.0045, 2.));
+        }
+        float3 tint = mix(float3(.63, .89, .93), float3(.55, .65, .8), g.night);
+        col.rgb += tint*ring*.55; col.a = max(col.a, min(1., ring*.55));
+    }
+    // Snow settling: soft flakes appearing one by one and staying a while.
+    if (g.snow > .5 && g.contacts > .5) {
+        float2 m = uv*g.patchSize/.05, cell = floor(m); float s = 0.;
+        for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
+            float2 k = cell + float2(dx, dy); float h = hash3(float3(k, 5.3));
+            if (h > .55) continue;   // not every cell gets a flake
+            float age = fmod(g.time + h*40., 20.);   // each settles, stays, melts away, and comes again
+            float2 at = k + float2(hash3(float3(k, 1.7)), hash3(float3(k, 4.1)));
+            float r = .18 + .14*hash3(float3(k, 8.3));
+            s = max(s, smoothstep(0., .8, age)*(1. - smoothstep(16., 20., age))*exp(-pow(length(m - at)/r, 2.)));
+        }
+        col.rgb += float3(.9, .93, 1.)*s*.85; col.a = max(col.a, s*.85);
+    }
+    out.write(half4(col*edge), gid);
+}
+
+struct VolumeParams { float time; float density; float cloudShape; float cloudSeed; float4 tint; float3 extent; };
+
+static float lobe(float3 p, float3 center, float3 size) { return length((p - center)/size) - 1.; }
+static float mergeCloud(float a, float b) { float h = max(.15 - abs(a - b), 0.)/.15; return min(a, b) - h*h*.0375; }
+static float field(float3 p, constant VolumeParams &v) {
+    float3 q = p*v.extent*10. + float3(v.time*.045, v.cloudSeed*7., v.time*.025);
+    float n = noise3(q)*.65 + noise3(q*2.1)*.25 + noise3(q*4.3)*.1;
+    if (v.cloudShape > .5) {
+        float3 c = p; c.x *= mix(-1., 1., step(.5, hash3(float3(v.cloudSeed, 2., 5.))));
+        c += float3(noise3(p*2.7 + v.cloudSeed) - .5, noise3(p*3.1 + v.cloudSeed + 8.) - .5, 0.)*.13;
+        float peak = mix(.02, .24, hash3(float3(v.cloudSeed, 4., 1.)));
+        float body = lobe(c, float3(-.49, -.11, -.03), float3(.30, .42, .47));
+        body = mergeCloud(body, lobe(c, float3(-.14, peak, .02), float3(.35, .61, .57)));
+        body = mergeCloud(body, lobe(c, float3(.24, .02, -.01), float3(.31, .48, .53)));
+        body = mergeCloud(body, lobe(c, float3(.52, -.16, 0.), float3(.26, .29, .39)));
+        body = mergeCloud(body, lobe(c, float3(0., -.24, .02), float3(.77, .25, .45)));
+        float envelope = 1. - smoothstep(.88, 1., max(abs(p.x), max(abs(p.y), abs(p.z))));
+        return (1. - smoothstep(-.18, .10, body + (n - .5)*.30))*smoothstep(.22, .68, n)*envelope;
+    }
+    float shape = 1. - smoothstep(.48, 1., length(p*float3(1., 1.25, 1.15))); return shape*smoothstep(.22, .68, n);
+}
+
+// A cloud or a fog wisp: the web's ray-marched density in a box (-1…1), seen straight on (rays along −z through each pixel), with its
+// soft self-shadowing. The plane showing it faces the viewer.
+kernel void weatherVolume(texture2d<half, access::write> out [[texture(0)]], constant VolumeParams &v [[buffer(0)]], uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= out.get_width() || gid.y >= out.get_height()) return;
+    float2 xy = float2((gid.x + .5)/out.get_width(), 1. - (gid.y + .5)/out.get_height())*2. - 1.;
+    const int steps = 28; float stepSize = 2./steps; float4 sum = 0.;
+    for (int i = 0; i < steps; i++) {
+        float3 p = float3(xy, 1. - (float(i) + .5)*stepSize);
+        float d = field(p, v), shade = clamp(.85 + d - field(p + float3(-.18, .3, .15), v), .6, 1.15);
+        float a = 1. - exp(-d*v.density*stepSize);
+        sum.rgb += (1. - sum.a)*a*v.tint.rgb*shade; sum.a += (1. - sum.a)*a;
+        if (sum.a > .97) break;
+    }
+    out.write(half4(sum), gid);
+}
+
+struct BodyParams { float time; float night; float phase; float _pad; };
+
+// The sun (convection, hot rim to warm centre) or the moon (grainy, lit from one side), a disc with its halo, as seen straight on.
+kernel void weatherBody(texture2d<half, access::write> out [[texture(0)]], constant BodyParams &b [[buffer(0)]], uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= out.get_width() || gid.y >= out.get_height()) return;
+    float2 xy = float2((gid.x + .5)/out.get_width(), 1. - (gid.y + .5)/out.get_height())*2. - 1.;
+    float r = length(xy)*1.6;   // the disc fills 1/1.6 of the texture; the halo the rest
+    float4 col = 0.;
+    if (r < 1.) {
+        float3 N = float3(xy*1.6, sqrt(max(0., 1. - r*r))), P = normalize(N);
+        float grain = noise3(P*23.)*.55 + noise3(P*47.)*.25 + noise3(P*8.)*.2;
+        float3 light = normalize(float3(-.85 + sin(b.phase*.7)*.25, .15, .35));
+        float lit = smoothstep(-.055, .09, dot(N, light));
+        float3 moon = mix(float3(.025, .041, .07), mix(float3(.49, .58, .70), float3(.91, .94, .96), grain), lit); moon *= .4 + .6*max(0., dot(N, light));
+        float convection = noise3(P*12. + float3(b.time*.035));
+        float3 sun = mix(float3(1., .30, .045), float3(1., .89, .42), pow(max(0., N.z), .35)); sun *= .9 + .1*convection;
+        float aa = 1. - smoothstep(.97, 1., r);
+        col = float4(mix(sun, moon, b.night)*aa, aa);
+    }
+    // Halo: a soft ring of the body's colour around the disc.
+    float halo = (1. - smoothstep(1., 1.6, r))*(r > .98 ? 1. : 0.)*mix(.25, .11, b.night);
+    float3 tint = mix(float3(1., .745, .388), float3(.70, .816, .945), b.night);
+    col.rgb += (1. - col.a)*tint*halo; col.a += (1. - col.a)*halo;
+    out.write(half4(col), gid);
+}

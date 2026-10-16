@@ -76,6 +76,7 @@ def listing():
         for s in sorted((d/'scenarios').iterdir()) if (d/'scenarios').is_dir() else []:
             if not (s/'session.json').is_file(): continue
             sm = json.loads((s/'session.json').read_text())
+            if sm.get('live'): continue   # a headset's live session (visionos/): no recording to open in the editor
             scenarios.append(dict(name=s.name, label=label(s.name), session=session_path(d.name, s.name), depth=bool(sm.get('depth')), roomMesh=bool(sm.get('roomMesh')),
                 hands=sm.get('handsPreparation'), registered=sm.get('toSpace') is not None, registration=sm.get('registration'), alignError=sm.get('alignError')))
         scan = m.get('scan')

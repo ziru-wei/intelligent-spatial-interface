@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><title>Spatial Take · Vision Pro</title>
+<!-- The Vision Pro app's editor: the editor in Vision Pro mode (src/vision-panel.mjs), on the space's first recording. -->
+<script type="module">
+const space=new URLSearchParams(location.search).get('space')||'atlas';
+const list=await fetch('/api/spaces').then(r=>r.json()),take=list.spaces.find(s=>s.name===space)?.scenarios[0];
+location.replace(take?`/?session=${encodeURIComponent(take.session)}&vision=1`:'/');
+</script>
