@@ -14,6 +14,9 @@ final class GestureFeedback {
 
     /// Two short notes, a fifth apart: up or down.
     private func play(_ rising: Bool) {
+        // Playback only, unless speech is listening (then its record session is on and the tone mixes in).
+        let session = AVAudioSession.sharedInstance()
+        if session.category != .playAndRecord { try? session.setCategory(.ambient, options: [.mixWithOthers]) }
         let notes: [Double] = rising ? [660, 990] : [990, 660]
         guard let player = try? AVAudioPlayer(data: Self.wav(notes)) else { return }
         player.volume = 0.5; player.play()

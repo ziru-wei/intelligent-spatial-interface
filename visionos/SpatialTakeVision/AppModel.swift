@@ -21,7 +21,8 @@ final class AppModel {
     @ObservationIgnored var roomReopens = 0
     /// The settings shown in the room, over the ask bar (opened from the bar), instead of in their window.
     var settingsInRoom = false
-    /// The bars and buttons in the room (the ask bar, the weather's controls, the settings) hidden: the left hand, palm down, going from open to a fist.
+    /// The controls in the room (the ask bar, the settings) hidden: the left hand, palm down, going from open to a fist. The weather's
+    /// controls stay.
     var barsHidden = false
     /// The list open under the ask bar: "presets" (ready-made questions) or "history" (past questions); nil: none.
     var barList: String?
@@ -435,7 +436,13 @@ final class AppModel {
         // A FindMy answer's text hangs under the ask bar (FINDMY_TEXT), whether it came before the FindMy part or after.
         if findmyAnswering && info == nil {
             let hand = TextLayout(title: title, body: body, settings: TextSettings(bodySize: bodySize, headingSize: Float(behavior.headingSize), showHeading: behavior.showHeading, info: true))
-            if let entity, entity !== findmyText { entity.removeFromParent(); answers.removeAll { $0 === entity } }
+            if let entity, entity !== findmyText {
+                answers.removeAll { $0 === entity }
+                if findmyText == nil {   // moved under the bar, its writing going on (not written in again)
+                    if entity === barText { barText = nil }
+                    findmyText = entity; await hang(entity, under: true)
+                } else { entity.removeFromParent() }
+            }
             return await showFindMyText(hand, title: title, body: body, streaming: streaming)
         }
         if let entity, entity === barText { return await showBarText(title: title, body: body, streaming: streaming) }
@@ -449,12 +456,15 @@ final class AppModel {
         } else if weather != nil, let t = weatherTarget ?? { pickWeatherTarget(); return weatherTarget }() {
             placed = weatherTextPlace(t, metrics: layout.metrics, head: pose)
         } else {
-            // An ordinary answer: on the desk or table in front, on the wall faced, else over the ask bar.
-            placed = answerPlace(layout.metrics, head: pose)
+            // An ordinary answer: beside the animation playing with it; else on the desk or table in front, on the wall faced, else
+            // over the ask bar.
+            placed = zoneAnimation != nil ? besideAnimation(layout.metrics, head: pose) ?? answerPlace(layout.metrics, head: pose) : answerPlace(layout.metrics, head: pose)
+            if zoneAnimation != nil, placed != nil, besideAnimationText == nil { pendingBeside = true }
             if placed == nil { return await showBarText(title: title, body: body, streaming: streaming) }
         }
         guard let placed = placed ?? TextPlacement.floating(head: pose, metrics: layout.metrics) else { return nil }
         let e = AnswerEntity(); spaceRoot.addChild(e); answers.append(e); e.text = (title, body)
+        if pendingBeside { besideAnimationText = e; pendingBeside = false }
         e.writing = .init(on: behavior.writing, strokes: behavior.writingStrokes, speed: behavior.writingSpeed)
         e.infoBox = box
         e.overlay = box == nil && weather != nil && weatherTarget != nil
@@ -496,6 +506,12 @@ final class AppModel {
         guard let space else { return }
         for a in answers where a !== barText {   // the text over the bar goes with the bar
             guard let p = a.placed, let layout = a.layout, !p.settled else { continue }
+            if a === besideAnimationText, zoneAnimation != nil {   // with its animation: kept beside it (placed again there when unreadable)
+                let angles = TextPlacement.viewAngles(p.center, head: head)
+                if angles.map({ abs($0.x) < TextPlacement.halfFieldH*1.5 && abs($0.y) < TextPlacement.halfFieldV*1.5 }) ?? false { continue }
+                if let next = besideAnimation(layout.metrics, head: head) { Task { await a.move(to: next) } }
+                continue
+            }
             // An info answer stays where it was put (the web's: world-fixed, never following the viewer); every 2 s it looks for a spot to
             // settle on, and goes there (locked) once one turns up.
             if let box = a.infoBox {
@@ -530,10 +546,7 @@ final class AppModel {
             } else if let p = answerPlace(layout.metrics, head: head) { next = p }
             else {
                 // No desk or wall now: it goes over the bar (where an ordinary answer goes without one).
-                if barText == nil {
-                    a.removeFromParent(); answers.removeAll { $0 === a }
-                    Task { _ = await showBarText(title: a.text.title, body: a.text.body, streaming: !a.streamingDone) }
-                }
+                if barText == nil { hangOverBar(a) }
                 continue
             }
             guard let next else { continue }
@@ -607,7 +620,8 @@ final class AppModel {
         TextPlacement.keepClear = [z.keepClear(scale: k)]
         sensing.occlusion = false   // nothing real hides it while it plays
         Diag.mark("animation \(a.id) on \(onWhat), scale \(String(format: "%.2f", k))")
-        // Text already shown over it moves off it.
+        // Its text (the answer's own, already shown) goes beside it; any other text over it moves off it.
+        if let text = answers.last(where: { $0.infoBox == nil && $0 !== weatherHost }) { putBesideAnimation(text, head: pose) }
         keepAnimationClear(head: pose, now: true)
     }
     /// While an animation plays, no answer's text hides it (or is seen over it) from where the user is: one that does, wherever it is
@@ -632,7 +646,8 @@ final class AppModel {
             guard TextPlacement.covers(corners, eye: head.eye) else { continue }
             clearedAt[id] = Date()
             var next: PlacedText?
-            if let box = a.infoBox {
+            if a === besideAnimationText, let p = besideAnimation(layout.metrics, head: head) { next = p }
+            else if let box = a.infoBox {
                 next = InfoPlacement.place(box: box, surfaces: space.surfaces, head: head, metrics: layout.metrics, minShrink: Float(behavior.infoMinShrink), parallel: Float(behavior.floatParallel), relation: relation, probe: probeNow)?.0
             } else if a === weatherHost, let t = weatherTarget {
                 next = weatherTextPlace(t, metrics: layout.metrics, head: head)
@@ -657,9 +672,41 @@ final class AppModel {
         }
     }
 
+    /// The text that goes with an animation: beside it, upright and facing the user at its middle height, on whichever side keeps nearer
+    /// the middle of the view (never over it); else above it. As wide as reads at that distance.
+    @ObservationIgnored private var besideAnimationText: AnswerEntity?
+    @ObservationIgnored private var pendingBeside = false
+    private func besideAnimation(_ metrics: TextMetrics, head: HeadPose) -> PlacedText? {
+        guard let box = TextPlacement.keepClear.first else { return nil }
+        var toEye = head.eye - box.center; toEye.y = 0
+        guard toEye.length > 1e-3 else { return nil }
+        let n = toEye.normalized, right = simd_cross(worldUp, n).normalized
+        let distance = simd_distance(head.eye, box.center)
+        let width = max(0.22, min(0.8, tan(radians(TextPlacement.targetDeg*metrics.scale))*distance/metrics.xHeightRatio)), height = width*metrics.aspect
+        let half = max(box.size.x, box.size.z)/2, gap: Float = 0.05
+        var spots: [V3] = [1, -1].map { (side: Float) in box.center + right*(side*(half + gap + width/2)) + V3(0, box.size.y*0.1, 0) }
+        spots.sort { abs(TextPlacement.viewAngles($0, head: head)?.x ?? 90) < abs(TextPlacement.viewAngles($1, head: head)?.x ?? 90) }
+        spots.append(box.center + V3(0, box.size.y/2 + gap + height/2, 0))
+        for c in spots {
+            let p = PlacedText(surface: .none, center: c, right: right, up: worldUp, normal: n, width: width, height: height,
+                               style: TextStyle(text: SIMD3(1, 1, 1), side: "light", glass: nil, clutter: 0), cost: 0)
+            guard !TextPlacement.covers(p, eye: head.eye), let a = TextPlacement.viewAngles(c, head: head), abs(a.x) < TextPlacement.halfFieldH*1.6, abs(a.y) < TextPlacement.halfFieldV*1.6 else { continue }
+            return p
+        }
+        return nil
+    }
+    /// Moves an answer beside the animation (from the room, or off the bar), its writing going on.
+    private func putBesideAnimation(_ a: AnswerEntity, head: HeadPose) {
+        guard let layout = a.layout, let p = besideAnimation(layout.metrics, head: head) else { return }
+        if a.parent !== spaceRoot { a.setParent(spaceRoot, preservingWorldTransform: true); if a === barText { barText = nil } }
+        besideAnimationText = a
+        Diag.mark("text beside the animation")
+        Task { await a.move(to: p) }
+    }
+
     func stopZoneAnimation() {
         guard let z = zoneAnimation else { return }
-        z.removeFromParent(); zoneAnimation = nil; TextPlacement.keepClear = []
+        z.removeFromParent(); zoneAnimation = nil; TextPlacement.keepClear = []; besideAnimationText = nil
         sensing.occlusion = behavior.occlusion
     }
     /// Whether a surface is in view: its middle or a corner within ±45° across and ±35° up and down, and in sight.
@@ -680,10 +727,11 @@ final class AppModel {
         if !findmyAnswering {
             findmyAnswering = true
             // Text already in the room (it came first): it moves under the bar, written in again.
-            if let a = answers.last(where: { $0.infoBox == nil && $0 !== weatherHost }) {
-                a.removeFromParent(); answers.removeAll { $0 === a }
-                let hand = TextLayout(title: a.text.title, body: a.text.body, settings: TextSettings(bodySize: bodySize, headingSize: Float(behavior.headingSize), showHeading: behavior.showHeading, info: true))
-                _ = await showFindMyText(hand, title: a.text.title, body: a.text.body, streaming: !a.streamingDone)
+            if let a = answers.last(where: { $0.infoBox == nil && $0 !== weatherHost }), findmyText == nil {
+                // Moved under the bar, its writing going on where it was.
+                if a === barText { barText = nil }
+                answers.removeAll { $0 === a }; findmyText = a
+                await hang(a, under: true)
             }
         }
         guard f.status == "found", let t = f.target, findmy?.box.id != "layout:" + t.id else { return }
@@ -797,6 +845,26 @@ final class AppModel {
         return e
     }
 
+    /// Where text hangs on the bar (the follow anchor's frame): under it (FindMy) or over the panels (an ordinary answer with nowhere
+    /// else), facing the user, its x-height the answers' angle at the bar's distance.
+    private func barPlacement(_ metrics: TextMetrics, under: Bool) -> PlacedText {
+        let distance = (Self.ahead*Self.ahead + Self.below*Self.below).squareRoot()
+        let width = tan(radians(TextPlacement.targetDeg*metrics.scale))*distance/metrics.xHeightRatio, height = width*metrics.aspect
+        let barBottom: Float = askPanel.map { a in -a.visualBounds(relativeTo: a).extents.y*a.scale.y/2 } ?? -0.03
+        let y = under ? barBottom - 0.02 - height/2 : panelsTop + 0.03 + height/2
+        return PlacedText(surface: .none, center: V3(0, y, 0.004), right: V3(1, 0, 0), up: V3(0, 1, 0), normal: V3(0, 0, 1),
+                          width: width, height: height, style: TextStyle(text: SIMD3(1, 1, 1), side: "light", glass: nil, clutter: 0), cost: 0)
+    }
+    /// An answer already shown moves onto the bar (under it, or over it), easing there, its writing going on where it was (never
+    /// written in again).
+    private func hang(_ a: AnswerEntity, under: Bool) async {
+        guard let layout = a.layout else { return }
+        if followAnchor.parent == nil { root.addChild(followAnchor) }
+        a.setParent(followAnchor, preservingWorldTransform: true); a.overlay = true
+        await a.move(to: barPlacement(layout.metrics, under: under))
+    }
+    private func hangOverBar(_ a: AnswerEntity) { barText = a; Task { await hang(a, under: false) } }
+
     /// The FindMy answer's text under the ask bar, following with it: hand-lettered, written in glyph by glyph, no backing, over
     /// everything real (only the hands cover it); its x-height the answers' angle at the bar's distance. Kept when the bars are hidden
     /// (it is an answer). Updated in place as it streams.
@@ -858,13 +926,11 @@ final class AppModel {
         if let host = weatherHost {
             let layout = TextLayout(title: host.text.title, body: host.text.body, settings: TextSettings(bodySize: bodySize, headingSize: Float(behavior.headingSize), showHeading: behavior.showHeading, info: true))
             guard let next = weatherTextPlace(t, metrics: layout.metrics, head: pose) else { return }
-            // Moving into the weather's look (from wherever it was shown before the weather came): written in again, glyph by glyph.
-            let first = !host.overlay
+            // Into the weather's look (from wherever it was before the weather came): moved, its writing going on where it was.
             host.overlay = true
             Task {
                 if host.layout?.key != layout.key { await host.setText(layout, streaming: !host.streamingDone) }
                 await host.move(to: next)
-                if first { host.restart() }
             }
         }
     }
@@ -1033,7 +1099,7 @@ final class AppModel {
             if size.x > 0 { let k = Self.askWidth/size.x; a.scale = V3(repeating: k); a.position = .zero; top = size.y*k/2; panelsLaidOut = true; if a.isEnabled { outline += box(.zero, Self.askWidth, size.y*k) } }
         }
         if let w = weatherPanel {
-            w.isEnabled = weather != nil && !barsHidden
+            w.isEnabled = weather != nil   // the left hand hides the controls (bar, settings), not the weather's
             let size = w.visualBounds(relativeTo: w).extents
             if size.x > 0, weather != nil {
                 let k = Self.weatherWidth/size.x; w.scale = V3(repeating: k); w.position = V3(0, top + 0.03 + size.y*k/2, 0); top += 0.03 + size.y*k

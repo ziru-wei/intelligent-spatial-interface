@@ -168,6 +168,10 @@ final class SpeechInput {
         if engine.isRunning { engine.stop(); engine.inputNode.removeTap(onBus: 0) }
         request?.endAudio(); task?.cancel(); request = nil; task = nil
         listening = false
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        // Back to playback only (the microphone closed): with the record category left on, every tone after re-opened the input, and
+        // visionOS kept its microphone indicator floating.
+        let session = AVAudioSession.sharedInstance()
+        try? session.setActive(false, options: .notifyOthersOnDeactivation)
+        try? session.setCategory(.ambient, options: [.mixWithOthers])
     }
 }
