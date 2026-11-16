@@ -6,10 +6,10 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const schema=fileURLToPath(new URL('./luna-answer.schema.json',import.meta.url));
-export async function lunaAnswer(question,context,{model='gpt-6-luna',effort='low',trace=()=>{}}={}){
+export async function lunaAnswer(question,context,{model='gpt-6-luna',effort='low',trace=()=>{},instruction=answerInstruction}={}){
   // Fresh, isolated turn prevents prior full-context turns or spatial AGENTS.md from leaking into this branch.
   const cwd=await mkdtemp(path.join(tmpdir(),'spatial-luna-'));
-  const prompt=answerInstruction+'\n'+answerInput(question,context);
+  const prompt=instruction+'\n'+answerInput(question,context);
   trace('luna_answer','Started');
   try{return await new Promise((resolve,reject)=>{
     const args=['exec','--json','--ephemeral','--ignore-user-config','--skip-git-repo-check','-s','read-only','-m',model,'-c',`model_reasoning_effort=${JSON.stringify(effort)}`,'--output-schema',schema,'-'];

@@ -7,6 +7,10 @@ def catalog(d, context=None):
     path=d.parent.parent/'scan/semantic.json'
     layout=json.loads(path.read_text()) if path.is_file() else {}
     boxes={o['id']:o for o in layout.get('objects',[]) if o.get('id') and all(isinstance(o.get(k),list) and len(o[k])==3 for k in ('center','size'))}
+    # ModOS: belongings are items of the digital twin (scripts/modos_twin.py), parented to the box they are in.
+    if (d.parent.parent/'modos').is_dir():
+        import modos_twin
+        return modos_twin.belongings(d.parent.parent, d),boxes
     return [dict(item_id=i['id'],label=i['label'],aliases=i.get('aliases',[]),box_id=i['box_id'],box_label=boxes.get(i['box_id'],{}).get('label',i.get('location','')),available=i['box_id'] in boxes) for i in ctx.get('stored_items',[]) if all(isinstance(i.get(k),str) for k in ('id','label','box_id'))],boxes
 
 def resolve(d,selection):

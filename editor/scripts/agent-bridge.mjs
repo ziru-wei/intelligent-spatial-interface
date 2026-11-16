@@ -3,6 +3,8 @@
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {createJev,runPipeline} from './jev-pipeline.mjs';
+import {runModos} from '../modos/pipeline.mjs';
+import {createDecisionModule,jevEngine} from '../modos/decision.mjs';
 import {lunaAnswer} from './luna-answer.mjs';
 import {geminiAnswer} from './gemini-answer.mjs';
 import {answerSettings} from './answer-settings.mjs';
@@ -12,6 +14,9 @@ const url=arg('url','http://127.0.0.1:8766'),session=arg('session','./spaces/dem
 const configPath=arg('config',fileURLToPath(new URL('../agent-config.local.json',import.meta.url)));
 let config={};try{config=JSON.parse(readFileSync(configPath,'utf8'));}catch(e){if(e.code!=='ENOENT')throw Error('Cannot read local agent config; check its JSON.');}
 const {provider,model,effort}=answerSettings(config,{provider:arg('provider'),model:arg('model'),effort:arg('effort')});
+// ModOS (modos-system-design.md) is the default; --pipeline legacy runs the previous path-based pipeline for comparison.
+const pipeline=arg('pipeline',config.pipeline||'modos');
+if(!['modos','legacy'].includes(pipeline)){console.error('pipeline must be modos or legacy');process.exit(1);}
 let apiKey,geminiApiKey;
 try{apiKey=await resolveApiKey({configKey:config.apiKey});if(provider==='gemini')geminiApiKey=await resolveGeminiApiKey({configKey:config.geminiApiKey});}
 catch(e){console.error(e.message);process.exit(e.code==='CANCELLED'?130:1);}
@@ -20,7 +25,7 @@ async function api(p,body){
   const r=await fetch(u,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session,...body}),signal:AbortSignal.timeout(35000)}:{signal:AbortSignal.timeout(35000)});
   const data=await r.json();if(!r.ok)throw Error(data.error||r.statusText);return data;
 }
-console.log(`Spatial Take · Jev + ${provider} ${model} (${effort}) · one bridge, two parallel branches\n${session} · ${url}`);
+console.log(`Spatial Take · ${pipeline} · Jev + ${provider} ${model} (${effort}) · one bridge, two parallel branches\n${session} · ${url}`);
 let warned=false;
 for(;;){
   let q;try{q=await api('/api/agent/questions/next');warned=false;}catch(e){if(!warned)console.error(`Editor unreachable: ${e.message}; retrying…`);warned=true;await new Promise(r=>setTimeout(r,3000));continue;}
@@ -30,7 +35,15 @@ for(;;){
   console.log(`? #${q.id}: ${q.text}`);
   try{
     const ask=createJev({apiKey,model:process.env.TYPESAFE_MODEL||config.jevModel||'jev-latest',trace});
-    const result=await runPipeline({question:q,ask,trace,checkVisible:ids=>api(`/api/agent/visible?question_id=${q.id}&ids=${ids.map(encodeURIComponent).join(',')}`),publish:async part=>{await api('/api/agent/responses',part);if(!seenParts.has(part.part)||part.stream?.status==='complete'){trace('show_'+part.part,part.stream?.status==='complete'?'Text stream complete':part.title||'Mod UI ready');seenParts.add(part.part);}},readInfo:key=>api(`/api/agent/info?question_id=${q.id}&key=${encodeURIComponent(key)}`),recordInfo:(key,interaction_id,source)=>api('/api/agent/questions/info',{id:q.id,key,interaction_id,source}),readContext:groups=>api(`/api/agent/context?question_id=${q.id}&${groups.length?'groups='+encodeURIComponent(groups.join(',')):'catalog=1'}`),answer:(question,context,options)=>provider==='gemini'?geminiAnswer(question,context,{apiKey:geminiApiKey,model,effort,trace,...options}):lunaAnswer(question,context,{model,effort,trace})});
+    const answerFn=(question,context,options)=>provider==='gemini'?geminiAnswer(question,context,{apiKey:geminiApiKey,model,effort,trace,...options}):lunaAnswer(question,context,{model,effort,trace,...options});
+    const publish=async part=>{await api('/api/agent/responses',part);const kind=part.part+(part.weather?':weather':part.findmy?':findmy':'');if(!seenParts.has(kind)||part.stream?.status==='complete'){trace('show_'+part.part,part.stream?.status==='complete'?'Text stream complete':part.title||(part.weather?'Weather UI ready':part.findmy?'FindMy UI ready':part.animation?'Animation ready':'UI ready'));seenParts.add(kind);}};
+    const result=pipeline==='modos'
+      ?await runModos({question:q,trace,publish,answer:answerFn,
+          decide:createDecisionModule(jevEngine(ask),{log:r=>trace('decision',JSON.stringify({engine:r.engine,stage:r.stage,elapsed_ms:r.elapsed_ms}))}).decide,
+          memory:()=>api(`/api/modos/memory?question_id=${q.id}`),
+          items:ids=>api(`/api/modos/items?question_id=${q.id}&ids=${encodeURIComponent(ids.join('|'))}`).then(r=>r.items),
+          recordInfo:(key,interaction_id,source)=>api('/api/agent/questions/info',{id:q.id,key,interaction_id,source})})
+      :await runPipeline({question:q,ask,trace,checkVisible:ids=>api(`/api/agent/visible?question_id=${q.id}&ids=${ids.map(encodeURIComponent).join(',')}`),publish:async part=>{await api('/api/agent/responses',part);if(!seenParts.has(part.part)||part.stream?.status==='complete'){trace('show_'+part.part,part.stream?.status==='complete'?'Text stream complete':part.title||'Mod UI ready');seenParts.add(part.part);}},readInfo:key=>api(`/api/agent/info?question_id=${q.id}&key=${encodeURIComponent(key)}`),recordInfo:(key,interaction_id,source)=>api('/api/agent/questions/info',{id:q.id,key,interaction_id,source}),readContext:groups=>api(`/api/agent/context?question_id=${q.id}&${groups.length?'groups='+encodeURIComponent(groups.join(',')):'catalog=1'}`),answer:(question,context,options)=>provider==='gemini'?geminiAnswer(question,context,{apiKey:geminiApiKey,model,effort,trace,...options}):lunaAnswer(question,context,{model,effort,trace})});
     message=result.message||result.title||'Response ready';
   }catch(e){message=e.message;trace('pipeline_error',message);}
   await sending;

@@ -6,14 +6,14 @@ const endpoint='https://generativelanguage.googleapis.com/v1beta/interactions';
 // files: [{mime_type, data (base64)}] attached after the question (PDF as a document, images as images); previousInteractionId continues
 // a stored interaction (store: true keeps this one so a later turn can continue it; the API keeps stored interactions 55 days on the paid
 // tier). The result carries interaction_id.
-export async function geminiAnswer(question,context,{apiKey=process.env.GEMINI_API_KEY||process.env.GOOGLE_API_KEY,model=GEMINI_MODEL,effort='minimal',fetchImpl=fetch,trace=()=>{},onPartial=async()=>{},files=[],previousInteractionId=null,store=false}={}){
+export async function geminiAnswer(question,context,{apiKey=process.env.GEMINI_API_KEY||process.env.GOOGLE_API_KEY,model=GEMINI_MODEL,effort='minimal',fetchImpl=fetch,trace=()=>{},onPartial=async()=>{},files=[],previousInteractionId=null,store=false,instruction=answerInstruction}={}){
   if(typeof apiKey!=='string'||!apiKey.trim())throw Error('Set geminiApiKey in agent-config.local.json or run scripts/gemini-setup.mjs.');
   const started=Date.now();trace('gemini_answer',`Started · ${model} · ${effort}`);
   let response;
   try{
     response=await fetchImpl(endpoint,{method:'POST',headers:{'x-goog-api-key':apiKey.trim(),'Content-Type':'application/json'},
       body:JSON.stringify({model,input:files.length?[{type:'text',text:answerInput(question,context)},...files.map(f=>({type:f.mime_type.startsWith('image/')?'image':'document',data:f.data,mime_type:f.mime_type}))]:answerInput(question,context),
-        ...(previousInteractionId?{previous_interaction_id:previousInteractionId}:{}),system_instruction:answerInstruction,store:!!(store||previousInteractionId),stream:true,
+        ...(previousInteractionId?{previous_interaction_id:previousInteractionId}:{}),system_instruction:instruction,store:!!(store||previousInteractionId),stream:true,
         generation_config:{thinking_level:effort,max_output_tokens:1024},response_format:{type:'text',mime_type:'application/json',schema:answerSchema}}),signal:AbortSignal.timeout(20000)});
   }catch(e){throw Error(e.name==='TimeoutError'||e.name==='AbortError'?'Gemini timed out after 20 seconds.':'Gemini request failed; check the connection.');}
   if(!response.ok){

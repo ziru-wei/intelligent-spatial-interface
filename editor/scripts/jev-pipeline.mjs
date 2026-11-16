@@ -176,7 +176,7 @@ export function infoRoute(catalog,answers={},reference=null){
   return info;
 }
 // One answer from the language model, streamed to the user as it arrives (partial title/body), then complete.
-async function streamAnswer({question,context,answer,publish,options={},layoutSlot=0,extra={}}){
+export async function streamAnswer({question,context,answer,publish,options={},layoutSlot=0,extra={}}){
   let sequence=0;
   const publishText=text=>publish({...text,...extra,question_id:question.id,part:'text',layout_slot:layoutSlot});
   try{

@@ -1,0 +1,14 @@
+{
+  "id": "worldinfo",
+  "name": "WorldInfo",
+  "description": "Answer about a thing or a place the user is asking about, from the information attached to it.",
+  "examples": ["Can I eat this?", "What is this?", "What are the rules here?"],
+  "scope": "referent",
+  "knowledge": [{"ref": "referent"}],
+  "selectors": {},
+  "slots": [
+    {"id": "answer", "use": "situated-text", "anchor": {"kind": "object", "of": "referent"}}
+  ],
+  "text": "answer",
+  "provider": "system"
+}

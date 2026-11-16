@@ -24,6 +24,7 @@ import {createWeatherPreview,createWeatherSurfacePreview} from './weather-previe
 import {createWeatherScene} from './weather-scene.mjs';
 import {createTwin} from './twin.mjs';
 import {createLayoutEditor,dropCenter} from './layout-editor.mjs';
+import {createTwinPanel} from './twin-panel.mjs';
 import {createOutline} from './layout-outline.mjs';
 import {outline as layoutOutline,roomOf,path as labelPath} from './layout-tree.mjs';
 import {createStructure} from './layout-structure.mjs';
@@ -987,6 +988,7 @@ let layoutLoaded=false,layoutTimer=null,layoutRevision=0,layoutRooms=[],layoutUR
 // The scan under a ray from the 3D view; in plan and elevation views, only what the section plane leaves visible.
 function pickRoom(ray){return room?ray.intersectObject(room,true).find(h=>!['plan','elevation-x','elevation-z'].includes(twin.mode)||twin.clip.distanceToPoint(h.point)>=0):null;}
 twin.setCuttable(()=>[twin.semantic,components.group]);   // what Cut objects clips in section views
+let twinPanel=null;
 const layout=createLayoutEditor({group:twin.semantic,getRooms:()=>layoutRooms,canvas:$('twin'),getCamera:()=>twin.camera,render:()=>twin.render(),pickScene:pickRoom,
   pickOther:ray=>{const hit=components.pick(ray,i=>groupOf(i)==='persistent'&&visibleInTwin(i)&&!outlineLocked.has(i.spec.id));if(hit)select(hit.instance.spec.id);else if(selected)select(null);return !!hit;},
     // Saves carry the revision this page loaded; one saved from another window since is refused (409) instead of overwritten.
@@ -995,7 +997,7 @@ const layout=createLayoutEditor({group:twin.semantic,getRooms:()=>layoutRooms,ca
     const sem=await(await fetch(layoutURL,{cache:'no-store'})).json();structure.setData(sem);vision?.setLayout(sem);weatherScene.setLayout(sem);setTextLayout(sem);
     layoutRevision=r.revision;$('take-status').textContent='';await loadSpaces();}catch(e){$('take-status').textContent=e.message;}},500);},
   onHistory:h=>{$('layout-undo').disabled=!h.undo;$('layout-redo').disabled=!h.redo;},
-  onSelect:b=>{if(b&&selected)select(null);update();outlineView?.setSelected(b?.id??null);for(const id of ['box-label','box-yaw','box-type','box-delete','box-duplicate'])$(id).disabled=!b;
+  onSelect:b=>{if(b&&selected)select(null);update();outlineView?.setSelected(b?.id??null);twinPanel?.setSelected(b?'layout:'+b.id:null);for(const id of ['box-label','box-yaw','box-type','box-delete','box-duplicate'])$(id).disabled=!b;
     $('box-type').value=b?.kind||'object';if(b)$('zone-info').value='';showInfo();
     $('box-destination-row').hidden=b?.category?.toLowerCase()!=='door';if(document.activeElement!==$('box-destination'))$('box-destination').value=b?.destination||'';
     const kids=b?layout.children().length:0;$('box-arrange').disabled=!kids;$('box-arrange').title=kids?`Arrange ${kids} children: same rotation, centred, evenly spaced`:'Arrange children';
@@ -1159,8 +1161,8 @@ loadSpaces();
 // Side panel: Scene (scene, its scan, layout, objects and recordings; the components placed here), Agent or Behavior (how answers are
 // lettered), one at a time.
 const agentTab=document.querySelector('[data-tab=agent]');
-function showTab(tab){if(tab==='agent'&&agentTab.disabled)tab='scene';if(tab==='vision'&&!visionMode())tab='scene';for(const b of document.querySelectorAll('[data-tab]'))b.setAttribute('aria-pressed',b.dataset.tab===tab);
-  for(const t of ['scene','agent','behavior','vision'])$('tab-'+t).hidden=tab!==t;store.set('spatialTake.sideTab',tab);}
+function showTab(tab){if((tab==='agent'&&agentTab.disabled)||(tab==='twin'&&document.querySelector('[data-tab=twin]').disabled))tab='scene';if(tab==='vision'&&!visionMode())tab='scene';for(const b of document.querySelectorAll('[data-tab]'))b.setAttribute('aria-pressed',b.dataset.tab===tab);
+  for(const t of ['scene','agent','twin','behavior','vision'])$('tab-'+t).hidden=tab!==t;store.set('spatialTake.sideTab',tab);}
 // Vision Pro mode (?vision=1, /vision.html): the 3D view with the scan and boxes alone (the recorded camera hidden), and the headset's
 // settings in a tab of their own (src/vision-panel.mjs).
 const vision=visionMode()&&here[0]?createVisionPanel({space:here[0],$,onTune:()=>startHeadsetTune()}):null;
@@ -1211,6 +1213,8 @@ async function startAgent(){
   agent=createAgentLayer({scene,getStyleRevision:()=>weatherScene.playback.state.entry?.id,getSettings:forResponse,frames:session.frames,sessionPath:sessionURL.pathname,intrinsics:session.intrinsics,frameCamera,viewport:answerView,
     visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,relationAt,egoTarget,sceneBoxes,infoTarget,onPlacement:logPlacement,infoFloatParallel:()=>textBehavior.floatParallel??80,infoMinShrink:()=>textBehavior.infoMinShrink??.55,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
     onChange:()=>update(),onAnimate:()=>update(),onStatus:showAgentStatus});
+  if(here[0]){const tw=document.querySelector('[data-tab=twin]');tw.disabled=false;tw.title='';
+    twinPanel=createTwinPanel({root:$('tab-twin'),space:here[0],session:sessionURL.pathname,onPick:id=>{if(!id.startsWith('layout:'))return;const b=layout.boxes.find(x=>x.id===id.slice(7));if(b)layout.select(b);}});twinPanel.load();}
   $('agent-panel').hidden=false;$('ask').hidden=false;agentTab.disabled=false;agentTab.title='';showTab(store.get('spatialTake.sideTab')||'scene');
   let id=await showConversations(store.get(convKey));if(!id)id=await showConversations((await agentApi('/api/agent/conversations',{})).id);
   await openConversation(id);agent.start();

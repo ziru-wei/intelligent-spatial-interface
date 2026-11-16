@@ -1,0 +1,20 @@
+{
+  "id": "weather",
+  "name": "Weather",
+  "description": "Weather forecasts: whether it will rain, the temperature, wind, and whether to bring an umbrella or a jacket.",
+  "examples": ["Will it rain tonight?", "What's the weather this weekend?", "Do I need a jacket tomorrow morning?"],
+  "scope": "global",
+  "knowledge": [{"ref": "feed:weather", "type": "timeseries"}],
+  "selectors": {
+    "entries": {"kind": "pick-many", "from": "feed:weather", "unit": ["day", "period"]}
+  },
+  "slots": [
+    {"id": "sky", "use": "ambient-effect", "data": "entries",
+     "anchor": {"order": ["surface:window", "surface:desk", "surface:wall", "surface:ceiling"]}},
+    {"id": "controls", "use": "data-widget", "data": "entries", "anchor": {"kind": "user-reach"}},
+    {"id": "answer", "use": "situated-text", "anchor": {"kind": "relative", "to": "sky", "side": "below"}}
+  ],
+  "state": {"cursor": {"over": "entries", "autoplay_s": 8}},
+  "text": "answer",
+  "provider": "service"
+}

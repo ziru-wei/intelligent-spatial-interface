@@ -13,7 +13,10 @@ def resolve(d, selection):
     ids = selection.get('forecast_ids') if isinstance(selection, dict) else None
     if not isinstance(ids, list) or not 1 <= len(ids) <= 384 or any(not isinstance(i, str) for i in ids):
         raise ValueError('Weather needs 1–384 forecast_ids from get_user_context.')
-    periods = context(d, ['weather']).get('weather', {}).get('forecast', [])
+    # ModOS: weather is external data, read from the feed cache (scripts/modos_cache.py) when there is one.
+    import modos_cache
+    cached = modos_cache.read(Path(d).parent.parent, 'weather')
+    periods = (cached['data'] if cached else context(d, ['weather']).get('weather', {})).get('forecast', [])
     entries = {e['id']: e for parent in periods for e in [parent]+parent.get('samples', [])}
     if len(set(ids)) != len(ids) or any(i not in entries for i in ids):
         raise ValueError('Unknown or duplicate weather forecast ID. Read get_user_context first.')

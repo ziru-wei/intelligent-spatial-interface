@@ -1,0 +1,18 @@
+{
+  "id": "findmy",
+  "name": "FindMy",
+  "description": "Locate one registered physical belonging the user wants to find, and show the container it is in. Only for physical finding; not for recommendations, summaries or reading progress.",
+  "examples": ["Where are my headphones?", "Help me find my brush", "I can't find my keys"],
+  "scope": "global",
+  "knowledge": [{"ref": "user:belongings", "type": "item-location"}],
+  "selectors": {
+    "item": {"kind": "pick-one", "from": "user:belongings", "extra": {"not_found": "No registered item matches, or its location is unknown.", "ambiguous": "Several items match and the user has not said which."}}
+  },
+  "slots": [
+    {"id": "container", "use": "highlight", "data": "item", "anchor": {"kind": "object"}},
+    {"id": "direction", "use": "guidance", "data": "item", "anchor": {"kind": "user-view"}},
+    {"id": "answer", "use": "situated-text", "anchor": {"kind": "user-view"}}
+  ],
+  "text": "answer",
+  "provider": "user"
+}

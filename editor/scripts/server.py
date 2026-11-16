@@ -53,7 +53,7 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
-import agent_store as store, spaces, composition, weather, findmy, ego, hand_cache, info_context, layout, vision, location
+import agent_store as store, spaces, composition, weather, findmy, ego, hand_cache, info_context, layout, vision, location, modos_memory, modos_registry, modos_twin
 busy = threading.Lock()
 MOCK_CONTEXT = ROOT/'agent'/'mock-context.json'
 
@@ -253,6 +253,32 @@ class Handler(SimpleHTTPRequestHandler):
         if url.path == '/api/agent/context':
             try: return self.reply(200, agent_context(session, q.get('groups', [None])[0].split(',') if q.get('groups', [None])[0] else ([] if 'catalog' in q else None), q.get('question_id', [None])[0]))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if url.path == '/api/modos/entities':
+            # The digital twin's one entity view (scripts/modos_twin.py) for the editor's Twin tab: every entity with its kind,
+            # traits, parent and device, plus the knowledge items attached to it.
+            try:
+                sp = spaces.space_dir(q.get('space', [''])[0]); d = session_dir(session) if session else None
+                ents = modos_twin.entities(sp, d)
+                its = modos_memory.items(d or sp, modos_registry.installed(sp, set(ents)))
+                about = {}
+                for it in its:
+                    for a in it['about']: about.setdefault(a, []).append(dict(id=it['id'], type=it['type'], summary=it['summary']))
+                return self.reply(200, dict(entities=[dict(e, knowledge=about.get(e['id'], [])) for e in ents.values()],
+                                            kinds=list(modos_twin.KINDS), traits=list(modos_twin.TRAITS)))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if url.path in ('/api/modos/memory', '/api/modos/items'):
+            # ModOS (modos-system-design.md): the catalog of the question being answered plus the space's MODs, entities and item
+            # summaries; or the bodies of chosen items.
+            try:
+                d = session_dir(session); qid = q.get('question_id', [None])[0]
+                if url.path == '/api/modos/memory':
+                    ctx = agent_context(session, [], qid)
+                    keep = {k: ctx[k] for k in ('time', 'conversation', 'selection', 'location', 'active_info', 'question', 'user') if k in ctx}
+                    return self.reply(200, dict(keep, **modos_memory.snapshot(d)))
+                mods = modos_memory.snapshot(d)['mods']
+                ids = [i for i in q.get('ids', [''])[0].split('|') if i]
+                return self.reply(200, dict(items=[modos_memory.body(d, i, mods) for i in ids]))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if url.path.startswith('/api/agent/'):
             try: return self.reply(200, agent_get(url.path, session, q))
             except KeyError: return self.reply(404, dict(error='Not found'))
@@ -268,6 +294,20 @@ class Handler(SimpleHTTPRequestHandler):
                 if path == '/api/vision/room': return self.reply(200, vision.save_room(name, body))
                 if path == '/api/vision/alignment': return self.reply(200, vision.set_alignment(name, body))
                 return self.reply(200, vision.save_settings(name, body.get('settings')))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if path == '/api/modos/entities':
+            body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
+            try:
+                sp = spaces.space_dir(body.get('space')); d = session_dir(body['session']) if body.get('session') else None
+                op = body.get('op')
+                if op == 'update': return self.reply(200, dict(entity=modos_twin.update(sp, body.get('id'), body.get('patch'), d)))
+                if op == 'add': return self.reply(200, dict(entity=modos_twin.add(sp, body.get('entity') or {}, d)))
+                if op == 'remove': modos_twin.remove(sp, body.get('id')); return self.reply(200, dict(ok=True))
+                return self.reply(400, dict(error='op is update, add or remove.'))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if path == '/api/modos/install':
+            body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
+            try: return self.reply(200, dict(installed=modos_registry.install(spaces.space_dir(body.get('space')), body.get('mod'))))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if path.startswith('/api/agent/'):
             try: return self.reply(200, agent_post(path, json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')))

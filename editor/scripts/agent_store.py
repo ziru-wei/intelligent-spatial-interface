@@ -2,6 +2,7 @@
 and responses, so a new conversation starts with an empty timeline. Question ids are unique across a scene's conversations because
 the agent only echoes the number back. All access goes through `lock`; the bridge long-polls on it."""
 import json, re, threading, time
+from pathlib import Path
 import weather, findmy, ego, conversation_context
 from datetime import datetime
 
@@ -203,6 +204,14 @@ def delete_question(d, cid, qid):
     c['questions'].remove(q); c['responses'] = [r for r in c['responses'] if str(r.get('question_id')) != str(qid)]
     _write(d, c); return dict(ok=True)
 
+def _installed(d, mod_id):
+    """Whether a MOD is installed in the question's space (ModOS replaces the per-question mod switches with installed MODs)."""
+    import modos_registry
+    space = Path(d).parent.parent
+    if not (space/'modos').is_dir(): return False   # a space that does not use ModOS keeps the per-question switches
+    try: return any(m['id'] == mod_id for m in modos_registry.installed(space))
+    except (OSError, ValueError): return False
+
 def add_response(d, body):
     if not (body.get('title') or body.get('body') or body.get('items') or (body.get('part') == 'ui' and (body.get('weather') or body.get('findmy') or body.get('ego'))) or (body.get('part') == 'animation' and body.get('animation'))): raise ValueError('A response needs a title, body or items.')
     c, q = _find_question(d, body.get('question_id')) if body.get('question_id') is not None else (None, None)
@@ -213,8 +222,11 @@ def add_response(d, body):
     if body.get('stream') is not None:
         if part != 'text' or body.get('weather') is not None or body.get('findmy') is not None or body.get('ego') is not None: raise ValueError('Only text parts can stream.')
         return _add_stream(d, c, q, body)
-    if part and any(r.get('part') == part and r.get('question_id') == q['id'] for r in c['responses']):
-        return next(r for r in c['responses'] if r.get('part') == part and r.get('question_id') == q['id'])
+    # One part of each kind per question; a ui part is one per MOD (ModOS composes several MODs into one response).
+    mod_of = lambda r: next((k for k in ('weather', 'findmy', 'ego') if r.get(k) is not None), None)
+    same = lambda r: r.get('part') == part and r.get('question_id') == q['id'] and (part != 'ui' or mod_of(r) == mod_of(body))
+    if part and any(same(r) for r in c['responses']):
+        return next(r for r in c['responses'] if same(r))
     if part == 'ui' and (body.get('title') or body.get('body') or body.get('items')): raise ValueError('UI part cannot contain language text.')
     if part == 'text' and (body.get('weather') is not None or body.get('findmy') is not None or body.get('ego') is not None): raise ValueError('Text part cannot contain mod UI.')
     if q: at = q
@@ -240,10 +252,10 @@ def add_response(d, body):
         if not at.get('ego_mod'): raise ValueError('Object mod was not enabled for this question.')
         r['ego'] = ego.resolve(d, body['ego'])
     if body.get('findmy') is not None:
-        if not at.get('findmy_mod'): raise ValueError('FindMy mod was not enabled for this question.')
+        if not (at.get('findmy_mod') or _installed(d, 'findmy')): raise ValueError('FindMy mod was not enabled for this question.')
         r['findmy'] = findmy.resolve(d,body['findmy'])
     if body.get('weather') is not None:
-        if not at.get('weather_mod',at.get('weather_mode')): raise ValueError('Weather mod was not enabled for this question.')
+        if not (at.get('weather_mod',at.get('weather_mode')) or _installed(d, 'weather')): raise ValueError('Weather mod was not enabled for this question.')
         r['weather'] = weather.resolve(d, body['weather'])
     reference_ids = body.get('referenced_item_ids', [])
     if r.get('findmy', {}).get('status') == 'found':
@@ -253,7 +265,9 @@ def add_response(d, body):
         r['part'] = part
         r['layout_slot'] = 1 if part == 'text' and body.get('layout_slot') == 1 else 0
         r['latency'] = round(r['created']-q.get('started', r['created']), 2)
-        q.setdefault('parts', {})[part] = dict(response=r['id'], latency=r['latency'])
+        q.setdefault('parts', {}).setdefault(part, dict(response=r['id'], latency=r['latency']))
+        # ModOS: several MODs can each add a ui part; their own arrival times are kept apart from the per-kind `parts`.
+        if part == 'ui' and mod_of(r): q.setdefault('mod_parts', {})[mod_of(r)] = dict(response=r['id'], latency=r['latency'])
     c['responses'].append(r)
     # Real seconds from the agent starting on the question to its answer being shown.
     if q:

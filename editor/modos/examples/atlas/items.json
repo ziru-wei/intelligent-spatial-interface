@@ -1,0 +1,12 @@
+{
+  "note": "Authored ModOS items for the atlas space (copied to spaces/atlas/modos/items.json, which is not tracked). Gives the lab's knowledge blocks one-sentence summaries and attaches them to the lab and its corridor, replacing the old part_keys special case.",
+  "items": [
+    {"info_key": "Programmable Reality Lab", "about": ["zone:lab-2f", "zone:lab-hall-2f"],
+     "summary": "Who the lab is: PRL, its institute (ATLAS, CU Boulder), its director Prof. Ryo Suzuki and its students."},
+    {"info_key": "PRL research theme", "about": ["zone:lab-2f", "zone:lab-hall-2f"],
+     "summary": "What PRL researches: programmable reality, making the living environment dynamic and interactive through AR/VR, robotics and shape-changing interfaces."},
+    {"info_key": "PRL philosophy", "about": ["zone:lab-2f", "zone:lab-hall-2f"],
+     "summary": "How PRL works with students: student success and happiness first, doing what you are excited about, lab life and how research is done."},
+    {"info_key": "candy", "summary": "The candy bowl: this week's grad tea leftovers; people may help themselves."}
+  ]
+}
