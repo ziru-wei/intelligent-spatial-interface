@@ -1,0 +1,4 @@
+.DS_Store
+# Videos are regenerated with system/editor/demos/record.mjs (see ../AGENTS.md); posters, cue images and the manifest are kept.
+recordings/**/*.mp4
+recordings/**/*.webm

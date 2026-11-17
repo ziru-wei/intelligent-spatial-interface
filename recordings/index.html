@@ -1,0 +1,156 @@
+<title>ModOS MOD Reel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a headset-reel page. Intro and legend, then one section per MOD (built ones first), each a row of clips; a clip opens in a
+   large player with its question, what the system chose, and the answer. Committed dark: the videos are dark UI over camera footage. */
+:root{
+  --bg:#0d0e10;--panel:#15171a;--line:#262930;--fg:#eceef1;--muted:#9a9fa8;--faint:#6b7079;
+  --accent:#3ff0ff;--live:#7fd6ff;--spec:#a7a2b8;
+  --display:'Sora',ui-sans-serif,system-ui,sans-serif;--body:'Manrope',ui-sans-serif,system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding-block:40px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:40px}
+header{display:grid;gap:14px;max-width:760px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:600 clamp(30px,4.4vw,46px)/1.08 var(--display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:65ch}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--live);flex:none}.dot.spec{background:var(--spec)}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.filters button{font:500 13px var(--body);color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.filters button:focus-visible,.clip:focus-visible,.close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mod{display:grid;gap:14px;padding-top:22px;border-top:1px solid var(--line)}
+.mod-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.mod-head h2{font:600 22px/1.2 var(--display);margin:0}
+.badge{font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:6px;border:1px solid var(--line);display:inline-flex;align-items:center;gap:6px}
+.mod-head p{flex-basis:100%;margin:0;color:var(--muted);max-width:75ch;font-size:14px}
+.clips{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:16px}
+.clip{display:grid;gap:10px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0 0 14px;cursor:pointer;color:inherit;font:inherit;overflow:hidden;min-width:0}
+.clip:hover{border-color:#3a3e46}
+.thumb{position:relative;aspect-ratio:16/9;background:#000;max-width:100%}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.play{position:absolute;right:12px;bottom:12px;width:40px;height:40px;border-radius:50%;background:rgba(13,14,16,.78);display:grid;place-items:center}
+.play::before{content:"";border-left:13px solid var(--fg);border-top:8px solid transparent;border-bottom:8px solid transparent;margin-left:3px}
+.q{padding:0 14px;font:600 16px/1.35 var(--display);text-wrap:balance}
+.meta{padding:0 14px;display:flex;flex-wrap:wrap;gap:6px 14px;font:400 12px/1.4 var(--mono);color:var(--faint)}
+.meta b{color:var(--muted);font-weight:500}
+dialog{border:0;padding:0;background:transparent;max-width:min(1200px,96vw);width:100%;color:var(--fg)}
+dialog::backdrop{background:rgba(5,6,8,.86)}
+.player{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:grid}
+.player video{width:100%;display:block;background:#000;aspect-ratio:16/9}
+.detail{padding:16px 18px 18px;display:grid;gap:10px;grid-template-columns:minmax(0,1fr) auto;align-items:start}
+.detail h3{margin:0;font:600 20px/1.3 var(--display);grid-column:1}
+.close{grid-column:2;grid-row:1;font:500 13px var(--body);background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+.facts{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px}
+.fact{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.fact span{display:block;font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+.fact p{margin:0;font-size:14px;overflow-wrap:anywhere}
+.empty{color:var(--muted)}
+.jump{display:flex;gap:18px;font:500 13px var(--mono);letter-spacing:.04em}.jump a{color:var(--accent);text-decoration:none}.jump a:hover{text-decoration:underline}
+#cues{display:grid;gap:22px;padding-top:28px;border-top:1px solid var(--line)}
+#cues>header h2{font:600 clamp(24px,3vw,32px)/1.15 var(--display);margin:0}
+.group{display:grid;gap:12px}
+.group h3{margin:0;font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.cues{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:14px}
+.cue{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid;align-content:start;margin:0}
+.cue img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000;cursor:zoom-in}
+.cue figcaption{padding:10px 13px 13px;display:grid;gap:5px}
+.cue b{font:600 15px/1.25 var(--display)}.cue code{font:400 11px var(--mono);color:var(--faint)}
+.cue p{margin:0;font-size:13px;color:var(--muted)}.cue .for{font:400 12px/1.4 var(--mono);color:var(--faint)}
+#zoom{max-width:min(1400px,96vw)}#zoom img{width:100%;display:block;border-radius:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">ModOS · recorded in the ATLAS building, 2F</div>
+    <h1>Each MOD, seen through the headset</h1>
+    <p>Every clip replays a real question asked at a moment of a headset recording. On the left is what the wearer sees: the question typed in, then the MOD's parts placed in the room. On the right, the system's stages light up as it works: what was asked, which MODs it chose, the context info each one asked for, how it filled their slots, and what it showed. The agent's time is slowed down so each stage can be followed.</p>
+    <div class="legend"><span><i class="dot"></i>Built: its own spatial representation</span><span><i class="dot spec"></i>Spec: chosen by the system, answers in text for now</span></div>
+  </header>
+  <nav class="jump"><a href="#filters">MOD clips</a><a href="#cues">Spatial UI cues</a></nav>
+  <nav class="filters" id="filters" aria-label="Show MODs"></nav>
+  <main id="reel"><p class="empty">Loading the recordings…</p></main>
+  <section id="cues" aria-labelledby="cues-h">
+    <header><div class="eyebrow">Candidates · pick the ones MODs should use</div><h2 id="cues-h">Spatial UI cues</h2>
+      <p>Cues that live on the room instead of on a panel: they take the shape of the thing they are about (its box, its footprint, its edge, a doorway, the floor). Each is drawn on a real object of a recording. Each says when to use it and what it is for; which one appears is decided from the target and its data, not fixed per MOD.</p></header>
+    <div id="cue-groups"></div>
+  </section>
+</div>
+<dialog id="zoom" aria-label="Cue"><img alt=""></dialog>
+
+<script src="manifest.js"></script>
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <div class="player">
+    <video id="vid" controls playsinline preload="metadata"></video>
+    <div class="detail">
+      <h3 id="dlg-title"></h3>
+      <button class="close" id="close" type="button">Close</button>
+      <div class="facts" id="facts"></div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+// What each MOD is (for the audience), in reel order: built MODs first.
+const MODS=[
+  ['Weather','built','The forecast becomes part of the room: sky and weather on a window or surface, controls to step through the days, the answer beside them.'],
+  ['FindMy','built','Where a belonging is kept: its container glows, and an arrow at the edge of the view points to it when it is out of sight.'],
+  ['WorldInfo','built','Answers about the thing you point at, beside it, or in its own voice.'],
+  ['LabInfo','built','A space owner’s MOD built on WorldInfo: the lab explains itself, with its diorama on the central table.'],
+  ['IoTControl','built','A connected device’s controls appear next to it, made from what it can do: switches, sliders, inputs, and a task’s live progress.'],
+  ['ObjectStatus','built','Things around are outlined by their state: fine, needs attention, or a warning.'],
+  ['Wayfinding','built','The door of the room you are looking for is outlined and named; an arrow leads there when it is out of view.'],
+  ['Delegate','built','Acts for you: who it goes to, the drafted message in a field you can edit, the thing or a photo of it, and Send.'],
+  ['Agenda','spec','Your schedule, today or this week.'],
+  ['BookCompanion','spec','Help with the book you are reading.'],
+  ['StepGuide','spec','Step-by-step instructions for a device or a task.'],
+  ['LiveCoach','spec','Coaching a movement, with cues on your body.'],
+  ['Reminder','spec','Reminders tied to a thing at a time.'],
+];
+const CUES=[["Mark: show which thing or place",[["breathingBox","Breathing Box","When the user is looking for a thing or must notice it, to draw the eye to the thing itself.","FindMy found item; ObjectStatus attention"],["cornerBrackets","Corner Brackets","When the thing carries content the user needs to read (a document, book, poster, screen), to mark it without covering that content.","WorldInfo on a poster"],["footprintRing","Footprint Ring","When the user is operating or asking about one thing and its controls or info appear beside it, to show which thing they belong to.","IoTControl on the lamp"],["floorArea","Floor Area","When the target is a room or area in view, to show its extent; a place has no box, so only its floor lights up.","LabInfo “this area”"],["doorwayGlow","Doorway Glow","When the target room is elsewhere but its door is in view, to show where to go in.","Wayfinding to a room"]]],["Direction: lead there",[["arrowAhead","Arrow Ahead","When the target is nearby but out of view, to show which way to turn.","FindMy, Wayfinding"],["floorPath","Floor Path","When reaching the target means walking through other spaces, to lead the user along the route.","Wayfinding along a corridor"]]],["Display: read only",[["haloDial","Gauge","When the user asks how much of something there is now (a level with a range: brightness, toner, battery), to show the amount at a glance.","“How bright is the lamp?”"],["progressRail","Progress Rail","When a task is running toward an end, to show how far along it is and how long is left.","Printer job, laundry cycle"],["pinnedTags","Pinned Tags","When the user needs several separate readings of one thing, to show each next to the part it is about.","Printer toner and paper"],["statusPulse","Status Pulse","When something about a thing needs attention, to flag it in the state’s color and say why.","ObjectStatus “paper low”"],["cardStack","Card Stack","When things wait in line for a device, to show what is next and how many are waiting.","Print queue"]]],["Control: change it",[["edgeBar","Slider","When the user wants to change a level, to let them set it by dragging along the thing’s edge.","“Make the light brighter”"],["datePicker","Date Picker","When data is dated and the user can move between days, to pick a day: the month once above, each day a capsule with its weekday and date.","Weather days, Agenda"],["playback","Playback","When data runs through time, to play it and scrub to a moment: a Play/Pause button, a rail with a stop per entry, and the current time riding on the thumb.","Weather hours"],["edgeTabs","Edge Tabs","When the user wants to switch between a few options, to pick one directly on the thing.","“Switch the TV to HDMI 2”"],["iconButton","Icon Button","When the user wants to switch something on or off or trigger a command, to do it in one press: a preset icon with its word (Send, Confirm, Cancel, Turn on/off, Pause…).","Power, cancel a print job, Send"],["textButton","Text Button","When no preset button fits the action, the system writes a text-only button that says what the press does.","“Clean print head”"]]],["Message: reach a person",[["contactChip","Contact Chip","When an action reaches a person, to show who it goes to (initials and name); with several candidates, each is a chip to pick.","Delegate “…to Alice”"],["textInput","Text Input","When the user may change what will be said, to show the drafted text in a field they can tap and edit (keyboard or dictation).","Delegate “describe this and draft a message”"],["photoCapture","Photo Capture","When what is sent is a photo of the thing, to frame the thing and flash, then show the photo as a card with the message.","Delegate “take a photo of this and send it”"]]],["Text forms (library, not cues)",[["","Embedded Text","When a surface at the anchor scores well for writing on, to write the text onto it, handwritten.","Weather on the desk"],["","Floating Text","When no surface scores well enough, to show the text beside its anchor, facing the user.","an answer beside the lamp"],["","Object-centric Dialogue","Only when a thing is clearly pointed at and asked in the second person (“Can I eat you?”), to let it answer in its own voice.","WorldInfo voice"]]],["Act: do it for the user",[["tetherSend","Tether Send","When the system passes something to someone for the user, to show what goes to whom before it is sent.","“Send the poster to Alice”"]]]];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let clips=[],filter='all';
+const NAMES={labinfo:'LabInfo',worldinfo:'WorldInfo',findmy:'FindMy',weather:'Weather',iotcontrol:'IoTControl',objectstatus:'ObjectStatus',wayfinding:'Wayfinding',delegate:'Delegate',agenda:'Agenda',bookcompanion:'BookCompanion',stepguide:'StepGuide',livecoach:'LiveCoach',reminder:'Reminder'};
+const chosenText=c=>(c.chosen||[]).map(([id,s])=>`${NAMES[id]||id} ${(+s).toFixed(2)}`).join(', ')||'none';
+function render(){
+  const f=document.getElementById('filters');
+  const opts=[['all','All'],['built','Built'],['spec','Spec'],...MODS.filter(m=>clips.some(c=>c.mod===m[0])).map(m=>[m[0],m[0]])];
+  f.innerHTML=opts.map(([k,l])=>`<button type="button" data-f="${esc(k)}" aria-pressed="${k===filter}">${esc(l)}</button>`).join('');
+  for(const b of f.querySelectorAll('button'))b.onclick=()=>{filter=b.dataset.f;render();};
+  const shown=MODS.filter(([name,kind])=>clips.some(c=>c.mod===name)&&(filter==='all'||filter===kind||filter===name));
+  document.getElementById('reel').innerHTML=shown.map(([name,kind,about])=>`<section class="mod" aria-labelledby="m-${name}">
+    <div class="mod-head"><h2 id="m-${name}">${esc(name)}</h2><span class="badge"><i class="dot${kind==='spec'?' spec':''}"></i>${kind==='spec'?'spec':'built'}</span><p>${esc(about)}</p></div>
+    <div class="clips">${clips.filter(c=>c.mod===name).map(c=>`<button class="clip" type="button" data-clip="${esc(c.name)}">
+      <div class="thumb"><img src="${esc(c.poster)}" alt="" loading="lazy"><span class="play" aria-hidden="true"></span></div>
+      <div class="q">“${esc(c.question)}”</div>
+      <div class="meta"><span><b>chose</b> ${esc(chosenText(c))}</span>${c.latency!=null?`<span><b>answered in</b> ${(+c.latency).toFixed(1)} s</span>`:''}</div>
+    </button>`).join('')}</div></section>`).join('')||'<p class="empty">No clips for this filter.</p>';
+  for(const b of document.querySelectorAll('[data-clip]'))b.onclick=()=>open(clips.find(c=>c.name===b.dataset.clip));
+}
+function open(c){
+  const v=document.getElementById('vid');v.src=c.video;v.poster=c.poster;
+  document.getElementById('dlg-title').textContent=`“${c.question}”`;
+  const about=(c.about||[]).map(q=>q.about).join(', ');
+  document.getElementById('facts').innerHTML=[
+    ['MOD chosen',chosenText(c)],['About',about||'—'],['Answer',c.answer?`${c.answer.title}: ${c.answer.body}`:'—'],
+    ['Timing',`${c.latency!=null?`${(+c.latency).toFixed(1)} s to the full answer`:''}${c.agent_speed<1?` · shown at ${c.agent_speed}× agent time`:''}`],
+    ['Recording',`${c.recording} at ${c.ask_at} s`]].map(([k,v])=>`<div class="fact"><span>${esc(k)}</span><p>${esc(v)}</p></div>`).join('');
+  document.getElementById('dlg').showModal();v.play().catch(()=>{});
+}
+document.getElementById('close').onclick=()=>document.getElementById('dlg').close();
+document.getElementById('dlg').addEventListener('close',()=>{const v=document.getElementById('vid');v.pause();v.removeAttribute('src');v.load();});
+// manifest.js (window.MANIFEST) works when the page is opened as a local file; manifest.json when it is served.
+document.getElementById('cue-groups').innerHTML=CUES.map(([g,list])=>`<div class="group"><h3>${esc(g)}</h3><div class="cues">${list.map(([id,name,use,mod])=>`<figure class="cue">
+  ${id?`<img src="cues/${id}.jpg" alt="${esc(name)} drawn in the room" loading="lazy" data-zoom>`:''}
+  <figcaption><b>${esc(name)}</b><code>${id}</code><p>${esc(use)}</p><span class="for">e.g. ${esc(mod)}</span></figcaption></figure>`).join('')}</div></div>`).join('');
+const zoom=document.getElementById('zoom');
+for(const i of document.querySelectorAll('[data-zoom]'))i.onclick=()=>{zoom.querySelector('img').src=i.src;zoom.showModal();};
+zoom.onclick=()=>zoom.close();
+const load=window.MANIFEST?Promise.resolve(window.MANIFEST):fetch('manifest.json').then(r=>r.json());
+load.then(m=>{clips=Object.values(m.clips);render();}).catch(()=>{document.getElementById('reel').innerHTML='<p class="empty">The recordings could not be loaded.</p>';});
+</script>
