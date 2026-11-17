@@ -1,0 +1,73 @@
+{
+  "id": "agenda",
+  "name": "Agenda",
+  "description": "The user's schedule: what is on today or this week, meetings, events and free time.",
+  "examples": [
+    "What's on my calendar today?",
+    "When is my next meeting?",
+    "Am I free Thursday afternoon?"
+  ],
+  "scope": "global",
+  "knowledge": [
+    {
+      "type": "schedule"
+    }
+  ],
+  "selectors": {},
+  "slots": [
+    {
+      "id": "timeline",
+      "use": "data-widget",
+      "anchor": {
+        "kind": "surface"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "datePicker",
+            "when": "data.days>1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "relative",
+        "to": "timeline",
+        "side": "beside"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
+  ],
+  "provider": "system",
+  "status": "spec",
+  "note": "Foundational MOD defined as a spec (modos-system-design.md 5.3): the system can choose it and its text answers; its selectors and representations are not implemented yet.",
+  "variants": {
+    "default": {
+      "label": "Timeline on a wall or desk",
+      "description": "The user's schedule: what is on today or this week, meetings, events and free time.",
+      "slots": [
+        "timeline",
+        "answer"
+      ],
+      "text": "answer"
+    }
+  },
+  "default_variant": "default"
+}

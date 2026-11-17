@@ -179,9 +179,22 @@
         "earphones",
         "耳机"
       ],
-      "location": "lab, shelf 3, bottom shelf",
-      "box_id": "lab-shelf-3-bottom",
-      "container_detail": "bottom shelf"
+      "location": "lab, shelf 3, middle shelf",
+      "box_id": "lab-shelf-3-middle",
+      "container_detail": "middle shelf"
+    },
+    {
+      "id": "umbrella",
+      "label": "Umbrella",
+      "aliases": [
+        "umbrella",
+        "black umbrella",
+        "雨伞",
+        "伞"
+      ],
+      "location": "lab, shelf 1, by the lab door",
+      "box_id": "lab-shelf-1",
+      "container_detail": "lowest shelf, by the door"
     }
   ]
 }

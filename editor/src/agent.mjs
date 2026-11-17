@@ -489,7 +489,8 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         layer.orient(camera);
         if(controls?.userData.responseOffset&&controls.userData.owner){const owner=controls.userData.owner;controls.quaternion.copy(owner.quaternion);controls.position.copy(owner.position).add(controls.userData.responseOffset.clone().applyQuaternion(owner.quaternion));}
       }
-      const excluded=[...widgets.values(),...thoughts.values()].filter(w=>w.visible&&pass!=='all'&&(pass==='fixed'?!drawnFixed(w):drawnFixed(w)));
+      // An answer with an action card (Delegate) shows its text inside the card (src/action-cues.mjs: the message's Text Input), not as text of its own.
+      const excluded=[...widgets.values(),...thoughts.values()].filter(w=>w.visible&&(w.userData.response?.action||pass!=='all'&&(pass==='fixed'?!drawnFixed(w):drawnFixed(w))));
       const originalControlsVisible=controls?.visible;
       for(const w of excluded)w.visible=false;
       if(controls?.userData.owner&&excluded.includes(controls.userData.owner))controls.visible=false;

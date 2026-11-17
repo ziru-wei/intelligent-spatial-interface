@@ -13,8 +13,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+def _redate(w):
+    """The mock forecast moved to start today, so it always covers the coming days (its weather stays as recorded)."""
+    import datetime, re
+    text = json.dumps(w); dates = sorted(set(re.findall(r'\b(\d{4}-\d{2}-\d{2})\b', text)))
+    if not dates: return w
+    shift = datetime.date.today()-datetime.date.fromisoformat(dates[0])
+    move = lambda m: (datetime.date.fromisoformat(m.group(1))+shift).isoformat()
+    return json.loads(re.sub(r'\b(\d{4}-\d{2}-\d{2})\b', move, text))
+
 def _mock_weather():
-    w = json.loads((ROOT/'agent'/'context'/'weather.json').read_text())['weather']
+    w = _redate(json.loads((ROOT/'agent'/'context'/'weather.json').read_text())['weather'])
     dates = sorted({e['date'] for e in w.get('forecast', [])})
     span = f'{dates[0]} to {dates[-1]}' if dates else 'no dates'
     return dict(type='timeseries', fetcher='mock', summary=f'Weather forecast by day and period (morning, afternoon, evening) with hourly samples, {span}.', data=w)

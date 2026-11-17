@@ -4,7 +4,7 @@
 //   Fixtures  per place: large static furniture (nested: a shelf of a bookcase), doors and windows, walls and ceilings
 //   Objects   per place: items, artifacts and devices, inside furniture or inside one another
 // Geometry stays in the Scene tab; this tab edits what ModOS needs to know: kind, category, traits (what representations can
-// attach to), where it is (place, and what it is inside), and for a connected device its states and actions. It also lists the
+// attach to), where it is (place, and what it is inside), and for a connected device its inputs (what can be adjusted) and outputs (what can be read). It also lists the
 // knowledge attached to each entity.
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const slug=s=>String(s).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48);
@@ -75,8 +75,8 @@ export function createTwinPanel({root,space,session,onPick=()=>{}}){
       <div class="twin-traits">${data.traits.map(t=>`<label class="switch">${esc(t)}<input class="sw twin-trait" type="checkbox" value="${t}"${(e.traits||[]).includes(t)?' checked':''}></label>`).join('')}</div>
       ${(e.traits||[]).includes('iot')?`<div class="twin-device"><h4>Device</h4>
         <div class="take-row"><label>Protocol</label><input id="twin-protocol" type="text" value="${esc(dev.protocol||'mock')}"></div>
-        <div class="take-row"><label>States</label><input id="twin-states" type="text" value="${esc(Object.entries(dev.states||{}).map(([k,v])=>`${k}=${v}`).join(', '))}" placeholder="power=off, brightness=50"></div>
-        <div class="take-row"><label>Actions</label><input id="twin-actions" type="text" value="${esc((dev.actions||[]).join(', '))}" placeholder="on, off"></div></div>`:''}
+        <div class="take-row"><label>Inputs</label><textarea id="twin-inputs" rows="4" spellcheck="false" title="What can be adjusted: {name: {type, ...}} (toggle, level, choice, color, command, time)">${esc(JSON.stringify(dev.inputs||{},null,1))}</textarea></div>
+        <div class="take-row"><label>Outputs</label><textarea id="twin-outputs" rows="4" spellcheck="false" title="What can be read: {name: {type, ...}} (reading, level, task, queue, alert, media)">${esc(JSON.stringify(dev.outputs||{},null,1))}</textarea></div></div>`:''}
       <div class="twin-know"><h4>Knowledge</h4>${e.knowledge?.length?`<ul>${e.knowledge.map(k=>`<li><b>${esc(k.type)}</b> ${esc(k.summary)}</li>`).join('')}</ul>`:'<p class="muted">None attached. Attach info in Scene › Layout.</p>'}</div>
       <div class="take-row"><button id="twin-save">Save</button>${e.source==='authored'?'<button id="twin-remove">Delete</button>':'<button id="twin-reset" title="Drop what was edited here and go back to what the source files say">Reset</button>'}</div></div>`;
   }
@@ -109,9 +109,8 @@ export function createTwinPanel({root,space,session,onPick=()=>{}}){
         const patch={name:$('twin-name').value.trim()||e.name,kind:$('twin-kind').value,category:$('twin-category').value.trim(),traits};
         if($('twin-parent'))patch.parent=$('twin-parent').value||null;
         const place=$('twin-place');if(!place.disabled){if(e.kind==='place')patch.parent=place.value||null;else patch.place=place.value||null;}
-        if(traits.includes('iot')&&$('twin-protocol'))patch.device={protocol:$('twin-protocol').value.trim()||'mock',
-          states:Object.fromEntries($('twin-states').value.split(',').map(s=>s.split('=').map(x=>x.trim())).filter(([k])=>k).map(([k,v])=>[k,v??''])),
-          actions:$('twin-actions').value.split(',').map(s=>s.trim()).filter(Boolean)};
+        if(traits.includes('iot')&&$('twin-protocol')){const parse=(id,what)=>{try{return JSON.parse($(id).value||'{}');}catch{throw Error(`${what} is not valid JSON.`);}};
+          patch.device={...(e.device||{}),protocol:$('twin-protocol').value.trim()||'mock',inputs:parse('twin-inputs','Inputs'),outputs:parse('twin-outputs','Outputs')};}
         await call('POST',{op:'update',id:e.id,patch});
       });
       if($('twin-remove'))$('twin-remove').onclick=()=>act(async()=>{await call('POST',{op:'remove',id:e.id});selected=null;});

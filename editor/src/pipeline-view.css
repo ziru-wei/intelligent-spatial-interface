@@ -1,0 +1,79 @@
+/* The agent log's Pipeline view (src/pipeline-view.mjs), the In / Looking-at overlay on the camera view, and the presentation mode
+   (?present=1: the recorded camera and the pipeline only, for recording demos). Two layouts:
+     side    (default) the stages down a vertical line beside the camera view
+     bottom  (?pipeline=bottom) the stages along a horizontal line under it
+   The line is lit as far as the system has got; options are listed from the start and fill in; Fill's slots are small cards, two per
+   row. Monochrome; white marks what was chosen. */
+
+#pipeline{margin-top:8px}
+.pv{font:12px/1.35 system-ui;color:#c9cbd0;display:flex;flex-direction:column}
+.pv-note{font-size:10.5px;color:#7d8088;margin:0 0 8px 0}
+/* each stage: a numbered node on the line; the line is lit as far as the system has got */
+.pv-stage{position:relative;min-width:0;border-left:1px solid #34363b;margin-left:10px;padding:0 0 14px 20px;transition:opacity .35s,border-color .35s}
+.pv-stage:last-child{border-left-color:transparent!important}
+.pv-stage header{display:flex;align-items:baseline;gap:7px;margin-bottom:5px}
+.pv-stage header i{font-style:normal;width:20px;height:20px;border-radius:50%;flex:none;align-self:center;display:grid;place-items:center;font-size:11px;font-weight:700;background:#2a2c31;color:#8a8d94;margin-left:-31px;position:relative;z-index:1}
+.pv-stage header b{font-size:12.5px;font-weight:600;color:#e8e9eb}.pv-stage header small{color:#7d8088;font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-stage.idle{opacity:.45}
+.pv-stage.active header i{background:#fff;color:#111;box-shadow:0 0 0 4px rgba(255,255,255,.16);animation:pvpulse 1s ease-in-out infinite}
+.pv-stage.done{border-left-color:#e8e9eb}.pv-stage.done header i{background:#fff;color:#111}
+@keyframes pvpulse{50%{opacity:.4}}
+.pv-chip{display:inline-block;padding:1px 7px;border-radius:9px;background:#24262b;color:#e6e7ea;font-size:11px}
+.pv-opts{list-style:none;margin:2px 0;padding:0;display:grid;gap:1px}
+.pv-opts li{display:grid;grid-template-columns:minmax(0,1fr) 54px 30px;gap:6px;align-items:center;color:#8a8d94;font-size:11px;transition:color .3s}
+.pv-opts li.wait{color:#5f6268}
+.pv-opts li.on{color:#fff;font-weight:600}
+.pv-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-bar{height:4px;border-radius:2px;background:#24262b;overflow:hidden}.pv-bar i{display:block;height:100%;background:#5d6067;transition:width .45s ease-out}
+.pv-opts li.on .pv-bar i{background:#fff}
+.pv-v{text-align:right;font-variant-numeric:tabular-nums}
+.pv-res{font-size:11px;color:#cfd1d6;margin-top:3px}.pv-res.dim{color:#6e7178}
+.pv-mod{font-size:11.5px;color:#fff;font-weight:600;margin:2px 0 4px}
+.pv-sel{font-size:10.5px;color:#9a9da4;margin-bottom:3px}
+.pv-parts{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:11.5px;color:#e8e9eb}
+.pv-parts li{transition:color .3s,opacity .3s}.pv-parts li.pending{color:#5f6268}.pv-parts li.pending .pv-chip{opacity:.45}
+/* Fill: each slot a component of its own, two per row */
+.pv-comps{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pv-comp{min-width:0;border:1px solid #2a2c31;border-radius:8px;padding:6px 8px;background:#131417;transition:border-color .35s}
+.pv-comp.active{border-color:#8b8e95}.pv-comp.done{border-color:#e8e9eb}
+.pv-comp .pv-opts li{grid-template-columns:minmax(0,1fr) 34px 28px;gap:4px}
+
+/* bottom: the five cards in one row */
+body.pipeline-bottom .pv{flex-direction:row;align-items:stretch}
+body.pipeline-bottom .pv-note{display:none}
+body.pipeline-bottom .pv-stage{flex:1;border-left:0;border-top:2px solid #2f3136;margin:0;padding:12px 10px 4px}
+body.pipeline-bottom .pv-stage header i{position:absolute;left:0;top:-11px;margin:0}
+body.pipeline-bottom .pv-stage.done{border-top-color:#e8e9eb}body.pipeline-bottom .pv-stage:last-child{border-top-color:#2f3136}
+body.pipeline-bottom .pv-stage.done:last-child{border-top-color:#e8e9eb}
+body.pipeline-bottom .pv-opts li{grid-template-columns:minmax(0,1fr) 34px 26px}
+body.pipeline-bottom .pv-opts li:nth-child(n+7){display:none}
+
+/* In / Looking at, in the camera view's top-right corner (placed by app.mjs placeWhere) */
+.where{position:absolute;z-index:3;pointer-events:none;display:grid;grid-template-columns:auto auto;gap:2px 8px;padding:7px 10px;border-radius:9px;background:rgba(12,13,15,.62);backdrop-filter:blur(6px);font:11px/1.3 system-ui;color:#fff}
+.where span{color:#a9adb4}.where b{font-weight:600}
+
+/* presentation mode */
+body.present{overflow:hidden}
+body.present #camera-col{position:fixed;inset:0;z-index:100;background:#0b0c0e;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:24px;padding:0 24px 0 0;box-sizing:border-box;align-items:center}
+body.present #camera-col>*{display:none!important}
+body.present #camera-col>#stage{display:block!important;grid-column:1;grid-row:1;height:100vh!important;width:auto!important;border-radius:0}
+body.present #camera-col>#pipeline{display:block!important;grid-column:2;grid-row:1;align-self:start;margin:56px 0 0}
+body.present #camera-col>#where:not([hidden]){display:grid!important;font-size:14px}
+body.present #camera-col>#info-arrows:not([hidden]){display:block!important}
+body.present .pv{font-size:14px}body.present .pv-note{font-size:12px}
+body.present .pv-stage{padding-bottom:12px}body.present .pv-stage header b{font-size:15px}body.present .pv-stage header small{font-size:12px}
+body.present .pv-opts li{font-size:12.5px;grid-template-columns:minmax(0,1fr) 70px 36px}body.present .pv-comp .pv-opts li{grid-template-columns:minmax(0,1fr) 40px 32px}body.present .pv-res,body.present .pv-parts{font-size:13px}
+body.present .pv-chip{font-size:13px}body.present .pv-mod{font-size:14px}body.present .pv-sel{font-size:12.5px}
+body.present.pipeline-bottom #camera-col{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;row-gap:14px;padding:22px;justify-items:center}
+body.present.pipeline-bottom #camera-col>#stage{grid-column:1;grid-row:1;height:100%!important;max-height:610px;border-radius:14px}
+body.present.pipeline-bottom #camera-col>#pipeline{grid-column:1;grid-row:2;width:100%;align-self:end}
+
+.pv-opts li.skip{color:#4f5257}.pv-opts li.skip .pv-v{font-size:.85em;white-space:nowrap}
+
+/* Request: each question and what it is about; Context info: where each MOD took its info from */
+.pv-qs{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:3px}.pv-qs li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;font-size:11.5px;color:#e8e9eb}
+.pv-qs li.wait{color:#5f6268}.pv-qt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pv-qa{color:#9a9da4}.pv-qa b{color:#fff;font-weight:600}
+.pv-from{font-size:10.5px;color:#8a8d94;margin:-2px 0 4px}.pv-chips{display:flex;flex-wrap:wrap;gap:4px}
+body.present .pv-qs li{font-size:13px}body.present .pv-from{font-size:12px}
+
+.pv-opts li.alt{color:#b9bcc2}.pv-opts li.alt em{font-style:normal;color:#7d8088;font-size:.9em;margin-left:4px}.pv-opts li.alt .pv-bar i{background:#8b8e95}

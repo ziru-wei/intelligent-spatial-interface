@@ -1,31 +1,108 @@
 // ModOS stage 4 · Composition: a MOD's selections become response parts, and one chosen MOD hosts the answer text.
-// Rendering still uses today's renderers: slots map onto the existing parts (weather, findmy, animation, text with info), so the
+// Rendering still uses today's renderers: slots map onto the existing parts (weather, findmy, ego, animation, text with info), so the
 // web editor and the headset show these responses unchanged. A generic primitive-representation renderer replaces this mapping later.
+// A MOD here is already effective (scripts/modos_registry.py): `slots` are the active variant's, settled params carry {fixed}.
 
-export function partsFor(mod,selection){
-  const out=[];
+import {partsToDraw} from './ui-rules.mjs';
+
+const TONE_COLOR={neutral:'calm',attention:'attention',warning:'warning'};
+const EGO_ID=/^(layout|comp):/;   // what can speak: furniture, openings and scene objects (scripts/ego.py catalog), not places
+
+/** The value of a slot param: the author's setting, the fill's choice, or the primitive's first value. */
+export const paramOf=(slot,name,selection={},fallback)=>slot.params?.[name]?.fixed??selection?.[`${slot.id}.${name}`]?.value??fallback;
+
+/** The entity an ego-object slot makes speak (its anchor's), when it can speak. */
+// The facts of the request itself: a thing clearly pointed at (the referent was resolved) and the question put to it in the second person.
+export const requestFacts=(question,referent)=>({'target.pointed':!!referent?.entity,'request.second_person':/\b(you|your|yours|yourself)\b/i.test(String(question||''))});
+/** Whether an ego-object slot speaks for this request: its declaration decides (Object-centric Dialogue only for a pointed-at thing asked
+ *  in the second person); a slot without one speaks whenever its thing can. */
+export const speaks=(slot,facts)=>!slot.ui||partsToDraw(slot.ui,facts).includes('dialogue');
+
+export function speakerOf(slot,referent){
+  const id=slot.anchor?.of==='referent'?referent?.entity:slot.anchor?.of;
+  return id&&EGO_ID.test(id)?id:null;
+}
+
+// A part carries what its MOD declared it draws (`ui` of the slot, and of the slots drawn with it on the same choice: a highlight's
+// direction and sign) and the facts known when composing; the renderer adds what the view knows and decides (modos/ui-rules.mjs).
+const COMPANIONS={highlight:['guidance','label'],'ambient-effect':['data-widget'],'data-widget':['ambient-effect']};
+const uiOf=(mod,slot)=>Object.fromEntries([slot,...mod.slots.filter(s=>s!==slot&&s.data&&s.data===slot.data&&(COMPANIONS[slot.use]||[]).includes(s.use))]
+  .filter(s=>s.ui).map(s=>[s.id,{use:s.use,ui:s.ui}]));
+const meta=(mod,slot,facts={})=>({mod:{id:mod.id,variant:mod.variant||null,slot:slot.id,
+  settings:Object.fromEntries(Object.entries(slot.params||{}).filter(([,p])=>'fixed' in p).map(([k,p])=>[k,p.fixed])),
+  ui:uiOf(mod,slot),facts}});
+
+export function partsFor(mod,selection,{referent=null,abouts=[],question=''}={}){
+  const out=[],asked=abouts.includes('here')?'here':abouts[0],said=requestFacts(question,referent);
+  // facts from the request (what the question is about) and from each slot's data
+  const factsFor=sel=>({...said,...(asked?{'question.about':asked}:{}),
+    ...(sel?.kind==='timeseries'?{'data.days':(sel.dates||[]).length,'data.steps_per_day':(sel.times||[]).length}:{}),
+    ...(sel?.kind==='device'?{intent:sel.action?'change':'read'}:{})});
   for(const slot of mod.slots){
-    const sel=slot.data?selection[slot.data]:null;
+    if(slot.use==='ego-object'){
+      const speaker=speakerOf(slot,referent);
+      if(speaker&&speaks(slot,factsFor(null)))out.push({part:'ui',ego:{objects:[speaker],main:speaker,effect:{type:paramOf(slot,'effect',selection,'bounce'),color:TONE_COLOR[paramOf(slot,'tone',selection,'neutral')]}},...meta(mod,slot,factsFor(null))});
+      continue;
+    }
+    // An action card (Delegate): what will be done, for whom and with what; it runs only when the user confirms it.
+    if(slot.use==='action-card'){
+      // what goes with the message: the thing itself, a photo taken of it, or nothing (the request says which)
+      const [to,what,cap]=(slot.data||[]).map(d=>selection?.[d]),capture=what?.entity?(cap?.id||'thing'):'none';
+      if(to)out.push({part:'ui',action:{kind:'send',to:to.id,capture,...(capture!=='none'?{attachment:what.entity}:{})},...meta(mod,slot,{...factsFor(null),'attachment.kind':capture})});
+      continue;
+    }
+    const sel=slot.data?selection?.[slot.data]:null;
     if(!sel)continue;
+    const meta_=()=>meta(mod,slot,factsFor(sel));
     if((slot.use==='ambient-effect'||slot.use==='data-widget')&&sel.kind==='timeseries'&&!out.some(p=>p.weather))
-      out.push({part:'ui',weather:{forecast_ids:sel.ids,preview:{component:sel.layout}}});
+      out.push({part:'ui',weather:{forecast_ids:sel.ids,preview:{component:sel.layout}},...meta_()});
+    // Highlight from a choice of things (ObjectStatus: by state), a device (IoTControl) or a place (Wayfinding: its door); the MOD's
+    // direction arrow and sign on the same choice travel with it.
+    if(slot.use==='highlight'&&['entities','device','place'].includes(sel.kind)){
+      const same=use=>mod.slots.some(s=>s.use===use&&s.data===slot.data);
+      out.push({part:'ui',highlight:{targets:sel.kind==='entities'?sel.ids:[sel.entity],...(sel.tones?{tones:sel.tones}:{}),...(sel.kind==='place'?{door:true}:{}),
+        guidance:same('guidance'),label:same('label')},...meta_()});
+    }
+    if(slot.use==='control'&&sel.kind==='device')out.push({part:'ui',control:{device:sel.entity,action:sel.action||null},...meta_()});
     if(slot.use==='highlight'&&sel.kind==='item-location')
-      out.push({part:'ui',findmy:sel.status==='found'?{status:'found',item_id:sel.item_id}:{status:sel.status}});
+      out.push({part:'ui',findmy:sel.status==='found'?{status:'found',item_id:sel.item_id}:{status:sel.status},...meta_()});
     if(slot.use==='scene-asset'&&sel.kind==='allowed'&&sel.id!=='none'){
       const zone=String(slot.anchor?.of||'').replace(/^zone:/,'');
-      out.push({part:'animation',animation:{id:sel.id,zone}});
+      out.push({part:'animation',animation:{id:sel.id,zone},...meta_()});
     }
   }
   return out;
 }
 
+/** Where a MOD's text goes: in a speaking object's voice, or as situated text. Layout slot 1 is the place below a data view (the
+ *  weather view) the text is placed relative to; everything else uses slot 0. */
+function hostOf(mod,referent,said={}){
+  const slot=mod.slots.find(s=>s.id===mod.text);
+  if(slot?.use==='action-card')return {extra:{},slot:0,mod:mod.id,draft:true};   // the text is the draft inside the card
+  if(slot?.use==='ego-object'&&speaks(slot,said)){
+    const speaker=speakerOf(slot,referent);
+    if(speaker)return {extra:{},slot:0,mod:mod.id,voice:{speaker,name:referent?.entity===speaker?referent.name:null}};
+  }
+  const to=slot?.anchor?.kind==='relative'?mod.slots.find(s=>s.id===slot.anchor.to):null;
+  return {extra:{},slot:to&&['ambient-effect','data-widget'].includes(to.use)?1:0,mod:mod.id};
+}
+
 /** Which chosen MOD carries the answer text: the referent's first, then the highest scored one with a text slot. */
-export function textHost(chosen,referent,placeMod=null){
-  if(referent)return {extra:{info:{key:referent.key}},slot:0,mod:placeMod?.id||'worldinfo'};
-  // Whether a MOD shows text is authored (its `text` slot). When MODs were chosen and none of them has one, the response has no text;
-  // with no MOD at all, the text is the whole response and goes in front of the user.
+export function textHost(chosen,referent,placeMod=null,question=''){
+  const said=requestFacts(question,referent);
+  // A MOD that acts for the user (its text slot is an action card) carries the text: the text is its draft.
+  const acting=chosen.find(c=>c.mod.slots.find(s=>s.id===c.mod.text)?.use==='action-card');
+  if(acting)return hostOf(acting.mod,referent,said);
+  if(referent){
+    // The referent's MOD: a place MOD that speaks for the place, else the referent-scoped MOD chosen for it (WorldInfo).
+    const own=placeMod||chosen.find(c=>c.mod.scope==='referent')?.mod||null;
+    const host=own?.text?hostOf(own,referent,said):null;
+    if(host?.voice)return host;
+    return {extra:{info:{key:referent.key}},slot:0,mod:own?.id||'worldinfo'};
+  }
+  // Whether a MOD shows text is authored (its variant's text slot). When MODs were chosen and none of them has one, the response has
+  // no text; with no MOD at all, the text is the whole response and goes in front of the user.
   if(chosen.length&&!chosen.some(c=>c.mod.text))return {none:true};
   const best=[...chosen].filter(c=>c.mod.text).sort((a,b)=>b.score-a.score)[0];
-  if(best?.mod.id==='weather')return {extra:{},slot:1,mod:'weather'};
-  return {extra:{},slot:0,mod:best?.mod.id||null};
+  return best?hostOf(best.mod,null):{extra:{},slot:0,mod:null};
 }

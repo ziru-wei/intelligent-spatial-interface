@@ -1,18 +1,111 @@
 {
   "id": "findmy",
   "name": "FindMy",
-  "description": "Locate one registered physical belonging the user wants to find, and show the container it is in. Only for physical finding; not for recommendations, summaries or reading progress.",
-  "examples": ["Where are my headphones?", "Help me find my brush", "I can't find my keys"],
+  "description": "Where a registered belonging is kept, and pointing to it when the user wants to take or bring it with them (an umbrella when it may rain, keys, headphones).",
+  "examples": [
+    "Where are my headphones?",
+    "Where did I leave my keys?",
+    "Should I bring my umbrella?"
+  ],
   "scope": "global",
-  "knowledge": [{"ref": "user:belongings", "type": "item-location"}],
+  "knowledge": [
+    {
+      "ref": "user:belongings",
+      "type": "item-location"
+    }
+  ],
   "selectors": {
-    "item": {"kind": "pick-one", "from": "user:belongings", "extra": {"not_found": "No registered item matches, or its location is unknown.", "ambiguous": "Several items match and the user has not said which."}}
+    "item": {
+      "kind": "pick-one",
+      "from": "user:belongings",
+      "extra": {
+        "not_found": "No registered item matches, or its location is unknown.",
+        "ambiguous": "Several items match and the user has not said which."
+      }
+    }
   },
   "slots": [
-    {"id": "container", "use": "highlight", "data": "item", "anchor": {"kind": "object"}},
-    {"id": "direction", "use": "guidance", "data": "item", "anchor": {"kind": "user-view"}},
-    {"id": "answer", "use": "situated-text", "anchor": {"kind": "user-view"}}
+    {
+      "id": "container",
+      "use": "highlight",
+      "data": "item",
+      "anchor": {
+        "kind": "object"
+      },
+      "ui": {
+        "fixed": [
+          "breathingBox"
+        ],
+        "flexible": [
+          {
+            "cue": "cornerBrackets",
+            "when": "target.has_content",
+            "instead_of": "breathingBox"
+          }
+        ]
+      }
+    },
+    {
+      "id": "direction",
+      "use": "guidance",
+      "data": "item",
+      "anchor": {
+        "kind": "user-view"
+      },
+      "ui": {
+        "flexible": [
+          {
+            "cue": "arrowAhead",
+            "when": "target.out_of_view & !target.other_room"
+          },
+          {
+            "cue": "floorPath",
+            "when": "target.other_room"
+          }
+        ]
+      }
+    },
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "user-view"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
   ],
-  "text": "answer",
-  "provider": "user"
+  "provider": "user",
+  "variants": {
+    "guide": {
+      "label": "Highlight and direction",
+      "description": "The container glows; an arrow points to it when it is out of view.",
+      "slots": [
+        "container",
+        "direction",
+        "answer"
+      ],
+      "text": "answer"
+    },
+    "highlight": {
+      "label": "Highlight only",
+      "description": "The container glows; no arrow.",
+      "slots": [
+        "container",
+        "answer"
+      ],
+      "text": "answer"
+    }
+  },
+  "default_variant": "guide"
 }

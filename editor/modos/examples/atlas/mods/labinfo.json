@@ -1,0 +1,106 @@
+{
+  "id": "labinfo",
+  "extends": "worldinfo",
+  "name": "LabInfo",
+  "note": "A space-owner MOD for the atlas space (copy to spaces/atlas/modos/mods/labinfo.json, which is not tracked). It extends the foundational WorldInfo: the same answer about the place, plus the lab's prefabricated dioramas on the lab table.",
+  "description": "What this lab (the Programmable Reality Lab, PRL) is: what it researches, who is in it, and what lab life and its way of doing research are like.",
+  "examples": [
+    "What does this lab research?",
+    "What is lab life like here?",
+    "Can you tell me more about what they're working on?"
+  ],
+  "scope": [
+    "zone:lab-2f",
+    "zone:lab-hall-2f"
+  ],
+  "knowledge": [
+    {
+      "ref": "about:zone:lab-2f"
+    }
+  ],
+  "selectors": {
+    "asset": {
+      "kind": "pick-one",
+      "from": "allowed",
+      "allowed": [
+        {
+          "id": "labResearchWork",
+          "description": "Lab work and research content: research topics and vision (programmable reality), AR/VR, robotics, shape-changing interfaces."
+        },
+        {
+          "id": "labResearchLife",
+          "description": "Lab requirements, lab life and how the lab does research: principles, culture, writing first, papers and internships."
+        },
+        {
+          "id": "none",
+          "description": "No animation: plain facts (who leads the lab, who its students are, its name) or not about the lab."
+        }
+      ]
+    }
+  },
+  "slots": [
+    {
+      "id": "diorama",
+      "use": "scene-asset",
+      "data": "asset",
+      "anchor": {
+        "kind": "place",
+        "of": "zone:lab-2f"
+      },
+      "ui": {
+        "fixed": [
+          "asset:diorama"
+        ],
+        "flexible": [
+          {
+            "cue": "floorArea",
+            "when": "question.about=here"
+          }
+        ]
+      }
+    },
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "relative",
+        "to": "diorama",
+        "side": "beside"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
+  ],
+  "provider": "space-owner",
+  "variants": {
+    "diorama": {
+      "label": "Diorama and text",
+      "description": "A prefabricated animation on the lab table when it fits the question, with text beside it.",
+      "slots": [
+        "diorama",
+        "answer"
+      ],
+      "text": "answer"
+    },
+    "text": {
+      "label": "Text only",
+      "description": "Only the answer text.",
+      "slots": [
+        "answer"
+      ],
+      "text": "answer"
+    },
+    "voice": null
+  },
+  "default_variant": "diorama"
+}

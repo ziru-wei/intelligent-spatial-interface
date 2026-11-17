@@ -2,13 +2,87 @@
   "id": "worldinfo",
   "name": "WorldInfo",
   "description": "Answer about a thing or a place the user is asking about, from the information attached to it.",
-  "examples": ["Can I eat this?", "What is this?", "What are the rules here?"],
+  "examples": [
+    "Can I eat this?",
+    "What is this?",
+    "What are the rules here?"
+  ],
   "scope": "referent",
-  "knowledge": [{"ref": "referent"}],
+  "knowledge": [
+    {
+      "ref": "referent"
+    }
+  ],
   "selectors": {},
   "slots": [
-    {"id": "answer", "use": "situated-text", "anchor": {"kind": "object", "of": "referent"}}
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "object",
+        "of": "referent"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    },
+    {
+      "id": "voice",
+      "use": "ego-object",
+      "anchor": {
+        "kind": "object",
+        "of": "referent"
+      },
+      "params": {
+        "effect": {
+          "allowed": [
+            "bounce",
+            "grow",
+            "color"
+          ]
+        }
+      },
+      "ui": {
+        "flexible": [
+          {
+            "cue": "dialogue",
+            "when": "target.pointed & request.second_person"
+          },
+          {
+            "cue": "asset:ego-motion",
+            "when": "target.pointed & request.second_person"
+          }
+        ]
+      }
+    }
   ],
-  "text": "answer",
-  "provider": "system"
+  "provider": "system",
+  "variants": {
+    "text": {
+      "label": "Text beside it",
+      "description": "The answer appears next to the thing, pointing at it.",
+      "slots": [
+        "answer"
+      ],
+      "text": "answer"
+    },
+    "voice": {
+      "label": "The thing speaks",
+      "description": "The thing answers in the first person in a bubble and makes a small motion.",
+      "slots": [
+        "voice"
+      ],
+      "text": "voice"
+    }
+  },
+  "default_variant": "text"
 }

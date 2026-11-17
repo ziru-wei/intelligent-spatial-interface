@@ -1,0 +1,78 @@
+{
+  "id": "livecoach",
+  "name": "LiveCoach",
+  "description": "Coach a body movement, exercise or stretch: arrows and labels on the user's body showing how to move.",
+  "examples": [
+    "How do I stretch my shoulders?",
+    "Show me a good squat",
+    "How should I hold the racket?"
+  ],
+  "scope": "global",
+  "knowledge": [
+    {
+      "type": "steps"
+    }
+  ],
+  "selectors": {},
+  "slots": [
+    {
+      "id": "arrows",
+      "use": "guidance",
+      "anchor": {
+        "kind": "user-body"
+      },
+      "ui": {
+        "fixed": [
+          "bodyArrow"
+        ]
+      }
+    },
+    {
+      "id": "labels",
+      "use": "label",
+      "anchor": {
+        "kind": "user-body"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ]
+      }
+    },
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "user-view"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
+  ],
+  "provider": "system",
+  "status": "spec",
+  "note": "Foundational MOD defined as a spec (modos-system-design.md 5.3): the system can choose it and its text answers; its selectors and representations are not implemented yet.",
+  "variants": {
+    "default": {
+      "label": "Arrows and labels on the body",
+      "description": "Coach a body movement or exercise: arrows and labels on the user's body showing how to move.",
+      "slots": [
+        "arrows",
+        "labels",
+        "answer"
+      ],
+      "text": "answer"
+    }
+  },
+  "default_variant": "default"
+}

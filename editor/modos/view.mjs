@@ -1,4 +1,4 @@
-// ModOS: what every stage reads about the current request, derived once from the memory snapshot (no model involved).
+// ModOS: what every stage reads about the current request, derived once from the context snapshot (no model involved).
 export const placeIds=loc=>[loc?.in?.id,loc?.facing?.id].filter(Boolean).map(id=>'zone:'+id);
 
 export function createView(snap,question){

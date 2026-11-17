@@ -18,7 +18,7 @@ export function jevEngine(ask){
     const raw=await ask(stage,state,q),out={};
     for(const [id,x] of Object.entries(questions)){
       const a=raw[id];
-      out[id]=x.kind==='choose'?{choice:a.choice,probability:a.probabilities?.[a.choice]??null,confidence:a.confidence??null}:{score:a.noul};
+      out[id]=x.kind==='choose'?{choice:a.choice,probability:a.probabilities?.[a.choice]??null,probabilities:a.probabilities||null,confidence:a.confidence??null}:{score:a.noul};
     }
     return out;
   }};

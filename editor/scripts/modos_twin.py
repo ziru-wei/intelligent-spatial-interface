@@ -17,12 +17,14 @@ Every ModOS module reads entities from here, never from the source files:
 kind     layout: place · fixture: structure (walls, ceilings), opening (doors, windows), furniture (large, static) ·
          object: item, artifact (a poster, a booklet, a book), device
 traits   what representations can attach to: container, surface, window, door, display, iot
-device   only for connected devices (trait iot): {protocol, states: {name: value}, actions: [names]}
+device   only for connected devices (trait iot): {protocol, class?, inputs: {name: typed value}, outputs: {name: typed value}}, value types
+         toggle, level, choice, color, command, time, reading, task, queue, alert, media (modos-system-design.md 3.7)
 No dependencies beyond the other scripts: used by the server and tests."""
 import json, re
 from pathlib import Path
 import user_context
 
+VALUE_TYPES = ('toggle', 'level', 'choice', 'color', 'command', 'time', 'reading', 'task', 'queue', 'alert', 'media')
 KINDS = ('place', 'structure', 'opening', 'furniture', 'item', 'artifact', 'device')
 # Three layers: the layout (places), the fixtures (walls and ceilings, doors and windows, large static furniture) and the objects
 # (things that move or are added: items, artifacts, devices).
@@ -43,7 +45,10 @@ CATEGORY_MAP = [
     ('sink', ('furniture', 'sink', [])),
     ('stove', ('furniture', 'stove', ['surface'])),
     ('oven', ('furniture', 'oven', ['container'])),
-    ('television', ('furniture', 'television', ['display'])),
+    ('television', ('device', 'television', ['display'])),
+    ('printer', ('device', 'printer', [])),
+    ('lamp', ('device', 'lamp', [])),
+    ('coffee_machine', ('device', 'coffee machine', [])),
     ('door', ('opening', 'door', ['door'])),
     ('window', ('opening', 'window', ['window', 'surface'])),
     ('opening', ('opening', 'opening', [])),
@@ -188,9 +193,12 @@ def validate(entity, known):
     dev = entity.get('device')
     if dev is not None:
         if 'iot' not in entity.get('traits', []): raise ValueError('Only an entity with the iot trait has a device.')
-        if not (isinstance(dev, dict) and isinstance(dev.get('states', {}), dict) and isinstance(dev.get('actions', []), list)):
-            raise ValueError('A device has states {name: value} and actions [names].')
-    elif 'iot' in entity.get('traits', []): raise ValueError('An iot entity needs a device (protocol, states, actions).')
+        if not isinstance(dev, dict) or not all(isinstance(dev.get(k, {}), dict) for k in ('inputs', 'outputs')):
+            raise ValueError('A device has inputs and outputs: {name: {type, ...}}.')
+        for side in ('inputs', 'outputs'):
+            for name, v in (dev.get(side) or {}).items():
+                if not isinstance(v, dict) or v.get('type') not in VALUE_TYPES: raise ValueError(f'{side}.{name} needs a type: {", ".join(VALUE_TYPES)}.')
+    elif 'iot' in entity.get('traits', []): raise ValueError('An iot entity needs a device (protocol, inputs, outputs).')
     return entity
 
 EDITABLE = ('kind', 'category', 'traits', 'parent', 'name', 'aliases', 'device', 'place')
@@ -201,7 +209,7 @@ def update(space, eid, patch, session=None):
     if eid not in current: raise ValueError('Unknown entity.')
     patch = {k: v for k, v in (patch or {}).items() if k in EDITABLE}
     if 'iot' in patch.get('traits', current[eid].get('traits', [])) and 'device' not in patch and not current[eid].get('device'):
-        patch['device'] = dict(protocol='mock', states={'power': 'off'}, actions=['on', 'off'])
+        patch['device'] = dict(protocol='mock', inputs={'power': {'type': 'toggle', 'value': 'off'}}, outputs={})
     if 'iot' not in patch.get('traits', current[eid].get('traits', [])): patch['device'] = None
     validate(dict(current[eid], **patch), current)
     added = next((e for e in store['added'] if e['id'] == eid), None)
@@ -214,7 +222,7 @@ def add(space, entity, session=None):
     space = Path(space); store = _store(space); current = entities(space, session)
     entity = {k: v for k, v in entity.items() if k in EDITABLE+('id',)}
     entity.setdefault('traits', [])
-    if 'iot' in entity['traits'] and not entity.get('device'): entity['device'] = dict(protocol='mock', states={'power': 'off'}, actions=['on', 'off'])
+    if 'iot' in entity['traits'] and not entity.get('device'): entity['device'] = dict(protocol='mock', inputs={'power': {'type': 'toggle', 'value': 'off'}}, outputs={})
     if entity.get('id') in current: raise ValueError('That id is taken.')
     validate(entity, current)
     store['added'].append(entity); _save(space, store); return entities(space, session)[entity['id']]

@@ -1,12 +1,150 @@
 {
-  "note": "Authored ModOS items for the atlas space (copied to spaces/atlas/modos/items.json, which is not tracked). Gives the lab's knowledge blocks one-sentence summaries and attaches them to the lab and its corridor, replacing the old part_keys special case.",
-  "items": [
-    {"info_key": "Programmable Reality Lab", "about": ["zone:lab-2f", "zone:lab-hall-2f"],
-     "summary": "Who the lab is: PRL, its institute (ATLAS, CU Boulder), its director Prof. Ryo Suzuki and its students."},
-    {"info_key": "PRL research theme", "about": ["zone:lab-2f", "zone:lab-hall-2f"],
-     "summary": "What PRL researches: programmable reality, making the living environment dynamic and interactive through AR/VR, robotics and shape-changing interfaces."},
-    {"info_key": "PRL philosophy", "about": ["zone:lab-2f", "zone:lab-hall-2f"],
-     "summary": "How PRL works with students: student success and happiness first, doing what you are excited about, lab life and how research is done."},
-    {"info_key": "candy", "summary": "The candy bowl: this week's grad tea leftovers; people may help themselves."}
-  ]
+ "note": "Authored ModOS items for the atlas space (copied to spaces/atlas/modos/items.json, which is not tracked). Gives the lab's knowledge blocks one-sentence summaries and attaches them to the lab and its corridor, replacing the old part_keys special case.",
+ "items": [
+  {
+   "info_key": "Programmable Reality Lab",
+   "about": [
+    "zone:lab-2f",
+    "zone:lab-hall-2f"
+   ],
+   "summary": "Who the lab is: PRL, its institute (ATLAS, CU Boulder), its director Prof. Ryo Suzuki and its students."
+  },
+  {
+   "info_key": "PRL research theme",
+   "about": [
+    "zone:lab-2f",
+    "zone:lab-hall-2f"
+   ],
+   "summary": "What PRL researches: programmable reality, making the living environment dynamic and interactive through AR/VR, robotics and shape-changing interfaces."
+  },
+  {
+   "info_key": "PRL philosophy",
+   "about": [
+    "zone:lab-2f",
+    "zone:lab-hall-2f"
+   ],
+   "summary": "How PRL works with students: student success and happiness first, doing what you are excited about, lab life and how research is done."
+  },
+  {
+   "info_key": "candy",
+   "summary": "The candy bowl: this week's grad tea leftovers; people may help themselves."
+  },
+  {
+   "id": "status:printer",
+   "about": [
+    "layout:lab-printer"
+   ],
+   "type": "status",
+   "level": "attention",
+   "summary": "Lab printer: in use, printing a 12-page poster for Ana; about 4 minutes left.",
+   "body": "The lab printer is busy: it is printing a 12-page A1 poster for Ana's CHI submission. About 4 minutes left; the queue is otherwise empty. Paper tray: 60 sheets."
+  },
+  {
+   "id": "status:espresso",
+   "about": [
+    "layout:lab-espresso"
+   ],
+   "type": "status",
+   "level": "warning",
+   "summary": "Espresso machine: water tank almost empty; refill before making coffee.",
+   "body": "The espresso machine's water tank is almost empty (about 1 cup left). Refill it at the kitchen sink before making coffee. Beans were refilled this morning."
+  },
+  {
+   "id": "status:tv",
+   "about": [
+    "layout:lab-central-tv"
+   ],
+   "type": "status",
+   "level": "neutral",
+   "summary": "Lab TV: free now; booked for the 3 pm group meeting.",
+   "body": "The lab TV is free now. It is booked for the PRL group meeting at 3 pm today."
+  },
+  {
+   "id": "status:fridge",
+   "about": [
+    "layout:kitchen-fridge"
+   ],
+   "type": "status",
+   "level": "neutral",
+   "summary": "Kitchen fridge: cleaned out on Friday; label your food.",
+   "body": "The kitchen fridge was cleaned out on Friday. Unlabeled food is thrown away every Friday at 5 pm."
+  },
+  {
+   "id": "directory:2f",
+   "about": [
+    "zone:lab-2f",
+    "zone:kitchen-2f",
+    "zone:north-hall-2f",
+    "zone:central-hall-2f",
+    "zone:lab-hall-2f",
+    "zone:south-hall-2f",
+    "zone:west-hall-2f",
+    "zone:stair-landing-2f"
+   ],
+   "type": "text",
+   "summary": "2F directory: the rooms on the second floor and how they connect.",
+   "body": "Second floor of the ATLAS building. The Programmable Reality Lab (PRL) opens onto the lab corridor; its entry door is halfway along the corridor. The lab corridor joins the central corridor to the north. The kitchen is off the central corridor, on its west side, with two doors (north and south). The north corridor runs west from the top of the central corridor, past the ATLAS flyers and the colloquium posters, to the stair landing. The south corridor continues south from the lab corridor."
+  },
+  {
+   "id": "user:contacts",
+   "about": [
+    "user:me"
+   ],
+   "type": "text",
+   "summary": "The user's contacts: who they are and how to reach them (lab members, advisor, the lab list).",
+   "data": [
+    {
+     "id": "alice",
+     "name": "Alice Chen",
+     "role": "PhD student in PRL; organizes the lab's talk series",
+     "email": "alice.chen@example.edu"
+    },
+    {
+     "id": "ryo",
+     "name": "Ryo Suzuki",
+     "role": "Director of PRL, the user's advisor",
+     "email": "ryo.suzuki@example.edu"
+    },
+    {
+     "id": "ana",
+     "name": "Ana Ruiz",
+     "role": "PhD student in PRL; printing the CHI poster",
+     "email": "ana.ruiz@example.edu"
+    },
+    {
+     "id": "prl-list",
+     "name": "PRL lab list",
+     "role": "Everyone in the Programmable Reality Lab",
+     "email": "prl-lab@example.edu"
+    }
+   ]
+  },
+  {
+   "id": "steps:espresso",
+   "about": [
+    "layout:lab-espresso"
+   ],
+   "type": "steps",
+   "summary": "How to make an espresso with the lab's Breville machine, step by step.",
+   "body": "1. Fill the water tank (back of the machine) to the MAX line. 2. Grind 18 g of beans into the portafilter (grinder on the left, setting 12). 3. Tamp firmly and lock the portafilter in. 4. Put a cup under the spouts and press the double-cup button (about 30 s). 5. Knock out the puck into the bin and rinse the portafilter."
+  },
+  {
+   "id": "info:to-the-lighthouse",
+   "about": [
+    "item:to-the-lighthouse"
+   ],
+   "type": "text",
+   "summary": "To the Lighthouse (Virginia Woolf): the user's current book, reading Part 2 'Time Passes'.",
+   "body": "To the Lighthouse by Virginia Woolf (1927). The user is on page 142, Part 2 'Time Passes': ten years pass in a few pages; the Ramsays' summer house decays while the family is away; Mrs. Ramsay, Prue and Andrew die (told in brackets). Part 3 'The Lighthouse' returns to the house and the long-delayed trip to the lighthouse."
+  },
+  {
+   "id": "steps:desk-stretch",
+   "about": [
+    "user:me"
+   ],
+   "type": "steps",
+   "summary": "A 3-minute stretch routine for after long sitting (neck, shoulders, back).",
+   "body": "1. Neck: tilt the ear to the shoulder, 15 s each side. 2. Shoulders: roll back 10 times. 3. Upper back: clasp hands in front, round the back, push away, 20 s. 4. Chest: hands behind the back, lift and open the chest, 20 s. 5. Spine twist: sit tall, rotate to each side holding the backrest, 15 s each."
+  }
+ ]
 }

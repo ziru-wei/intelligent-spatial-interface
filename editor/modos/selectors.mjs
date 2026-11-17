@@ -57,17 +57,96 @@ function enumerated(name,sel){
   return {questions:{[name]:choose(sel.instructions||`Which ${name} fits user_question?`,options)},data:null,interpret(a){return {kind:'enum',value:a[name].choice};}};
 }
 
-/** For one MOD: {questions, data, interpret(answers) → {selector: selection}}. bodies: {itemId: body} of the items selectors read. */
+// A slot param of kind enum that the MOD's author left open (listed with `allowed`, not settled with `fixed`) is chosen per answer:
+// e.g. the motion an object makes while it speaks. Its selection is keyed "<slot>.<param>" (compose.mjs paramOf reads it).
+function slotParam(mod,slot,name,p){
+  const options=Object.fromEntries(p.allowed.map(v=>[v,v]));
+  return {questions:{[`${slot.id}__${name}`]:choose(`For "${mod.name}", the ${slot.use} "${slot.id}" can show its ${name} as one of these. Which fits user_question best?`,options)},
+    data:null,interpret(a){return {kind:'enum',value:a[`${slot.id}__${name}`].choice};}};
+}
+
+/** The selectors the MOD's active slots read (a variant that hides a slot does not ask for its data). */
+const reads=(slot,name)=>Array.isArray(slot.data)?slot.data.includes(name):slot.data===name;
+export const activeSelectors=mod=>Object.entries(mod.selectors||{}).filter(([name])=>mod.slots.some(s=>reads(s,name)));
+
+// From the MOD's context info (the items it asked for, of the selector's type):
+//   pick-one over device-state → which device and what to do with it (one of its actions, or just show its controls)
+//   pick-many over status      → one score per thing: is the question about it
+function fromContext(name,sel,ctx){
+  const items=(ctx.context||[]).filter(i=>(!sel.type||i.type===sel.type)&&!i.about.every(a=>a.startsWith('user:')||a.startsWith('feed:')));
+  const entityOf=i=>i.about[0],nameOf=i=>ctx.view?.nameOf(entityOf(i))||entityOf(i);
+  // pick-one over things (Delegate's attachment): which of the things around, by their information
+  if(sel.kind==='pick-one'&&sel.type!=='device-state'){
+    // things only (not places), the one the user points at said so: "send this" means it
+    const things=items.filter(it=>ctx.view?.entities.get(entityOf(it))?.kind!=='place'),pointed=ctx.view?.candidate;
+    items.splice(0,items.length,...things);
+    const options={none:'Something not listed here (the user names a thing that is not among these)'};items.forEach((it,i)=>options[`t${i}`]=`${entityOf(it)===pointed?'(the user is pointing at it) ':''}${nameOf(it)}: ${String(it.summary).replace(/\*\*/g,'').slice(0,90)}`);
+    const pi=items.findIndex(it=>entityOf(it)===pointed);
+    return {questions:{[name]:choose('Which of these things does user_question mean (what to send, share or act on)? "This", "it" or "the poster" while pointing means the thing the user is pointing at.',options)},data:null,
+      interpret(a){let c=a[name].choice;
+        // a near tie with "not listed" goes to the thing pointed at
+        if(c==='none'&&pi>=0&&(a[name].probabilities?.[`t${pi}`]??0)>=.3)c=`t${pi}`;
+        if(c==='none')return null;const it=items[Number(c.slice(1))];return {kind:'thing',entity:entityOf(it),item:it.id,label:nameOf(it)};}};
+  }
+  if(sel.kind==='pick-one'){
+    // which device, and what to do with it, from its typed Inputs (modos-system-design.md 3.7): turn a toggle on or off, move a level up
+    // or down (or to its ends), pick a choice, run a command; or only look at it
+    const options={none:'None of these devices'},map={};
+    items.forEach((it,i)=>{const dev=ctx.view?.entities.get(entityOf(it))?.device||{},n=nameOf(it);let j=0;
+      const add=(text,action)=>{const id=`d${i}_${j++}`;options[id]=`${n}: ${text}`;map[id]=[it,action];};
+      add(`look at it (${it.summary})`,null);
+      for(const [k,v] of Object.entries(dev.inputs||{})){const what=k.replace(/_/g,' ');
+        if(v.type==='toggle'){add(k==='power'?'turn on':`${what} on`,{key:k,op:'set',value:'on'});add(k==='power'?'turn off':`${what} off`,{key:k,op:'set',value:'off'});}
+        else if(v.type==='level'){add(`${what} up`,{key:k,op:'up'});add(`${what} down`,{key:k,op:'down'});add(`${what} to maximum`,{key:k,op:'set',value:v.max??100});add(`${what} to minimum`,{key:k,op:'set',value:v.min??0});}
+        else if(v.type==='choice')for(const o of v.options||[])add(`${what}: ${o}`,{key:k,op:'set',value:o});
+        else if(v.type==='command')for(const cmd of v.commands||[])add(`${cmd}${v.for?' '+v.for.replace(/_/g,' '):''}`,{key:k,op:'command',value:cmd});
+      }});
+    if(Object.keys(options).length>250)throw Error('Too many device options for one choice.');
+    return {questions:{[name]:choose('Which device does user_question mean, and what should happen to it? Choose a change only when the user asks for one (e.g. "make the light brighter" → lamp: brightness up); "look at it" when they ask what it is doing or how it is.',options)},
+      data:{devices:items.map(i=>i.summary)},
+      interpret(a){const c=a[name].choice;if(!map[c])return null;const [it,action]=map[c];return {kind:'device',entity:entityOf(it),action};}};
+  }
+  const qs=Object.fromEntries(items.map((it,i)=>[`${name}_${i}`,score(`Does user_question ask about the "${nameOf(it)}" (or about things like it)? Its state: ${it.summary}`)]));
+  return {questions:qs,data:null,interpret(a){
+    // The things asked about (0.5 and above); when none clearly is, the most likely one if it is still plausible (0.3).
+    const sc=items.map((_,i)=>a[`${name}_${i}`].score),best=sc.indexOf(Math.max(...sc));
+    const on=items.filter((_,i)=>sc[i]>=.5).concat(items.length&&sc[best]>=.3&&!sc.some(x=>x>=.5)?[items[best]]:[]);
+    return on.length?{kind:'entities',ids:on.map(entityOf),tones:Object.fromEntries(on.map(i=>[entityOf(i),i.level||'neutral']))}:null;}};
+}
+
+// pick-one over the user's contacts: to whom
+function contact(name,body){
+  const people=body.data,options={nobody:'Nobody named or meant'};people.forEach((p,i)=>options[`c${i}`]=`${p.name} (${p.role})`);
+  return {questions:{[name]:choose('Who does user_question want to send or share it with?',options)},data:null,
+    interpret(a){const c=a[name].choice;if(c==='nobody')return null;const p=people[Number(c.slice(1))];return {kind:'contact',id:p.id,name:p.name,email:p.email};}};
+}
+
+// pick-one over the places of the space (not where the user already is): which one to go to.
+function place(name,sel,ctx){
+  const v=ctx.view,here=new Set(v?.places||[]);
+  const places=[...(v?.entities.values()||[])].filter(e=>e.kind==='place'&&!here.has(e.id));
+  const options={none:'No place in the building'};places.forEach((p,i)=>options[`p${i}`]=`${p.name}${p.info?` (${p.info})`:''}`);
+  return {questions:{[name]:choose('Which place in the building does user_question want to go to or find?',options)},data:null,
+    interpret(a){const c=a[name].choice;return c==='none'?null:{kind:'place',entity:places[Number(c.slice(1))].id};}};
+}
+
+/** For one MOD: {questions, data, interpret(answers) → {selector or "slot.param": selection}}. bodies: {itemId: body} of the items
+ *  selectors read. No questions means no decision call. */
 export function selectorQuestions(mod,bodies,ctx){
-  const parts=Object.entries(mod.selectors||{}).map(([name,sel])=>{
+  const open=mod.slots.flatMap(slot=>Object.entries(slot.params||{}).filter(([,p])=>!('fixed' in p)&&p.allowed?.length>1).map(([n,p])=>[`${slot.id}.${n}`,slotParam(mod,slot,n,p)]));
+  const parts=activeSelectors(mod).map(([name,sel])=>{
     if(sel.kind==='enum')return [name,enumerated(name,sel)];
     if(sel.from==='allowed')return [name,allowed(name,sel,mod)];
+    if(sel.from==='context')return [name,fromContext(name,sel,ctx)];
+    if(sel.from==='places')return [name,place(name,sel,ctx)];
     const body=bodies[sel.from];
     if(!body)throw Error(`MOD ${mod.id}: no data for ${sel.from}.`);
     if(body.type==='timeseries'&&sel.kind==='pick-many')return [name,timeseries(name,sel,body)];
     if(body.type==='item-location'&&sel.kind==='pick-one')return [name,itemLocation(name,sel,body,ctx)];
+    if(Array.isArray(body.data)&&body.data[0]?.email&&sel.kind==='pick-one')return [name,contact(name,body)];
     throw Error(`MOD ${mod.id}: selector ${name} (${sel.kind} over ${body.type}) is not supported yet.`);
   });
+  parts.push(...open);
   return {
     questions:Object.assign({},...parts.map(([,p])=>p.questions)),
     data:Object.fromEntries(parts.filter(([,p])=>p.data).map(([n,p])=>[n,p.data])),
@@ -76,4 +155,4 @@ export function selectorQuestions(mod,bodies,ctx){
 }
 
 /** The items a MOD's selectors read from (feed:weather, user:belongings, ...). */
-export const selectorSources=mod=>[...new Set(Object.values(mod.selectors||{}).map(s=>s.from).filter(f=>f&&f!=='allowed'))];
+export const selectorSources=mod=>[...new Set(activeSelectors(mod).map(([,s])=>s.from).filter(f=>f&&!['allowed','context','places'].includes(f)))];

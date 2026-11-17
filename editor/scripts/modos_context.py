@@ -1,4 +1,5 @@
-"""ModOS memory: everything the system knows, as items attached to the entities of the digital twin.
+"""ModOS context info: everything the system knows about the space and the user, as items attached to the entities of the digital
+twin (the context the MODs ask for; not the user's memory).
 
 Entities are what the twin holds: zone:<id> (rooms), layout:<box> (furniture, doors, windows), comp:<id> (scene objects),
 user:me, and feed:<id> (external sources). An item is one piece of knowledge about one or more entities:
@@ -63,7 +64,7 @@ def _authored(space, items):
         iid = 'info:'+a['info_key'] if a.get('info_key') else a['id']
         base = items.get(iid, dict(id=iid, about=[], type=a.get('type', 'text'), source='authored', freshness='static'))
         base['about'] = list(dict.fromkeys(base.get('about', [])+a.get('about', [])))
-        for k in ('summary', 'type', 'body', 'source'):
+        for k in ('summary', 'type', 'body', 'source', 'level', 'data'):
             if k in a: base[k] = a[k]
         if a.get('info_key'): base['info_key'] = a['info_key']
         items[iid] = base
@@ -87,11 +88,31 @@ def _feed_items(d, mods):
                                            source='feed', freshness='cached', fetched_at=entry['fetched_at'])
     return out
 
+def _device_state(dev):
+    """A device in words, from its Outputs and Inputs: a task as its progress, a queue as how many wait, others as their values."""
+    out = []
+    for side in ('outputs', 'inputs'):
+        for k, v in (dev.get(side) or {}).items():
+            t = v.get('type')
+            if t == 'task' and v.get('title'):
+                k_ = min(1, (v.get('elapsed_s') or 0)/max(1, v.get('total_s') or 1))
+                out.append(f"{k}: {v['title']}, {int((v.get('total') or 0)*k_)} of {v.get('total')} {v.get('unit', '')}, about {max(0, round(((v.get('total_s') or 0)-(v.get('elapsed_s') or 0))/60))} min left{' (paused)' if v.get('paused') else ''}")
+            elif t == 'queue': out.append(f"{len(v.get('items') or [])} waiting in {k}")
+            elif t == 'command': out.append(f"can {', '.join(v.get('commands') or [])} ({k})")
+            elif t in ('toggle', 'choice', 'level', 'reading'): out.append(f"{k} {v.get('value')}{(' '+v['unit']) if v.get('unit') else ''}")
+            elif t == 'alert' and v.get('items'): out.append(f"alerts: {'; '.join(a.get('message', '') for a in v['items'])}")
+    return ', '.join(out)
+
 def items(d, mods):
     """Every item of the space (without bodies), for the installed MODs' feeds."""
     space = _space(d)
     out = _authored(space, _info_items(d, space))
     out.update(_user_items(d)); out.update(_feed_items(d, mods))
+    # Connected devices: one device-state item each, from the twin (the state is the twin's; IoTControl reads and changes it).
+    for e in modos_twin.entities(space, d if not (Path(d)/'space.json').is_file() else None).values():
+        dev = e.get('device')
+        if dev: out['device:'+e['id']] = dict(id='device:'+e['id'], about=[e['id']], type='device-state', source='twin', freshness='live',
+                                              summary=_short(f"{e['name']}: {_device_state(dev)}"))
     # Belongings are items of the twin; one item-location entry lists them all, so retrieval judges one summary, not every item.
     if modos_twin.belongings(space, d if not (Path(d)/'space.json').is_file() else None):
         out['user:belongings'] = dict(id='user:belongings', about=['user:me'], type='item-location', source='twin', freshness='static',
@@ -110,6 +131,10 @@ def body(d, item_id, mods):
         entry = modos_cache.read(space, item_id[5:])
         if not entry: raise ValueError('Feed not cached.')
         return dict(id=item_id, type=entry['type'], data=entry['data'], fetched_at=entry['fetched_at'])
+    if item_id.startswith('device:'):
+        e = modos_twin.entities(space, d if not (Path(d)/'space.json').is_file() else None).get(item_id[7:])
+        if not e or not e.get('device'): raise ValueError('Unknown device.')
+        return dict(id=item_id, type='device-state', data=dict(entity=e['id'], name=e['name'], **e['device']))
     if item_id == 'user:belongings':
         return dict(id=item_id, type='item-location', data=modos_twin.belongings(space, d))
     if item_id == 'user:household':
@@ -120,6 +145,7 @@ def body(d, item_id, mods):
             ctx = user_context.read(d, [g]); keep = {k: v for k, v in ctx.items() if k not in ('context_groups', 'loaded_groups', 'mock', 'note', 'user')}
             return dict(id=item_id, type=typ, data=keep)
     authored = next((i for i in _authored(space, {}).values() if i['id'] == item_id), None)
+    if authored and 'data' in authored: return dict(id=item_id, type=authored['type'], data=authored['data'])
     if authored and 'body' in authored: return dict(id=item_id, type=authored['type'], text=authored['body'])
     raise ValueError('Unknown item.')
 

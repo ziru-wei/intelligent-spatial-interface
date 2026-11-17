@@ -1,0 +1,19 @@
+{
+  "_doc": "Preset buttons (icon + word) for the Icon Button cue. Fill picks one for an action by its key; when none fits, the system writes a text-only button instead. A device command or action maps here by rule first (ops), then by choice over the labels.",
+  "presets": [
+    {"id": "send",     "icon": "➤", "label": "Send",     "ops": ["send"]},
+    {"id": "confirm",  "icon": "✓", "label": "Confirm",  "ops": ["confirm"]},
+    {"id": "cancel",   "icon": "✕", "label": "Cancel",   "ops": ["cancel"]},
+    {"id": "turn_on",  "icon": "⏻", "label": "Turn on",  "ops": ["set:power:true", "toggle:power:off"]},
+    {"id": "turn_off", "icon": "⏻", "label": "Turn off", "ops": ["set:power:false", "toggle:power:on"]},
+    {"id": "start",    "icon": "▶", "label": "Start",    "ops": ["start"]},
+    {"id": "pause",    "icon": "⏸", "label": "Pause",    "ops": ["pause"]},
+    {"id": "resume",   "icon": "▶", "label": "Resume",   "ops": ["resume"]},
+    {"id": "stop",     "icon": "■", "label": "Stop",     "ops": ["stop"]},
+    {"id": "next",     "icon": "→", "label": "Next",     "ops": ["next"]},
+    {"id": "back",     "icon": "←", "label": "Back",     "ops": ["back", "previous"]},
+    {"id": "retry",    "icon": "↻", "label": "Retry",    "ops": ["retry"]},
+    {"id": "open",     "icon": "↗", "label": "Open",     "ops": ["open"]},
+    {"id": "call",     "icon": "✆", "label": "Call",     "ops": ["call"]}
+  ]
+}

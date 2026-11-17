@@ -1,0 +1,232 @@
+{
+  "note": "Demo videos of each MOD, recorded from the editor's headset view with the pipeline beside it (demos/record.mjs). Not part of the system: change a clip here and run `node demos/record.mjs <name>` to record it again. recording: a scenario of the space; ask_at: when (s) in the recording the question is asked; start/duration: the part of the replay recorded (the replay holds at the question while the answer comes); setup: MOD customizations applied while asking (as in the MODs tab), reset afterwards. agent_speed < 1 replays the agent's work in slow motion so each stage can be seen in turn (the video says so). devices: {entity: power} set before asking, so a device action starts from the same state. press: {at: s} presses an action card's confirm button (Send) at that second of the clip.",
+  "space": "atlas",
+  "server": "http://127.0.0.1:8766",
+  "viewport": [
+    1920,
+    1080
+  ],
+  "pipeline": "side",
+  "bridge": {
+    "provider": "gemini",
+    "model": "gemini-3.5-flash-lite",
+    "effort": "minimal"
+  },
+  "clips": [
+    {
+      "name": "labinfo-panorama",
+      "mod": "LabInfo",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "What does this lab work on?",
+      "start": 0,
+      "duration": 20
+    },
+    {
+      "name": "labinfo-wall",
+      "mod": "LabInfo",
+      "recording": "atlas_rec_4",
+      "ask_at": 1.0,
+      "question": "What is this lab about?",
+      "start": 0,
+      "duration": 15
+    },
+    {
+      "name": "findmy",
+      "mod": "FindMy",
+      "recording": "atlas_rec_4",
+      "ask_at": 7.0,
+      "question": "Where are my headphones?",
+      "start": 5.5,
+      "duration": 26
+    },
+    {
+      "name": "weather-lab",
+      "mod": "Weather",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.5,
+      "question": "Will it rain this weekend?",
+      "start": 0,
+      "duration": 14
+    },
+    {
+      "name": "weather-corridor",
+      "mod": "Weather",
+      "recording": "atlas_rec_2",
+      "ask_at": 1.0,
+      "question": "Do I need an umbrella tonight?",
+      "start": 0,
+      "duration": 14
+    },
+    {
+      "name": "worldinfo-text",
+      "mod": "WorldInfo",
+      "recording": "atlas_rec_3",
+      "ask_at": 48.6,
+      "question": "What is this study about?",
+      "start": 46.5,
+      "duration": 18
+    },
+    {
+      "name": "worldinfo-voice",
+      "mod": "WorldInfo",
+      "recording": "atlas_rec_3",
+      "ask_at": 18.1,
+      "question": "Can I eat you?",
+      "start": 15.5,
+      "duration": 18,
+      "setup": {
+        "worldinfo": {
+          "variant": "voice"
+        }
+      }
+    },
+    {
+      "name": "iotcontrol-brighter",
+      "mod": "IoTControl",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "I want to make the light brighter",
+      "start": 0,
+      "duration": 16,
+      "devices": {
+        "layout:lab-desk-lamp": {
+          "power": "on",
+          "brightness": 40
+        }
+      }
+    },
+    {
+      "name": "objectstatus-printer",
+      "mod": "ObjectStatus",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "Is the printer free?",
+      "start": 0,
+      "duration": 16
+    },
+    {
+      "name": "wayfinding-kitchen",
+      "mod": "Wayfinding",
+      "recording": "atlas_rec_4",
+      "ask_at": 1.0,
+      "question": "How do I get to the kitchen?",
+      "start": 0,
+      "duration": 16
+    },
+    {
+      "name": "iotcontrol-printer",
+      "mod": "IoTControl",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "How long until my print job is done?",
+      "start": 0,
+      "duration": 18
+    },
+    {
+      "name": "delegate-poster",
+      "mod": "Delegate",
+      "recording": "atlas_rec_2",
+      "ask_at": 7.1,
+      "question": "Send this poster to Alice",
+      "start": 5.5,
+      "duration": 20,
+      "press": {
+        "at": 15
+      }
+    },
+    {
+      "name": "delegate-describe",
+      "mod": "Delegate",
+      "recording": "atlas_rec_2",
+      "ask_at": 7.1,
+      "question": "Describe this and draft a message to Alice",
+      "start": 5.5,
+      "duration": 20,
+      "press": {
+        "at": 15
+      }
+    },
+    {
+      "name": "delegate-photo",
+      "mod": "Delegate",
+      "recording": "atlas_rec_2",
+      "ask_at": 7.1,
+      "question": "Take a photo of this and send it to Alice",
+      "start": 5.5,
+      "duration": 20,
+      "press": {
+        "at": 15
+      }
+    },
+    {
+      "name": "agenda-afternoon",
+      "mod": "Agenda",
+      "recording": "atlas_rec_4",
+      "ask_at": 2.5,
+      "question": "What do I have this afternoon?",
+      "start": 1.0,
+      "duration": 16
+    },
+    {
+      "name": "bookcompanion-lighthouse",
+      "mod": "BookCompanion",
+      "recording": "atlas_rec_5",
+      "ask_at": 5.0,
+      "question": "Remind me what happened in the part I'm reading",
+      "start": 3.5,
+      "duration": 18
+    },
+    {
+      "name": "stepguide-espresso",
+      "mod": "StepGuide",
+      "recording": "atlas_rec_5",
+      "ask_at": 47.0,
+      "question": "How do I make an espresso with this?",
+      "start": 45.5,
+      "duration": 18
+    },
+    {
+      "name": "livecoach-stretch",
+      "mod": "LiveCoach",
+      "recording": "atlas_rec_5",
+      "ask_at": 5.5,
+      "question": "How should I stretch after sitting all day?",
+      "start": 4.0,
+      "duration": 18
+    },
+    {
+      "name": "reminder-espresso",
+      "mod": "Reminder",
+      "recording": "atlas_rec_5",
+      "ask_at": 48.5,
+      "question": "Remind me to refill the water tank tomorrow morning",
+      "start": 47.0,
+      "duration": 16
+    },
+    {
+      "name": "weather-umbrella",
+      "mod": "Weather",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.5,
+      "question": "Should I bring my umbrella?",
+      "start": 0,
+      "duration": 18
+    },
+    {
+      "name": "iotcontrol-tv",
+      "mod": "IoTControl",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "Switch the TV to HDMI 2",
+      "start": 0,
+      "duration": 16,
+      "devices": {
+        "layout:lab-central-tv": {
+          "power": "on"
+        }
+      }
+    }
+  ],
+  "agent_speed": 0.35
+}

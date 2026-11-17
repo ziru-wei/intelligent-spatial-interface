@@ -32,55 +32,50 @@ export function createWeatherPreview(container,playback,invalidate){
  return {render};
 }
 
-// World-space controls: real round buttons, a raised rail and a spherical thumb.
-// The invisible carrier preserves UV ray actions for both desktop and XR pointers.
+// World-space controls from the shared spatial UI library (modos-system-design.md 4.4): the Date Picker when the forecast spans days, the
+// Playback (Play/Pause, a rail with a stop per entry, the time on the thumb) for the times within the day. Weather has no controls of its
+// own; it declares these in its MOD (modos/mods/weather.json `controls.ui`). They sit under the answer, turned the same way, and are
+// pressed by a ray from the pointer (desktop or XR).
 export async function createWeatherSurfacePreview(scene,playback,invalidate){
- const THREE=await import('three'),ASPECT=.40;
- const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,toneMapped:false}));mesh.material.visible=false;mesh.name='weather-preview-component';mesh.visible=false;scene.add(mesh);
- const bodies=[],labels=[],rings=[],dayButtons=[],daysAt=[-.28,0,.28],trackStart=-.30,trackEnd=.44,trackY=-.045;
- function solid(){const m=new THREE.ShaderMaterial({depthWrite:true,toneMapped:false,uniforms:{tint:{value:new THREE.Color()}},vertexShader:'varying vec3 n;void main(){n=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec3 n;uniform vec3 tint;void main(){vec3 N=normalize(n),L=normalize(vec3(-.45,.65,1.));float diffuse=.62+.38*max(0.,dot(N,L));float shine=pow(max(0.,dot(reflect(-L,N),vec3(0,0,1))),28.)*.18;gl_FragColor=vec4(tint*diffuse+vec3(shine),1.);\n#include <colorspace_fragment>\n}'});return m;}
- function part(geometry,x,y,z,name){const o=new THREE.Mesh(geometry,solid());o.name=name;o.position.set(x,y/ASPECT,z);o.scale.y=1/ASPECT;o.renderOrder=9;o.onBeforeRender=()=>o.material.uniforms.tint.value.copy(mesh.material.color);mesh.add(o);bodies.push(o);return o;}
- function label(width,height,x,y,z,name){
-  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=Math.round(512*height/width);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
-  const o=new THREE.Mesh(new THREE.PlaneGeometry(width,height),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,toneMapped:false}));o.position.set(x,y/ASPECT,z);o.scale.y=1/ASPECT;o.name=name;o.renderOrder=12;
-  o.onBeforeRender=()=>{const c=mesh.material.color,bright=c.r*.2126+c.g*.7152+c.b*.0722>.24;o.material.color.setRGB(...(bright?[.012,.018,.026]:[.97,.98,1.]));};
-  mesh.add(o);labels.push(o);let previous='';
-  o.userData.write=(text,small='')=>{const key=text+'|'+small;if(previous===key)return;previous=key;const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height);c.fillStyle='white';c.textAlign='center';c.textBaseline='middle';
-   if(small){c.font='650 136px system-ui';c.fillText(small,256,120);c.font='700 232px system-ui';c.fillText(text,256,310);}else{c.font=`650 ${Math.round(canvas.height*.72)}px system-ui`;c.fillText(text,256,canvas.height/2);}texture.needsUpdate=true;};return o;
+ const THREE=await import('three'),cues=await import('./spatial-ui/cues.mjs');
+ // an invisible carrier (the agent renderer tints and places it as the answer's footer)
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1e-4,1e-4),new THREE.MeshBasicMaterial({visible:false}));mesh.name='weather-preview-component';mesh.visible=false;scene.add(mesh);
+ const content=new THREE.Group();mesh.add(content);
+ const ORIGIN={center:[0,0,0],size:[0,0,0],yaw:0},EYE=new THREE.Vector3(0,0,1);
+ let key='',local=[],dayChoices=[],parts=[],hits=[],rail=null,height=0,natural={w:.8,h:.2};
+ function build(s){
+  content.clear();parts=[];hits=[];rail=null;
+  if(s.component==='weather-day-buttons'&&dayChoices.length>1)parts.push(cues.datePicker(ORIGIN,EYE,{dates:dayChoices,value:s.entry.date,y:.1}));
+  if(local.length>1){const p=cues.playback(ORIGIN,EYE,{stops:local.map(v=>v.e.local_time||v.e.period),index:Math.max(0,local.findIndex(v=>v.index===s.index)),playing:s.playing,y:-.04});parts.push(p);rail=p.group;}
+  for(const p of parts)content.add(p.group);
+  content.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(content),size=b.getSize(new THREE.Vector3());natural={w:Math.max(.2,size.x),h:Math.max(.05,size.y)};
+  content.position.set(-(b.min.x+b.max.x)/2,-(b.min.y+b.max.y)/2,0);
+  content.traverse(o=>{if(o.userData.action)hits.push(o);});
  }
- function button(x,y,r,name){const geometry=new THREE.CylinderGeometry(r*.93,r,.026,48,1);geometry.rotateX(Math.PI/2);const body=part(geometry,x,y,.016,name);const rim=part(new THREE.TorusGeometry(r,.004,10,48),x,y,.032,name+'-rim');const text=label(r*1.65,r*1.65,x,y,.034,name+'-label');return {body,rim,text};}
- for(let i=0;i<3;i++){const b=button(daysAt[i],.075,.072,'weather-date-button');const ring=part(new THREE.TorusGeometry(.083,.005,10,48),daysAt[i],.075,.023,'weather-selected-date');b.ring=ring;rings.push(ring);dayButtons.push(b);}
- const play=button(-.415,trackY,.044,'weather-play-button');play.text.userData.write('Ⅱ');
- const railGeometry=new THREE.CylinderGeometry(.012,.012,trackEnd-trackStart,20);railGeometry.rotateZ(Math.PI/2);const rail=part(railGeometry,(trackStart+trackEnd)/2,trackY,.021,'weather-slider-rail');
- const thumb=part(new THREE.BoxGeometry(.014,.070,.022),trackStart,trackY,.034,'weather-slider-thumb');thumb.renderOrder=10;
- // Time is a large floating label. It uses the text's polarity because it sits directly on the scene.
- const time=label(.25,.068,.075,-.032,.048,'weather-preview-time');time.onBeforeRender=()=>time.material.color.copy(mesh.material.color);
- const months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];let dayChoices=[],local=[],height=0;
- mesh.userData.controls3D={dayButtons,play,rail,thumb,time};
  function update(widget){const s=playback.state;mesh.visible=!!widget?.visible&&s.total>1&&s.component!=='weather-single';if(!mesh.visible)return 0;
-  const w=widget.userData.width*.875;height=w*ASPECT;mesh.userData.owner=widget;mesh.userData.height=height;mesh.position.copy(widget.position);mesh.quaternion.copy(widget.quaternion);
-  mesh.userData.responseOffset=new THREE.Vector3(0,-widget.userData.height/2+widget.userData.width*32/1024+height/2,.012);mesh.position.add(mesh.userData.responseOffset.clone().applyQuaternion(mesh.quaternion));mesh.scale.set(w,height,w);mesh.material.color.copy(widget.userData.text.material.color);
   local=s.entries.map((e,index)=>({e,index})).filter(({e})=>s.component!=='weather-day-buttons'||e.date===s.entry.date);
   const day=s.dates.indexOf(s.entry.date),start=Math.max(0,Math.min(s.dates.length-3,day-1));dayChoices=s.component==='weather-day-buttons'?s.dates.slice(start,start+3):[];
-  dayButtons.forEach((b,i)=>{const date=dayChoices[i];b.body.visible=b.rim.visible=b.text.visible=!!date;b.ring.visible=!!date&&date===s.entry.date;if(date){const [,m,d]=date.split('-');b.text.userData.write(String(Number(d)),months[Number(m)-1]);}});
-  time.position.y=(trackY-.085)/ASPECT;time.userData.write(s.entry.local_time||s.entry.period);play.text.userData.write(s.playing?'Ⅱ':'▶');
-  const k=Math.min(1,(Math.max(0,local.findIndex(v=>v.index===s.index))+s.fraction)/Math.max(1,local.length-1));thumb.position.x=trackStart+(trackEnd-trackStart)*k;time.position.x=thumb.position.x;
-  mesh.updateMatrixWorld(true);return height+.025;
+  const k=[s.component,dayChoices.join(),s.entry.date,s.index,s.playing].join('|');if(k!==key){key=k;build(s);}
+  // in the footer the answer keeps free for it (src/agent.mjs), as wide as the answer allows
+  const scale=Math.min(widget.userData.width*.875/natural.w,widget.userData.width*.3/natural.h);height=natural.h*scale;
+  mesh.quaternion.copy(widget.quaternion);mesh.scale.setScalar(scale);
+  mesh.userData.responseOffset=new THREE.Vector3(0,-widget.userData.height/2+widget.userData.width*32/1024+height/2,.012);
+  mesh.position.copy(widget.position).add(mesh.userData.responseOffset.clone().applyQuaternion(mesh.quaternion));mesh.userData.owner=widget;mesh.userData.height=height;
+  for(const p of parts)p.update(performance.now());mesh.updateMatrixWorld(true);return height+.025;
  }
- function controlAt(uv){const x=uv.x-.5,y=(uv.y-.5)*ASPECT;
-  for(let i=0;i<dayChoices.length;i++)if(Math.hypot(x-daysAt[i],y-.075)<.085)return {kind:'day',index:i};
-  if(Math.hypot(x+.415,y-trackY)<.06)return {kind:'play'};
-  if(Math.abs(y-trackY)<.055&&x>trackStart-.055)return {kind:'slider'};return null;
- }
- function action(uv,drag=false){const c=drag?{kind:'slider'}:controlAt(uv);if(!c)return;
-  if(c.kind==='day')playback.day(dayChoices[c.index]);else if(c.kind==='play')playback.toggle();else{const t=Math.max(0,Math.min(1,(uv.x-.5-trackStart)/(trackEnd-trackStart)));playback.seek(local[Math.round(t*(local.length-1))]?.index||0);}invalidate();}
- function hit(ndc,camera){if(!mesh.visible)return null;const ray=new THREE.Raycaster();ray.setFromCamera(ndc,camera);return ray.intersectObject(mesh,false)[0];}
- function attach(element,getCamera){let captured=false,moved=false;
+ function act(h,drag=false){const a=drag?{kind:'scrub'}:h.object.userData.action;if(!a)return;
+  if(a.kind==='date')playback.day(a.value);else if(a.kind==='play'||a.kind==='pause')playback.toggle();
+  else if(rail){const r=rail.userData.rail,x=rail.worldToLocal(h.point.clone()).x,t=Math.max(0,Math.min(1,(x-r.x0)/(r.x1-r.x0)));playback.seek(local[Math.round(t*(local.length-1))]?.index||0);}
+  invalidate();}
+ function hit(ndc,camera,only=null){if(!mesh.visible||!hits.length)return null;const ray=new THREE.Raycaster();ray.setFromCamera(ndc,camera);mesh.updateMatrixWorld(true);
+  return ray.intersectObjects(only||hits,false)[0]||null;}
+ function attach(element,getCamera){let captured=false;
   const ndc=e=>{const r=element.getBoundingClientRect();return new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2);};
-  element.addEventListener('pointerdown',e=>{const h=hit(ndc(e),getCamera()),c=h&&controlAt(h.uv);if(!c)return;captured=true;moved=c.kind==='slider';playback.scrub(moved);action(h.uv);element.setPointerCapture(e.pointerId);e.preventDefault();e.stopImmediatePropagation();},true);
-  element.addEventListener('pointermove',e=>{if(!captured)return;const h=hit(ndc(e),getCamera());if(h&&moved)action(h.uv,true);e.preventDefault();e.stopImmediatePropagation();},true);
+  const grips=()=>hits.filter(o=>o.userData.action?.kind==='scrub');
+  element.addEventListener('pointerdown',e=>{const h=hit(ndc(e),getCamera());if(!h)return;captured=h.object.userData.action.kind==='scrub';if(captured){playback.scrub(true);element.setPointerCapture(e.pointerId);}act(h);e.preventDefault();e.stopImmediatePropagation();},true);
+  element.addEventListener('pointermove',e=>{if(!captured)return;const h=hit(ndc(e),getCamera(),grips());if(h)act(h,true);e.preventDefault();e.stopImmediatePropagation();},true);
   const end=e=>{if(!captured)return;captured=false;playback.scrub(false);e.preventDefault();e.stopImmediatePropagation();};element.addEventListener('pointerup',end,true);element.addEventListener('pointercancel',end,true);
-  element.addEventListener('click',e=>{const h=hit(ndc(e),getCamera());if(h&&controlAt(h.uv)){e.preventDefault();e.stopImmediatePropagation();}},true);
+  element.addEventListener('click',e=>{if(hit(ndc(e),getCamera())){e.preventDefault();e.stopImmediatePropagation();}},true);
  }
- return {mesh,update,attach,action,dispose(){mesh.removeFromParent();mesh.traverse(o=>{o.geometry?.dispose();o.material?.map?.dispose();o.material?.dispose();});}};
+ return {mesh,update,attach,action(){},dispose(){mesh.removeFromParent();mesh.traverse(o=>{o.geometry?.dispose();o.material?.map?.dispose();o.material?.dispose?.();});}};
 }

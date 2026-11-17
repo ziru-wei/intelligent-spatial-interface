@@ -30,7 +30,7 @@ class TwinTest(unittest.TestCase):
             item = twin.add(sp, {'id': 'item:keys', 'kind': 'item', 'name': 'Keys', 'parent': 'layout:shelf-bottom'})
             self.assertEqual(item['place'], 'zone:lab')            # where its container is
             lamp = twin.add(sp, {'id': 'device:lamp', 'kind': 'device', 'name': 'Lamp', 'place': 'zone:kitchen', 'traits': ['iot']})
-            self.assertEqual(lamp['device']['actions'], ['on', 'off'])
+            self.assertEqual(lamp['device']['inputs']['power'], {'type': 'toggle', 'value': 'off'})
             self.assertIn('keys', [b['item_id'] for b in twin.belongings(sp)])
             for bad, msg in [({'parent': 'zone:lab'}, 'only be part of other furniture'),
                              ({'parent': 'item:keys'}, 'inside itself')]:

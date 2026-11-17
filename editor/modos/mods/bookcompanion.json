@@ -1,0 +1,53 @@
+{
+  "id": "bookcompanion",
+  "name": "BookCompanion",
+  "description": "Help with a book the user is reading: its story, chapters, characters or ideas, and where they are in it. Not for posters, flyers, signs or labels on things (those are about the thing).",
+  "examples": [
+    "What does this chapter say about memory?",
+    "Summarize this page",
+    "Who is this character again?"
+  ],
+  "scope": "global",
+  "knowledge": [
+    {
+      "type": "file"
+    }
+  ],
+  "selectors": {},
+  "slots": [
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "object",
+        "of": "referent"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
+  ],
+  "provider": "system",
+  "status": "spec",
+  "note": "Foundational MOD defined as a spec (modos-system-design.md 5.3): the system can choose it and its text answers; its selectors and representations are not implemented yet.",
+  "variants": {
+    "default": {
+      "label": "Notes beside the book",
+      "description": "Help with a book or document the user is reading: explain, summarize or look up what is in it.",
+      "slots": [
+        "answer"
+      ],
+      "text": "answer"
+    }
+  },
+  "default_variant": "default"
+}

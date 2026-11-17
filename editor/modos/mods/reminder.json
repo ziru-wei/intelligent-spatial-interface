@@ -1,0 +1,67 @@
+{
+  "id": "reminder",
+  "name": "Reminder",
+  "description": "Reminders tied to a thing at a time: remind the user to do something with an object, or what is due.",
+  "examples": [
+    "Remind me to water the plant at 5",
+    "What do I need to bring tomorrow?",
+    "Did I have a reminder about the oven?"
+  ],
+  "scope": "global",
+  "knowledge": [
+    {
+      "type": "schedule"
+    }
+  ],
+  "selectors": {},
+  "slots": [
+    {
+      "id": "target",
+      "use": "highlight",
+      "anchor": {
+        "kind": "object"
+      },
+      "ui": {
+        "fixed": [
+          "breathingBox"
+        ]
+      }
+    },
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "relative",
+        "to": "target",
+        "side": "beside"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
+  ],
+  "provider": "system",
+  "status": "spec",
+  "note": "Foundational MOD defined as a spec (modos-system-design.md 5.3): the system can choose it and its text answers; its selectors and representations are not implemented yet.",
+  "variants": {
+    "default": {
+      "label": "Highlight the thing",
+      "description": "Reminders tied to a thing at a time: remind the user to do something with an object, or what is due.",
+      "slots": [
+        "target",
+        "answer"
+      ],
+      "text": "answer"
+    }
+  },
+  "default_variant": "default"
+}

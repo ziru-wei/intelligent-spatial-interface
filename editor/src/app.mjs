@@ -25,6 +25,7 @@ import {createWeatherScene} from './weather-scene.mjs';
 import {createTwin} from './twin.mjs';
 import {createLayoutEditor,dropCenter} from './layout-editor.mjs';
 import {createTwinPanel} from './twin-panel.mjs';
+import {createModsPanel} from './mods-panel.mjs';
 import {createOutline} from './layout-outline.mjs';
 import {outline as layoutOutline,roomOf,path as labelPath} from './layout-tree.mjs';
 import {createStructure} from './layout-structure.mjs';
@@ -36,6 +37,13 @@ import {createAgentLayer,READING,formatSpeed,stepsAt,setTextBehavior,TEXT_BEHAVI
 import {questionClock} from './question-caption.mjs';
 import {readModel,modelBounds,fitScale,boxFromModel,swapHTML,wireSwap} from './model-fit.mjs';
 import {createEgo} from './ego.mjs';
+import {createDiorama} from './diorama.mjs';
+import {createCueHost} from './cue-host.mjs';
+import {createDeviceCues} from './device-cues.mjs';
+import {createActionCues} from './action-cues.mjs';
+import * as cues from './spatial-ui/cues.mjs';
+import {renderPipeline,whereAt} from './pipeline-view.mjs';
+import {questionCaption} from './question-caption.mjs';
 import {buildTextTargets,calibrate,applyOffsets} from './layout-surfaces.mjs';
 import {createRelationTracker,viewOf} from './spatial-relations.mjs';
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search);
@@ -202,6 +210,44 @@ function markColor(points,kind='corners'){
   return {color:new THREE.Color().setRGB(...pickStyle(px,w,h,0).text)};
 }
 const egoScene=createEgo({getTarget:egoTarget,lighting:{environment:scene.environment,lights:scene.children.filter(o=>o.isLight).map(l=>l.clone())}});
+const highlightScene=createCueHost({getRooms:()=>layoutRooms}),devicePanel=createDeviceCues();devicePanel.attach($('stage'),()=>camera,()=>update());
+// A photo of a thing (Delegate's Photo Capture): the recorded camera frame cropped to the thing's box as seen from `cam`, a little larger.
+function snapshot(box,cam=camera){
+  const img=textures.get(index)?.image;if(!img?.width)return null;
+  const c=new THREE.Vector3(...box.center),h=box.size.map(v=>v/2*1.15),pts=[];
+  for(const sx of [-1,1])for(const sy of [-1,1])for(const sz of [-1,1])pts.push(new THREE.Vector3(c.x+sx*h[0],c.y+sy*h[1],c.z+sz*h[2]).project(cam));
+  const W=img.width,H=img.height,xs=pts.map(p=>(p.x+1)/2*W),ys=pts.map(p=>(1-p.y)/2*H);
+  const x0=Math.max(0,Math.min(...xs)),x1=Math.min(W,Math.max(...xs)),y0=Math.max(0,Math.min(...ys)),y1=Math.min(H,Math.max(...ys));if(x1-x0<8||y1-y0<8)return null;
+  const w=Math.min(640,Math.round(x1-x0)),out=document.createElement('canvas');out.width=w;out.height=Math.round(w*(y1-y0)/(x1-x0));
+  out.getContext('2d').drawImage(img,x0,y0,x1-x0,y1-y0,0,0,out.width,out.height);return out;
+}
+const actionCard=createActionCues({getSnapshot:snapshot});actionCard.attach($('stage'),()=>camera,()=>update());
+window.modosUI={actionCard,devicePanel};
+// Spatial UI cue previews (src/spatial-ui/cues.mjs) for the cue gallery: window.modosCues.show(name, target id, options) puts one cue on a
+// thing ('layout:<box>') or a room ('zone:<room>') of this scene, seen from the current camera.
+const cueScene=new THREE.Scene();cueScene.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));{const l=new THREE.DirectionalLight(0xffffff,1.6);l.position.set(.4,1,1.2);cueScene.add(l);}
+let cueParts=[];
+window.modosCues={
+  show(name,target,options={},extra=null){
+    for(const p of cueParts)cueScene.remove(p.group);cueParts=[];if(!name)return update();
+    const box=id=>{const b=layout.boxes.find(x=>'layout:'+x.id===id);return b&&{center:b.center,size:b.size,yaw:b.yaw||0};};
+    const room=id=>{const r=layoutRooms.find(x=>'zone:'+x.id===id);if(!r)return null;const poly=r.polygon?.[0];const ring=Array.isArray(poly?.[0]?.[0])?poly[0]:poly;return {ring,floorY:r.floorY??0};};
+    const eye=camera.position.clone(),t=target?.startsWith('zone:')?room(target):box(target);
+    const make={breathingBox:()=>cues.breathingBox(t),footprintRing:()=>cues.footprintRing(t),beacon:()=>cues.beacon(t),cornerBrackets:()=>cues.cornerBrackets(t),
+      floorArea:()=>cues.floorArea(t),doorwayGlow:()=>cues.doorwayGlow(t,options.name||'Kitchen',eye),arrowAhead:()=>cues.arrowAhead(t,camera),
+      floorPath:()=>cues.floorPath(eye,t.center,options.floorY??(eye.y-1.5)),haloDial:()=>cues.haloDial(t,eye,options),edgeBar:()=>cues.edgeBar(t,eye,options),
+      powerPuck:()=>cues.powerPuck(t,eye,options),iconButton:()=>cues.iconButton(t,eye,options),datePicker:()=>cues.datePicker(t,eye,options),playback:()=>cues.playback(t,eye,options),edgeTabs:()=>cues.edgeTabs(t,eye,options),progressRail:()=>cues.progressRail(t,eye,options),
+      cardStack:()=>cues.cardStack(t,eye,options),pinnedTags:()=>cues.pinnedTags(t,eye,options),statusPulse:()=>cues.statusPulse(t,options),tetherSend:()=>cues.tetherSend(t,eye,options)}[name];
+    if(!t||!make)throw Error(`No ${t?'cue':'target'} ${t?name:target}.`);
+    // controls and labels on a thing read at the same size whatever its distance (the same rule as the spatial panels)
+    const dist=t.center?eye.distanceTo(new THREE.Vector3(...t.center)):1,k=Math.min(2.4,Math.max(1,dist/1.1));cues.setScale(k);
+    const part=make();if(['haloDial','powerPuck','iconButton','datePicker','playback','edgeTabs','progressRail','cardStack','statusPulse'].includes(name))part.group.scale.setScalar(k);cues.setScale(1);
+    cueParts=[part,...(extra?[cues.breathingBox(box(extra))]:[])];for(const p of cueParts)cueScene.add(p.group);update();
+  },
+};
+function renderCues(renderer){if(!cueParts.length)return;const now=performance.now();for(const p of cueParts)p.update(now,camera);
+  const auto=renderer.autoClear;renderer.autoClear=false;try{renderer.clearDepth();renderer.render(cueScene,camera);}finally{renderer.autoClear=auto;}requestAnimationFrame(update);}   // demos/record.mjs presses an action card's Send through this
+const dioramaScene=createDiorama({loader,lighting:{environment:scene.environment,lights:scene.children.filter(o=>o.isLight).map(l=>l.clone())}});
 const egoApproach=createApproachRemoval();
 const egoStatus=Object.assign(document.createElement('p'),{className:'muted',id:'ego-status',hidden:true});
 const findmyApproach=createApproachRemoval();
@@ -303,7 +349,7 @@ function paint(){
     removed=findmyApproach.update({key,frame:index,enabled:true,distance,distanceM:approachSettings.handApproachDistance});
     findmyStatus.hidden=false;findmyStatus.textContent=removed?'Effect removed · hand reached the box':handData.status==='no-depth'?'Hand approach needs recorded depth':distance==null?'Waiting for a hand with valid depth':`Hand to box · ${distance.toFixed(2)} m`;
   }
-  findmyScene.setResponse(responseSettings.mods.findmy.enabled&&!removed?found:null);
+  findmyScene.setResponse(null);   // drawn by the cue host (src/cue-host.mjs) now
   const egoAnswer=currentResponses.find(r=>r.question_id===latestQuestion&&r.ego);
   egoScene.setResponse(responseSettings.mods.ego.enabled?egoAnswer:null);
   // Each object's effect goes once a hand (with valid recorded depth) touches its box, when Remove effect on touch is on.
@@ -316,6 +362,18 @@ function paint(){
     egoStatus.hidden=false;egoStatus.textContent=gone.length?`Effect removed · ${gone.map(o=>o.label).join(', ')} touched`:handData.status==='no-depth'?'Hand touch needs recorded depth':nearest==null?'Waiting for a hand with valid depth':`Hand to object · ${nearest.toFixed(2)} m`;
   }else egoScene.setRemoved([]);
   if(egoScene.active)requestAnimationFrame(update);   // effects animate
+  // A zone's animation (LabInfo's diorama): placed from where its question was asked, then played in a loop.
+  const animAnswer=currentResponses.find(r=>r.question_id===latestQuestion&&r.animation),animQuestion=animAnswer&&agent?.questions.find(q=>q.id===animAnswer.question_id);
+  let tables=[];try{tables=layout.boxes.filter(b=>/table|desk/.test(b.category||'')&&b.center&&b.size);}catch{}
+  dioramaScene.setResponse(animAnswer||null,animQuestion?frameCamera(animQuestion.frame):camera,tables).then(()=>{if(dioramaScene.active)requestAnimationFrame(update);}).catch(fail);
+  if(dioramaScene.active)requestAnimationFrame(update);
+  // ModOS parts that point at things of the twin: a highlight (ObjectStatus, Wayfinding, IoTControl) and a device's controls (IoTControl).
+  // FindMy's found container (unless a hand reached it) and the other MODs' highlights: one spatial Highlight renderer.
+  highlightScene.setResponse(currentResponses.find(r=>r.question_id===latestQuestion&&r.highlight)||(responseSettings.mods.findmy.enabled&&!removed?found:null));if(highlightScene.active)requestAnimationFrame(update);
+  const ctlAnswer=currentResponses.find(r=>r.question_id===latestQuestion&&r.control),ctlQuestion=ctlAnswer&&agent?.questions.find(q=>q.id===ctlAnswer.question_id);
+  const actAnswer=currentResponses.find(r=>r.question_id===latestQuestion&&r.action),actQuestion=actAnswer&&agent?.questions.find(q=>q.id===actAnswer.question_id);
+  actionCard.setResponse(actAnswer||null,actQuestion?frameCamera(actQuestion.frame):camera,here[0]);
+  devicePanel.setResponse(ctlAnswer||null,ctlQuestion?frameCamera(ctlQuestion.frame):camera,here[0]);if(devicePanel.active)requestAnimationFrame(update);   // live: a task's progress
   const latest=weatherResponse(currentResponses);
   weatherScene.setResponse($('weather-mod').checked&&latest?.weather?latest:null);weatherScene.refresh();
   agent?.orient(camera);
@@ -329,7 +387,7 @@ function paint(){
     if(agent)agent.group.visible=false;if(controls)controls.visible=false;weatherScene.group.visible=false;
     renderer.render(scene,camera);weatherScene.group.visible=weatherVisible;weatherScene.render(renderer,camera);
     if(controls)controls.visible=controlVisible;
-    findmyScene.render(renderer,camera);egoScene.render(renderer,camera);
+    findmyScene.render(renderer,camera);egoScene.render(renderer,camera);dioramaScene.render(renderer,camera);highlightScene.render(renderer,camera);devicePanel.render(renderer,camera);actionCard.render(renderer,camera);renderCues(renderer);
     handCompositor.render(renderer,scene.background,currentHandData);
     // Response text/controls intentionally draw over hands; effects remain protected.
     agent?.renderAfter(renderer,camera,controls,index,true);
@@ -475,6 +533,9 @@ function playIcon(on){$('play').innerHTML=on?PAUSE:PLAY;$('play').setAttribute('
 // measured latency, READ_S seconds of reading; then it moves on. Asking holds the same way, live.
 // h measures agent time; replay's typingDuration elapses before h reaches zero.
 // `held` = questions already held during this playback.
+// ?agentSpeed=0.4: a replay shows the agent's work in slow motion (demo recordings); the video, the answer's parts and the pipeline
+// view stay in step.
+const AGENT_SPEED=Math.min(1,Math.max(.05,Number(params.get('agentSpeed'))||1));
 const SPEEDS=[1,.5,.25];let speed=1,playT=0,lastNow=0,hold=null,held=new Set(),replayFrom=null;
 function pause(){playing=false;playbackGeneration++;preparingFrames.clear();endHold();playIcon(false);showSpeed();}
 $('play').onclick=async()=>{if(playing){pause();return;}playing=true;playT=Number($('timeline').value);if(playT>=session.frames.at(-1).t){playT=0;try{await at(0);}catch(e){pause();fail(e);return;}if(!playing)return;}
@@ -488,7 +549,7 @@ $('speed').onclick=()=>{speed=SPEEDS[(SPEEDS.indexOf(speed)+1)%SPEEDS.length];sh
 function startHold(q,{resume=true,live=false}={}){
   playbackGeneration++;preparingFrames.clear();
   playT=q.t;
-  const clock=questionClock(q,0,{live,reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches});
+  const clock=questionClock(q,0,{live,reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches,agentSpeed:AGENT_SPEED});
   hold={id:q.id,start:performance.now(),...clock,shownAt:null,resume,live,pulsed:false};held.add(q.id);agent?.setHold({id:q.id,...clock,shownAt:null,live});showSpeed();
   if(!playing){playing=true;playIcon(true);lastNow=performance.now();requestAnimationFrame(tick);}
 }
@@ -498,7 +559,7 @@ function holdStep(now){
   // Asked here, the question reaches agent.questions only with the next status poll: wait for it (10 s at most) instead of ending the hold.
   if(!q&&hold.live&&now-hold.start<10000)return true;
   if(!q||q.status==='failed'){const resume=hold.resume;endHold();return resume;}
-  Object.assign(hold,questionClock(q,(now-hold.start)/1000,{live:hold.live,typingDuration:hold.typingDuration}));
+  Object.assign(hold,questionClock(q,(now-hold.start)/1000,{live:hold.live,typingDuration:hold.typingDuration,agentSpeed:AGENT_SPEED}));
   // The answer shows after its real latency; live, it can only show once it has arrived (the next status poll).
   if(q.status==='answered'&&hold.shownAt==null)hold.shownAt=hold.live?Math.max(q.latency||0,hold.h):q.latency||0;
   if(hold.shownAt!=null&&!hold.pulsed&&hold.h>=hold.shownAt){hold.pulsed=true;agent.replay(q.response);}
@@ -1161,8 +1222,8 @@ loadSpaces();
 // Side panel: Scene (scene, its scan, layout, objects and recordings; the components placed here), Agent or Behavior (how answers are
 // lettered), one at a time.
 const agentTab=document.querySelector('[data-tab=agent]');
-function showTab(tab){if((tab==='agent'&&agentTab.disabled)||(tab==='twin'&&document.querySelector('[data-tab=twin]').disabled))tab='scene';if(tab==='vision'&&!visionMode())tab='scene';for(const b of document.querySelectorAll('[data-tab]'))b.setAttribute('aria-pressed',b.dataset.tab===tab);
-  for(const t of ['scene','agent','twin','behavior','vision'])$('tab-'+t).hidden=tab!==t;store.set('spatialTake.sideTab',tab);}
+function showTab(tab){if((tab==='agent'&&agentTab.disabled)||(['twin','mods'].includes(tab)&&document.querySelector(`[data-tab=${tab}]`).disabled))tab='scene';if(tab==='vision'&&!visionMode())tab='scene';for(const b of document.querySelectorAll('[data-tab]'))b.setAttribute('aria-pressed',b.dataset.tab===tab);
+  for(const t of ['scene','agent','twin','mods','behavior','vision'])$('tab-'+t).hidden=tab!==t;store.set('spatialTake.sideTab',tab);}
 // Vision Pro mode (?vision=1, /vision.html): the 3D view with the scan and boxes alone (the recorded camera hidden), and the headset's
 // settings in a tab of their own (src/vision-panel.mjs).
 const vision=visionMode()&&here[0]?createVisionPanel({space:here[0],$,onTune:()=>startHeadsetTune()}):null;
@@ -1214,10 +1275,11 @@ async function startAgent(){
     visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,relationAt,egoTarget,sceneBoxes,infoTarget,onPlacement:logPlacement,infoFloatParallel:()=>textBehavior.floatParallel??80,infoMinShrink:()=>textBehavior.infoMinShrink??.55,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
     onChange:()=>update(),onAnimate:()=>update(),onStatus:showAgentStatus});
   if(here[0]){const tw=document.querySelector('[data-tab=twin]');tw.disabled=false;tw.title='';
-    twinPanel=createTwinPanel({root:$('tab-twin'),space:here[0],session:sessionURL.pathname,onPick:id=>{if(!id.startsWith('layout:'))return;const b=layout.boxes.find(x=>x.id===id.slice(7));if(b)layout.select(b);}});twinPanel.load();}
+    twinPanel=createTwinPanel({root:$('tab-twin'),space:here[0],session:sessionURL.pathname,onPick:id=>{if(!id.startsWith('layout:'))return;const b=layout.boxes.find(x=>x.id===id.slice(7));if(b)layout.select(b);}});twinPanel.load();
+    const mt=document.querySelector('[data-tab=mods]');mt.disabled=false;mt.title='';createModsPanel({root:$('tab-mods'),space:here[0]}).load();}
   $('agent-panel').hidden=false;$('ask').hidden=false;agentTab.disabled=false;agentTab.title='';showTab(store.get('spatialTake.sideTab')||'scene');
   let id=await showConversations(store.get(convKey));if(!id)id=await showConversations((await agentApi('/api/agent/conversations',{})).id);
-  await openConversation(id);agent.start();
+  await openConversation(id);agent.start();loadPipelineSkeleton();
   $('agent-copy').onclick=async()=>{await navigator.clipboard.writeText(command);const label=$('agent-copy').querySelector('span');label.textContent='Copied';setTimeout(()=>label.textContent='Copy command',1500);};
   $('conv').onchange=()=>openConversation($('conv').value).catch(fail);
   $('conv-new').onclick=async()=>{try{await openConversation(await showConversations((await agentApi('/api/agent/conversations',{})).id));}catch(e){fail(e);}};
@@ -1262,14 +1324,34 @@ function showAgentStatus({connected:c,questions,responses}){
     m.append(del);$('markers').append(m);
   }
 }
-// The agent's work on the focused question (live while it answers, stored for replay): faint text under the question box.
-let traceKey='';
+// The agent's work on the focused question (live while it answers, stored for replay): faint text under the question box, or (Pipeline)
+// the ModOS stages lit as the system reaches them. ?present=1 shows only the recorded camera and the pipeline (for recording demos).
+let traceKey='';let traceMode=params.get('present')?'pipeline':(()=>{try{return localStorage.getItem('spatial-take:trace-mode')||'log';}catch{return 'log';}})();
+if(params.get('present'))document.body.classList.add('present');
+if(params.get('pipeline')==='bottom')document.body.classList.add('pipeline-bottom');   // the Pipeline view's layout (src/pipeline-view.css)
+for(const b of document.querySelectorAll('[data-trace]')){b.setAttribute('aria-pressed',b.dataset.trace===traceMode);
+  b.onclick=()=>{traceMode=b.dataset.trace;try{localStorage.setItem('spatial-take:trace-mode',traceMode);}catch{}for(const x of document.querySelectorAll('[data-trace]'))x.setAttribute('aria-pressed',x===b);traceKey='';showTrace();};}
+// The where-overlay sits in the camera view's top-right corner, whatever the layout around the view.
+function placeWhere(){const w=$('where');if(w.hidden)return;const c=cameraCol.getBoundingClientRect(),r=$('stage').getBoundingClientRect();
+  w.style.top=`${r.top-c.top+12}px`;w.style.left='auto';w.style.right=`${c.right-r.right+12}px`;}
+addEventListener('resize',()=>placeWhere());
+// What the pipeline view lists before any question: the space's MODs and memory (the options the stages choose among).
+let pipelineSkeleton=null;
+async function loadPipelineSkeleton(){try{const m=await agentApi('/api/modos/context');pipelineSkeleton={mods:m.mods,items:m.items};traceKey='';showTrace();}catch{}}
 function showTrace(){
-  const q=agent&&session?agent.focus():null;
+  // Only once the video has reached the question (or it is being asked / replayed now): before that the view shows the options only.
+  const focused=agent&&session?agent.focus():null,q=focused&&(hold?.id===focused.id||session.frames[index].t>=focused.t-.002)?focused:null;
   const clock=hold||agent?.delivery;
   const replaying=!!hold&&!hold.live,steps=q?stepsAt(q,clock?.id===q.id?clock.h:Infinity):[];
   const tail=!q?'':replaying?(hold.h<0?'Typing question…':hold.h<(q.latency||0)?`Processing… ${Math.floor(hold.h)} s`:''):q.status==='running'?`thinking… ${Math.max(0,Math.round(Date.now()/1000-q.started))} s`:q.status==='failed'?`no response: ${q.message||''}`:q.duration!=null?`${q.duration.toFixed(1)} s`:'';
-  const key=q?JSON.stringify([q.id,steps.length,q.status,tail]):'';if(key===traceKey)return;traceKey=key;
+  // The pipeline view (the log's other mode): its question types as the caption does during a replay.
+  const typed=q&&replaying?questionCaption(q,{clock:hold}).text:q?.text;
+  const key=JSON.stringify([q?.id,steps.length,q?.status,tail,typed,traceMode,!!pipelineSkeleton]);if(key===traceKey)return;traceKey=key;
+  $('trace').hidden=traceMode!=='log';$('pipeline').hidden=traceMode!=='pipeline';
+  if(traceMode==='pipeline')renderPipeline($('pipeline'),q,steps,{skeleton:pipelineSkeleton,slowed:AGENT_SPEED<1?AGENT_SPEED:null});
+  const where=q?whereAt(steps):null,w=$('where');w.hidden=!where||!(where.in||where.looking);
+  placeWhere();
+  if(where)w.innerHTML=[where.in?`<span>In</span><b>${where.in.replace(/[<&]/g,'')}</b>`:'',where.looking?`<span>Looking at</span><b>${where.looking.replace(/[<&]/g,'')}</b>`:''].join('');placeWhere();
   $('trace').replaceChildren(...(q?[...steps.map(s=>{const line=document.createElement('div');line.className='trace-'+s.kind;
     line.textContent=s.kind==='reasoning'?`∴ ${s.text}`:s.kind==='tool'?`· ${s.tool}${s.text?'  '+s.text:''}`:s.kind==='error'?`✗ ${s.tool?s.tool+': ':''}${s.text}`:`→ ${s.text}`;return line;}),
     Object.assign(document.createElement('div'),{className:'trace-tail',textContent:tail})]:[]));

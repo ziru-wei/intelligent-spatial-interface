@@ -26,6 +26,9 @@ async function api(p,body){
   const data=await r.json();if(!r.ok)throw Error(data.error||r.statusText);return data;
 }
 console.log(`Spatial Take · ${pipeline} · Jev + ${provider} ${model} (${effort}) · one bridge, two parallel branches\n${session} · ${url}`);
+// The first call to the language model on a new connection is several seconds slower than later ones: warm it up at start, so the
+// first question is answered as fast as the rest.
+if(provider==='gemini'){const t=Date.now();geminiAnswer('Reply OK.',{},{apiKey:geminiApiKey,model,effort}).then(()=>console.log(`  warm: language model ready (${Date.now()-t} ms)`),e=>console.log('  warm: '+e.message));}
 let warned=false;
 for(;;){
   let q;try{q=await api('/api/agent/questions/next');warned=false;}catch(e){if(!warned)console.error(`Editor unreachable: ${e.message}; retrying…`);warned=true;await new Promise(r=>setTimeout(r,3000));continue;}
@@ -40,7 +43,7 @@ for(;;){
     const result=pipeline==='modos'
       ?await runModos({question:q,trace,publish,answer:answerFn,
           decide:createDecisionModule(jevEngine(ask),{log:r=>trace('decision',JSON.stringify({engine:r.engine,stage:r.stage,elapsed_ms:r.elapsed_ms}))}).decide,
-          memory:()=>api(`/api/modos/memory?question_id=${q.id}`),
+          context:()=>api(`/api/modos/context?question_id=${q.id}`),
           items:ids=>api(`/api/modos/items?question_id=${q.id}&ids=${encodeURIComponent(ids.join('|'))}`).then(r=>r.items),
           recordInfo:(key,interaction_id,source)=>api('/api/agent/questions/info',{id:q.id,key,interaction_id,source})})
       :await runPipeline({question:q,ask,trace,checkVisible:ids=>api(`/api/agent/visible?question_id=${q.id}&ids=${ids.map(encodeURIComponent).join(',')}`),publish:async part=>{await api('/api/agent/responses',part);if(!seenParts.has(part.part)||part.stream?.status==='complete'){trace('show_'+part.part,part.stream?.status==='complete'?'Text stream complete':part.title||'Mod UI ready');seenParts.add(part.part);}},readInfo:key=>api(`/api/agent/info?question_id=${q.id}&key=${encodeURIComponent(key)}`),recordInfo:(key,interaction_id,source)=>api('/api/agent/questions/info',{id:q.id,key,interaction_id,source}),readContext:groups=>api(`/api/agent/context?question_id=${q.id}&${groups.length?'groups='+encodeURIComponent(groups.join(',')):'catalog=1'}`),answer:(question,context,options)=>provider==='gemini'?geminiAnswer(question,context,{apiKey:geminiApiKey,model,effort,trace,...options}):lunaAnswer(question,context,{model,effort,trace})});

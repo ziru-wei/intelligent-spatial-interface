@@ -6,9 +6,10 @@ export function questionTypingDuration(text,reducedMotion=false){
   return reducedMotion?0:Math.max(0,captionGraphemes(text).length-1)/LETTERS_PER_SECOND;
 }
 // Agent time is negative during replay typing. Recorded latencies start only after the last letter.
-export function questionClock(question,elapsed,{live=false,reducedMotion=false,typingDuration=questionTypingDuration(question.text,reducedMotion)}={}){
-  const seconds=Math.max(0,elapsed);
-  return {h:seconds-(live?0:typingDuration),typingElapsed:seconds,typingDuration:live?0:typingDuration};
+// agentSpeed < 1 replays the agent's time in slow motion (a demo: the answer's parts and its trace slow down together).
+export function questionClock(question,elapsed,{live=false,reducedMotion=false,typingDuration=questionTypingDuration(question.text,reducedMotion),agentSpeed=1}={}){
+  const seconds=Math.max(0,elapsed),h=seconds-(live?0:typingDuration);
+  return {h:live||h<0?h:h*agentSpeed,typingElapsed:seconds,typingDuration:live?0:typingDuration};
 }
 // Historical questions at the current video frame are not active captions.
 export function captionQuestion(questions,clock=null,dismissedId=null){

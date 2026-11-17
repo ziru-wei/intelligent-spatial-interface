@@ -53,7 +53,7 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
-import agent_store as store, spaces, composition, weather, findmy, ego, hand_cache, info_context, layout, vision, location, modos_memory, modos_registry, modos_twin
+import agent_store as store, spaces, composition, weather, findmy, ego, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts
 busy = threading.Lock()
 MOCK_CONTEXT = ROOT/'agent'/'mock-context.json'
 
@@ -141,7 +141,8 @@ def ask(body):
     space = d.parent.parent; m = json.loads((space/'space.json').read_text()); sem_path = space/(m.get('semantic') or 'scan/semantic.json')
     sem = layout.migrate_information(json.loads(sem_path.read_text())) if sem_path.is_file() else {}
     selection = info_context.selection(space, sem, body.get('selection'), body.get('selection_mode', 'jev'), session=d) if body.get('selection') else None
-    where = location.check(d, body.get('location'))
+    # A recording asked about in the editor: where the recorded camera stands and looks (a headset sends its own).
+    where = location.check(d, body.get('location')) if body.get('location') is not None or sm.get('live') else location.from_camera(d, sm, frame)
     with store.lock: return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), body.get('weather_mod', False), body.get('text_response'), body.get('findmy_mod', False), body.get('ego_mod', False), selection, pose, where)
 
 def agent_get(path, session, q):
@@ -259,25 +260,29 @@ class Handler(SimpleHTTPRequestHandler):
             try:
                 sp = spaces.space_dir(q.get('space', [''])[0]); d = session_dir(session) if session else None
                 ents = modos_twin.entities(sp, d)
-                its = modos_memory.items(d or sp, modos_registry.installed(sp, set(ents)))
+                its = modos_context.items(d or sp, modos_registry.installed(sp, set(ents)))
                 about = {}
                 for it in its:
                     for a in it['about']: about.setdefault(a, []).append(dict(id=it['id'], type=it['type'], summary=it['summary']))
                 return self.reply(200, dict(entities=[dict(e, knowledge=about.get(e['id'], [])) for e in ents.values()],
                                             kinds=list(modos_twin.KINDS), traits=list(modos_twin.TRAITS)))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
-        if url.path in ('/api/modos/memory', '/api/modos/items'):
+        if url.path == '/api/modos/mods':
+            # The space's MODs as the editor's MODs tab tailors them (scripts/modos_registry.py catalog).
+            try: return self.reply(200, dict(mods=modos_registry.catalog(spaces.space_dir(q.get('space', [''])[0]))))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if url.path in ('/api/modos/context', '/api/modos/memory', '/api/modos/items'):   # /memory: the old name
             # ModOS (modos-system-design.md): the catalog of the question being answered plus the space's MODs, entities and item
             # summaries; or the bodies of chosen items.
             try:
                 d = session_dir(session); qid = q.get('question_id', [None])[0]
-                if url.path == '/api/modos/memory':
+                if url.path in ('/api/modos/context', '/api/modos/memory'):
                     ctx = agent_context(session, [], qid)
                     keep = {k: ctx[k] for k in ('time', 'conversation', 'selection', 'location', 'active_info', 'question', 'user') if k in ctx}
-                    return self.reply(200, dict(keep, **modos_memory.snapshot(d)))
-                mods = modos_memory.snapshot(d)['mods']
+                    return self.reply(200, dict(keep, **modos_context.snapshot(d)))
+                mods = modos_context.snapshot(d)['mods']
                 ids = [i for i in q.get('ids', [''])[0].split('|') if i]
-                return self.reply(200, dict(items=[modos_memory.body(d, i, mods) for i in ids]))
+                return self.reply(200, dict(items=[modos_context.body(d, i, mods) for i in ids]))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if url.path.startswith('/api/agent/'):
             try: return self.reply(200, agent_get(url.path, session, q))
@@ -304,6 +309,31 @@ class Handler(SimpleHTTPRequestHandler):
                 if op == 'add': return self.reply(200, dict(entity=modos_twin.add(sp, body.get('entity') or {}, d)))
                 if op == 'remove': modos_twin.remove(sp, body.get('id')); return self.reply(200, dict(ok=True))
                 return self.reply(400, dict(error='op is update, add or remove.'))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if path == '/api/modos/actions':
+            # An action card's confirm button (Delegate's Send): {space, action, message} → sent (mock: the space's outbox).
+            body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
+            try: return self.reply(200, modos_parts.send(spaces.space_dir(body.get('space')), body.get('action'), body.get('message')))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if path == '/api/modos/devices':
+            # A connected device's input changed from its controls (IoTControl's panel): {space, id, key, op, value} → its device (mock protocol).
+            body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
+            try: return self.reply(200, dict(device=modos_parts.apply_action(spaces.space_dir(body.get('space')), body.get('id'), body.get('key'), body.get('op', 'set'), body.get('value'))))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if path == '/api/modos/mods':
+            # Tailor a MOD: op customize {mod, change}, reset {mod}, fork {mod, id, name, description?}, remove {mod} (a fork),
+            # install / uninstall {mod}. Every change is validated by resolving the MOD before it is saved.
+            body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
+            try:
+                sp = spaces.space_dir(body.get('space')); op = body.get('op'); mid = body.get('mod')
+                if op == 'customize': modos_registry.customize(sp, mid, body.get('change') or {})
+                elif op == 'reset': modos_registry.reset(sp, mid)
+                elif op == 'fork': modos_registry.fork(sp, mid, body.get('id'), body.get('name'), body.get('description'))
+                elif op == 'remove': modos_registry.remove_fork(sp, mid)
+                elif op == 'install': modos_registry.install(sp, mid)
+                elif op == 'uninstall': modos_registry.uninstall(sp, mid)
+                else: return self.reply(400, dict(error='op is customize, reset, fork, remove, install or uninstall.'))
+                return self.reply(200, dict(mods=modos_registry.catalog(sp)))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if path == '/api/modos/install':
             body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')

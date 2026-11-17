@@ -1,0 +1,130 @@
+{
+  "id": "iotcontrol",
+  "name": "IoTControl",
+  "description": "Control or follow a connected device nearby: turn lights, displays or appliances on and off, adjust them, or see what it is doing now (a print job, a cycle) and how long it has left.",
+  "examples": [
+    "Make the light brighter",
+    "Switch the TV to HDMI 2",
+    "How long until my print job is done?",
+    "Cancel the print job"
+  ],
+  "scope": "global",
+  "knowledge": [
+    {
+      "type": "device-state"
+    }
+  ],
+  "selectors": {
+    "device": {
+      "kind": "pick-one",
+      "from": "context",
+      "type": "device-state"
+    }
+  },
+  "slots": [
+    {
+      "id": "device",
+      "use": "highlight",
+      "data": "device",
+      "anchor": {
+        "kind": "object"
+      },
+      "ui": {
+        "fixed": [
+          "footprintRing"
+        ]
+      }
+    },
+    {
+      "id": "controls",
+      "use": "control",
+      "data": "device",
+      "anchor": {
+        "kind": "object"
+      },
+      "ui": {
+        "flexible": [
+          {
+            "cue": "gauge",
+            "when": "value.type=level & value.io=input & intent=read"
+          },
+          {
+            "cue": "slider",
+            "when": "value.type=level & value.io=input & intent=change"
+          },
+          {
+            "cue": "edgeTabs",
+            "when": "value.type=choice & intent=change"
+          },
+          {
+            "cue": "iconButton",
+            "when": "value.type=toggle|command & intent=change & preset.found"
+          },
+          {
+            "cue": "textButton",
+            "when": "value.type=command & intent=change & !preset.found"
+          },
+          {
+            "cue": "progressRail",
+            "when": "value.type=task"
+          },
+          {
+            "cue": "cardStack",
+            "when": "value.type=queue"
+          },
+          {
+            "cue": "pinnedTags",
+            "when": "value.type=reading|level & value.io=output"
+          },
+          {
+            "cue": "statusPulse",
+            "when": "value.type=alert"
+          }
+        ]
+      }
+    },
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "relative",
+        "to": "controls",
+        "side": "beside"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
+  ],
+  "provider": "system",
+  "variants": {
+    "panel": {
+      "label": "Controls at the device",
+      "description": "The device is outlined and its switches appear next to it; the asked action is applied.",
+      "slots": [
+        "device",
+        "controls",
+        "answer"
+      ],
+      "text": "answer"
+    },
+    "quiet": {
+      "label": "Controls only",
+      "description": "Only the switches, no text.",
+      "slots": [
+        "device",
+        "controls"
+      ]
+    }
+  },
+  "default_variant": "panel"
+}

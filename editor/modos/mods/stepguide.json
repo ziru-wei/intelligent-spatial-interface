@@ -1,0 +1,69 @@
+{
+  "id": "stepguide",
+  "name": "StepGuide",
+  "description": "Step-by-step instructions for using a device or doing a task with things (making coffee, printing, fixing), listed once. Not for exercises or moving the body (that is LiveCoach).",
+  "examples": [
+    "How do I use the espresso machine?",
+    "How do I print a poster?",
+    "How do I reset the router?"
+  ],
+  "scope": "global",
+  "knowledge": [
+    {
+      "type": "steps"
+    }
+  ],
+  "selectors": {},
+  "slots": [
+    {
+      "id": "steps",
+      "use": "data-widget",
+      "anchor": {
+        "kind": "surface"
+      },
+      "ui": {
+        "fixed": [
+          "progressRail",
+          "iconButton:back",
+          "iconButton:next"
+        ]
+      }
+    },
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "relative",
+        "to": "steps",
+        "side": "beside"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
+  ],
+  "provider": "system",
+  "status": "spec",
+  "note": "Foundational MOD defined as a spec (modos-system-design.md 5.3): the system can choose it and its text answers; its selectors and representations are not implemented yet.",
+  "variants": {
+    "default": {
+      "label": "Steps beside the device",
+      "description": "Step-by-step instructions for using a device or doing a task, listed once (not tracked step by step).",
+      "slots": [
+        "steps",
+        "answer"
+      ],
+      "text": "answer"
+    }
+  },
+  "default_variant": "default"
+}

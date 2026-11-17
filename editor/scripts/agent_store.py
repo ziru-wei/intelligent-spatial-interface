@@ -3,7 +3,9 @@ and responses, so a new conversation starts with an empty timeline. Question ids
 the agent only echoes the number back. All access goes through `lock`; the bridge long-polls on it."""
 import json, re, threading, time
 from pathlib import Path
-import weather, findmy, ego, conversation_context
+import weather, findmy, ego, conversation_context, modos_parts
+
+UI_KINDS = ('weather', 'findmy', 'ego', 'highlight', 'control', 'action')   # one of them per ui part
 from datetime import datetime
 
 lock = threading.Condition()
@@ -178,7 +180,7 @@ def add_trace(d, qid, step):
     trace = q.setdefault('trace', [])
     if len(trace) < 60:
         trace.append(dict(kind=str(step.get('kind') or 'message')[:16], tool=str(step.get('tool') or '')[:60] or None,
-            text=str(step.get('text') or '')[:500], at=int(step.get('at') or 0)))
+            text=str(step.get('text') or '')[:2000], at=int(step.get('at') or 0)))
         _write(d, c)
     return dict(ok=True)
 
@@ -205,30 +207,55 @@ def delete_question(d, cid, qid):
     _write(d, c); return dict(ok=True)
 
 def _installed(d, mod_id):
-    """Whether a MOD is installed in the question's space (ModOS replaces the per-question mod switches with installed MODs)."""
+    """Whether a MOD is installed in the question's space (ModOS replaces the per-question mod switches with installed MODs).
+    mod_id 'ego' asks whether an installed MOD shows an ego-object (its active variant), e.g. WorldInfo set to let the thing speak."""
     import modos_registry
     space = Path(d).parent.parent
     if not (space/'modos').is_dir(): return False   # a space that does not use ModOS keeps the per-question switches
-    try: return any(m['id'] == mod_id for m in modos_registry.installed(space))
+    try:
+        mods = modos_registry.installed(space)
+        if mod_id == 'ego': return any(s['use'] == 'ego-object' for m in mods for s in m['slots'])
+        # A fork renders with its base MOD's part (a forked Weather still makes a weather part).
+        return any(m['id'] == mod_id or m.get('from') == mod_id for m in mods)
     except (OSError, ValueError): return False
 
+def _mod_meta(m):
+    """Which MOD, variant and slot made a part, with the slot's settled settings (shown and logged; renderers read it later)."""
+    if not isinstance(m, dict) or not isinstance(m.get('id'), str): raise ValueError('Bad mod metadata.')
+    settings = m.get('settings') or {}
+    if not isinstance(settings, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in settings.items()): raise ValueError('Bad mod settings.')
+    out = dict(id=m['id'][:48], variant=str(m.get('variant') or '')[:32] or None, slot=str(m.get('slot') or '')[:32] or None,
+               settings={k[:32]: v[:32] for k, v in list(settings.items())[:8]})
+    # What the MOD declared its slots draw (modos/ui-rules.mjs) and the facts known when composing; the renderer decides the rest.
+    ui, facts = m.get('ui') or {}, m.get('facts') or {}
+    if not (isinstance(ui, dict) and len(ui) <= 4 and isinstance(facts, dict) and len(facts) <= 12): raise ValueError('Bad mod ui.')
+    for sid, s in ui.items():
+        u = s.get('ui') if isinstance(s, dict) else None
+        if not (isinstance(u, dict) and all(isinstance(p, str) for p in u.get('fixed', [])) and
+                all(isinstance(f, dict) and isinstance(f.get('cue'), str) for f in u.get('flexible', []))): raise ValueError('Bad mod ui.')
+    if not all(isinstance(k, str) and isinstance(v, (str, int, float, bool)) for k, v in facts.items()): raise ValueError('Bad mod facts.')
+    if ui: out['ui'] = {sid[:32]: dict(use=str(s.get('use') or '')[:32], ui=dict(fixed=[p[:48] for p in s['ui'].get('fixed', [])][:8],
+        flexible=[{k: str(f[k])[:120] for k in ('cue', 'when', 'instead_of') if f.get(k)} for f in s['ui'].get('flexible', [])][:12])) for sid, s in ui.items()}
+    if facts: out['facts'] = {k[:40]: v for k, v in facts.items()}
+    return out
+
 def add_response(d, body):
-    if not (body.get('title') or body.get('body') or body.get('items') or (body.get('part') == 'ui' and (body.get('weather') or body.get('findmy') or body.get('ego'))) or (body.get('part') == 'animation' and body.get('animation'))): raise ValueError('A response needs a title, body or items.')
+    if not (body.get('title') or body.get('body') or body.get('items') or (body.get('part') == 'ui' and any(body.get(k) for k in UI_KINDS)) or (body.get('part') == 'animation' and body.get('animation'))): raise ValueError('A response needs a title, body or items.')
     c, q = _find_question(d, body.get('question_id')) if body.get('question_id') is not None else (None, None)
     if body.get('question_id') is not None and not q: raise ValueError('Unknown question.')
     part = body.get('part')
     if part not in (None, 'ui', 'text', 'animation'): raise ValueError('Unknown response part.')
     if part and not q: raise ValueError('Response parts need a question_id.')
     if body.get('stream') is not None:
-        if part != 'text' or body.get('weather') is not None or body.get('findmy') is not None or body.get('ego') is not None: raise ValueError('Only text parts can stream.')
+        if part != 'text' or any(body.get(k) is not None for k in UI_KINDS): raise ValueError('Only text parts can stream.')
         return _add_stream(d, c, q, body)
     # One part of each kind per question; a ui part is one per MOD (ModOS composes several MODs into one response).
-    mod_of = lambda r: next((k for k in ('weather', 'findmy', 'ego') if r.get(k) is not None), None)
+    mod_of = lambda r: next((k for k in UI_KINDS if r.get(k) is not None), None)
     same = lambda r: r.get('part') == part and r.get('question_id') == q['id'] and (part != 'ui' or mod_of(r) == mod_of(body))
     if part and any(same(r) for r in c['responses']):
         return next(r for r in c['responses'] if same(r))
     if part == 'ui' and (body.get('title') or body.get('body') or body.get('items')): raise ValueError('UI part cannot contain language text.')
-    if part == 'text' and (body.get('weather') is not None or body.get('findmy') is not None or body.get('ego') is not None): raise ValueError('Text part cannot contain mod UI.')
+    if part == 'text' and any(body.get(k) is not None for k in UI_KINDS): raise ValueError('Text part cannot contain mod UI.')
     if q: at = q
     else:
         # Asked in the terminal: the conversation and frame the editor shows.
@@ -238,6 +265,7 @@ def add_response(d, body):
         question=q['text'] if q else str(body.get('question') or ''), question_id=q['id'] if q else None, title=str(body.get('title') or ''),
         body=str(body.get('body') or ''), items=[str(i) for i in body.get('items') or []][:12], anchor=body.get('anchor') or None)
     if body.get('reserve_text') is True: r['reserve_text'] = True
+    if body.get('mod') is not None: r['mod'] = _mod_meta(body['mod'])
     # A zone's animation (scripts/jev-pipeline.mjs ZONE_ANIMATIONS: the lab's diorama), played on the headset beside the text.
     if part == 'animation':
         a = body.get('animation')
@@ -247,9 +275,20 @@ def add_response(d, body):
     if body.get('info') is not None:
         if part != 'text' or not q: raise ValueError('Only a text part of a question can carry info.')
         r['info'] = response_info(c, q, body['info'])
-    if sum(body.get(k) is not None for k in ('weather', 'findmy', 'ego')) > 1: raise ValueError('Only one mod per response.')
+    if sum(body.get(k) is not None for k in UI_KINDS) > 1: raise ValueError('Only one mod per response.')
+    # ModOS parts that point at things of the twin (scripts/modos_parts.py): a highlight (ObjectStatus, Wayfinding, IoTControl's device)
+    # and a device's controls (IoTControl, which applies the asked action).
+    if body.get('highlight') is not None:
+        if not (Path(d).parent.parent/'modos').is_dir(): raise ValueError('Highlight parts need ModOS.')
+        r['highlight'] = modos_parts.resolve_highlight(d, body['highlight'], at.get('frame', 0))
+    if body.get('action') is not None:
+        if not (Path(d).parent.parent/'modos').is_dir(): raise ValueError('Action parts need ModOS.')
+        r['action'] = modos_parts.resolve_action(d, body['action'])
+    if body.get('control') is not None:
+        if not (Path(d).parent.parent/'modos').is_dir(): raise ValueError('Control parts need ModOS.')
+        r['control'] = modos_parts.resolve_control(d, body['control'])
     if body.get('ego') is not None:
-        if not at.get('ego_mod'): raise ValueError('Object mod was not enabled for this question.')
+        if not (at.get('ego_mod') or _installed(d, 'ego')): raise ValueError('Object mod was not enabled for this question.')
         r['ego'] = ego.resolve(d, body['ego'])
     if body.get('findmy') is not None:
         if not (at.get('findmy_mod') or _installed(d, 'findmy')): raise ValueError('FindMy mod was not enabled for this question.')

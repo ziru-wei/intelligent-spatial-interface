@@ -2,19 +2,124 @@
   "id": "weather",
   "name": "Weather",
   "description": "Weather forecasts: whether it will rain, the temperature, wind, and whether to bring an umbrella or a jacket.",
-  "examples": ["Will it rain tonight?", "What's the weather this weekend?", "Do I need a jacket tomorrow morning?"],
+  "examples": [
+    "Will it rain tonight?",
+    "What's the weather this weekend?",
+    "Do I need a jacket tomorrow morning?"
+  ],
   "scope": "global",
-  "knowledge": [{"ref": "feed:weather", "type": "timeseries"}],
+  "knowledge": [
+    {
+      "ref": "feed:weather",
+      "type": "timeseries"
+    }
+  ],
   "selectors": {
-    "entries": {"kind": "pick-many", "from": "feed:weather", "unit": ["day", "period"]}
+    "entries": {
+      "kind": "pick-many",
+      "from": "feed:weather",
+      "unit": [
+        "day",
+        "period"
+      ]
+    }
   },
   "slots": [
-    {"id": "sky", "use": "ambient-effect", "data": "entries",
-     "anchor": {"order": ["surface:window", "surface:desk", "surface:wall", "surface:ceiling"]}},
-    {"id": "controls", "use": "data-widget", "data": "entries", "anchor": {"kind": "user-reach"}},
-    {"id": "answer", "use": "situated-text", "anchor": {"kind": "relative", "to": "sky", "side": "below"}}
+    {
+      "id": "sky",
+      "use": "ambient-effect",
+      "data": "entries",
+      "anchor": {
+        "order": [
+          "surface:window",
+          "surface:desk",
+          "surface:wall",
+          "surface:ceiling"
+        ]
+      },
+      "ui": {
+        "fixed": [
+          "ambient:weather"
+        ]
+      }
+    },
+    {
+      "id": "controls",
+      "use": "data-widget",
+      "data": "entries",
+      "anchor": {
+        "kind": "user-reach"
+      },
+      "ui": {
+        "flexible": [
+          {
+            "cue": "datePicker",
+            "when": "data.days>1"
+          },
+          {
+            "cue": "playback",
+            "when": "data.steps_per_day>1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "relative",
+        "to": "sky",
+        "side": "below"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
   ],
-  "state": {"cursor": {"over": "entries", "autoplay_s": 8}},
-  "text": "answer",
-  "provider": "service"
+  "state": {
+    "cursor": {
+      "over": "entries",
+      "autoplay_s": 8
+    }
+  },
+  "provider": "service",
+  "variants": {
+    "full": {
+      "label": "Sky and controls",
+      "description": "The forecast as sky and weather on a window or surface, controls within reach, text beside it.",
+      "slots": [
+        "sky",
+        "controls",
+        "answer"
+      ],
+      "text": "answer"
+    },
+    "controls": {
+      "label": "Controls only",
+      "description": "Only the day and time controls with readouts, no sky effect.",
+      "slots": [
+        "controls",
+        "answer"
+      ],
+      "text": "answer"
+    },
+    "text": {
+      "label": "Text only",
+      "description": "Only the answer text.",
+      "slots": [
+        "answer"
+      ],
+      "text": "answer"
+    }
+  },
+  "default_variant": "full"
 }

@@ -1,0 +1,122 @@
+{
+  "id": "wayfinding",
+  "name": "Wayfinding",
+  "description": "How to get to a room or place in the building: which way to go and which door it is.",
+  "examples": [
+    "How do I get to the kitchen?",
+    "Where is the lab?",
+    "Which way to the stairs?"
+  ],
+  "scope": "global",
+  "knowledge": [
+    {
+      "type": "text",
+      "from": "places"
+    }
+  ],
+  "selectors": {
+    "place": {
+      "kind": "pick-one",
+      "from": "places"
+    }
+  },
+  "slots": [
+    {
+      "id": "door",
+      "use": "highlight",
+      "data": "place",
+      "anchor": {
+        "kind": "door"
+      },
+      "ui": {
+        "flexible": [
+          {
+            "cue": "doorwayGlow",
+            "when": "target.door_in_view & !user.in_target"
+          },
+          {
+            "cue": "floorArea",
+            "when": "user.in_target"
+          }
+        ]
+      }
+    },
+    {
+      "id": "direction",
+      "use": "guidance",
+      "data": "place",
+      "anchor": {
+        "kind": "user-view"
+      },
+      "ui": {
+        "flexible": [
+          {
+            "cue": "arrowAhead",
+            "when": "target.out_of_view & !target.other_room"
+          },
+          {
+            "cue": "floorPath",
+            "when": "target.other_room"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sign",
+      "use": "label",
+      "data": "place",
+      "anchor": {
+        "kind": "door"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ]
+      }
+    },
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "user-view"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
+  ],
+  "provider": "system",
+  "variants": {
+    "guide": {
+      "label": "Door, sign and direction",
+      "description": "The target room's door is outlined with its name; an arrow points to it when it is out of view.",
+      "slots": [
+        "door",
+        "sign",
+        "direction",
+        "answer"
+      ],
+      "text": "answer"
+    },
+    "door": {
+      "label": "Door only",
+      "description": "Only the door outlined, with the text.",
+      "slots": [
+        "door",
+        "answer"
+      ],
+      "text": "answer"
+    }
+  },
+  "default_variant": "guide",
+  "note": "Later: a route drawn on the floor, Google Maps AR style (a new primitive representation)."
+}

@@ -1,0 +1,80 @@
+{
+  "id": "objectstatus",
+  "name": "ObjectStatus",
+  "description": "The current state of things around: whether something is free, in use, full, empty, broken or needs attention.",
+  "examples": [
+    "Is the printer free?",
+    "Can I make coffee now?",
+    "Is anything here out of order?"
+  ],
+  "scope": "global",
+  "knowledge": [
+    {
+      "type": "status"
+    }
+  ],
+  "selectors": {
+    "things": {
+      "kind": "pick-many",
+      "from": "context",
+      "type": "status"
+    }
+  },
+  "slots": [
+    {
+      "id": "state",
+      "use": "highlight",
+      "data": "things",
+      "anchor": {
+        "kind": "object"
+      },
+      "ui": {
+        "fixed": [
+          "statusPulse"
+        ],
+        "flexible": [
+          {
+            "cue": "breathingBox",
+            "when": "state.level!=ok"
+          },
+          {
+            "cue": "pinnedTags",
+            "when": "value.type=reading"
+          }
+        ]
+      }
+    },
+    {
+      "id": "answer",
+      "use": "situated-text",
+      "anchor": {
+        "kind": "user-view"
+      },
+      "ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
+  ],
+  "provider": "system",
+  "variants": {
+    "highlight": {
+      "label": "Outline by state",
+      "description": "Each thing asked about is outlined in a tone for its state (fine, needs attention, warning).",
+      "slots": [
+        "state",
+        "answer"
+      ],
+      "text": "answer"
+    }
+  },
+  "default_variant": "highlight"
+}
