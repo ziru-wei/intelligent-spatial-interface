@@ -12,7 +12,7 @@
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const parse=s=>{try{return JSON.parse(s.text);}catch{return null;}};
 // What each part of an answer is, in plain words.
-const SHOWS={'situated-text':'text','ego-object':'the thing speaks','highlight':'highlight','guidance':'direction arrow','data-widget':'controls','ambient-effect':'sky on a surface','scene-asset':'animation','label':'label','control':'switches','action-card':'draft + Send'};
+const SHOWS={'situated-text':'text','highlight':'highlight','guidance':'direction arrow','data-widget':'controls','ambient-effect':'sky on a surface','scene-asset':'animation','label':'label','control':'switches','action-card':'draft + Send'};
 const itemLabel=id=>String(id).replace(/^(info|user|feed):/,'').replace(/^weather$/,'weather forecast');
 
 /** Option rows: [label, value|null]; a null value is not scored yet (greyed, empty bar). */

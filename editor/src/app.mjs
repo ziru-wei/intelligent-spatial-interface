@@ -1207,7 +1207,7 @@ $('space-name').onkeydown=e=>{if(e.key==='Escape')$('space-create').hidden=true;
 $('space-name').onblur=()=>setTimeout(()=>{if(document.activeElement?.closest('#space-create'))return;$('space-create').hidden=true;},150);
 $('space-create').onsubmit=async e=>{e.preventDefault();try{const r=await api('/api/spaces',{name:$('space-name').value});$('space-create').hidden=true;await loadSpaces();$('space').value=r.name;showSpace();}catch(err){$('take-status').textContent=err.message;}};
 loadSpaces();
-// Local coding agent as the spatial assistant (scripts/agent-bridge.mjs + scripts/mcp.mjs); only when served by scripts/server.py.
+// The ModOS agent (scripts/agent-bridge.mjs runs the pipeline); only when served by scripts/server.py.
 // Questions and answers belong to a session of this scene (agent conversations, scripts/agent_store.py); each starts with an empty timeline.
 // Side panel, one tab at a time: Scene (scan, layout, objects, recordings), Agent (setup, session, replay), Input (info selection,
 // hands: what a request starts from), Twin, MODs (tailoring), UI library (what can be adjusted in the shared text forms and cues).
@@ -1256,7 +1256,7 @@ $('text-writing-strokes').onchange=()=>changeWriting({writingStrokes:$('text-wri
 $('text-writing-speed').oninput=()=>changeWriting({writingSpeed:+$('text-writing-speed').value});
 $('text-reset').onclick=()=>changeTextBehavior({...TEXT_BEHAVIOR});
 const agentApi=async(path,body)=>{const u=new URL(path,location.href);u.searchParams.set('session',sessionURL.pathname);const r=await fetch(u,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:sessionURL.pathname,...body})}:{});const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;};
-const userState=()=>({conversation:agent?.conversation,frame:index,t:session.frames[index].t,position:session.frames[index].position,quaternion:session.frames[index].quaternion,weather_mod:true,findmy_mod:true,ego_mod:true});
+const userState=()=>({conversation:agent?.conversation,frame:index,t:session.frames[index].t,position:session.frames[index].position,quaternion:session.frames[index].quaternion});
 async function showConversations(select){
   const list=await agentApi('/api/agent/conversations');$('conv').innerHTML='';
   for(const c of list.slice().reverse())$('conv').add(new Option(`${c.name}${c.questions?` · ${c.questions}`:''}`,c.id));
@@ -1358,7 +1358,7 @@ function setAskStatus(text){if(text!==askStatus){askStatus=text;$('ask-status').
 $('ask').onsubmit=async e=>{e.preventDefault();const text=$('ask-input').value.trim();if(!text||!agent||!connected)return;
   const wasPlaying=playing;
   try{const sel=computeSelection()?.selected||null;
-    const q=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},true,undefined,true,true,{selection:sel,selection_mode:selectionMode});$('ask-input').value='';startHold(q,{resume:wasPlaying,live:true});
+    const q=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},{selection:sel,selection_mode:selectionMode});$('ask-input').value='';startHold(q,{resume:wasPlaying,live:true});
   }catch(err){$('ask-status').textContent='Error: '+err.message;}};
 function fail(e){$('status').textContent='Error: '+e.message;console.error(e);}
 async function sessionLoadError(status){

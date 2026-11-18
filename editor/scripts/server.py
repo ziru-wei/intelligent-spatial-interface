@@ -24,7 +24,7 @@ POST /api/register {space,take,target?}  align a recording again; target {surfac
 POST /api/align-manual {space,take,toSpace,info}   toSpace from point pairs picked in the editor
 POST /api/rename {take,name}     display name of a recording (spaces/names.json)
 
-Agent (a local coding agent plays the spatial assistant: scripts/agent-bridge.mjs runs Codex, which calls back through scripts/mcp.mjs).
+Agent (scripts/agent-bridge.mjs runs the ModOS pipeline for one recording and publishes its parts here).
 Questions and responses live in conversations ("sessions" in the UI), see scripts/agent_store.py:
 GET  /api/agent/command?session=                   pastable shell command that starts the bridge for this scene
 GET  /api/agent/conversations?session=             list; POST /api/agent/conversations {session,name?} creates an empty one

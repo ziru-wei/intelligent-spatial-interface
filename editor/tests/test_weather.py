@@ -19,14 +19,11 @@ class WeatherTest(unittest.TestCase):
     def test_canonical_weather_and_mode_snapshot(self):
         with tempfile.TemporaryDirectory() as tmp, store.lock:
             d = Path(tmp); c = store.create(d); forecast = weather.context(d)['weather']['forecast']
-            q = store.ask(d, c['id'], 0, 0, 'Tonight weather?', weather_mod=True)
-            store.editor_state[str(d)] = {'weather_mod': False}
+            q = store.ask(d, c['id'], 0, 0, 'Tonight weather?')
             r = store.add_response(d, dict(question_id=q['id'], title='Tonight: rain', weather={'forecast_ids': [forecast[2]['id']], 'condition': 'snow'}))
             self.assertEqual(r['weather']['forecast'], [forecast[2]])
             self.assertEqual(store.read(d, c['id'])['responses'][0]['weather'], r['weather'])
-            q2 = store.ask(d, c['id'], 0, 0, 'Weather off')
-            with self.assertRaises(ValueError): store.add_response(d, dict(question_id=q2['id'], title='No', weather={'forecast_ids': [forecast[0]['id']]}))
-            q3 = store.ask(d, c['id'], 0, 0, 'Laundry?', weather_mod=True)
+            q3 = store.ask(d, c['id'], 0, 0, 'Laundry?')
             self.assertNotIn('weather', store.add_response(d, dict(question_id=q3['id'], title='14 items')))
             self.assertEqual(len(store.read(d,c['id'])['responses']), 2)
 

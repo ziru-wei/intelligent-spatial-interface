@@ -28,6 +28,15 @@
         ],
         "flexible": [
           {
+            "cue": "dialogue",
+            "when": "target.pointed & request.second_person",
+            "instead_of": [
+              "floatingText",
+              "embeddedText",
+              "textArrow"
+            ]
+          },
+          {
             "cue": "embeddedText",
             "when": "surface.score>=0.5",
             "instead_of": "floatingText"
@@ -35,26 +44,6 @@
           {
             "cue": "textArrow",
             "when": "text.apart"
-          }
-        ]
-      }
-    },
-    {
-      "id": "voice",
-      "use": "ego-object",
-      "anchor": {
-        "kind": "object",
-        "of": "referent"
-      },
-      "ui": {
-        "flexible": [
-          {
-            "cue": "dialogue",
-            "when": "target.pointed & request.second_person"
-          },
-          {
-            "cue": "asset:ego-motion",
-            "when": "target.pointed & request.second_person"
           }
         ]
       }

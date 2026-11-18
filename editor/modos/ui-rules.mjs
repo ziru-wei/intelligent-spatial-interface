@@ -29,12 +29,12 @@ export const holds=(when,facts={})=>parseWhen(when).every(t=>term(t,facts));
 /** The facts a `when` reads (to know which side can decide it). */
 export const factsOf=when=>parseWhen(when).map(t=>t.fact);
 
-/** The parts a slot draws for these facts: its fixed parts, minus those a holding flexible part stands in for, plus the flexible parts
- *  that hold, in the declared order. */
+/** The parts a slot draws for these facts: its fixed parts and the flexible parts that hold, in the declared order, minus those a
+ *  holding flexible part stands in for (`instead_of`: one part or several, fixed or flexible). */
 export function partsToDraw(ui,facts={}){
   if(!ui)return [];
-  const on=(ui.flexible||[]).filter(f=>holds(f.when,facts));
-  const out=(ui.fixed||[]).filter(p=>!on.some(f=>f.instead_of===p));
-  for(const f of on)if(!out.includes(f.cue))out.push(f.cue);
+  const on=(ui.flexible||[]).filter(f=>holds(f.when,facts)),gone=new Set(on.flatMap(f=>[].concat(f.instead_of||[])));
+  const out=(ui.fixed||[]).filter(p=>!gone.has(p));
+  for(const f of on)if(!out.includes(f.cue)&&!gone.has(f.cue))out.push(f.cue);
   return out;
 }

@@ -582,7 +582,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     // The response under a pointer (normalised device coordinates) for a camera, if any.
     pick(ndc,cam){const ray=new THREE.Raycaster();ray.setFromCamera(ndc,cam);const hit=ray.intersectObjects([...widgets.values()].filter(w=>w.visible).map(w=>w.userData.text),false)[0];return hit?hit.object.parent.userData.response:null;},
     // extra: {selection, selection_mode}: the thing carrying info the user selects at that frame (src/user-selection.mjs).
-    ask:(frame,t,text,live,weather_mod=false,text_response,findmy_mod=false,ego_mod=false,extra={})=>post('/api/agent/questions',{frame,t,text,live,weather_mod,text_response,findmy_mod,ego_mod,...extra}).then(async q=>{await layer.sync().catch(()=>{});return q;}),
+    ask:(frame,t,text,live,extra={})=>post('/api/agent/questions',{frame,t,text,live,...extra}).then(async q=>{await layer.sync().catch(()=>{});return q;}),
     deleteQuestion:id=>post('/api/agent/questions/delete',{id}).then(()=>layer.sync()),
     // The frame the editor shows is the simulated user's state for terminal questions; send it at most every 200 ms.
     report(state){pending=state;if(!reportTimer)reportTimer=setTimeout(()=>{reportTimer=null;post('/api/agent/state',pending).catch(()=>{});},200);}};

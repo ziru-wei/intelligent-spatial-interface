@@ -379,9 +379,9 @@ export const DEFAULT_TEXT_UI={fixed:['floatingText'],flexible:[{cue:'embeddedTex
 
 export async function place(response,ctx){
   if(!response.text_ui)response={...response,text_ui:DEFAULT_TEXT_UI};
-  const info=response.info?.key?await infoPlacement(response,ctx):null;
-  const bubble=!info&&response.dialogue?.speaker?bubblePlacement(response,ctx):null;
-  if(bubble)return bubble;if(info)return info;
+  // Object-centric Dialogue is the text form the MOD's rule chose: it goes on the thing that speaks, before any info-answer placement.
+  const bubble=response.dialogue?.speaker?bubblePlacement(response,ctx):null;if(bubble)return bubble;
+  const info=response.info?.key?await infoPlacement(response,ctx):null;if(info)return info;
   // The declaration decides Embedded vs Floating Text for a spot on a surface (an info answer decides it in infoPlacement). Once shown,
   // the form stays: a float stays a float (placed again in front of the user only once it is mostly out of view); text on a surface
   // stays while it scores 0.4 or more there (no flicker at 0.5).

@@ -39,7 +39,7 @@ class ResponsePartsTest(unittest.TestCase):
     def test_ui_and_text_are_independent_and_finish_completes_question(self):
         import weather
         with tempfile.TemporaryDirectory() as tmp, store.lock:
-            d=Path(tmp);c=store.create(d);q=store.ask(d,c['id'],0,0,'Weather?',weather_mod=True);store.take_next(d)
+            d=Path(tmp);c=store.create(d);q=store.ask(d,c['id'],0,0,'Weather?');store.take_next(d)
             entry=weather.context(d,['weather'])['weather']['forecast'][0]['id']
             ui=store.add_response(d,dict(question_id=q['id'],part='ui',weather={'forecast_ids':[entry]}))
             self.assertEqual(store.read(d,c['id'])['questions'][0]['status'],'running')
@@ -55,7 +55,7 @@ class ResponsePartsTest(unittest.TestCase):
     def test_partial_ui_survives_language_failure(self):
         import weather
         with tempfile.TemporaryDirectory() as tmp, store.lock:
-            d=Path(tmp);c=store.create(d);q=store.ask(d,c['id'],0,0,'Weather?',weather_mod=True);store.take_next(d)
+            d=Path(tmp);c=store.create(d);q=store.ask(d,c['id'],0,0,'Weather?');store.take_next(d)
             entry=weather.context(d,['weather'])['weather']['forecast'][0]['id']
             store.add_response(d,dict(question_id=q['id'],part='ui',weather={'forecast_ids':[entry]}))
             final=store.finish(d,q['id'],'UI ready; language response failed.')

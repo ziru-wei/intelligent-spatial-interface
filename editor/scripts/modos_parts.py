@@ -18,7 +18,7 @@ The only protocol so far is `mock`: an action changes the stored state; a task's
 No dependencies beyond the other scripts."""
 import json, math, re
 from pathlib import Path
-import ego, modos_twin
+import modos_twin
 
 TONES = ('neutral', 'attention', 'warning')
 MAX_TARGETS = 8
@@ -26,7 +26,7 @@ MAX_TARGETS = 8
 def _space(d): return Path(d).parent.parent
 
 def _boxes(d):
-    return {b['id']: b for b in ego.catalog(d)}
+    return {b['id']: b for b in modos_twin.boxes(d)}
 
 def _semantic(space):
     m = json.loads((space/'space.json').read_text())
@@ -36,7 +36,7 @@ def _semantic(space):
 def _camera(d, frame):
     try:
         s = json.loads((Path(d)/'session.json').read_text())
-        return ego._camera(s, min(max(0, int(frame or 0)), len(s['frames'])-1))[1]
+        return modos_twin.camera_pose(s, min(max(0, int(frame or 0)), len(s['frames'])-1))[1]
     except (OSError, ValueError, KeyError, IndexError): return None
 
 def door_of(d, zone, frame=0):

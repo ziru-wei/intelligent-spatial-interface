@@ -71,12 +71,12 @@ def from_camera(session_dir, session, frame, reach=10.0, step=.1, near=.6, wall=
     """The location of a recorded frame's camera: {in, facing?}, or None outside every room. The gaze (the camera's horizontal
     heading) is followed out of the room: leaving through a door, window or opening, the first room it reaches is the one faced;
     leaving through a wall, nothing is; across an open boundary (one corridor into the next) it goes on."""
-    import ego, modos_twin, math
+    import modos_twin, math
     space = Path(session_dir).parent.parent; m = json.loads((space/'space.json').read_text())
     sem_path = space/(m.get('semantic') or 'scan/semantic.json')
     if not sem_path.is_file(): return None
     sem = json.loads(sem_path.read_text())
-    R, p = ego._camera(session, frame)
+    R, p = modos_twin.camera_pose(session, frame)
     fx, fz = -R[0][2], -R[2][2]; n = math.hypot(fx, fz)
     inside = modos_twin.room_at(sem, p)
     out = {'in': inside} if inside else {}

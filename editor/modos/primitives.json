@@ -41,24 +41,6 @@
       }
     },
     {
-      "id": "ego-object",
-      "description": "An object speaks in the first person (the answer text, in its voice) and makes a small motion.",
-      "accepts": [
-        "text",
-        "file",
-        "status"
-      ],
-      "anchors": [
-        "object"
-      ],
-      "params": {
-        "speaker": {
-          "kind": "pick-one",
-          "from": "entities"
-        }
-      }
-    },
-    {
       "id": "situated-text",
       "description": "The answer text placed next to an entity, on a surface, relative to another slot, or in the user's view; can point at its referent with corners and an arrow.",
       "accepts": [

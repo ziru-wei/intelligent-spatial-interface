@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MODOS = ROOT/'modos'
 SELECTOR_KINDS = {'enum', 'pick-one', 'pick-many'}
-TEXT_USES = {'situated-text', 'ego-object', 'action-card'}
+TEXT_USES = {'situated-text', 'action-card'}
 ID = re.compile(r'^[a-z0-9][a-z0-9-]{0,47}$')
 CUSTOM_KEYS = {'variant', 'settings', 'scope', 'knowledge', 'examples'}   # whether a MOD shows text is its variant's text slot
 
@@ -57,7 +57,9 @@ def _check_ui(mid, sid, ui):
     for p in ui.get('fixed', []): part(p)
     for f in ui.get('flexible', []):
         part(f.get('cue', ''))
-        if f.get('instead_of') and f['instead_of'] not in ui.get('fixed', []): raise ValueError(f'MOD {mid}: slot {sid} replaces {f["instead_of"]}, which it does not draw.')
+        drawn = set(ui.get('fixed', []))|{x.get('cue') for x in ui.get('flexible', [])}
+        for gone in ([f['instead_of']] if isinstance(f.get('instead_of'), str) else f.get('instead_of') or []):
+            if gone not in drawn: raise ValueError(f'MOD {mid}: slot {sid} replaces {gone}, which it does not draw.')
         for term in str(f.get('when', '')).split('&'):
             fact = re.split(r'[=!<>]', term.strip().lstrip('!'), maxsplit=1)[0]
             if fact not in WHEN_FACTS: raise ValueError(f'MOD {mid}: slot {sid} decides on unknown fact {fact!r}.')
@@ -103,7 +105,7 @@ def validate(mod, prims=None):
     if mod.get('text'):
         if mod['text'] not in ids: raise ValueError(f'MOD {mid}: text slot {mod["text"]} is not one of its slots.')
         if next(s for s in mod['slots'] if s['id'] == mod['text'])['use'] not in TEXT_USES:
-            raise ValueError(f'MOD {mid}: the text slot must be a situated-text, an ego-object or an action-card.')
+            raise ValueError(f'MOD {mid}: the text slot must be a situated-text or an action-card.')
     return mod
 
 def effective(base, custom=None, prims=None):

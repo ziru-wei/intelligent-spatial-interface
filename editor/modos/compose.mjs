@@ -1,26 +1,14 @@
 // ModOS stage 4 · Composition: a MOD's selections become response parts, and one chosen MOD hosts the answer text.
-// Rendering still uses today's renderers: slots map onto the existing parts (weather, findmy, ego, animation, text with info), so the
-// web editor and the headset show these responses unchanged. A generic primitive-representation renderer replaces this mapping later.
+// Each part carries its slot's `ui` declaration; the client draws it (modos/ui-rules.mjs). The text part carries its text form: the host
+// slot's declaration, and `dialogue: {speaker}` when Object-centric Dialogue holds (the thing says the answer in a bubble on it).
 // A MOD here is already effective (scripts/modos_registry.py): `slots` are the active variant's, settled params carry {fixed}.
 
 import {partsToDraw} from './ui-rules.mjs';
 
-const EGO_ID=/^(layout|comp):/;   // what can speak: furniture, openings and scene objects (scripts/ego.py catalog), not places
+const SPEAKERS=/^(layout|comp):/;   // what can speak: furniture, openings and scene objects (modos_twin.boxes), not places
 
-// A speaking thing's motion is the library's (asset:ego-motion): one, the same for every MOD, never chosen per answer.
-const SPEAKING={type:'bounce',color:'calm'};
-
-/** The entity an ego-object slot makes speak (its anchor's), when it can speak. */
 // The facts of the request itself: a thing clearly pointed at (the referent was resolved) and the question put to it in the second person.
 export const requestFacts=(question,referent)=>({'target.pointed':!!referent?.entity,'request.second_person':/\b(you|your|yours|yourself)\b/i.test(String(question||''))});
-/** Whether an ego-object slot speaks for this request: its declaration decides (Object-centric Dialogue only for a pointed-at thing asked
- *  in the second person); a slot without one speaks whenever its thing can. */
-export const speaks=(slot,facts)=>!slot.ui||partsToDraw(slot.ui,facts).includes('dialogue');
-
-export function speakerOf(slot,referent){
-  const id=slot.anchor?.of==='referent'?referent?.entity:slot.anchor?.of;
-  return id&&EGO_ID.test(id)?id:null;
-}
 
 // A part carries what its MOD declared it draws (`ui` of the slot, and of the slots drawn with it on the same choice: a highlight's
 // direction and sign) and the facts known when composing; the renderer adds what the view knows and decides (modos/ui-rules.mjs).
@@ -38,11 +26,6 @@ export function partsFor(mod,selection,{referent=null,abouts=[],question=''}={})
     ...(sel?.kind==='timeseries'?{'data.days':(sel.dates||[]).length,'data.steps_per_day':(sel.times||[]).length}:{}),
     ...(sel?.kind==='device'?{intent:sel.action?'change':'read'}:{})});
   for(const slot of mod.slots){
-    if(slot.use==='ego-object'){
-      const speaker=speakerOf(slot,referent);
-      if(speaker&&speaks(slot,factsFor(null)))out.push({part:'ui',ego:{objects:[speaker],main:speaker,effect:SPEAKING},...meta(mod,slot,factsFor(null))});
-      continue;
-    }
     // An action card (Delegate): what will be done, for whom and with what; it runs only when the user confirms it.
     if(slot.use==='action-card'){
       // what goes with the message: the thing itself, a photo taken of it, or nothing (the request says which)
@@ -83,10 +66,11 @@ const textUi=(mod,slot)=>slot?.use==='situated-text'?{...(slot.ui?{text_ui:slot.
 function hostOf(mod,referent,said={}){
   const slot=mod.slots.find(s=>s.id===mod.text);
   if(slot?.use==='action-card')return {extra:{},slot:0,mod:mod.id,draft:true};   // the text is the draft inside the card
-  // Object-centric Dialogue: when the MOD declares it and its rule holds (the thing pointed at, asked as "you"), the thing says the answer
-  // in the first person; otherwise the MOD's text slot shows it.
-  const voice=mod.slots.find(s=>s.use==='ego-object'&&s.ui&&speaks(s,said)&&speakerOf(s,referent));
-  if(voice){const speaker=speakerOf(voice,referent);return {extra:{},slot:0,mod:mod.id,voice:{speaker,name:referent?.entity===speaker?referent.name:null}};}
+  // Object-centric Dialogue: when the text slot declares it and its rule holds (the thing pointed at, asked as "you") and the thing can
+  // speak, it says the answer in the first person in a bubble on it; otherwise the slot's other text forms show the answer.
+  const speaker=referent?.entity&&SPEAKERS.test(referent.entity)?referent.entity:null;
+  if(speaker&&slot?.ui&&partsToDraw(slot.ui,said).includes('dialogue'))
+    return {extra:{...textUi(mod,slot),dialogue:{speaker}},slot:0,mod:mod.id,voice:{speaker,name:referent.name||null}};
   const to=slot?.anchor?.kind==='relative'?mod.slots.find(s=>s.id===slot.anchor.to):null;
   return {extra:textUi(mod,slot),slot:to&&['ambient-effect','data-widget'].includes(to.use)?1:0,mod:mod.id};
 }

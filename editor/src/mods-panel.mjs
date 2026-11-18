@@ -8,7 +8,7 @@
 // Base MODs can be reset to how their author made them; duplicates can be deleted. Every change is checked by the server first.
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const slug=s=>String(s).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48);
-const USE={'situated-text':'text','ego-object':'object speaks','highlight':'highlight','guidance':'direction','data-widget':'controls','ambient-effect':'ambient','scene-asset':'animation','label':'label','control':'device control'};
+const USE={'situated-text':'text','highlight':'highlight','guidance':'direction','data-widget':'controls','ambient-effect':'ambient','scene-asset':'animation','label':'label','control':'device control'};
 const PARAM={duration:'Text stays',lock:'Sky'};
 const VALUE={stay:'until the next answer','5s':'5 seconds',follow:'moves to where you look',lock:'stays where it first showed'};
 

@@ -131,18 +131,17 @@ test('variants: Weather as text only shows no weather view and asks nothing for 
   assert.equal(textHost([{mod:mod('weather'),score:.8}],null).slot,1);   // the full variant: text below the weather view
 });
 
-test('WorldInfo: the thing speaks in the first person only by its rule (pointed at, asked as "you"); its motion is the library\'s', async()=>{
+test('WorldInfo: the thing speaks in the first person only by its rule (pointed at, asked as "you"): Object-centric Dialogue on the text', async()=>{
   const info=mod('worldinfo');
   assert.equal(info.variant??null,null);   // one representation: no variant to switch the voice on
   const r=await run('Can I eat you?',{yes:['looking at','candy bowl'],selection:{box_id:'comp:c3',key:'candy',mode:'jev'},mods:[info]});
-  assert.deepEqual(r.ui.map(p=>p.ego),[{objects:['comp:c3'],main:'comp:c3',effect:{type:'bounce',color:'calm'}}]);
-  assert.equal(r.ui[0].mod.slot,'voice');assert.deepEqual(r.ui[0].mod.settings,{});
+  assert.equal(r.ui.length,0);   // no part of its own: the text part carries the dialogue
+  assert.deepEqual(r.text.at(-1).dialogue,{speaker:'comp:c3'});
   assert.equal(r.contexts[0].voice.speak_as,'candy');
   assert.equal(r.text[0].info,undefined);
   // Asked about it, not to it (no second person): text beside it, no voice, no motion.
   const t=await run('Can I eat this?',{yes:['looking at','candy bowl'],selection:{box_id:'comp:c3',key:'candy',mode:'jev'},mods:[info]});
-  assert.equal(t.ui.length,0);assert.equal(t.contexts[0].voice,undefined);
-  assert.deepEqual(partsFor(info,{},{referent:{entity:'comp:c3'},question:'Can I eat this?'}),[]);
+  assert.equal(t.ui.length,0);assert.equal(t.contexts[0].voice,undefined);assert.equal(t.text.at(-1).dialogue,undefined);
   // A place cannot speak: the answer stays text beside it.
   assert.deepEqual(textHost([{mod:info,score:1}],{key:'Lab',entity:'zone:lab-2f',kind:'place'},null,'What are you?').extra.info,{key:'Lab'});
 });
@@ -151,11 +150,11 @@ test('grounding: a thing asked in the second person is the referent even when gr
   const voice=mod('worldinfo'),selection={box_id:'comp:c3',key:'candy',mode:'jev'};
   // grounding says no; the request's `about` picks the thing looked at (its option reads "the thing the user is looking at")
   const r=await run('Can I eat you?',{yes:['the thing the user is looking'],selection,mods:[voice]});
-  assert.deepEqual(r.ui.map(p=>p.ego?.main),['comp:c3']);
+  assert.deepEqual(r.text.at(-1).dialogue,{speaker:'comp:c3'});
   assert.equal(r.contexts[0].voice.speak_as,'candy');
   // "you" as the assistant is not the thing
   const a=await run('Can you tell me what time it is?',{yes:['the thing the user is looking'],selection,mods:[voice]});
-  assert.equal(a.ui.length,0);
+  assert.equal(a.text.at(-1)?.dialogue,undefined);
 });
 
 test('tailoring: knowledge added to a MOD is read by its text when it is chosen, without being required', async()=>{

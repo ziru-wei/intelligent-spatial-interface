@@ -30,7 +30,7 @@ export async function runText({view,question,picked,referent,reference,items,ans
   if(host.draft&&draftP){const sel=await draftP;const to=Object.values(sel||{}).find(x=>x?.kind==='contact'),what=Object.values(sel||{}).find(x=>x?.kind==='thing');
     const cap=Object.values(sel||{}).find(x=>x?.kind==='allowed')?.id;
     context.draft={to:to?.name||null,attachment:cap==='none'?null:what?.label||null,...(cap==='photo'?{attachment_is:'a photo of it'}:{})};}
-  // An ego-object text slot: the referent speaks (compose.mjs publishes its ego ui part; this is its words).
+  // Object-centric Dialogue: the referent says the answer in the first person (the text part carries dialogue:{speaker}).
   if(host.voice)context.voice={speak_as:host.voice.name||view.nameOf(host.voice.speaker),entity:host.voice.speaker};
   const hosted=async part=>publish({...part,...host.extra,layout_slot:host.slot});
   const text=await streamAnswer({question,context,answer,publish:hosted,options:{files,instruction:MODOS_INSTRUCTION,store:!!referent},layoutSlot:host.slot,extra:host.extra});

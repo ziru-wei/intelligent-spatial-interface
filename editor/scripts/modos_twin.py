@@ -20,7 +20,7 @@ traits   what representations can attach to: container, surface, window, door, d
 device   only for connected devices (trait iot): {protocol, class?, inputs: {name: typed value}, outputs: {name: typed value}}, value types
          toggle, level, choice, color, command, time, reading, task, queue, alert, media (modos-system-design.md 3.7)
 No dependencies beyond the other scripts: used by the server and tests."""
-import json, re
+import json, math, re
 from pathlib import Path
 import user_context
 
@@ -249,3 +249,49 @@ def belongings(space, session=None):
         out.append(dict(item_id=e['id'].split(':', 1)[1], label=e['name'], aliases=e.get('aliases', []), box_id=box,
                         box_label=ents.get(e['parent'], {}).get('name', box), available=box in boxes))
     return out
+
+
+# ——— the scene's boxes and the recorded camera (used by modos_parts and location) ———
+ROOT = Path(__file__).resolve().parents[1]
+
+def _vec(v): return isinstance(v, list) and len(v) == 3 and all(isinstance(x, (int, float)) and math.isfinite(x) for x in v)
+
+def _library_entry(scene, cid):
+    for base in (scene/'components'/cid, ROOT/'components'/cid):
+        if (base/'component.json').is_file(): return _json(base/'component.json', {})
+    return None
+
+def boxes(d):
+    """d: the recording folder (spaces/<scene>/scenarios/<take>). Every box of the scene a part can point at: layout furniture and
+    openings (`layout:<id>`) and placed scene objects (`comp:<id>`), as [{id, kind, label, zone, has_model, center, size, yaw}]."""
+    d = Path(d); scene = d.parent.parent; m = _json(scene/'space.json', {}); sem = _json(scene/(m.get('semantic') or 'scan/semantic.json'), {})
+    rooms = {r.get('id'): r.get('name', r.get('id')) for r in sem.get('rooms', [])}; models = sem.get('models', {}); out = []
+    for kind, key in (('furniture', 'objects'), ('opening', 'openings')):
+        for b in sem.get(key, []):
+            if not (b.get('id') and _vec(b.get('center')) and _vec(b.get('size'))): continue
+            out.append(dict(id='layout:'+b['id'], kind=kind, label=str(b.get('label') or b['id']).split('/')[-1].strip(), zone=rooms.get(b.get('room')),
+                            has_model=b['id'] in models, center=b['center'], size=b['size'], yaw=b.get('yaw', 0) or 0))
+    specs = [c for c in _json(scene/'composition.json', {}).get('components', []) if c.get('category') == 'persistent']
+    specs += [c for c in _json(d/'composition.json', {}).get('components', []) if c.get('category') == 'opportunistic']
+    for c in specs:
+        if not (c.get('id') and _vec(c.get('position'))): continue
+        entry = _library_entry(scene, str(c.get('component'))) or {}
+        box = entry.get('kind') == 'box'; scale = c.get('scale', 1)
+        size = scale if box and _vec(scale) else [.3, .3, .3]   # a model's bounds are the editor's to measure
+        out.append(dict(id='comp:'+c['id'], kind='object', label=str(c.get('name') or entry.get('name') or c['component']), zone=None,
+                        has_model=not box, center=c['position'], size=size, yaw=(c.get('rotation') or [0, c.get('yaw', 0), 0])[1]))
+    return out
+
+def _rot(q):
+    x, y, z, w = q
+    return [[1-2*(y*y+z*z), 2*(x*y-z*w), 2*(x*z+y*w)], [2*(x*y+z*w), 1-2*(x*x+z*z), 2*(y*z-x*w)], [2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x*x+y*y)]]
+
+def camera_pose(session, frame):
+    """World (scene) rotation rows and position of the recorded camera at a frame (toSpace applied)."""
+    f = session['frames'][frame]; R = _rot(f['quaternion']); p = list(f['position'])
+    M = session.get('toSpace')
+    if M:
+        A = [M[0:3], M[4:7], M[8:11]]; t = [M[3], M[7], M[11]]
+        R = [[sum(A[i][k]*R[k][j] for k in range(3)) for j in range(3)] for i in range(3)]
+        p = [sum(A[i][k]*p[k] for k in range(3))+t[i] for i in range(3)]
+    return R, p

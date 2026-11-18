@@ -1,11 +1,12 @@
+// Object-centric Dialogue (a library text form): where the bubble goes on the thing that speaks, and its outline.
 import {test} from 'node:test';import assert from 'node:assert/strict';import * as THREE from 'three';
 import {place} from '../src/placement.mjs';
-import {bounceOffset,growScale} from '../src/ego.mjs';
+import {bubbleOutline} from '../src/spatial-ui/dialogue.mjs';
 
 // The recorded view at 1.5 m, level, looking down -z; objects ahead of it.
 const D=Math.PI/180,cam=(pitch=0)=>{const c=new THREE.PerspectiveCamera(60,1,.01,100);c.position.set(0,1.5,0);c.rotation.set(pitch*D,0,0);c.updateMatrixWorld(true);return c;};
-const at=(target,{pitch=0,previousPose,fallback}={})=>place({frame:0,aspect:.4,textMetrics:{xHeightRatio:.04},ego:{main:'layout:x'},previousPose},
-  {frames:[{t:0}],frameCamera:()=>cam(pitch),viewport:()=>({width:600,height:600}),egoTarget:id=>id==='layout:x'?target:null,getSettings:()=>({fallback}),
+const at=(target,{pitch=0,previousPose,fallback}={})=>place({frame:0,aspect:.4,textMetrics:{xHeightRatio:.04},dialogue:{speaker:'layout:x'},previousPose},
+  {frames:[{t:0}],frameCamera:()=>cam(pitch),viewport:()=>({width:600,height:600}),entityBox:id=>id==='layout:x'?target:null,getSettings:()=>({fallback}),
    relationAt:()=>null,getStaticSurfaces:()=>[],visible:async(_,pts)=>pts.map(()=>true)});
 
 test('a desk ahead: the bubble sits just above it, a line down to its top',async()=>{
@@ -35,8 +36,8 @@ test('the object behind the viewer: the bubble is held in the view on its side, 
   }
   // Straight behind: still in view; in a small view it is made smaller to fit, never cut off.
   assert.ok(onScreen(await at({center:[0,.7,2],size:[1,.1,.5],yaw:0})).corners.every(inside));
-  const small=await place({frame:0,aspect:.4,textMetrics:{xHeightRatio:.04},ego:{main:'layout:x'}},{frames:[{t:0}],frameCamera:()=>cam(),viewport:()=>({width:120,height:120}),
-    egoTarget:()=>({center:[1.5,.7,1],size:[1,.1,.5],yaw:0}),getSettings:()=>({}),relationAt:()=>null,getStaticSurfaces:()=>[],visible:async(_,pts)=>pts.map(()=>true)});
+  const small=await place({frame:0,aspect:.4,textMetrics:{xHeightRatio:.04},dialogue:{speaker:'layout:x'}},{frames:[{t:0}],frameCamera:()=>cam(),viewport:()=>({width:120,height:120}),
+    entityBox:()=>({center:[1.5,.7,1],size:[1,.1,.5],yaw:0}),getSettings:()=>({}),relationAt:()=>null,getStaticSurfaces:()=>[],visible:async(_,pts)=>pts.map(()=>true)});
   assert.equal(small.edge,true);const ss=onScreen(small);assert.ok(ss.corners.every(inside)&&inside(ss.tip));
   const first=await at({center:[0,.7,-2],size:[1.2,.1,.6],yaw:0});
   assert.equal((await at({center:[0,.7,-2],size:[1.2,.1,.6],yaw:0},{previousPose:first})).reusedSurface,true);
@@ -49,11 +50,8 @@ test('an object in view whose spots do not fit: the bubble just above it on the 
   assert.ok(Math.hypot(s.tip.x-obj.x,s.tip.y-obj.y)<1e-6,'the tail reaches it');
 });
 test('bubble outline: a tail on the side facing the tip, its base clear of the corners; none when the tip is inside',async()=>{
-  const {bubbleOutline}=await import('../src/ego.mjs');const box={x0:-1,x1:1,y0:-.5,y1:.5};
+const box={x0:-1,x1:1,y0:-.5,y1:.5};
   const pts=bubbleOutline(box,.1,{x:3,y:-3},.1),tip=pts.findIndex(v=>v.x===3&&v.y===-3);
   assert.ok(tip>0);assert.equal(pts[tip-1].y,-.5);assert.ok(pts[tip+1].x<=.9+1e-9,'clear of the corner');
   assert.ok(bubbleOutline(box,.1,{x:.2,y:.1},.1).every(v=>Math.abs(v.x)<=1&&Math.abs(v.y)<=.5));
-});
-test('effects: bounce and grow run in the first 1.2 s of every 3 s',()=>{
-  assert.equal(bounceOffset(2,1),0);assert.ok(bounceOffset(.2,1)>.1);assert.equal(growScale(2),1);assert.ok(Math.abs(growScale(.6)-1.3)<1e-9);assert.ok(Math.abs(growScale(3.6)-1.3)<1e-9);
 });

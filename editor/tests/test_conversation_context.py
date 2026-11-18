@@ -66,12 +66,12 @@ class ConversationContextTest(unittest.TestCase):
             layout.write_text(json.dumps({'objects':[{'id':'table2','label':'Table 2','center':[1,2,3],'size':[1,1,1]}]}))
             context=d/'context.json'
             context.write_text(json.dumps({'stored_items':[{'id':'book','label':'Book','box_id':'table2','location':'Table 2 drawer'}]}))
-            c=store.create(d);q=store.ask(d,c['id'],0,0,'Where is Book?',findmy_mod=True);store.take_next(d)
+            c=store.create(d);q=store.ask(d,c['id'],0,0,'Where is Book?');store.take_next(d)
             r=store.add_response(d,dict(question_id=q['id'],part='ui',findmy={'status':'found','item_id':'book'}))
             self.assertEqual(r['referenced_entities'][0]['item_id'],'book')
             self.assertNotIn('target',r['referenced_entities'][0]);self.assertNotIn('location',r['referenced_entities'][0])
             store.finish(d,q['id'],'UI ready')
-            follow=store.ask(d,c['id'],0,0,'Where is it now?',findmy_mod=True)
+            follow=store.ask(d,c['id'],0,0,'Where is it now?')
             context.write_text(json.dumps({'stored_items':[{'id':'book','label':'Book','box_id':'table2','location':'Table 2 top'}]}))
             layout.write_text(json.dumps({'objects':[{'id':'table2','label':'Table 2','center':[4,5,6],'size':[1,1,1]}]}))
             with patch.object(server,'session_dir',return_value=d), patch.object(server,'frame_pose',return_value={}):

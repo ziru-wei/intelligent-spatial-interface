@@ -81,7 +81,7 @@ export async function runModos({question,memory,context,items,decide,answer,publ
   // Stage 4: the text (one of the host MOD's slots) and each MOD's other slots, in parallel; stage 5 as parts become ready.
   const host=textHost(chosen,referent,placeMod,question.text);
   {const m=mods.find(x=>x.id===host.mod),slot=m?.slots.find(x=>x.id===m.text);
-    trace('view_text',JSON.stringify(host.none?{none:true}:{mod:m?.name||null,use:host.voice?'ego-object':slot?.use||'situated-text',voice:host.voice?.name||null}));}
+    trace('view_text',JSON.stringify(host.none?{none:true}:{mod:m?.name||null,use:host.voice?'dialogue':slot?.use||'situated-text',voice:host.voice?.name||null}));}
   const hostMod=chosen.find(c=>c.mod.id===host.mod)?.mod,draftP=host.draft&&hostMod?filler.fill(hostMod,requests.find(r=>r.mod===hostMod)?.items||[]):null;
   const language=runText({view,question,picked,referent,reference,items,answer,publish,hostP:Promise.resolve(host),recordInfo,trace,questions:req.questions,draftP});
   const visual=(async()=>{

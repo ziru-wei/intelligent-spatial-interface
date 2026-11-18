@@ -261,6 +261,9 @@ def add_response(d, body):
         r['info'] = response_info(c, q, body['info'])
     if part == 'text' and isinstance(body.get('text_ui'), dict): r['text_ui'] = _text_ui(body['text_ui'])
     if part == 'text' and isinstance(body.get('text_mod'), dict): r['text_mod'] = _text_mod(body['text_mod'])
+    if body.get('dialogue') is not None:
+        if part != 'text': raise ValueError('Only a text part carries dialogue.')
+        r['dialogue'] = _dialogue(body['dialogue'])
     if sum(body.get(k) is not None for k in UI_KINDS) > 1: raise ValueError('Only one mod per response.')
     # ModOS parts that point at things of the twin (scripts/modos_parts.py): a highlight (ObjectStatus, Wayfinding, IoTControl's device)
     # and a device's controls (IoTControl, which applies the asked action).
@@ -299,9 +302,16 @@ def add_response(d, body):
 def _text_ui(ui):
     # The text form a MOD's text slot declares (modos-system-design.md 4.4): fixed parts and flexible ones with a `when` rule.
     fixed = [p for p in ui.get('fixed', []) if isinstance(p, str)][:4]
-    flexible = [dict(cue=f['cue'], when=str(f.get('when', ''))[:200], **({'instead_of': f['instead_of']} if isinstance(f.get('instead_of'), str) else {}))
-                for f in ui.get('flexible', []) if isinstance(f, dict) and isinstance(f.get('cue'), str)][:4]
+    inst = lambda v: v if isinstance(v, str) else [x for x in v if isinstance(x, str)][:4] if isinstance(v, list) else None
+    flexible = [dict(cue=f['cue'], when=str(f.get('when', ''))[:200], **({'instead_of': inst(f['instead_of'])} if inst(f.get('instead_of')) else {}))
+                for f in ui.get('flexible', []) if isinstance(f, dict) and isinstance(f.get('cue'), str)][:6]
     return dict(fixed=fixed, flexible=flexible)
+
+def _dialogue(v):
+    # Object-centric Dialogue (compose.mjs): the thing that says the answer, a box of the scene (layout:<id> or comp:<id>).
+    speaker = v.get('speaker') if isinstance(v, dict) else None
+    if not (isinstance(speaker, str) and re.fullmatch(r'(layout|comp):[A-Za-z0-9_.:-]{1,96}', speaker)): raise ValueError('Bad dialogue.')
+    return dict(speaker=speaker)
 
 def _text_mod(m):
     # The MOD hosting the text and its text slot's settings (e.g. duration: stay | 5s), read by the client.
@@ -346,6 +356,7 @@ def _add_stream(d, c, q, body):
     if body.get('info') is not None: r['info'] = response_info(c, q, body['info'])
     if isinstance(body.get('text_ui'), dict): r['text_ui'] = _text_ui(body['text_ui'])
     if isinstance(body.get('text_mod'), dict): r['text_mod'] = _text_mod(body['text_mod'])
+    if body.get('dialogue') is not None: r['dialogue'] = _dialogue(body['dialogue'])
     r['stream'].update(seq=stream['seq'], status=stream['status'])
     q['parts']['text']['status'] = stream['status']
     r['stream']['updates'].append(dict(seq=stream['seq'], status=stream['status'], at=at, created=now, title=title, body=text, anchor=anchor, referenced_entities=refs))
@@ -354,8 +365,9 @@ def _add_stream(d, c, q, body):
 
 def status(d, cid):
     c = read(d, cid); busy = running_question(d)[1] is not None
-    # A text answer of an info question published without its item (an older bridge) still gets it from the question.
+    # A text answer of an info question published without its item (an older bridge) still gets it from the question; a thing's own
+    # words (Object-centric Dialogue) are not an info answer.
     questions = {q['id']: q for q in c['questions']}
     responses = [dict(r, info=response_info(c, questions[r['question_id']], dict(key=questions[r['question_id']]['info']['key'])))
-                 if r.get('part') == 'text' and not r.get('info') and questions.get(r.get('question_id'), {}).get('info') else r for r in c['responses']]
+                 if r.get('part') == 'text' and not r.get('info') and not r.get('dialogue') and questions.get(r.get('question_id'), {}).get('info') else r for r in c['responses']]
     return dict(connected=busy or time.time()-bridge_seen.get(str(d), 0) < 40, questions=c['questions'], responses=responses)

@@ -57,10 +57,10 @@ export function presentationResponses(records,questions,hold,deliveries=new Map(
     const uis=ready.filter(r=>r.part==='ui'),ui=uis[0],text=ready.find(r=>r.part==='text'),pick=k=>uis.find(r=>r[k])?.[k];
     const animation=ready.find(r=>r.part==='animation')?.animation;
     const base=parts.reduce((a,b)=>a.id<b.id?a:b);
-    output.push({...base,title:text?.title||'',body:text?.body||'',items:text?.items||[],anchor:text?.anchor||null,...(text?.text_ui?{text_ui:text.text_ui}:{}),...(text?.text_mod?{text_mod:text.text_mod}:{}),
-      findmy:pick('findmy'),weather:pick('weather'),ego:pick('ego'),highlight:pick('highlight'),control:pick('control'),action:pick('action'),...(animation?{animation}:{}),weather_identity:uis.find(r=>r.weather)?.id??ui?.id,
+    output.push({...base,title:text?.title||'',body:text?.body||'',items:text?.items||[],anchor:text?.anchor||null,...(text?.text_ui?{text_ui:text.text_ui}:{}),...(text?.dialogue?{dialogue:text.dialogue}:{}),...(text?.text_mod?{text_mod:text.text_mod}:{}),
+      findmy:pick('findmy'),weather:pick('weather'),highlight:pick('highlight'),control:pick('control'),action:pick('action'),...(animation?{animation}:{}),weather_identity:uis.find(r=>r.weather)?.id??ui?.id,
       // each kind keeps its own MOD's metadata (what it declared it draws, modos/ui-rules.mjs)
-      mods:Object.fromEntries(['findmy','weather','ego','highlight','control','action'].map(k=>[k,uis.find(r=>r[k])?.mod]).filter(([,m])=>m)),part:'presentation',layout_slot:0,
+      mods:Object.fromEntries(['findmy','weather','highlight','control','action'].map(k=>[k,uis.find(r=>r[k])?.mod]).filter(([,m])=>m)),part:'presentation',layout_slot:0,
       reserve_text:!!(ui?.reserve_text||text?.reserve_text||text?.stream),stream:text?.stream,
       latency:Math.min(...ready.map(r=>r.latency||0)),component_ids:ready.map(r=>r.id),
       component_key:ready.map(r=>r.id+(r.stream?`@${r.stream.seq}`:'')).join(':')});
