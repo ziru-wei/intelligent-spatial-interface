@@ -556,7 +556,8 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     relayout(){placementEpoch++;for(const w of widgets.values()){group.remove(w);dispose(w);}widgets.clear();apply();},
     /** The settings changed (src/ui-settings.mjs, a MOD's): show, hide and place again. */
     refreshSettings(){apply();},
-    replay(responseId){const w=widgets.get(responseId)||[...widgets.values()].find(w=>w.userData.response.component_ids?.includes(responseId));if(!w)return;w.userData.replay=performance.now();
+    // The arrival pulse is for an answer appearing: one already showing (a bubble that showed its first words) is not faded in again.
+    replay(responseId){const w=widgets.get(responseId)||[...widgets.values()].find(w=>w.userData.response.component_ids?.includes(responseId));if(!w||w.visible&&w.userData.text.material.opacity>=.99)return;w.userData.replay=performance.now();
       const step=()=>{apply();onAnimate?.();if(w.userData.replay)requestAnimationFrame(step);};requestAnimationFrame(step);},
     // Foremost screen layer: type first, then breathe a bright point at the final letter.
     renderHud(renderer){
