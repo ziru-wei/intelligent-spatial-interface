@@ -250,7 +250,7 @@ Digital twin 里的实体：`place`（区域）、`object`（家具、物品、�
 | 组成 | 是什么 | 来源 | 例子 |
 | --- | --- | --- | --- |
 | **Ambient Effect** | 和环境融为一体、由数据驱动的效果 | MOD 专有（如 Weather） | 天空、日月、雨雪、雾、地面倒影 |
-| **Asset** | 预制的模型、动画、图片 | MOD 或空间主人提供 | Lab 的 diorama、Ego Object 的动作 |
+| **Asset** | 预制的模型、动画、图片 | MOD 或空间主人提供 | Lab 的 diorama |
 | **Spatial Cue** | 贴在物体、地面、门上的标记、方向、显示和控件 | 公共库（4.4 节），所有 MOD 共用 | Breathing Box、Slider、Icon Button |
 | **Text** | 文字形式：Floating Text、Embedded Text、Object-centric Dialogue（4.4 节） | 公共库，所有 MOD 共用；内容来自 Gemini 写的文字 slot 或数据里的值 | 回答、门牌、草稿、物体说的话 |
 
@@ -283,7 +283,7 @@ Digital twin 里的实体：`place`（区域）、`object`（家具、物品、�
 | `pick-many` | 从数据或实体里挑若干个 | Jev 每项一个 noul，≥ 0.5 选中 |
 | `derived` | 由已选的数据按规则算出 | 不问 Jev。例：天气控件的布局由选中了几天、几个时段决定（现在代码就是这样做的） |
 
-文字（Situated Text、Ego Object 的话）不是参数，由 Gemini 生成。
+文字（Situated Text、Object-centric Dialogue）不是参数，由 Gemini 生成。
 
 `state` 声明这个 primitive representation 在客户端产生或接收的交互状态，用于 MOD 内部各部分联动（见 5.2）。
 
@@ -292,7 +292,7 @@ Digital twin 里的实体：`place`（区域）、`object`（家具、物品、�
 | Primitive representation | 作用 | `accepts` | `anchors` | 主要 `params` | `state` |
 | --- | --- | --- | --- | --- | --- |
 | **Highlight** | 高亮物体或容器；嵌套容器带父级淡高亮 | `item-location`、`status`，或实体 | object | `targets`（pick-many）；`tone`（enum 或由 `status` derived） | |
-| **Ego Object** | 物体以第一人称说话，并做一个动作 | `text`、`file`、`status` | object | `speaker`（pick-one）；`effect`（enum：bounce / grow / color）；`tone`（enum） | |
+| **Object-centric Dialogue** | 物体以第一人称说话：回答以 bubble 出现在物体上（文字形式，见 4.4；没有动作） | `text` | object | 说话的物体 = referent（规则决定，不是参数） | |
 | **Situated Text** | 把回答放在实体旁或表面上；可带指向实体的角标和箭头 | 任意（内容来自 Gemini） | object / surface / 相对另一个部分 / 用户视野 | `link`（是否指向 referent，derived） | |
 | **Label** | 短标签、门牌、标注 | `text`、`steps` | object / door / place / user-body | `targets`（pick-many） | |
 | **Data Widget** | 可操作的数据面板（由 4.3 节的组件组成）：日期按钮、时间轴、播放 / 暂停、读数、列表 | `timeseries`、`schedule`、`steps` | user-reach / surface / object 旁 | 组件由数据类型决定（derived） | 产生 `cursor`、`playing` |
@@ -359,7 +359,7 @@ Digital twin 里的实体：`place`（区域）、`object`（家具、物品、�
 
 同一条路径给所有面板：Weather 的控件 = day selector + timeline + readout（`timeseries`）；Agenda = timeline + list（`schedule`）；StepGuide = list（`steps`）；Delegate 的 Action Card = field + text block + button。**一个新 MOD 只要用已有的值类型，就自动有界面**；需要新的值类型时，加一个组件（作者的工作，和 primitive representation 一样固定），而不是为某个 MOD 画一次。
 
-不是面板的 primitive representation（Highlight、Guidance、Ambient Effect、Scene Asset、Ego Object、Situated Text、Label）保持各自的渲染器：它们是放进场景的效果，不是控件。
+不是面板的 primitive representation（Highlight、Guidance、Ambient Effect、Scene Asset、Situated Text、Label）保持各自的渲染器：它们是放进场景的效果，不是控件。
 
 **和定位的关系：** 组件库固定（作者提供），运行时只做选择和组合（Jev 选数据，规则选组件，语言模型填文字），处在 vibe coding（写代码）和 generative UI（运行时生成整个界面）之间。
 
@@ -544,8 +544,7 @@ Primitive representation 是固定的 block；**用户扩展的是 MOD**。新�
 | IoTControl | device | footprintRing | |
 | | controls | | gauge / slider / edgeTabs / iconButton / textButton / progressRail / cardStack / pinnedTags / statusPulse，按 value type 和 intent |
 | Delegate | card | contactChip，textInput，iconButton:send | tetherSend（attachment.kind=thing\|photo），photoCapture（attachment.kind=photo） |
-| WorldInfo | answer | | cornerBrackets（target.has_content） |
-| | voice | | dialogue + asset:ego-motion（target.pointed & request.second_person；WorldInfo 只有这一种表现方式，没有 voice variant；动作固定为 library 的一种） |
+| WorldInfo | answer | floatingText | dialogue（target.pointed & request.second_person，替换 floatingText、embeddedText、textArrow），embeddedText（surface.score≥0.5），textArrow（text.apart） |
 | LabInfo | diorama | asset:diorama | floorArea（question.about=here） |
 | Agenda（spec） | timeline | floatingText（列表） | datePicker（data.days>1） |
 | BookCompanion（spec） | answer | cornerBrackets | |
@@ -577,7 +576,7 @@ Primitive representation 是固定的 block；**用户扩展的是 MOD**。新�
 | **Weather** ✓ | `timeseries` | Ambient Effect → 窗 / 桌 / 墙 / 天花板；Data Widget → 手边；Situated Text → 效果下方 | 哪几天、哪些时段 | 控件布局、效果种类 |
 | **FindMy** ✓ | `item-location` | Highlight → 物品所在的容器（带父级）；Guidance → 容器不在视野内时；Situated Text → 用户视野 | 哪件物品（或 not found / ambiguous）；也负责“要带上的东西”（伞） | Guidance 的目标 |
 | **Wayfinding** ✓ | 关于整层楼的说明（关于 ≥ 2 个地点的 item） | Highlight → 目标房间的门；Label → 门牌；Guidance → 门不在视野内时；Situated Text → 用户视野，从当前位置给路线 | 目标地点 | 门 = 该地点边界上离用户最近的门 |
-| **WorldInfo** ✓ | 物体 / 地点上的 `text`、`file` | Ego Object → referent；或 Situated Text → referent 旁，带角标和箭头 | 用哪种形式；Ego Object 的动作和语气 | `link` |
+| **WorldInfo** ✓ | 物体 / 地点上的 `text`、`file` | Situated Text → referent 旁，带角标和 Text Arrow；被指着并以第二人称问时为 Object-centric Dialogue（物体上的 bubble） | 规则决定，没有可选项 | |
 | **BookCompanion** | 书的 `file` | Situated Text → 书旁，带角标 | 无（读到哪一页仍待定，见第 9 节） | |
 | **StepGuide** | `steps` | Data Widget（list）→ 设备旁的表面；Situated Text → 列表旁 | 哪份步骤；显示哪几步 | 布局固定为 list；**一次性列出，不追踪进度** |
 | **ObjectStatus** ✓ | 这里的 `status` | Highlight → 相关物体，用 tone 表示状态；Situated Text | 哪些物体（每个一个 noul） | tone 由状态等级算出 |
@@ -585,7 +584,7 @@ Primitive representation 是固定的 block；**用户扩展的是 MOD**。新�
 | **IoTControl** ✓ | 这里的 `device-state`（3.7 节） | Highlight → 设备；Control → 设备旁的空间面板；Situated Text → 面板旁 | 哪台设备 + 动作（一次 choice） | 面板组件由值类型决定（4.3 节） |
 | **LabInfo** ✓（空间主人的 MOD，extends WorldInfo） | `zone:lab-2f` 的 items | Scene Asset → lab 中间的桌子（不在视野内时：用户前方偏右下）；Situated Text → 动画旁 | 哪段动画（或 none） | |
 | **LiveCoach** | `steps`（每一步可以指明身体部位和动作方向） | Guidance → 用户身体上的箭头；Label → 身体上的文字标注；Situated Text → 用户视野 | 哪套动作；当前显示哪几步 | 箭头方向由步骤和身体姿态算出 |
-| **Reminder** | `schedule`（时间 + 关于哪个物体 + 说明） | Highlight 或 Ego Object → 那个物体；Situated Text → 物体旁 | 无（由时间触发，见 6.1 的 Trigger） | tone 由紧急程度算出 |
+| **Reminder** | `schedule`（时间 + 关于哪个物体 + 说明） | Highlight → 那个物体；Situated Text → 物体旁 | 无（由时间触发，见 6.1 的 Trigger） | tone 由紧急程度算出 |
 | **Delegate** ✓ | 用户的联系人 + 被指着的东西 + 周围东西的说明 | Action Card → 附件旁：收件人、附件、草稿、Send | 收件人、附件（choice）；草稿是文字 slot | 按 Send 才执行 |
 
 ✓ = 已实现，有自己的画面（10.5–10.7 节）；其余是 spec：能被选中，用文字回答，画面待做（迁到 4.3 节的组件库后，Agenda、StepGuide 可以直接得到画面）。
@@ -869,7 +868,14 @@ The rebuild exists so that computation generalizes. Small, concrete features mad
 - The legacy pipeline (`scripts/jev-pipeline.mjs`, `--pipeline legacy`) still has its own object mod that picks a motion and colour; `src/ego.mjs` keeps grow and color for it.
 - Tests: Node 239, Python 88, all pass.
 
-### 10.15 Not Done Yet (2026-11-17, in priority order)
+### 10.15 Dialogue Is a Text Form; Legacy Pipeline Removed (2026-11-17)
+
+- **Object-centric Dialogue is one of the text slot's forms**, not a part of its own. WorldInfo has one slot, `answer`, which declares `dialogue when target.pointed & request.second_person` and lets it stand `instead_of` Floating Text, Embedded Text and Text Arrow (`instead_of` may now name several parts, fixed or flexible). When it holds and the referent is a thing that can speak (`layout:` or `comp:`), `compose.mjs` gives the text part `dialogue: {speaker}`, the text is written in the thing's voice, and the editor places it as a speech bubble on the thing (`src/spatial-ui/dialogue.mjs`, `src/placement.mjs`). There is no motion and no ego part; the `ego-object` primitive, `src/ego.mjs` and `scripts/ego.py` are gone.
+- **A dialogue answer is not an info answer.** The store no longer attaches the question's info item to a text part with `dialogue`, and placement tries the bubble first.
+- **Legacy pipeline removed:** `scripts/jev-pipeline.mjs` (`--pipeline legacy`), `scripts/mcp.mjs` and the old tool-agent prompt (`agent/AGENTS.md`), the `/api/agent/context` and `/api/agent/visible` endpoints, the `weather_mod` / `findmy_mod` / `ego_mod` / `text_response` question flags, the old FindMy renderer, and the `@modelcontextprotocol/sdk` dependency. The Jev client is `scripts/jev.mjs`; the scene's boxes and the recorded camera pose moved from `ego.py` to `scripts/modos_twin.py` (`boxes`, `camera_pose`).
+- Tests: Node 195, Python 85, all pass. The WorldInfo clips are re-recorded: "Can I eat you?" is a bubble on the candy bowl.
+
+### 10.16 Not Done Yet (2026-11-17, in priority order)
 
 1. **Placement module (4.5), the rest.** The user-reach cluster exists; still missing are the per-thing site allocator, `beside` clusters with occlusion and overlap checks (the Delegate message column can still cover the poster), and one solver shared by all MODs.
 2. **Wayfinding picks the nearest door of the target room** by the user's straight-line distance, not by route length.

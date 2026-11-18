@@ -36,10 +36,10 @@
     ]
    ],
    "answer": {
-    "title": "Music-Brain User Study",
-    "body": "It is a user study where you can scan and sign up in the brain music lab after reading the requirements."
+    "title": "Music-Brain User Study Details",
+    "body": "This user study is conducted by the Brain Music Lab. You can scan to sign up after reading the eligibility requirements."
    },
-   "latency": 2.71,
+   "latency": 2.99,
    "agent_speed": 0.35
   },
   "delegate-poster": {
@@ -78,10 +78,10 @@
     ]
    ],
    "answer": {
-    "title": "Yes, you can eat me",
-    "body": "Yes, you can help yourself. I am leftover from this week's grad tea."
+    "title": "Eat the Candy",
+    "body": "Yes, you can eat me. I am leftover candy from this week's grad tea, and people are welcome to help themselves."
    },
-   "latency": 2.76,
+   "latency": 2.82,
    "agent_speed": 0.35
   },
   "labinfo-wall": {
@@ -446,5 +446,5 @@
    "agent_speed": 0.35
   }
  },
- "recorded": "2026-11-18T01:29:03.866Z"
+ "recorded": "2026-11-18T01:49:51.934Z"
 }
