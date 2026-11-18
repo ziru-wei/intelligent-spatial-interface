@@ -1,12 +1,12 @@
 # ModOS
 
-Research project: **ModOS: Exploring On-Demand Spatial Interfaces in Mixed Reality**.
+Research project: **ModOS: Exploring On-Demand Spatial Interfaces in Mixed Reality**. One repo (`github.com/ziru-wei/intelligent-spatial-interface`, branch `modos`).
 
-| Folder | What | Git |
-| --- | --- | --- |
-| `system/` | The prototype: web editor, ModOS pipeline, Vision Pro app | `github.com/ziru-wei/intelligent-spatial-interface`, branch `modos` |
-| `context/` | Design doc, study plans, paper draft, recordings dashboard | local repo (videos not tracked) |
+| Folder | What |
+| --- | --- |
+| `index.html` | The main page: Demo (recordings of every MOD) and Document (Spatial vocabulary, …) |
+| `system/` | The prototype: web editor, ModOS pipeline, Vision Pro app |
+| `context/` | Design doc, study plans, paper draft, recordings (videos not tracked) |
 
 - Start here: `AGENTS.md` (how to run, code map, decisions, next steps).
 - The spec: `context/docs/modos-system-design.md`.
-- See it working: open `context/recordings/index.html` (videos of every MOD, and the spatial UI library).

@@ -3,20 +3,21 @@
 This folder holds one research project, **ModOS: Exploring On-Demand Spatial Interfaces in Mixed Reality** (UIST '27). An AI agent's answer in mixed reality becomes a spatial interface. The interface is composed at runtime from **MODs**: reusable units of knowledge and representation that people add to their environment ahead of time. Read this file first, then the design doc.
 
 ```
-modos/
+modos/               one git repo (origin github.com/ziru-wei/intelligent-spatial-interface, branch modos)
   AGENTS.md          this guide
   README.md          the short version for people
-  system/            git repo: the prototype (origin github.com/ziru-wei/intelligent-spatial-interface, branch modos)
+  index.html         the project's main page: Demo (the recordings) and Document (Spatial vocabulary; Memory, Walkthrough… to come)
+  system/            the prototype
     editor/          the web editor and ModOS pipeline (everything below is under here)
     visionos/        the Vision Pro app (not yet updated to the spatial UI library)
-  context/           git repo: design doc, study plans, paper draft, recordings dashboard
+  context/           design doc, study plans, paper draft, recordings
     docs/modos-system-design.md   THE spec: architecture, decisions, library, MOD format, status (§10)
     docs/system-changes.md, fs1-plan.md, stimuli-dryrun.md
     write-up/draft.md              paper draft
-    recordings/                    headset-view videos per MOD + index.html (the reel dashboard; videos are not in git)
+    recordings/                    headset-view videos per MOD, posters, cue images, manifest (videos are not in git)
 ```
 
-This is the only copy: the old locations (`~/quest-spatial-studio`, `~/Documents/GitHub/isi-backend-context`) no longer exist.
+This is the only copy: the old locations (`~/quest-spatial-studio`, `~/Documents/GitHub/isi-backend-context`) no longer exist. The two earlier repos were merged here with their history (the system's as the main line, `context/` imported by `git subtree`).
 
 ## Run
 
@@ -55,7 +56,7 @@ npm run record:cues -- [cue names]     # cue gallery screenshots
 ```
 
 - `demos/record.mjs` uses the clip list in `demos/modos-videos.json`. A name selects a clip, every clip of a MOD, or a name prefix. The clips run as one queue: a failed clip is reported at the end and the others are still recorded. Run it in the background. It needs the server, ffmpeg and Playwright's Chromium.
-- `context/recordings/index.html` is the dashboard. The user also has a published copy as a claude.ai artifact.
+- `index.html` at the root is the main page; it reads `context/recordings/manifest.js`. Serve the root to view it (`python3 -m http.server` in `modos/`) or open the file.
 
 ## How ModOS works (code map)
 
@@ -116,10 +117,10 @@ MODs live in `editor/modos/mods/*.json` (12 foundational: 7 built, 5 spec). They
 - **Editor UI.** Explanations sit behind a hoverable "?" (`.help[data-tip]`), never as exposed paragraphs. Names say what a control does. Related views are seg controls (Space: Scene | Entities; an entity: Semantics | Knowledge).
 - **Editor follows the design.** MOD choices live only in MOD settings (MODs tab); the UI library tab adjusts only shared text and cue parameters; Input holds info selection and hands. No per-mod overrides, no pinned or fallback text.
 - **Object-centric Dialogue has no heading**: the bubble shows only what the thing says.
-- **The reel page** (`context/recordings/index.html`):
-  - Two sections, Recordings and Spatial UI vocabulary, switched by a fixed floating capsule control at the bottom.
-  - No page header or explanation. Arial only. No horizontal lines.
-  - Recordings are grouped by MOD, with no built/spec split. A card shows only "Answered in <time>"; the opened player shows only the video.
+- **The main page** (`index.html`):
+  - Two sections, **Demo** (the system: its recordings) and **Document** (Spatial vocabulary now; Memory, Walkthrough and others are added as entries of `DOCS`), switched by a fixed floating capsule control at the bottom; a Document with several parts gets a second capsule row for them.
+  - No page header or explanation. Helvetica light, bold only for what matters most (names, the answer time, the active switch). No horizontal lines.
+  - Demo is grouped by MOD, with no built/spec split. A card shows only "Answered in <time>"; the opened player shows only the video.
   - The vocabulary is ordered type → group → part. The types are spatial cues, message, text forms and a MOD's own.
 - **Ask before** committing, pushing, or deleting anything the user made. Show results as screenshots or recordings, and ask the user to choose before large visual changes.
 

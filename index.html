@@ -1,72 +1,96 @@
+<!doctype html>
 <meta charset="utf-8">
-<title>ModOS Reel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ModOS</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-:root{--bg:#0d0e10;--card:#16181c;--fg:#eceef1;--muted:#a3a8b0;--faint:#737882;--accent:#3ff0ff;--ink:#062a2e;color-scheme:dark}
+/* One page for the project: Demo (the system, recorded through the headset) and Document (Spatial vocabulary; Memory, Walkthrough… to
+   come). Helvetica light; bold only where the text matters most. No header, no rules: a floating capsule switch at the bottom. */
+:root{--bg:#0d0e10;--card:#16181c;--fg:#eceef1;--muted:#a3a8b0;--faint:#737882;--accent:#3ff0ff;--ink:#062a2e;
+  --font:"Helvetica Neue",Helvetica,Arial,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.45}
-main{max-width:1280px;margin:0 auto;padding:32px max(16px,env(safe-area-inset-right,0px)) 120px max(16px,env(safe-area-inset-left,0px))}
-section[hidden]{display:none}
+body{margin:0;background:var(--bg);color:var(--fg);font:300 15px/1.5 var(--font)}
+b,strong,h2,h3{font-weight:700}
+main{max-width:1280px;margin:0 auto;padding:32px max(16px,env(safe-area-inset-right,0px)) 150px max(16px,env(safe-area-inset-left,0px))}
+[hidden]{display:none!important}
 .mod{margin:0 0 36px}
-h2{font:700 22px/1.2 Arial,Helvetica,sans-serif;margin:0 0 14px}
+h2{font:700 22px/1.2 var(--font);margin:0 0 14px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px}
 .clip{display:block;width:100%;padding:0;border:0;background:var(--card);border-radius:12px;overflow:hidden;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .clip img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#000}
 .clip span{display:block;padding:9px 12px 11px;color:var(--muted);font-size:13px}
-.clip span b{color:var(--fg);font-weight:700}
+.clip span b{color:var(--fg)}
 .clip:hover img{filter:brightness(1.12)}
 .type{margin:0 0 48px}
 .type>p{margin:-8px 0 18px;color:var(--muted)}
 .group{margin:0 0 26px}
-h3{font:700 13px/1 Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;color:var(--accent)}
-h3 small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:13px;margin-left:8px}
+h3{font:700 13px/1 var(--font);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;color:var(--accent)}
+h3 small{font-weight:300;text-transform:none;letter-spacing:0;color:var(--muted);font-size:13px;margin-left:8px}
 .vocab{background:var(--card);border-radius:12px;overflow:hidden;margin:0}
 .vocab img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000;cursor:zoom-in}
 .vocab figcaption{padding:10px 13px 13px}
 .vocab b{display:block;font-size:16px;margin-bottom:4px}
 .vocab p{margin:0 0 6px;color:var(--muted);font-size:13.5px}
 .vocab i{font-style:normal;color:var(--faint);font-size:12.5px}
-.switch{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:4px;padding:5px;border-radius:999px;background:rgba(28,31,36,.92);box-shadow:0 8px 28px rgba(0,0,0,.45);backdrop-filter:blur(10px);z-index:10;max-width:calc(100vw - 32px)}
-.switch button{font:700 14px Arial,Helvetica,sans-serif;color:var(--fg);background:transparent;border:0;border-radius:999px;padding:10px 18px;cursor:pointer;white-space:nowrap}
-.switch button[aria-pressed="true"]{background:var(--accent);color:var(--ink)}
+.bar{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:grid;justify-items:center;gap:8px;z-index:10;max-width:calc(100vw - 32px)}
+.switch{display:flex;gap:4px;padding:5px;border-radius:999px;background:rgba(28,31,36,.92);box-shadow:0 8px 28px rgba(0,0,0,.45);backdrop-filter:blur(10px);max-width:100%;overflow-x:auto}
+.switch button{font:300 14px var(--font);color:var(--fg);background:transparent;border:0;border-radius:999px;padding:10px 18px;cursor:pointer;white-space:nowrap}
+.switch button[aria-pressed="true"]{background:var(--accent);color:var(--ink);font-weight:700}
+.switch.sub button{font-size:13px;padding:7px 14px}
 .switch button:focus-visible,.clip:focus-visible,.close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 dialog{border:0;padding:0;background:transparent;max-width:min(1280px,96vw);width:100%}
 dialog::backdrop{background:rgba(5,6,8,.9)}
 dialog video,dialog img{display:block;width:100%;border-radius:12px;background:#000}
-.close{position:absolute;top:10px;right:10px;font:700 13px Arial,Helvetica,sans-serif;color:var(--fg);background:rgba(20,22,26,.85);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}
+.close{position:absolute;top:10px;right:10px;font:300 13px var(--font);color:var(--fg);background:rgba(20,22,26,.85);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 <main>
-  <section id="recordings" aria-label="Recordings"><p class="clip-empty">Loading…</p></section>
-  <section id="vocabulary" aria-label="Spatial UI vocabulary" hidden></section>
+  <section id="demo" aria-label="Demo"><p>Loading…</p></section>
+  <section id="document" aria-label="Document" hidden></section>
 </main>
-<nav class="switch" aria-label="Section"><button type="button" data-tab="recordings" aria-pressed="true">Recordings</button><button type="button" data-tab="vocabulary" aria-pressed="false">Spatial UI vocabulary</button></nav>
+<div class="bar">
+  <nav class="switch sub" id="docnav" aria-label="Document parts" hidden></nav>
+  <nav class="switch" id="nav" aria-label="Section"><button type="button" data-tab="demo" aria-pressed="true">Demo</button><button type="button" data-tab="document" aria-pressed="false">Document</button></nav>
+</div>
 <dialog id="dlg" aria-label="Recording"><video id="vid" controls playsinline preload="metadata"></video><button class="close" type="button" data-close>Close</button></dialog>
 <dialog id="zoom" aria-label="Image"><img alt=""><button class="close" type="button" data-close>Close</button></dialog>
-<script src="manifest.js"></script>
+<script src="context/recordings/manifest.js"></script>
 <script>
+const REC='context/recordings/';   // the recordings and their manifest (system/editor/demos/record.mjs writes them)
 const MODS=["Weather", "FindMy", "WorldInfo", "LabInfo", "IoTControl", "ObjectStatus", "Wayfinding", "Delegate", "Agenda", "BookCompanion", "StepGuide", "LiveCoach", "Reminder"];
+// Spatial vocabulary: type → group → part (context/docs/modos-system-design.md 4.4)
 const TYPES=[{"name": "Spatial cues", "def": "Drawn on the room itself: a thing’s own geometry, the floor, a doorway.", "groups": [{"name": "Mark", "def": "which thing or place", "items": [{"img": "breathingBox", "name": "Breathing Box", "use": "When the user is looking for a thing or must notice it, to draw the eye to the thing itself.", "eg": "FindMy found item; ObjectStatus attention"}, {"img": "cornerBrackets", "name": "Corner Brackets", "use": "When the thing carries content the user needs to read (a document, book, poster, screen), to mark it without covering that content.", "eg": "WorldInfo on a poster"}, {"img": "footprintRing", "name": "Footprint Ring", "use": "When the user is operating or asking about one thing and its controls or info appear beside it, to show which thing they belong to.", "eg": "IoTControl on the lamp"}, {"img": "floorArea", "name": "Floor Area", "use": "When the target is a room or area in view, to show its extent; a place has no box, so only its floor lights up.", "eg": "LabInfo “this area”"}, {"img": "doorwayGlow", "name": "Doorway Glow", "use": "When the target room is elsewhere but its door is in view, to show where to go in.", "eg": "Wayfinding to a room"}]}, {"name": "Direction", "def": "lead there, or point text at its thing", "items": [{"img": "arrowAhead", "name": "Arrow Ahead", "use": "When the target is nearby but out of view, to show which way to turn.", "eg": "FindMy, Wayfinding"}, {"img": "floorPath", "name": "Floor Path", "use": "When reaching the target means walking through other spaces, to lead the user along the route.", "eg": "Wayfinding along a corridor"}, {"img": "textArrow", "name": "Text Arrow", "use": "When text stands apart from the thing it is about, to point from the text to that thing. It does not lead anywhere; Arrow Ahead and Floor Path do.", "eg": "WorldInfo beside a poster"}]}, {"name": "Display", "def": "read only", "items": [{"img": "haloDial", "name": "Gauge", "use": "When the user asks how much of something there is now (a level with a range: brightness, toner, battery), to show the amount at a glance.", "eg": "“How bright is the lamp?”"}, {"img": "progressRail", "name": "Progress Rail", "use": "When a task is running toward an end, to show how far along it is and how long is left.", "eg": "Printer job, laundry cycle"}, {"img": "pinnedTags", "name": "Pinned Tags", "use": "When the user needs several separate readings of one thing, to show each next to the part it is about.", "eg": "Printer toner and paper"}, {"img": "statusPulse", "name": "Status Pulse", "use": "When something about a thing needs attention, to flag it in the state’s color and say why.", "eg": "ObjectStatus “paper low”"}, {"img": "cardStack", "name": "Card Stack", "use": "When things wait in line for a device, to show what is next and how many are waiting.", "eg": "Print queue"}]}, {"name": "Adjust", "def": "change the thing; the change is sent", "items": [{"img": "edgeBar", "name": "Slider", "use": "When the user wants to change a level, to let them set it by dragging along the thing’s edge; the new level is sent when they let go.", "eg": "“Make the light brighter”"}, {"img": "edgeTabs", "name": "Edge Tabs", "use": "When the user wants to switch between a few options, to pick one directly on the thing.", "eg": "“Switch the TV to HDMI 2”"}, {"img": "iconButton", "name": "Icon Button", "use": "When the user wants to switch something on or off or trigger a command, to do it in one press: a preset icon with its word (Send, Confirm, Cancel, Turn on/off, Pause…).", "eg": "Power, cancel a print job, Send"}, {"img": "textButton", "name": "Text Button", "use": "When no preset button fits the action, the system writes a text-only button that says what the press does.", "eg": "“Clean print head”"}]}, {"name": "Explore", "def": "move through information; nothing is sent", "items": [{"img": "datePicker", "name": "Date Picker", "use": "When data is dated and the user can move between days, to pick a day: the month once above, each day a capsule with its weekday and date.", "eg": "Weather days, Agenda"}, {"img": "playback", "name": "Playback", "use": "When data runs through time, to play it and scrub to a moment: a Play/Pause button, a rail with a stop per entry, and the current time riding on the thumb.", "eg": "Weather hours"}]}]}, {"name": "Message", "def": "Reaching a person: who, what is said, what goes with it.", "groups": [{"name": "", "def": "", "items": [{"img": "contactChip", "name": "Contact Chip", "use": "When an action reaches a person, to show who it goes to (initials and name); with several candidates, each is a chip to pick.", "eg": "Delegate “…to Alice”"}, {"img": "textInput", "name": "Text Input", "use": "When the user may change what will be said, to show the drafted text in a field they can tap and edit (keyboard or dictation).", "eg": "Delegate “describe this and draft a message”"}, {"img": "tetherSend", "name": "Tether Send", "use": "When the system passes something to someone for the user, to show what goes to whom before it is sent.", "eg": "“Send the poster to Alice”"}, {"img": "photoCapture", "name": "Photo Capture", "use": "When what is sent is a photo of the thing, to frame the thing and flash, then show the photo as a card with the message.", "eg": "Delegate “take a photo of this and send it”"}]}]}, {"name": "Text forms", "def": "How the answer’s words appear. Not cues.", "groups": [{"name": "", "def": "", "items": [{"img": "embeddedText", "name": "Embedded Text", "use": "When a surface at the anchor scores well for writing on, to write the text onto it, handwritten.", "eg": "Weather on the desk"}, {"img": "floatingText", "name": "Floating Text", "use": "When no surface scores well enough, to show the text beside its anchor, facing the user.", "eg": "an answer beside the lamp"}, {"img": "dialogue", "name": "Object-centric Dialogue", "use": "Only when a thing is clearly pointed at and asked in the second person (“Can I eat you?”), to let it answer in its own voice.", "eg": "WorldInfo voice"}]}]}, {"name": "A MOD’s own", "def": "The only parts not shared: ambient effects and assets.", "groups": [{"name": "", "def": "", "items": [{"img": "ambientEffect", "name": "Ambient Effect", "use": "When the data is about the surroundings (weather), to show it as part of the room: sky, rain, fog on a window or surface.", "eg": "Weather"}, {"img": "asset", "name": "Asset", "use": "When a space owner has made something to show (a model, an animation), to place it where it belongs.", "eg": "LabInfo diorama"}]}]}];
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $=id=>document.getElementById(id);
-// Section switch (remembered in the URL hash)
-function show(tab){for(const b of document.querySelectorAll('.switch button'))b.setAttribute('aria-pressed',String(b.dataset.tab===tab));
-  $('recordings').hidden=tab!=='recordings';$('vocabulary').hidden=tab!=='vocabulary';if(location.hash.slice(1)!==tab)history.replaceState(null,'','#'+tab);scrollTo(0,0);}
-for(const b of document.querySelectorAll('.switch button'))b.onclick=()=>show(b.dataset.tab);
-// Vocabulary: type → group → part
-$('vocabulary').innerHTML=TYPES.map(t=>`<section class="type"><h2>${esc(t.name)}</h2><p>${esc(t.def)}</p>${t.groups.map(g=>`<div class="group">${g.name?`<h3>${esc(g.name)}<small>${esc(g.def)}</small></h3>`:''}
-  <div class="grid">${g.items.map(i=>`<figure class="vocab"><img src="cues/${esc(i.img)}.jpg" alt="${esc(i.name)} in the room" loading="lazy" data-zoom>
-  <figcaption><b>${esc(i.name)}</b><p>${esc(i.use)}</p><i>e.g. ${esc(i.eg)}</i></figcaption></figure>`).join('')}</div></div>`).join('')}</section>`).join('');
-for(const i of document.querySelectorAll('[data-zoom]'))i.onclick=()=>{$('zoom').querySelector('img').src=i.src;$('zoom').showModal();};
-// Recordings: grouped by MOD; a card is the clip and how fast it was answered
-function renderClips(clips){
-  $('recordings').innerHTML=MODS.filter(m=>clips.some(c=>c.mod===m)).map(m=>`<section class="mod"><h2>${esc(m)}</h2><div class="grid">${clips.filter(c=>c.mod===m).map(c=>`<button class="clip" type="button" data-clip="${esc(c.name)}" aria-label="${esc(c.question)}">
-    <img src="${esc(c.poster)}" alt="" loading="lazy"><span>Answered in <b>${c.latency!=null?(+c.latency).toFixed(1)+' s':'—'}</b></span></button>`).join('')}</div></section>`).join('');
-  for(const b of document.querySelectorAll('[data-clip]'))b.onclick=()=>{const c=clips.find(x=>x.name===b.dataset.clip),v=$('vid');v.src=c.video;v.poster=c.poster;$('dlg').showModal();v.play().catch(()=>{});};
+// The Document's parts. A new one (Memory, Walkthrough…) is an entry here: its id, its name, and what it renders.
+const DOCS=[
+  {id:'vocabulary',name:'Spatial vocabulary',render:()=>TYPES.map(t=>`<section class="type"><h2>${esc(t.name)}</h2><p>${esc(t.def)}</p>${t.groups.map(g=>`<div class="group">${g.name?`<h3>${esc(g.name)}<small>${esc(g.def)}</small></h3>`:''}
+    <div class="grid">${g.items.map(i=>`<figure class="vocab"><img src="${REC}cues/${esc(i.img)}.jpg" alt="${esc(i.name)} in the room" loading="lazy" data-zoom>
+    <figcaption><b>${esc(i.name)}</b><p>${esc(i.use)}</p><i>e.g. ${esc(i.eg)}</i></figcaption></figure>`).join('')}</div></div>`).join('')}</section>`).join('')},
+];
+let tab='demo',doc=DOCS[0].id;
+function route(){const [t,d]=location.hash.slice(1).split('/');tab=t==='document'?'document':'demo';if(DOCS.some(x=>x.id===d))doc=d;render();}
+function go(t,d=doc){location.hash=t==='document'?`document/${d}`:'demo';}
+function render(){
+  for(const b of $('nav').children)b.setAttribute('aria-pressed',String(b.dataset.tab===tab));
+  $('demo').hidden=tab!=='demo';$('document').hidden=tab!=='document';
+  $('docnav').hidden=tab!=='document'||DOCS.length<2;
+  $('docnav').innerHTML=DOCS.map(d=>`<button type="button" data-doc="${d.id}" aria-pressed="${d.id===doc}">${esc(d.name)}</button>`).join('');
+  for(const b of $('docnav').children)b.onclick=()=>go('document',b.dataset.doc);
+  if(tab==='document'){const d=DOCS.find(x=>x.id===doc);$('document').innerHTML=d.render();
+    for(const i of $('document').querySelectorAll('[data-zoom]'))i.onclick=()=>{$('zoom').querySelector('img').src=i.src;$('zoom').showModal();};}
 }
-for(const d of document.querySelectorAll('dialog')){d.addEventListener('click',e=>{if(e.target===d||e.target.dataset.close!==undefined)d.close();});}
+for(const b of $('nav').children)b.onclick=()=>go(b.dataset.tab);
+addEventListener('hashchange',()=>{route();scrollTo(0,0);});
+// Demo: the recordings, grouped by MOD; a card is the clip and how fast it was answered, opened it is only the video
+function renderClips(clips){
+  $('demo').innerHTML=MODS.filter(m=>clips.some(c=>c.mod===m)).map(m=>`<section class="mod"><h2>${esc(m)}</h2><div class="grid">${clips.filter(c=>c.mod===m).map(c=>`<button class="clip" type="button" data-clip="${esc(c.name)}" aria-label="${esc(c.question)}">
+    <img src="${REC}${esc(c.poster)}" alt="" loading="lazy"><span>Answered in <b>${c.latency!=null?(+c.latency).toFixed(1)+' s':'—'}</b></span></button>`).join('')}</div></section>`).join('');
+  for(const b of document.querySelectorAll('[data-clip]'))b.onclick=()=>{const c=clips.find(x=>x.name===b.dataset.clip),v=$('vid');v.src=REC+c.video;v.poster=REC+c.poster;$('dlg').showModal();v.play().catch(()=>{});};
+}
+for(const d of document.querySelectorAll('dialog'))d.addEventListener('click',e=>{if(e.target===d||e.target.dataset.close!==undefined)d.close();});
 $('dlg').addEventListener('close',()=>{const v=$('vid');v.pause();v.removeAttribute('src');v.load();});
-const load=window.MANIFEST?Promise.resolve(window.MANIFEST):fetch('manifest.json').then(r=>r.json());
-load.then(m=>renderClips(Object.values(m.clips))).catch(()=>{$('recordings').textContent='The recordings could not be loaded.';});
-show(location.hash.slice(1)==='vocabulary'?'vocabulary':'recordings');
+const load=window.MANIFEST?Promise.resolve(window.MANIFEST):fetch(REC+'manifest.json').then(r=>r.json());
+load.then(m=>renderClips(Object.values(m.clips))).catch(()=>{$('demo').textContent='The recordings could not be loaded.';});
+route();
 </script>
