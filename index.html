@@ -5,10 +5,10 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* The project's main page: Demo (ModOS itself, live: the editor served by system/editor), Gallery (the recordings) and Document
-   (Spatial vocabulary; Memory, Walkthrough… to come). Neutral greys only (cyan belongs to the spatial UI, not to this page). Helvetica
+   (Spatial vocabulary; Memory, Walkthrough… to come). Light; neutral greys only (cyan belongs to the spatial UI, not to this page). Helvetica
    light; bold only where the text matters most. Document: centred, one row per group; Gallery: a masonry of MODs. */
-:root{--bg:#0b0c0e;--card:#15171a;--card-hi:#1c1f23;--line:rgba(255,255,255,.08);--fg:#f1f2f4;--muted:#9ea3ab;--faint:#6c717a;
-  --pill:rgba(30,32,36,.88);--on:#f1f2f4;--on-ink:#0b0c0e;--font:"Helvetica Neue",Helvetica,Arial,sans-serif;color-scheme:dark}
+:root{--bg:#fbfbfa;--card:#f0f0ee;--card-hi:#e7e7e4;--line:rgba(0,0,0,.08);--fg:#16171a;--muted:#5f636a;--faint:#9a9ea5;--rule:rgba(0,0,0,.16);
+  --pill:rgba(255,255,255,.86);--on:#16171a;--on-ink:#fbfbfa;--font:"Helvetica Neue",Helvetica,Arial,sans-serif;color-scheme:light}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:300 15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
 b,strong{font-weight:700}
@@ -17,7 +17,7 @@ main{padding:28px 0 140px}
 main.full{padding:14px 0 0}
 .pad{padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
 /* category tabs (Document) */
-.tabs{position:sticky;top:0;z-index:5;display:flex;justify-content:center;gap:28px;padding-top:14px;padding-bottom:14px;margin-bottom:8px;background:linear-gradient(var(--bg) 70%,rgba(11,12,14,0))}
+.tabs{position:sticky;top:0;z-index:5;display:flex;justify-content:center;gap:28px;padding-top:14px;padding-bottom:14px;margin-bottom:8px;background:linear-gradient(var(--bg) 70%,rgba(251,251,250,0))}
 .tabs button{font:300 28px/1.1 var(--font);color:var(--faint);background:none;border:0;padding:0;cursor:pointer;letter-spacing:-.01em}
 .tabs button:hover{color:var(--muted)}
 .tabs button[aria-selected="true"]{color:var(--fg);font-weight:700}
@@ -35,12 +35,12 @@ main.full{padding:14px 0 0}
    above the camera view (the recording's left 3/4: the pipeline beside it is not shown here). */
 .masonry{columns:3 340px;column-gap:28px}
 .mod{break-inside:avoid;margin:0 0 30px;position:relative;padding-left:26px;display:grid;gap:14px}
-.mod::before{content:"";position:absolute;left:8px;top:26px;bottom:6px;width:1px;background:rgba(255,255,255,.18)}
+.mod::before{content:"";position:absolute;left:8px;top:26px;bottom:6px;width:1px;background:var(--rule)}
 .mod h2{font:700 17px/1.2 var(--font);margin:0 0 0 -26px;display:flex;align-items:center;gap:9px}
 .mod h2 svg,.mod h2 i{width:17px;height:17px;flex:none;stroke-width:1.75}
 .mod h2 .n{font-weight:300;color:var(--faint);font-size:13px}
 .clip{position:relative}
-.clip::before{content:"";position:absolute;left:-18px;top:.75em;width:12px;height:1px;background:rgba(255,255,255,.18)}
+.clip::before{content:"";position:absolute;left:-18px;top:.75em;width:12px;height:1px;background:var(--rule)}
 .clip .q{display:block;font:300 15px/1.35 var(--font);color:var(--fg);margin:0 0 7px}
 .cam{position:relative;display:block;aspect-ratio:4/3;overflow:hidden;border-radius:12px;background:#000}
 .cam img,.cam video{position:absolute;left:0;top:0;height:100%;width:133.6%;max-width:none;object-fit:cover;object-position:left center;display:block}
@@ -63,16 +63,17 @@ main.full{padding:14px 0 0}
 .clip span b{color:var(--fg)}
 /* the floating switch */
 .bar{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:grid;justify-items:center;gap:8px;z-index:10;max-width:calc(100vw - 32px)}
-.switch{display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--pill);box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 0 1px var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);max-width:100%;overflow-x:auto}
+.switch{display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--pill);box-shadow:0 8px 28px rgba(0,0,0,.12),inset 0 0 0 1px var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);max-width:100%;overflow-x:auto}
 .switch button{font:300 14px var(--font);color:var(--muted);background:transparent;border:0;border-radius:999px;padding:9px 20px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
 .switch button:hover{color:var(--fg)}
 .switch button[aria-pressed="true"]{background:var(--on);color:var(--on-ink);font-weight:700}
 .switch.sub button{font-size:13px;padding:7px 14px}
 button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+/* Demo frames the editor, which stays dark: its own page */
 dialog{border:0;padding:0;background:transparent;max-width:min(1100px,94vw,117vh);width:100%}
 dialog::backdrop{background:rgba(5,6,8,.92)}
 dialog video,dialog img{display:block;width:100%;border-radius:14px;background:#000}
-.close{position:absolute;top:12px;right:12px;font:300 13px var(--font);color:var(--fg);background:rgba(20,22,26,.85);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}
+.close{position:absolute;top:12px;right:12px;font:300 13px var(--font);color:#f1f2f4;background:rgba(20,22,26,.8);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}
 #demo iframe{display:block;width:100%;height:calc(100vh - 96px);border:0;border-radius:14px;background:#000}
 #demo p{color:var(--muted)}
 
