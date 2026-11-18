@@ -56,15 +56,16 @@ function glowTexture(r,dark=false,previousBudget=null){
   if(r.findmy?.status==='not_found')add('No mapped location found',600,46,0);
   if(r.findmy?.status==='ambiguous')add('Which item do you mean?',600,46,0);
   const {headingSize:hs,showHeading,bodySize}=textBehavior,heading=72*hs;
-  const titleStart=lines.length;if(r.title&&showHeading)add(r.title,700,heading,0);
+  // Object-centric Dialogue is the thing talking: no heading, only what it says.
+  const titleStart=lines.length;if(r.title&&showHeading&&!ego)add(r.title,700,heading,0);
   const titleCount=lines.length-titleStart,titleLines=reserve&&showHeading?Math.max(2,titleCount,previousBudget?.titleLines||0):titleCount;   // no room kept for a hidden heading
   for(let i=titleCount;i<titleLines;i++)lines.push({text:'',weight:700,size:heading,gap:i?6:0});
   // The body, paragraph by paragraph; a markdown heading line ("# …": the heading size, "## …" and deeper: a little smaller) unless
   // headings are hidden.
   const bodyStart=lines.length;
   if(r.body){let first=true;for(const para of String(r.body).split(/\n+/)){const h=/^\s*(#{1,6})\s+(.*)$/.exec(para);
-    if(h){if(showHeading){add(h[2],700,h[1].length===1?heading:heading*.82,first?18:24);first=false;}continue;}
-    if(para.trim()){add(para,500,46,first?18:14);first=false;}}}
+    if(h){if(showHeading&&!ego){add(h[2],700,h[1].length===1?heading:heading*.82,first?18:24);first=false;}continue;}
+    if(para.trim()){add(para,500,46,first?(ego?0:18):14);first=false;}}}
   const bodyCount=lines.length-bodyStart,bodyLines=reserve?Math.max(4,bodyCount,previousBudget?.bodyLines||0):bodyCount;
   for(let i=bodyCount;i<bodyLines;i++)lines.push({text:'',weight:500,size:46,gap:i?6:18});
   for(const item of r.items||[])add(item,500,46,12,true);
@@ -75,7 +76,7 @@ function glowTexture(r,dark=false,previousBudget=null){
   canvas.width=W;canvas.height=Math.ceil(PAD*2+lines.reduce((h,l)=>h+l.gap+l.size*1.22,0)+footer);canvas.weatherFooter=footer;
   canvas.layoutBudget={titleLines,bodyLines,footer,columns:COLS};
   // The ink's box in canvas pixels (the glass backs exactly this): widest line, first line's top to last line's baseline area.
-  let right=PAD,bottom=PAD;{let y=PAD;for(const l of lines){y+=l.gap;ctx.font=`${l.weight} ${l.size}px ${FONT}`;right=Math.max(right,PAD+(l.indent?48:0)+ctx.measureText(l.text).width);bottom=y+l.size;y+=l.size*1.22;}}
+  let right=PAD,bottom=PAD;{let y=PAD;for(const l of lines){y+=l.gap;ctx.font=`${l.weight} ${l.size}px ${FONT}`;right=Math.max(right,PAD+(l.indent?48:0)+ctx.measureText(l.text).width);bottom=y+l.size*(ego?1.22:1);y+=l.size*1.22;}}
   const box={x0:PAD,x1:footer||reserve?W-PAD:right,y0:PAD,y1:footer||reserve?canvas.height-32:bottom};
   ctx.textBaseline='top';
   // White: the material's colour tints text and glow alike (one glowing colour, picked per answer in legibility.mjs).
@@ -385,6 +386,10 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         const w=await createResponseWidget(r,ctx,list.filter(o=>o.id<r.id&&o.frame===r.frame).length,frame,old);
         const current=presentationResponses(sourceResponses,questions,hold,deliveryClocks()).find(p=>p.id===r.id);
         if(gen!==generation||epoch!==placementEpoch||!current||(current.component_key!==r.component_key&&((current.dialogue?.speaker||null)!==(r.dialogue?.speaker||null)||!updateResponseWidget(w,current)))){dispose(w);continue;}
+        // A bubble that grows as its words stream in is the same bubble: it takes the old one's look and settled state at once, so it never
+        // blinks out or shows a moment of glass while it is set again.
+        if(isBubble(w))bubbleStyle(w);   // a bubble has its own fixed look from its first frame (no glass)
+        if(old&&isBubble(old)&&isBubble(w)){for(const k of ['rating','compositeInitialized','adaptedFrame','adaptedView','adaptedStability','placementDecision','replay','compositePass','legibility','style'])w.userData[k]=old.userData[k];}
         if(old){group.remove(old);dispose(old);}
         widgets.set(r.id,w);group.add(w);changed=true;
       }
