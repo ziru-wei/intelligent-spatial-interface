@@ -84,7 +84,7 @@ MODs live in `editor/modos/mods/*.json` (12 foundational: 7 built, 5 spec). They
 ## Decisions to keep (from the user)
 
 - **The MOD declares its UI.** Each slot lists `fixed` parts and `flexible` parts with a `when` rule over computed facts. No MOD has its own controls or text styles; everything comes from the shared library. MOD-specific parts are only ambient effects and assets. The decision model chooses MODs and fills slots; it does not choose UI.
-- **Library = spatial cues + text forms + message parts.**
+- **Library = cues + controls + text forms.** Controls are Adjust, Explore and Interactive (Contact Chip, Text Input, Tether Send, Photo Capture: reaching a person; not called "message").
   - Describe every part by when to use it and what for, not by what it is.
   - Similar parts must state how they differ:
     - Breathing Box draws attention to a thing.
@@ -119,9 +119,9 @@ MODs live in `editor/modos/mods/*.json` (12 foundational: 7 built, 5 spec). They
 - **Object-centric Dialogue has no heading**: the bubble shows only what the thing says.
 - **The main page** (`index.html`):
   - Two sections, **Demo** (the system: its recordings) and **Document** (Spatial vocabulary now; Memory, Walkthrough and others are added as entries of `DOCS`), switched by a fixed floating capsule control at the bottom; a Document with several parts gets a second capsule row for them.
-  - No page header or explanation. Helvetica light, bold only for what matters most (names, the answer time, the active switch). No horizontal lines.
+  - No page header or explanation. Helvetica light, bold only for what matters most (names, the answer time, the active switch). No horizontal lines. Neutral greys only: no cyan in the page's own UI (cyan is the spatial UI's, seen in the recordings).
   - Demo is grouped by MOD, with no built/spec split. A card shows only "Answered in <time>"; the opened player shows only the video.
-  - The vocabulary is ordered type → group → part. The types are spatial cues, message, text forms and a MOD's own.
+  - The vocabulary has three categories as tabs at the top: **Cues** (Mark, Direction, Display, A MOD's own), **Controls** (Adjust, Explore, Interactive) and **Text** (the text forms). Each group is one row of cards that scrolls sideways (Demo's MODs too), never a long vertical grid.
 - **Ask before** committing, pushing, or deleting anything the user made. Show results as screenshots or recordings, and ask the user to choose before large visual changes.
 
 ## What to do next
