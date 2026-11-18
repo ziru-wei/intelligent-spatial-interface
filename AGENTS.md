@@ -6,7 +6,7 @@ This folder holds one research project, **ModOS: Exploring On-Demand Spatial Int
 modos/               one git repo (origin github.com/ziru-wei/intelligent-spatial-interface, branch modos)
   AGENTS.md          this guide
   README.md          the short version for people
-  index.html         the project's main page: Demo (the recordings) and Document (Spatial vocabulary; Memory, Walkthrough… to come)
+  index.html         the project's main page: Demo (ModOS live), Gallery (the recordings), Document (Spatial vocabulary; Memory, Walkthrough… to come)
   system/            the prototype
     editor/          the web editor and ModOS pipeline (everything below is under here)
     visionos/        the Vision Pro app (not yet updated to the spatial UI library)
@@ -56,7 +56,7 @@ npm run record:cues -- [cue names]     # cue gallery screenshots
 ```
 
 - `demos/record.mjs` uses the clip list in `demos/modos-videos.json`. A name selects a clip, every clip of a MOD, or a name prefix. The clips run as one queue: a failed clip is reported at the end and the others are still recorded. Run it in the background. It needs the server, ffmpeg and Playwright's Chromium.
-- `index.html` at the root is the main page; it reads `context/recordings/manifest.js`. Serve the root to view it (`python3 -m http.server` in `modos/`) or open the file.
+- `index.html` at the root is the main page. Demo frames the running editor (`http://127.0.0.1:8766`, atlas_rec_5; start it with `npm start` in `system/editor`); Gallery reads `context/recordings/manifest.js`. Serve the root to view it (`python3 -m http.server` in `modos/`) or open the file.
 
 ## How ModOS works (code map)
 
@@ -118,10 +118,10 @@ MODs live in `editor/modos/mods/*.json` (12 foundational: 7 built, 5 spec). They
 - **Editor follows the design.** MOD choices live only in MOD settings (MODs tab); the UI library tab adjusts only shared text and cue parameters; Input holds info selection and hands. No per-mod overrides, no pinned or fallback text.
 - **Object-centric Dialogue has no heading**: the bubble shows only what the thing says.
 - **The main page** (`index.html`):
-  - Two sections, **Demo** (the system: its recordings) and **Document** (Spatial vocabulary now; Memory, Walkthrough and others are added as entries of `DOCS`), switched by a fixed floating capsule control at the bottom; a Document with several parts gets a second capsule row for them.
+  - Three sections, **Demo** (ModOS itself, the interactive system), **Gallery** (the recordings) and **Document** (Spatial vocabulary now; Memory, Walkthrough and others are added as entries of `DOCS`), switched by a fixed floating capsule control at the bottom; a Document with several parts gets a second capsule row for them.
   - No page header or explanation. Helvetica light, bold only for what matters most (names, the answer time, the active switch). No horizontal lines. Neutral greys only: no cyan in the page's own UI (cyan is the spatial UI's, seen in the recordings).
-  - Demo is grouped by MOD, with no built/spec split. A card shows only "Answered in <time>"; the opened player shows only the video.
-  - The vocabulary has four categories as tabs at the top: **Cues** (Mark, Direction, Display), **Controls** (Adjust, Explore, Interactive), **Text** (the text forms) and **Assets** (Ambient Asset, Scene Asset: a MOD's own, not shared). Each group is one row of cards that scrolls sideways (Demo's MODs too), never a long vertical grid.
+  - Gallery is grouped by MOD, with no built/spec split. A card shows only "Answered in <time>"; the opened player shows only the video.
+  - The vocabulary has four categories as tabs at the top: **Cues** (Mark, Direction, Display), **Controls** (Adjust, Explore, Interactive), **Text** (the text forms) and **Assets** (Ambient Asset, Scene Asset: a MOD's own, not shared). Groups are laid out like a kanban board: one column per group (per MOD in Gallery), side by side, its cards stacked vertically.
 - **Ask before** committing, pushing, or deleting anything the user made. Show results as screenshots or recordings, and ask the user to choose before large visual changes.
 
 ## What to do next

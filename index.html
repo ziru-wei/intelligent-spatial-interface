@@ -4,9 +4,9 @@
 <title>ModOS</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* The project's main page: Demo (the system, recorded through the headset) and Document (Spatial vocabulary; Memory, Walkthrough… to
-   come). Neutral greys only (cyan belongs to the spatial UI in the recordings, not to this page). Helvetica light; bold only where the
-   text matters most. Each group is one row that scrolls sideways. */
+/* The project's main page: Demo (ModOS itself, live: the editor served by system/editor), Gallery (the recordings) and Document
+   (Spatial vocabulary; Memory, Walkthrough… to come). Neutral greys only (cyan belongs to the spatial UI, not to this page). Helvetica
+   light; bold only where the text matters most. Groups are kanban columns: side by side, their cards stacked. */
 :root{--bg:#0b0c0e;--card:#15171a;--card-hi:#1c1f23;--line:rgba(255,255,255,.08);--fg:#f1f2f4;--muted:#9ea3ab;--faint:#6c717a;
   --pill:rgba(30,32,36,.88);--on:#f1f2f4;--on-ink:#0b0c0e;--font:"Helvetica Neue",Helvetica,Arial,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
@@ -14,6 +14,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:300 15px/1.5 var(--font)
 b,strong{font-weight:700}
 [hidden]{display:none!important}
 main{padding:28px 0 140px}
+main.full{padding:14px 0 0}
 .pad{padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
 /* category tabs (Document) */
 .tabs{position:sticky;top:0;z-index:5;display:flex;gap:28px;padding-top:14px;padding-bottom:14px;margin-bottom:8px;background:linear-gradient(var(--bg) 70%,rgba(11,12,14,0))}
@@ -21,28 +22,22 @@ main{padding:28px 0 140px}
 .tabs button:hover{color:var(--muted)}
 .tabs button[aria-selected="true"]{color:var(--fg);font-weight:700}
 .lead{margin:0 0 28px;color:var(--muted);max-width:60ch}
-/* a row: its name, what it is for, how many; then cards side by side */
-.row{margin:0 0 34px}
-.row-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
-.row-head h2{font:700 17px/1.2 var(--font);margin:0;white-space:nowrap}
-.row-head p{margin:0;color:var(--muted);font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row-head .n{color:var(--faint);font-size:13px}
-.row-head .arrows{margin-left:auto;display:flex;gap:6px;flex:none}
-.arrows button{width:34px;height:34px;border-radius:50%;border:0;background:var(--card-hi);color:var(--fg);font:400 22px/1 var(--font);padding:0 0 3px;cursor:pointer}
-.arrows button:hover:not(:disabled){background:#272a2f}
-.arrows button:disabled{opacity:.3;cursor:default}
-.strip{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 24px;padding-bottom:6px;scrollbar-width:none;overscroll-behavior-x:contain}
-.strip::-webkit-scrollbar{display:none}
-.strip>*{scroll-snap-align:start;flex:0 0 auto}
-.strip::after{content:"";flex:0 0 10px}
+/* kanban: one column per group, side by side; a column's cards stacked */
+.board{display:flex;align-items:flex-start;gap:18px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x proximity;scroll-padding:0 24px;overscroll-behavior-x:contain}
+.board::after{content:"";flex:0 0 6px}
+.col{flex:0 0 auto;width:min(300px,82vw);scroll-snap-align:start;display:flex;flex-direction:column;gap:12px}
+.col-head{padding:0 2px 2px}
+.col-head h2{font:700 17px/1.2 var(--font);margin:0;display:flex;align-items:baseline;gap:8px}
+.col-head h2 .n{font-weight:300;color:var(--faint);font-size:13px}
+.col-head p{margin:3px 0 0;color:var(--muted);font-size:13.5px}
 /* cards */
-.part{width:min(300px,78vw);background:var(--card);border-radius:14px;overflow:hidden;margin:0}
+.part{width:100%;background:var(--card);border-radius:14px;overflow:hidden;margin:0}
 .part img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000;cursor:zoom-in}
 .part figcaption{padding:12px 14px 15px}
 .part b{display:block;font-size:16px;margin-bottom:5px}
 .part p{margin:0 0 8px;color:var(--muted);font-size:13.5px;line-height:1.45}
 .part i{font-style:normal;color:var(--faint);font-size:12.5px}
-.clip{width:min(380px,82vw);display:block;padding:0;border:0;background:var(--card);border-radius:14px;overflow:hidden;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.clip{width:100%;display:block;padding:0;border:0;background:var(--card);border-radius:14px;overflow:hidden;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .clip img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#000;transition:filter .15s}
 .clip:hover img{filter:brightness(1.12)}
 .clip span{display:block;padding:10px 14px 12px;color:var(--muted);font-size:13px}
@@ -59,16 +54,20 @@ dialog{border:0;padding:0;background:transparent;max-width:min(1280px,94vw);widt
 dialog::backdrop{background:rgba(5,6,8,.92)}
 dialog video,dialog img{display:block;width:100%;border-radius:14px;background:#000}
 .close{position:absolute;top:12px;right:12px;font:300 13px var(--font);color:var(--fg);background:rgba(20,22,26,.85);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}
-@media (max-width:600px){.tabs{gap:20px}.tabs button{font-size:22px}.row-head p{display:none}.row-head .arrows{display:none}}
+#demo iframe{display:block;width:100%;height:calc(100vh - 96px);border:0;border-radius:14px;background:#000}
+#demo p{color:var(--muted)}
+#demo code{font:400 14px ui-monospace,Menlo,monospace;color:var(--fg)}
+@media (max-width:600px){.tabs{gap:18px}.tabs button{font-size:22px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 <main>
-  <section id="demo" aria-label="Demo"><p class="pad">Loading…</p></section>
+  <section id="demo" class="pad" aria-label="Demo" hidden></section>
+  <section id="gallery" aria-label="Gallery" hidden><p class="pad">Loading…</p></section>
   <section id="document" aria-label="Document" hidden></section>
 </main>
 <div class="bar">
   <nav class="switch sub" id="docnav" aria-label="Document parts" hidden></nav>
-  <nav class="switch" id="nav" aria-label="Section"><button type="button" data-tab="demo" aria-pressed="true">Demo</button><button type="button" data-tab="document" aria-pressed="false">Document</button></nav>
+  <nav class="switch" id="nav" aria-label="Section"><button type="button" data-tab="demo" aria-pressed="true">Demo</button><button type="button" data-tab="gallery" aria-pressed="false">Gallery</button><button type="button" data-tab="document" aria-pressed="false">Document</button></nav>
 </div>
 <dialog id="dlg" aria-label="Recording"><video id="vid" controls playsinline preload="metadata"></video><button class="close" type="button" data-close>Close</button></dialog>
 <dialog id="zoom" aria-label="Image"><img alt=""><button class="close" type="button" data-close>Close</button></dialog>
@@ -80,49 +79,50 @@ const MODS=["Weather", "FindMy", "WorldInfo", "LabInfo", "IoTControl", "ObjectSt
 const CATS=[{"id": "cues", "name": "Cues", "def": "Drawn on the room itself: a thing’s own geometry, the floor, a doorway.", "rows": [{"name": "Mark", "def": "which thing or place", "items": [{"img": "breathingBox", "name": "Breathing Box", "use": "When the user is looking for a thing or must notice it, to draw the eye to the thing itself.", "eg": "FindMy found item; ObjectStatus attention"}, {"img": "cornerBrackets", "name": "Corner Brackets", "use": "When the thing carries content the user needs to read (a document, book, poster, screen), to mark it without covering that content.", "eg": "WorldInfo on a poster"}, {"img": "footprintRing", "name": "Footprint Ring", "use": "When the user is operating or asking about one thing and its controls or info appear beside it, to show which thing they belong to.", "eg": "IoTControl on the lamp"}, {"img": "floorArea", "name": "Floor Area", "use": "When the target is a room or area in view, to show its extent; a place has no box, so only its floor lights up.", "eg": "LabInfo “this area”"}, {"img": "doorwayGlow", "name": "Doorway Glow", "use": "When the target room is elsewhere but its door is in view, to show where to go in.", "eg": "Wayfinding to a room"}]}, {"name": "Direction", "def": "lead there, or point text at its thing", "items": [{"img": "arrowAhead", "name": "Arrow Ahead", "use": "When the target is nearby but out of view, to show which way to turn.", "eg": "FindMy, Wayfinding"}, {"img": "floorPath", "name": "Floor Path", "use": "When reaching the target means walking through other spaces, to lead the user along the route.", "eg": "Wayfinding along a corridor"}, {"img": "textArrow", "name": "Text Arrow", "use": "When text stands apart from the thing it is about, to point from the text to that thing. It does not lead anywhere; Arrow Ahead and Floor Path do.", "eg": "WorldInfo beside a poster"}]}, {"name": "Display", "def": "read only", "items": [{"img": "haloDial", "name": "Gauge", "use": "When the user asks how much of something there is now (a level with a range: brightness, toner, battery), to show the amount at a glance.", "eg": "“How bright is the lamp?”"}, {"img": "progressRail", "name": "Progress Rail", "use": "When a task is running toward an end, to show how far along it is and how long is left.", "eg": "Printer job, laundry cycle"}, {"img": "pinnedTags", "name": "Pinned Tags", "use": "When the user needs several separate readings of one thing, to show each next to the part it is about.", "eg": "Printer toner and paper"}, {"img": "statusPulse", "name": "Status Pulse", "use": "When something about a thing needs attention, to flag it in the state’s color and say why.", "eg": "ObjectStatus “paper low”"}, {"img": "cardStack", "name": "Card Stack", "use": "When things wait in line for a device, to show what is next and how many are waiting.", "eg": "Print queue"}]}]}, {"id": "controls", "name": "Controls", "def": "What the user acts on.", "rows": [{"name": "Adjust", "def": "change the thing; the change is sent", "items": [{"img": "edgeBar", "name": "Slider", "use": "When the user wants to change a level, to let them set it by dragging along the thing’s edge; the new level is sent when they let go.", "eg": "“Make the light brighter”"}, {"img": "edgeTabs", "name": "Edge Tabs", "use": "When the user wants to switch between a few options, to pick one directly on the thing.", "eg": "“Switch the TV to HDMI 2”"}, {"img": "iconButton", "name": "Icon Button", "use": "When the user wants to switch something on or off or trigger a command, to do it in one press: a preset icon with its word (Send, Confirm, Cancel, Turn on/off, Pause…).", "eg": "Power, cancel a print job, Send"}, {"img": "textButton", "name": "Text Button", "use": "When no preset button fits the action, the system writes a text-only button that says what the press does.", "eg": "“Clean print head”"}]}, {"name": "Explore", "def": "move through information; nothing is sent", "items": [{"img": "datePicker", "name": "Date Picker", "use": "When data is dated and the user can move between days, to pick a day: the month once above, each day a capsule with its weekday and date.", "eg": "Weather days, Agenda"}, {"img": "playback", "name": "Playback", "use": "When data runs through time, to play it and scrub to a moment: a Play/Pause button, a rail with a stop per entry, and the current time riding on the thumb.", "eg": "Weather hours"}]}, {"name": "Interactive", "def": "reach a person: who, what is said, what goes with it", "items": [{"img": "contactChip", "name": "Contact Chip", "use": "When an action reaches a person, to show who it goes to (initials and name); with several candidates, each is a chip to pick.", "eg": "Delegate “…to Alice”"}, {"img": "textInput", "name": "Text Input", "use": "When the user may change what will be said, to show the drafted text in a field they can tap and edit (keyboard or dictation).", "eg": "Delegate “describe this and draft a message”"}, {"img": "tetherSend", "name": "Tether Send", "use": "When the system passes something to someone for the user, to show what goes to whom before it is sent.", "eg": "“Send the poster to Alice”"}, {"img": "photoCapture", "name": "Photo Capture", "use": "When what is sent is a photo of the thing, to frame the thing and flash, then show the photo as a card with the message.", "eg": "Delegate “take a photo of this and send it”"}]}]}, {"id": "text", "name": "Text", "def": "How the answer’s words appear.", "rows": [{"name": "Text forms", "def": "one per answer, chosen by rule", "items": [{"img": "embeddedText", "name": "Embedded Text", "use": "When a surface at the anchor scores well for writing on, to write the text onto it, handwritten.", "eg": "Weather on the desk"}, {"img": "floatingText", "name": "Floating Text", "use": "When no surface scores well enough, to show the text beside its anchor, facing the user.", "eg": "an answer beside the lamp"}, {"img": "dialogue", "name": "Object-centric Dialogue", "use": "Only when a thing is clearly pointed at and asked in the second person (“Can I eat you?”), to let it answer in its own voice.", "eg": "WorldInfo voice"}]}]}, {"id": "assets", "name": "Assets", "def": "What a MOD brings of its own; everything else comes from the shared library.", "rows": [{"name": "", "def": "made for one MOD, placed by it", "items": [{"img": "ambientEffect", "name": "Ambient Asset", "use": "When the data is about the surroundings (weather), to make it part of the room: sky, rain or fog on a window or surface. A MOD’s own, not shared.", "eg": "Weather"}, {"img": "asset", "name": "Scene Asset", "use": "When an author has made something to show (a model, an animation), to place it where it belongs in the space. A MOD’s own, not shared.", "eg": "LabInfo diorama"}]}]}];
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $=id=>document.getElementById(id);
-// One row: a header (name, what it is for, how many, arrows) and a strip of cards that scrolls sideways.
-const row=(name,def,cards)=>`<section class="row"><div class="row-head pad">${name?`<h2>${esc(name)}</h2>`:''}${def?`<p>${esc(def)}</p>`:''}<span class="n">${cards.length}</span>
-  <span class="arrows"><button type="button" data-step="-1" aria-label="Scroll ${esc(name)} back">‹</button><button type="button" data-step="1" aria-label="Scroll ${esc(name)} on">›</button></span></div>
-  <div class="strip pad">${cards.join('')}</div></section>`;
-function wireRows(root){
-  for(const r of root.querySelectorAll('.row')){const strip=r.querySelector('.strip'),[back,on]=r.querySelectorAll('[data-step]');
-    const sync=()=>{back.disabled=strip.scrollLeft<4;on.disabled=strip.scrollLeft+strip.clientWidth>=strip.scrollWidth-4;};
-    for(const b of [back,on])b.onclick=()=>{const card=strip.firstElementChild;strip.scrollBy({left:+b.dataset.step*((card?.offsetWidth||300)+14)*Math.max(1,Math.floor(strip.clientWidth/((card?.offsetWidth||300)+14))),behavior:'smooth'});};
-    strip.addEventListener('scroll',sync,{passive:true});addEventListener('resize',sync);sync();}
-  for(const i of root.querySelectorAll('[data-zoom]'))i.onclick=()=>{$('zoom').querySelector('img').src=i.src;$('zoom').showModal();};
-}
+// One kanban column: its name and how many, what it is for, then its cards stacked.
+const column=(name,def,cards)=>`<section class="col"><div class="col-head">${name?`<h2>${esc(name)}<span class="n">${cards.length}</span></h2>`:''}${def?`<p>${esc(def)}</p>`:''}</div>${cards.join('')}</section>`;
+const board=cols=>`<div class="board pad">${cols.join('')}</div>`;
+function wireZoom(root){for(const i of root.querySelectorAll('[data-zoom]'))i.onclick=()=>{$('zoom').querySelector('img').src=i.src;$('zoom').showModal();};}
 // The Document's parts. A new one (Memory, Walkthrough…) is an entry here: its id, its name, and what it renders.
 let cat=CATS[0].id;
 const DOCS=[
   {id:'vocabulary',name:'Spatial vocabulary',render(){const c=CATS.find(x=>x.id===cat);
     return `<nav class="tabs pad" role="tablist" aria-label="Vocabulary">${CATS.map(x=>`<button type="button" role="tab" data-cat="${x.id}" aria-selected="${x.id===cat}">${esc(x.name)}</button>`).join('')}</nav>
-      <p class="lead pad">${esc(c.def)}</p>${c.rows.map(r=>row(r.name,r.def,r.items.map(i=>`<figure class="part"><img src="${REC}cues/${esc(i.img)}.jpg" alt="${esc(i.name)} in the room" loading="lazy" data-zoom>
-      <figcaption><b>${esc(i.name)}</b><p>${esc(i.use)}</p><i>e.g. ${esc(i.eg)}</i></figcaption></figure>`))).join('')}`;},
+      <p class="lead pad">${esc(c.def)}</p>${board(c.rows.map(r=>column(r.name,r.def,r.items.map(i=>`<figure class="part"><img src="${REC}cues/${esc(i.img)}.jpg" alt="${esc(i.name)} in the room" loading="lazy" data-zoom>
+      <figcaption><b>${esc(i.name)}</b><p>${esc(i.use)}</p><i>e.g. ${esc(i.eg)}</i></figcaption></figure>`))))}`;},
    wire(root){for(const b of root.querySelectorAll('[data-cat]'))b.onclick=()=>{cat=b.dataset.cat;go('document',doc,cat);};}},
 ];
 let tab='demo',doc=DOCS[0].id;
-function route(){const [t,d,c]=location.hash.slice(1).split('/');tab=t==='document'?'document':'demo';if(DOCS.some(x=>x.id===d))doc=d;if(CATS.some(x=>x.id===c))cat=c;render();}
-function go(t,d=doc,c=cat){location.hash=t==='document'?`document/${d}/${c}`:'demo';}
+const TABS=['demo','gallery','document'];
+function route(){const [t,d,c]=location.hash.slice(1).split('/');tab=TABS.includes(t)?t:'demo';if(DOCS.some(x=>x.id===d))doc=d;if(CATS.some(x=>x.id===c))cat=c;render();}
+function go(t,d=doc,c=cat){location.hash=t==='document'?`document/${d}/${c}`:t;}
 function render(){
   for(const b of $('nav').children)b.setAttribute('aria-pressed',String(b.dataset.tab===tab));
-  $('demo').hidden=tab!=='demo';$('document').hidden=tab!=='document';
+  for(const t of TABS)$(t).hidden=tab!==t;document.querySelector('main').classList.toggle('full',tab==='demo');if(tab==='demo')showDemo();
   $('docnav').hidden=tab!=='document'||DOCS.length<2;
   $('docnav').innerHTML=DOCS.map(d=>`<button type="button" data-doc="${d.id}" aria-pressed="${d.id===doc}">${esc(d.name)}</button>`).join('');
   for(const b of $('docnav').children)b.onclick=()=>go('document',b.dataset.doc);
-  if(tab==='document'){const d=DOCS.find(x=>x.id===doc);$('document').innerHTML=d.render();d.wire?.($('document'));wireRows($('document'));}
+  if(tab==='document'){const d=DOCS.find(x=>x.id===doc);$('document').innerHTML=d.render();d.wire?.($('document'));wireZoom($('document'));}
 }
 for(const b of $('nav').children)b.onclick=()=>go(b.dataset.tab);
 addEventListener('hashchange',()=>{route();scrollTo(0,0);});
-// Demo: one row per MOD; a card is the clip and how fast it was answered, opened it is only the video
+// Demo: ModOS itself, live (the editor and its API, system/editor: npm start), on the lab recording
+const SYSTEM='http://127.0.0.1:8766/',SESSION='./spaces/atlas/scenarios/atlas_rec_5/session.json';
+let demoShown=false;
+async function showDemo(){
+  if(demoShown)return;demoShown=true;
+  try{await fetch(SYSTEM,{mode:'no-cors',cache:'no-store'});$('demo').innerHTML=`<iframe src="${SYSTEM}?session=${encodeURIComponent(SESSION)}" title="ModOS" allow="autoplay; fullscreen"></iframe>`;}
+  catch{demoShown=false;$('demo').innerHTML=`<p>ModOS is not running. Start it with <code>cd system/editor && npm start</code>, then open Demo again.</p>`;}
+}
+// Gallery: one column per MOD; a card is the clip and how fast it was answered, opened it is only the video
 function renderClips(clips){
-  $('demo').innerHTML=MODS.filter(m=>clips.some(c=>c.mod===m)).map(m=>row(m,'',clips.filter(c=>c.mod===m).map(c=>`<button class="clip" type="button" data-clip="${esc(c.name)}" aria-label="${esc(c.question)}">
-    <img src="${REC}${esc(c.poster)}" alt="" loading="lazy"><span>Answered in <b>${c.latency!=null?(+c.latency).toFixed(1)+' s':'—'}</b></span></button>`))).join('');
-  wireRows($('demo'));
+  $('gallery').innerHTML=board(MODS.filter(m=>clips.some(c=>c.mod===m)).map(m=>column(m,'',clips.filter(c=>c.mod===m).map(c=>`<button class="clip" type="button" data-clip="${esc(c.name)}" aria-label="${esc(c.question)}">
+    <img src="${REC}${esc(c.poster)}" alt="" loading="lazy"><span>Answered in <b>${c.latency!=null?(+c.latency).toFixed(1)+' s':'—'}</b></span></button>`))));
   for(const b of document.querySelectorAll('[data-clip]'))b.onclick=()=>{const c=clips.find(x=>x.name===b.dataset.clip),v=$('vid');v.src=REC+c.video;v.poster=REC+c.poster;$('dlg').showModal();v.play().catch(()=>{});};
 }
 for(const d of document.querySelectorAll('dialog'))d.addEventListener('click',e=>{if(e.target===d||e.target.dataset.close!==undefined)d.close();});
 $('dlg').addEventListener('close',()=>{const v=$('vid');v.pause();v.removeAttribute('src');v.load();});
 const load=window.MANIFEST?Promise.resolve(window.MANIFEST):fetch(REC+'manifest.json').then(r=>r.json());
-load.then(m=>renderClips(Object.values(m.clips))).catch(()=>{$('demo').innerHTML='<p class="pad">The recordings could not be loaded.</p>';});
+load.then(m=>renderClips(Object.values(m.clips))).catch(()=>{$('gallery').innerHTML='<p class="pad">The recordings could not be loaded.</p>';});
 route();
 </script>
