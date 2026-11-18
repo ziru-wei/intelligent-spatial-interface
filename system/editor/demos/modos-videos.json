@@ -96,7 +96,7 @@
       "mod": "ObjectStatus",
       "recording": "atlas_rec_5",
       "ask_at": 1.0,
-      "question": "whose is that printing?",
+      "question": "anything running low over here?",
       "start": 0,
       "duration": 16
     },
@@ -115,6 +115,15 @@
       "recording": "atlas_rec_5",
       "ask_at": 1.0,
       "question": "how far along is the poster?",
+      "start": 0,
+      "duration": 18
+    },
+    {
+      "name": "iotcontrol-printer-whose",
+      "mod": "IoTControl",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "whose is that printing?",
       "start": 0,
       "duration": 18
     },
@@ -168,7 +177,7 @@
       "mod": "BookCompanion",
       "recording": "atlas_rec_5",
       "ask_at": 5.0,
-      "question": "wait, what happened in this part again?",
+      "question": "wait, what happened in this chapter again?",
       "start": 3.5,
       "duration": 18
     },

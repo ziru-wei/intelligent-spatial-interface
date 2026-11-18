@@ -3,28 +3,32 @@
   "weather-corridor": {
    "name": "weather-corridor",
    "mod": "Weather",
-   "question": "Do I need an umbrella tonight?",
+   "question": "hmm, do I need an umbrella tonight?",
    "recording": "atlas_rec_2",
    "ask_at": 1,
    "video": "weather/weather-corridor.mp4",
    "poster": "weather/weather-corridor.jpg",
    "chosen": [
     [
+     "findmy",
+     0.54
+    ],
+    [
      "weather",
      0.98
     ]
    ],
    "answer": {
-    "title": "No Umbrella Needed Tonight",
-    "body": "You won't need an umbrella tonight as soft snowfall is forecasted instead of rain."
+    "title": "Yes",
+    "body": "Soft snowfall is expected this evening, so you will need your umbrella."
    },
-   "latency": 1.23,
+   "latency": 1.69,
    "agent_speed": 0.35
   },
   "worldinfo-text": {
    "name": "worldinfo-text",
    "mod": "WorldInfo",
-   "question": "What is this study about?",
+   "question": "what's this study about?",
    "recording": "atlas_rec_3",
    "ask_at": 48.6,
    "video": "worldinfo/worldinfo-text.mp4",
@@ -36,16 +40,16 @@
     ]
    ],
    "answer": {
-    "title": "Music-Brain User Study Details",
-    "body": "This user study is conducted by the Brain Music Lab. You can scan to sign up after reading the eligibility requirements."
+    "title": "Music-Brain User Study",
+    "body": "This study lets you sign up in the brain music lab after reviewing the eligibility requirements."
    },
-   "latency": 2.99,
+   "latency": 2.62,
    "agent_speed": 0.35
   },
   "delegate-poster": {
    "name": "delegate-poster",
    "mod": "Delegate",
-   "question": "Send this poster to Alice",
+   "question": "send this to Alice",
    "recording": "atlas_rec_2",
    "ask_at": 7.1,
    "video": "delegate/delegate-poster.mp4",
@@ -57,16 +61,16 @@
     ]
    ],
    "answer": {
-    "title": "Anastasia's Talk Poster",
-    "body": "Hi Alice, here is the poster for Anastasia's talk for your reference."
+    "title": "Draft for Alice",
+    "body": "Hi Alice, here is a photo of the poster for Anastasia's talk for you."
    },
-   "latency": 2.71,
+   "latency": 2.99,
    "agent_speed": 0.35
   },
   "worldinfo-voice": {
    "name": "worldinfo-voice",
    "mod": "WorldInfo",
-   "question": "Can I eat you?",
+   "question": "hey, can I eat you?",
    "recording": "atlas_rec_3",
    "ask_at": 18.1,
    "video": "worldinfo/worldinfo-voice.mp4",
@@ -78,16 +82,16 @@
     ]
    ],
    "answer": {
-    "title": "Candy Availability",
-    "body": "Yes, you can eat me because I am leftover candy from this week's grad tea and people are welcome to help themselves."
+    "title": "Yes",
+    "body": "You can eat me because I am grad tea leftover candy and people may help themselves."
    },
-   "latency": 2.48,
+   "latency": 2.31,
    "agent_speed": 0.35
   },
   "labinfo-wall": {
    "name": "labinfo-wall",
    "mod": "LabInfo",
-   "question": "What is this lab about?",
+   "question": "what's this lab about, all these posters…",
    "recording": "atlas_rec_4",
    "ask_at": 1,
    "video": "labinfo/labinfo-wall.mp4",
@@ -95,20 +99,20 @@
    "chosen": [
     [
      "labinfo",
-     0.9
+     0.92
     ]
    ],
    "answer": {
-    "title": "Programmable Reality Lab Research",
-    "body": "This lab aims to make our living environment dynamic, interactive, and programmable using AR, VR, robotics, and shape-changing interfaces."
+    "title": "Programmable Reality Lab Research Overview",
+    "body": "This lab focuses on making our entire living environment dynamic, interactive, and programmable using AR/VR, robotics, and shape-changing interfaces."
    },
-   "latency": 1.97,
+   "latency": 1.61,
    "agent_speed": 0.35
   },
   "findmy": {
    "name": "findmy",
    "mod": "FindMy",
-   "question": "Where are my headphones?",
+   "question": "wait, where did I put my headphones",
    "recording": "atlas_rec_4",
    "ask_at": 7,
    "video": "findmy/findmy.mp4",
@@ -120,16 +124,16 @@
     ]
    ],
    "answer": {
-    "title": "Headphones Location",
-    "body": "Your headphones are on shelf 3."
+    "title": "Headphones on shelf 3",
+    "body": "Your headphones are on shelf 3 in the middle shelf."
    },
-   "latency": 1.02,
+   "latency": 1.69,
    "agent_speed": 0.35
   },
   "wayfinding-kitchen": {
    "name": "wayfinding-kitchen",
    "mod": "Wayfinding",
-   "question": "How do I get to the kitchen?",
+   "question": "how do I get to the kitchen from here",
    "recording": "atlas_rec_4",
    "ask_at": 1,
    "video": "wayfinding/wayfinding-kitchen.mp4",
@@ -137,20 +141,20 @@
    "chosen": [
     [
      "wayfinding",
-     0.98
+     0.97
     ]
    ],
    "answer": {
     "title": "Directions to the Kitchen",
-    "body": "Exit the lab, turn right into the lab corridor, go north to the central corridor, and find the kitchen on your left."
+    "body": "Exit the lab into the lab corridor, head north to the central corridor, and the kitchen is on the west side."
    },
-   "latency": 1.05,
+   "latency": 1.59,
    "agent_speed": 0.35
   },
   "agenda-afternoon": {
    "name": "agenda-afternoon",
    "mod": "Agenda",
-   "question": "What do I have this afternoon?",
+   "question": "what's on this afternoon?",
    "recording": "atlas_rec_4",
    "ask_at": 2.5,
    "video": "agenda/agenda-afternoon.mp4",
@@ -158,20 +162,20 @@
    "chosen": [
     [
      "agenda",
-     0.97
+     0.89
     ]
    ],
    "answer": {
-    "title": "Afternoon Schedule",
-    "body": "You have badminton and a group meeting this afternoon."
+    "title": "Nothing scheduled this afternoon",
+    "body": "You have no events scheduled for this afternoon."
    },
-   "latency": 1.16,
+   "latency": 1.38,
    "agent_speed": 0.35
   },
   "labinfo-panorama": {
    "name": "labinfo-panorama",
    "mod": "LabInfo",
-   "question": "What does this lab work on?",
+   "question": "so what do they actually work on in here?",
    "recording": "atlas_rec_5",
    "ask_at": 1,
    "video": "labinfo/labinfo-panorama.mp4",
@@ -179,20 +183,20 @@
    "chosen": [
     [
      "labinfo",
-     0.95
+     0.97
     ]
    ],
    "answer": {
-    "title": "Programmable Reality Lab Research",
-    "body": "PRL researches programmable reality, aiming to make the living environment dynamic and interactive through AR/VR, robotics, and shape-changing interfaces."
+    "title": "Programmable reality research",
+    "body": "We make the living environment dynamic and interactive using AR/VR, robotics, and shape-changing interfaces."
    },
-   "latency": 1.76,
+   "latency": 2.66,
    "agent_speed": 0.35
   },
   "weather-lab": {
    "name": "weather-lab",
    "mod": "Weather",
-   "question": "Will it rain this weekend?",
+   "question": "is it gonna rain this weekend?",
    "recording": "atlas_rec_5",
    "ask_at": 1.5,
    "video": "weather/weather-lab.mp4",
@@ -204,16 +208,16 @@
     ]
    ],
    "answer": {
-    "title": "Weekend weather forecast",
-    "body": "No rain is expected this weekend. Saturday brings drifting mist, clear skies, and soft snowfall, while Sunday features drifting mist and soft snowfall."
+    "title": "No",
+    "body": "The forecast shows mist, clear skies, and soft snowfall on Saturday and Sunday, with no rain expected."
    },
-   "latency": 1.24,
+   "latency": 1.54,
    "agent_speed": 0.35
   },
   "iotcontrol-brighter": {
    "name": "iotcontrol-brighter",
    "mod": "IoTControl",
-   "question": "I want to make the light brighter",
+   "question": "kinda dark here… a bit brighter please",
    "recording": "atlas_rec_5",
    "ask_at": 1,
    "video": "iotcontrol/iotcontrol-brighter.mp4",
@@ -221,20 +225,20 @@
    "chosen": [
     [
      "iotcontrol",
-     0.98
+     0.97
     ]
    ],
    "answer": {
-    "title": "Desk Lamp Brightness Increased",
-    "body": "I have increased the desk lamp brightness to 60 percent."
+    "title": "Brightening the desk lamp",
+    "body": "I have increased the desk lamp brightness."
    },
-   "latency": 1.04,
+   "latency": 1.35,
    "agent_speed": 0.35
   },
   "objectstatus-printer": {
    "name": "objectstatus-printer",
    "mod": "ObjectStatus",
-   "question": "Is the printer free?",
+   "question": "anything running low over here?",
    "recording": "atlas_rec_5",
    "ask_at": 1,
    "video": "objectstatus/objectstatus-printer.mp4",
@@ -242,20 +246,20 @@
    "chosen": [
     [
      "objectstatus",
-     0.98
+     0.85
     ]
    ],
    "answer": {
-    "title": "Printer Status",
-    "body": "No, the printer is in use printing a 12-page poster for Ana and has about 4 minutes left."
+    "title": "Yes",
+    "body": "The espresso machine water tank is almost empty, with only about one cup left."
    },
-   "latency": 1.15,
+   "latency": 1.36,
    "agent_speed": 0.35
   },
   "iotcontrol-printer": {
    "name": "iotcontrol-printer",
    "mod": "IoTControl",
-   "question": "How long until my print job is done?",
+   "question": "how far along is the poster?",
    "recording": "atlas_rec_5",
    "ask_at": 1,
    "video": "iotcontrol/iotcontrol-printer.mp4",
@@ -263,20 +267,20 @@
    "chosen": [
     [
      "iotcontrol",
-     0.98
+     0.61
     ]
    ],
    "answer": {
-    "title": "Print job status",
-    "body": "Your print job has about 2 minutes left."
+    "title": "Ana's Poster Printing Progress",
+    "body": "Ana's CHI poster is 7 of 12 pages done."
    },
-   "latency": 1.07,
+   "latency": 1.41,
    "agent_speed": 0.35
   },
   "bookcompanion-lighthouse": {
    "name": "bookcompanion-lighthouse",
    "mod": "BookCompanion",
-   "question": "Remind me what happened in the part I'm reading",
+   "question": "wait, what happened in this chapter again?",
    "recording": "atlas_rec_5",
    "ask_at": 5,
    "video": "bookcompanion/bookcompanion-lighthouse.mp4",
@@ -284,20 +288,20 @@
    "chosen": [
     [
      "bookcompanion",
-     0.92
+     0.93
     ]
    ],
    "answer": {
-    "title": "Current Reading",
-    "body": "No information about the part you are reading is currently available."
+    "title": "To the Lighthouse Part 2 Summary",
+    "body": "Ten years pass quickly, the summer house decays, and tragic family losses occur during the absence."
    },
-   "latency": 0.97,
+   "latency": 1.72,
    "agent_speed": 0.35
   },
   "stepguide-espresso": {
    "name": "stepguide-espresso",
    "mod": "StepGuide",
-   "question": "How do I make an espresso with this?",
+   "question": "how do I even use this… for an espresso?",
    "recording": "atlas_rec_5",
    "ask_at": 47,
    "video": "stepguide/stepguide-espresso.mp4",
@@ -305,20 +309,20 @@
    "chosen": [
     [
      "stepguide",
-     0.9
+     0.95
     ]
    ],
    "answer": {
-    "title": "Making an espresso",
-    "body": "Fill the water tank to the MAX line, grind 18 g of beans, tamp firmly, lock the portafilter in, and press the double-cup button."
+    "title": "Breville Espresso Instructions",
+    "body": "Fill the water tank, grind 18g of beans, tamp firmly, lock in the portafilter, and press the double-cup button."
    },
-   "latency": 1.2,
+   "latency": 1.91,
    "agent_speed": 0.35
   },
   "livecoach-stretch": {
    "name": "livecoach-stretch",
    "mod": "LiveCoach",
-   "question": "How should I stretch after sitting all day?",
+   "question": "my back's killing me, any stretches?",
    "recording": "atlas_rec_5",
    "ask_at": 5.5,
    "video": "livecoach/livecoach-stretch.mp4",
@@ -326,20 +330,20 @@
    "chosen": [
     [
      "livecoach",
-     0.64
+     0.68
     ]
    ],
    "answer": {
-    "title": "Post-Sitting Stretch Routine",
-    "body": "Tilt ears to shoulders, roll shoulders back, round upper back, open chest, and do a seated spine twist."
+    "title": "Desk stretch routine for back",
+    "body": "Try this quick 3-minute stretch: clasp hands in front, round your back and push away for 20 seconds."
    },
-   "latency": 1.2,
+   "latency": 1.72,
    "agent_speed": 0.35
   },
   "reminder-espresso": {
    "name": "reminder-espresso",
    "mod": "Reminder",
-   "question": "Remind me to refill the water tank tomorrow morning",
+   "question": "remind me tomorrow morning, refill the water tank",
    "recording": "atlas_rec_5",
    "ask_at": 48.5,
    "video": "reminder/reminder-espresso.mp4",
@@ -347,20 +351,20 @@
    "chosen": [
     [
      "reminder",
-     0.97
+     0.98
     ]
    ],
    "answer": {
     "title": "Water Tank Reminder",
-    "body": "I will remind you to refill the water tank tomorrow morning."
+    "body": "I will remind you tomorrow morning to refill the water tank."
    },
-   "latency": 1.04,
+   "latency": 1.54,
    "agent_speed": 0.35
   },
   "weather-umbrella": {
    "name": "weather-umbrella",
    "mod": "Weather",
-   "question": "Should I bring my umbrella?",
+   "question": "should I bring my umbrella?",
    "recording": "atlas_rec_5",
    "ask_at": 1.5,
    "video": "weather/weather-umbrella.mp4",
@@ -368,7 +372,7 @@
    "chosen": [
     [
      "findmy",
-     0.59
+     0.57
     ],
     [
      "weather",
@@ -376,16 +380,16 @@
     ]
    ],
    "answer": {
-    "title": "Umbrella Check",
-    "body": "Yes, bring your umbrella because soft snowfall is expected this evening."
+    "title": "Yes",
+    "body": "It is going to snow this evening, so you should bring your umbrella."
    },
-   "latency": 1.08,
+   "latency": 1.75,
    "agent_speed": 0.35
   },
   "iotcontrol-tv": {
    "name": "iotcontrol-tv",
    "mod": "IoTControl",
-   "question": "Switch the TV to HDMI 2",
+   "question": "put the TV on HDMI 2",
    "recording": "atlas_rec_5",
    "ask_at": 1,
    "video": "iotcontrol/iotcontrol-tv.mp4",
@@ -393,20 +397,20 @@
    "chosen": [
     [
      "iotcontrol",
-     0.99
+     0.98
     ]
    ],
    "answer": {
-    "title": "TV Input Switched",
-    "body": "The TV is now set to HDMI 2."
+    "title": "TV set to HDMI 2",
+    "body": "The TV input is now set to HDMI 2."
    },
-   "latency": 0.99,
+   "latency": 1.54,
    "agent_speed": 0.35
   },
   "delegate-describe": {
    "name": "delegate-describe",
    "mod": "Delegate",
-   "question": "Describe this and draft a message to Alice",
+   "question": "describe this for Alice, like a quick message",
    "recording": "atlas_rec_2",
    "ask_at": 7.1,
    "video": "delegate/delegate-describe.mp4",
@@ -414,20 +418,20 @@
    "chosen": [
     [
      "delegate",
-     0.66
+     0.75
     ]
    ],
    "answer": {
-    "title": "Anastasia's Talk Poster",
-    "body": "Anastasia Kouvaras Ostrowski, Assistant Professor at Purdue, focuses on HRI, HCI, and human-centered AI."
+    "title": "Anastasia Kouvaras Ostrowski Talk",
+    "body": "Here is a photo of Anastasia's talk poster. She focuses on HRI, HCI, and human-centered AI."
    },
-   "latency": 2.84,
+   "latency": 2.42,
    "agent_speed": 0.35
   },
   "delegate-photo": {
    "name": "delegate-photo",
    "mod": "Delegate",
-   "question": "Take a photo of this and send it to Alice",
+   "question": "take a pic of this, send it to Alice",
    "recording": "atlas_rec_2",
    "ask_at": 7.1,
    "video": "delegate/delegate-photo.mp4",
@@ -435,16 +439,37 @@
    "chosen": [
     [
      "delegate",
-     0.97
+     0.98
     ]
    ],
    "answer": {
-    "title": "Poster of Anastasia's Talk",
-    "body": "Here is a photo of the Poster of Anastasia's Talk for you."
+    "title": "Photo sent to Alice",
+    "body": "Here is a photo of the Poster of Anastasia's Talk attached for you."
    },
-   "latency": 2.71,
+   "latency": 2.77,
+   "agent_speed": 0.35
+  },
+  "iotcontrol-printer-whose": {
+   "name": "iotcontrol-printer-whose",
+   "mod": "IoTControl",
+   "question": "whose is that printing?",
+   "recording": "atlas_rec_5",
+   "ask_at": 1,
+   "video": "iotcontrol/iotcontrol-printer-whose.mp4",
+   "poster": "iotcontrol/iotcontrol-printer-whose.jpg",
+   "chosen": [
+    [
+     "iotcontrol",
+     0.71
+    ]
+   ],
+   "answer": {
+    "title": "Ana Ruiz's CHI poster",
+    "body": "Ana Ruiz is currently printing her CHI poster."
+   },
+   "latency": 1.79,
    "agent_speed": 0.35
   }
  },
- "recorded": "2026-11-18T02:04:04.720Z"
+ "recorded": "2026-11-18T03:34:11.805Z"
 }

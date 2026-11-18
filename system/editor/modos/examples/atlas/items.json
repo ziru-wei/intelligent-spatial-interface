@@ -129,12 +129,13 @@
    "body": "1. Fill the water tank (back of the machine) to the MAX line. 2. Grind 18 g of beans into the portafilter (grinder on the left, setting 12). 3. Tamp firmly and lock the portafilter in. 4. Put a cup under the spouts and press the double-cup button (about 30 s). 5. Knock out the puck into the bin and rinse the portafilter."
   },
   {
-   "id": "info:to-the-lighthouse",
+   "id": "user:reading",
    "about": [
+    "user:me",
     "item:to-the-lighthouse"
    ],
    "type": "text",
-   "summary": "To the Lighthouse (Virginia Woolf): the user's current book, reading Part 2 'Time Passes'.",
+   "summary": "What the user is reading now: To the Lighthouse (Virginia Woolf), Part 2 'Time Passes'.",
    "body": "To the Lighthouse by Virginia Woolf (1927). The user is on page 142, Part 2 'Time Passes': ten years pass in a few pages; the Ramsays' summer house decays while the family is away; Mrs. Ramsay, Prue and Andrew die (told in brackets). Part 3 'The Lighthouse' returns to the house and the long-delayed trip to the lighthouse."
   },
   {

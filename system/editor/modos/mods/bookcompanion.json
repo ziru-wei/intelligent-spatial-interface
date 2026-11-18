@@ -10,6 +10,9 @@
   "scope": "global",
   "knowledge": [
     {
+      "ref": "user:reading"
+    },
+    {
       "type": "file"
     }
   ],

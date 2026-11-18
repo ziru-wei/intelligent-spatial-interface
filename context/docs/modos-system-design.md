@@ -881,6 +881,8 @@ The rebuild exists so that computation generalizes. Small, concrete features mad
 - **A device task is done of total, and whose.** `{title, done, total, unit, owner?}`: no time estimate anywhere (the context summary, the Progress Rail). A printer reports pages, not minutes.
 - **The panel components are gone** (`src/spatial-ui/kit.mjs` keeps only text: `label`, `wrapLines`); the cues replaced them (§4.3 describes the earlier panel library).
 - **Clip questions read like speech:** situated, casual, sometimes broken, and never about what can simply be seen.
+- **What the user is reading** is a user-context item (`user:reading`, about the user and the book); BookCompanion always asks for it, so "what happened in this chapter again?" is answered even when the book is not grounded as the referent.
+- **"whose is that printing?"** is answered by IoTControl (the job's owner is device state), so it is its own IoTControl clip; ObjectStatus asks "anything running low over here?".
 
 ### 10.17 Not Done Yet (2026-11-17, in priority order)
 

@@ -42,9 +42,10 @@ export async function runText({view,question,picked,referent,reference,items,ans
 
 // The answer streamed as it is written: partial title and body as they come, then the final text with the items it really discusses
 // (validated against the context); a failed stream ends as "Answer unavailable".
-// A yes/no question (it opens with an auxiliary verb, possibly after a filler, and offers no "or" choice) is answered under the heading
+// A yes/no question (it opens with an auxiliary verb, or with "any…" when the verb is dropped, possibly after a filler, and offers no
+// "or" choice) is answered under the heading
 // Yes, No or Not sure, by rule: the model is told so, and its title is held to it.
-export const isYesNo=q=>/^\s*(?:(?:hey|so|um+|uh+|ok(?:ay)?|wait|sorry|quick question)[,.\s]+)*(?:is|are|am|was|were|do|does|did|can|could|will|would|should|shall|may|might|must|have|has|had|isn't|aren't|don't|doesn't|didn't|can't|won't|wouldn't|shouldn't|gonna)\b/i.test(String(q||''))&&!/\bor\b/i.test(String(q||''));
+export const isYesNo=q=>/^\s*(?:(?:hey|so|um+|uh+|h+m+|er+|ok(?:ay)?|wait|sorry|quick question)[,.…\s]+)*(?:is|are|am|was|were|do|does|did|can|could|will|would|should|shall|may|might|must|have|has|had|isn't|aren't|don't|doesn't|didn't|can't|won't|wouldn't|shouldn't|gonna|any|anything|anyone|anybody)\b/i.test(String(q||''))&&!/\bor\b/i.test(String(q||''));
 const YES_NO=t=>{const s=String(t||'').trim().toLowerCase();return /^yes\b/.test(s)?'Yes':/^no\b/.test(s)?'No':'Not sure';};
 const YES_NO_PARTIAL=t=>/^(yes|no|not sure)\b/i.test(String(t||'').trim())?YES_NO(t):'';
 
