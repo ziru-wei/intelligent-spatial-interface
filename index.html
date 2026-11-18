@@ -13,19 +13,19 @@
 body{margin:0;background:var(--bg);color:var(--fg);font:300 15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
 b,strong{font-weight:700}
 [hidden]{display:none!important}
-main{padding:28px 0 140px}
+main{padding:16px 0 120px}
 .pad{padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
 /* category tabs (Document) */
-.tabs{position:sticky;top:0;z-index:5;display:flex;justify-content:center;gap:28px;padding-top:14px;padding-bottom:14px;margin-bottom:8px;background:linear-gradient(var(--bg) 70%,rgba(251,251,250,0))}
+.tabs{position:sticky;top:0;z-index:5;display:flex;justify-content:center;gap:28px;padding-top:12px;padding-bottom:10px;margin-bottom:4px;background:linear-gradient(var(--bg) 70%,rgba(251,251,250,0))}
 .tabs button{font:300 28px/1.1 var(--font);color:var(--faint);background:none;border:0;padding:0;cursor:pointer;letter-spacing:-.01em}
 .tabs button:hover{color:var(--muted)}
 .tabs button[aria-selected="true"]{color:var(--fg);font-weight:700;box-shadow:inset 0 -1.5px 0 var(--fg);padding-bottom:6px}
 .tabs button{padding-bottom:6px}
-.lead{margin:0 auto 34px;color:var(--muted);max-width:60ch}
+.lead{margin:0 auto 20px;color:var(--muted);max-width:60ch}
 /* Document: everything centred; a row is its name and what it is for, then its parts side by side (sideways when they do not fit) */
 #vocabulary,#about{text-align:center}
-.row{margin:0 0 44px}
-.row-head{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:16px}
+.row{margin:0 0 26px}
+.row-head{display:flex;flex-direction:column;align-items:center;gap:0;margin-bottom:10px}
 .row-head h2{font:700 17px/1.2 var(--font);margin:0}
 .row-head p{margin:0;color:var(--muted);font-size:14px}
 .strip{display:flex;justify-content:safe center;gap:28px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding:0 24px;padding-bottom:6px;scrollbar-width:none;overscroll-behavior-x:contain}
@@ -54,9 +54,9 @@ main{padding:28px 0 140px}
 /* cards */
 .part{width:min(220px,70vw);margin:0}
 .part img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000;cursor:zoom-in}
-.part figcaption{padding:10px 2px 0}
+.part figcaption{padding:7px 2px 0}
 .part b{display:block;font-size:15px;margin-bottom:3px}
-.part p{margin:0 0 4px;color:var(--muted);font-size:13px;line-height:1.4}
+.part p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}
 .part i{font-style:normal;color:var(--faint);font-size:12.5px}
 .clip{width:100%;display:block;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .clip span{display:block;padding:10px 14px 12px;color:var(--muted);font-size:13px}
@@ -76,6 +76,10 @@ dialog video,dialog img{display:block;width:100%;border-radius:14px;background:#
 .close{position:absolute;top:12px;right:12px;font:300 13px var(--font);color:#f1f2f4;background:rgba(20,22,26,.8);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}
 /* Demo is ModOS itself, the whole window, in its own dark */
 body.dark{background:#111111}
+body.dark .switch{background:rgba(28,30,34,.97);box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.08)}
+body.dark .switch button{color:#9ea3ab}
+body.dark .switch button:hover{color:#f1f2f4}
+body.dark .switch button[aria-pressed="true"]{background:#f1f2f4;color:#111111}
 #demo{padding:0}
 #demo iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:#111111}
 #demo p{margin:40px 24px;color:#9ea3ab}#demo code{color:#e8e8e8}
@@ -102,7 +106,7 @@ body.dark{background:#111111}
 const REC='context/recordings/';   // the recordings and their manifest (system/editor/demos/record.mjs writes them)
 const MODS=["Weather", "FindMy", "WorldInfo", "LabInfo", "IoTControl", "ObjectStatus", "Wayfinding", "Delegate", "Agenda", "BookCompanion", "StepGuide", "LiveCoach", "Reminder"];
 // Spatial vocabulary (context/docs/modos-system-design.md 4.4): category → row → part
-const CATS=[{"id": "cues", "name": "Cues", "def": "Drawn on the room itself.", "rows": [{"name": "Mark", "def": "which thing or place", "items": [{"img": "breathingBox", "name": "Breathing Box", "use": "Draws the eye to a thing.", "eg": "FindMy"}, {"img": "cornerBrackets", "name": "Corner Brackets", "use": "Marks a thing without covering its content.", "eg": "WorldInfo"}, {"img": "footprintRing", "name": "Footprint Ring", "use": "Shows which thing is being operated.", "eg": "IoTControl"}, {"img": "floorArea", "name": "Floor Area", "use": "Shows a room or area; a place has no box.", "eg": "LabInfo"}, {"img": "doorwayGlow", "name": "Doorway Glow", "use": "Shows where to enter another room.", "eg": "Wayfinding"}]}, {"name": "Direction", "def": "lead there, or link text", "items": [{"img": "arrowAhead", "name": "Arrow Ahead", "use": "Turns you toward a target in this room.", "eg": "FindMy"}, {"img": "floorPath", "name": "Floor Path", "use": "Leads along a route to another room.", "eg": "Wayfinding"}, {"img": "textArrow", "name": "Text Arrow", "use": "Links text to the thing it is about.", "eg": "WorldInfo"}]}, {"name": "Display", "def": "read only", "items": [{"img": "haloDial", "name": "Gauge", "use": "How much: a level with a range.", "eg": "IoTControl"}, {"img": "progressRail", "name": "Progress Rail", "use": "A task’s progress and time left.", "eg": "IoTControl"}, {"img": "pinnedTags", "name": "Pinned Tags", "use": "Several readings of one thing.", "eg": "IoTControl"}, {"img": "statusPulse", "name": "Status Pulse", "use": "A state, and why.", "eg": "ObjectStatus"}, {"img": "cardStack", "name": "Card Stack", "use": "What waits in line.", "eg": "IoTControl"}]}]}, {"id": "controls", "name": "Controls", "def": "What the user acts on.", "rows": [{"name": "Adjust", "def": "changes the thing; sent", "items": [{"img": "edgeBar", "name": "Slider", "use": "Sets a level; sent on release.", "eg": "IoTControl"}, {"img": "edgeTabs", "name": "Edge Tabs", "use": "Picks one of a few options.", "eg": "IoTControl"}, {"img": "iconButton", "name": "Icon Button", "use": "Switches or triggers in one press.", "eg": "IoTControl"}, {"img": "textButton", "name": "Text Button", "use": "A command no preset fits.", "eg": "IoTControl"}]}, {"name": "Explore", "def": "moves through information", "items": [{"img": "datePicker", "name": "Date Picker", "use": "Moves between days.", "eg": "Weather"}, {"img": "playback", "name": "Playback", "use": "Plays through time, or scrubs.", "eg": "Weather"}]}, {"name": "Interactive", "def": "reaches a person", "items": [{"img": "contactChip", "name": "Contact Chip", "use": "Who it goes to.", "eg": "Delegate"}, {"img": "textInput", "name": "Text Input", "use": "What is said; tap to edit.", "eg": "Delegate"}, {"img": "tetherSend", "name": "Tether Send", "use": "What goes, and to whom.", "eg": "Delegate"}, {"img": "photoCapture", "name": "Photo Capture", "use": "A photo of the thing, sent along.", "eg": "Delegate"}]}]}, {"id": "text", "name": "Text", "def": "How the words appear.", "rows": [{"name": "Text forms", "def": "one per answer, by rule", "items": [{"img": "embeddedText", "name": "Embedded Text", "use": "Written on a surface that reads well.", "eg": "Weather"}, {"img": "floatingText", "name": "Floating Text", "use": "Beside its anchor when no surface fits.", "eg": "IoTControl"}, {"img": "dialogue", "name": "Object-centric Dialogue", "use": "The thing answers, when asked as “you”.", "eg": "WorldInfo"}]}]}, {"id": "assets", "name": "Assets", "def": "A MOD’s own; not shared.", "rows": [{"name": "", "def": "", "items": [{"img": "ambientEffect", "name": "Ambient Asset", "use": "The data as part of the room: sky, rain, fog.", "eg": "Weather"}, {"img": "asset", "name": "Scene Asset", "use": "A prepared model or animation, in place.", "eg": "LabInfo"}]}]}];
+const CATS=[{"id": "cues", "name": "Cues", "def": "Drawn on the room itself.", "rows": [{"name": "Mark", "def": "highlighting a physical entity", "items": [{"img": "breathingBox", "name": "Breathing Box", "use": "Draws the eye to a thing.", "eg": "FindMy"}, {"img": "cornerBrackets", "name": "Corner Brackets", "use": "Marks a thing without covering its content.", "eg": "WorldInfo"}, {"img": "footprintRing", "name": "Footprint Ring", "use": "Shows which thing is being operated.", "eg": "IoTControl"}, {"img": "floorArea", "name": "Floor Area", "use": "Shows a room or area; a place has no box.", "eg": "LabInfo"}, {"img": "doorwayGlow", "name": "Doorway Glow", "use": "Shows where to enter another room.", "eg": "Wayfinding"}]}, {"name": "Direction", "def": "leading to somewhere", "items": [{"img": "arrowAhead", "name": "Arrow Ahead", "use": "Turns you toward a target in this room.", "eg": "FindMy"}, {"img": "floorPath", "name": "Floor Path", "use": "Leads along a route to another room.", "eg": "Wayfinding"}, {"img": "textArrow", "name": "Text Arrow", "use": "Links text to the thing it is about.", "eg": "WorldInfo"}]}, {"name": "Visualization", "def": "visualizing information", "items": [{"img": "haloDial", "name": "Gauge", "use": "How much: a level with a range.", "eg": "IoTControl"}, {"img": "progressRail", "name": "Progress Rail", "use": "A task’s progress and time left.", "eg": "IoTControl"}, {"img": "pinnedTags", "name": "Pinned Tags", "use": "Several readings of one thing.", "eg": "IoTControl"}, {"img": "statusPulse", "name": "Status Pulse", "use": "A state, and why.", "eg": "ObjectStatus"}, {"img": "cardStack", "name": "Card Stack", "use": "What waits in line.", "eg": "IoTControl"}]}]}, {"id": "controls", "name": "Controls", "def": "What the user acts on.", "rows": [{"name": "Adjust", "def": "changes the thing; sent", "items": [{"img": "edgeBar", "name": "Slider", "use": "Sets a level; sent on release.", "eg": "IoTControl"}, {"img": "edgeTabs", "name": "Edge Tabs", "use": "Picks one of a few options.", "eg": "IoTControl"}, {"img": "iconButton", "name": "Icon Button", "use": "Switches or triggers in one press.", "eg": "IoTControl"}, {"img": "textButton", "name": "Text Button", "use": "A command no preset fits.", "eg": "IoTControl"}]}, {"name": "Explore", "def": "moves through information", "items": [{"img": "datePicker", "name": "Date Picker", "use": "Moves between days.", "eg": "Weather"}, {"img": "playback", "name": "Playback", "use": "Plays through time, or scrubs.", "eg": "Weather"}]}, {"name": "Interactive", "def": "reaches a person", "items": [{"img": "contactChip", "name": "Contact Chip", "use": "Who it goes to.", "eg": "Delegate"}, {"img": "textInput", "name": "Text Input", "use": "What is said; tap to edit.", "eg": "Delegate"}, {"img": "tetherSend", "name": "Tether Send", "use": "What goes, and to whom.", "eg": "Delegate"}, {"img": "photoCapture", "name": "Photo Capture", "use": "A photo of the thing, sent along.", "eg": "Delegate"}]}]}, {"id": "text", "name": "Text", "def": "How the words appear.", "rows": [{"name": "Text forms", "def": "one per answer, by rule", "items": [{"img": "embeddedText", "name": "Embedded Text", "use": "Written on a surface that reads well.", "eg": "Weather"}, {"img": "floatingText", "name": "Floating Text", "use": "Beside its anchor when no surface fits.", "eg": "IoTControl"}, {"img": "dialogue", "name": "Object-centric Dialogue", "use": "The thing answers, when asked as “you”.", "eg": "WorldInfo"}]}]}, {"id": "assets", "name": "Assets", "def": "A MOD’s own; not shared.", "rows": [{"name": "", "def": "", "items": [{"img": "ambientEffect", "name": "Ambient Asset", "use": "The data as part of the room: sky, rain, fog.", "eg": "Weather"}, {"img": "asset", "name": "Scene Asset", "use": "A prepared model or animation, in place.", "eg": "LabInfo"}]}]}];
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $=id=>document.getElementById(id);
 // One row: its name and what it is for, then its parts side by side.
@@ -112,7 +116,7 @@ function wireRows(root){for(const i of root.querySelectorAll('[data-zoom]'))i.on
 const tabsBar=(sec,list,on)=>`<nav class="tabs pad" role="tablist" aria-label="${sec}">${list.map(x=>`<button type="button" role="tab" data-sub="${x.id}" aria-selected="${x.id===on}">${esc(x.name)}</button>`).join('')}</nav>`;
 const SUBS={
   vocabulary:CATS.map(c=>({id:c.id,name:c.name,render:()=>`<p class="lead pad">${esc(c.def)}</p>${c.rows.map(r=>row(r.name,r.def,r.items.map(i=>`<figure class="part"><img src="${REC}cues/${esc(i.img)}.jpg" alt="${esc(i.name)} in the room" loading="lazy" data-zoom>
-    <figcaption><b>${esc(i.name)}</b><p>${esc(i.use)}</p><i>e.g. ${esc(i.eg)}</i></figcaption></figure>`))).join('')}`})),
+    <figcaption><b>${esc(i.name)}</b><p>${esc(i.use)}</p></figcaption></figure>`))).join('')}`})),
   // About: to be written (left empty on purpose)
   about:[{id:'memory',name:'Memory',render:()=>''},{id:'decisions',name:'Decisions',render:()=>''},{id:'walkthrough',name:'Walkthrough',render:()=>''}],
 };

@@ -379,7 +379,7 @@ Each cue is defined by when it is used and what it does, in seven groups. The tw
 | Direction | Arrow Ahead | When the target is nearby but out of view, to show which way to turn. | FindMy, Wayfinding |
 |  | Floor Path | When reaching the target means walking through other spaces, to lead the user along the route. | Wayfinding along a corridor |
 | Link | Text Arrow | When text stands apart from the thing it is about (Floating or Embedded Text beside a poster or a bowl), to point from the text to that thing: a bright cyan polyline, a shaft and an open head, flat and turned to the user. It does not lead anywhere; Arrow Ahead and Floor Path are for going somewhere. | WorldInfo beside a poster |
-| Display | Gauge | When the user asks how much of something there is now (a level with a range: brightness, toner, battery), to show the amount at a glance. | “How bright is the lamp?” |
+| Visualization | Gauge | When the user asks how much of something there is now (a level with a range: brightness, toner, battery), to show the amount at a glance. | “How bright is the lamp?” |
 |  | Progress Rail | When a task is running toward an end, to show how far along it is and how long is left. | Printer job, laundry cycle |
 |  | Pinned Tags | When the user needs several separate readings of one thing, to show each next to the part it is about. | Printer toner and paper |
 |  | Status Pulse | When something about a thing needs attention, to flag it in the state’s color and say why. | ObjectStatus “paper low” |
@@ -422,7 +422,7 @@ The decision model keeps choosing MODs and filling slots (which thing, which dev
 Rules shared across MODs (used inside their declarations):
 - Mark: a place gets Floor Area, or Doorway Glow when it is another room. A thing with content to read gets Corner Brackets. A thing to find or notice gets Breathing Box. A thing being operated gets Footprint Ring.
 - Direction: Arrow Ahead when the target is out of view; Floor Path when the route crosses spaces.
-- Display or Control (IoTControl's flexible list) follows the value type (§3.7) and whether the request reads or changes it:
+- Visualization or Control (IoTControl's flexible list) follows the value type (§3.7) and whether the request reads or changes it:
 
 | Value type | Read (an output, or only asked about) | Change (an input the request means to change) |
 |---|---|---|
