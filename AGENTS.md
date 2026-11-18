@@ -120,7 +120,8 @@ MODs live in `editor/modos/mods/*.json` (12 foundational: 7 built, 5 spec). They
 - **The main page** (`index.html`):
   - Three sections, **Demo** (ModOS itself, the interactive system), **Gallery** (the recordings) and **Document** (Spatial vocabulary now; Memory, Walkthrough and others are added as entries of `DOCS`), switched by a fixed floating capsule control at the bottom; a Document with several parts gets a second capsule row for them.
   - No page header or explanation. Helvetica light, bold only for what matters most (names, the answer time, the active switch). No horizontal lines. Neutral greys only: no cyan in the page's own UI (cyan is the spatial UI's, seen in the recordings).
-  - Gallery is a masonry (waterfall) of MOD blocks, each a MOD's clips stacked, with no built/spec split. A card is only the frame (no time, no text); the opened player shows only the video.
+  - Gallery is a masonry (waterfall) of MOD blocks, with no built/spec split. A MOD block is a Lucide icon and its name, with a thin line down its left joining it to its clips. A clip is its question (light) above the camera view only: the recording's left 3/4, never the pipeline beside it. No time.
+  - Quiet until looked at: every MOD block is dim, the one under the pointer brighter, and the clip under the pointer fully opaque and playing (muted). Opened, a clip shows only its video.
   - The vocabulary has four categories as tabs at the top: **Cues** (Mark, Direction, Display), **Controls** (Adjust, Explore, Interactive), **Text** (the text forms) and **Assets** (Ambient Asset, Scene Asset: a MOD's own, not shared). In Document each group is one row of cards that scrolls sideways.
 - **Ask before** committing, pushing, or deleting anything the user made. Show results as screenshots or recordings, and ask the user to choose before large visual changes.
 
