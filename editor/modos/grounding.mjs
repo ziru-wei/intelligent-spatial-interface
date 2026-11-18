@@ -9,7 +9,7 @@ export function groundingQuestions(view){
   if(sel&&sel.mode!=='score'){
     q.referent=String(sel.box_id).startsWith('zone:')
       ?score(`While asking, the user is standing in an area that carries information named "${sel.key}". Is user_question about this area or that information (e.g. "what is this place?", "what are the rules here?", "what are they working on?")? No when it asks about something else (a particular object, plans, weather) or when a pronoun refers to something from the conversation rather than to this area.`)
-      :score(`While asking, the user is looking at, pointing at or touching "${view.nameOf(sel.box_id)}" (information item "${sel.key}"). Is user_question about it, including deictic questions such as "what is this?" or "can I eat this?"? No when it asks about something else.`);
+      :score(`While asking, the user is looking at, pointing at or touching "${view.nameOf(sel.box_id)}" (information item "${sel.key}"). Is user_question about it, including deictic questions such as "what is this?" or "can I eat this?", and questions put to the thing itself in the second person such as "what are you?" or "can I eat you?"? No when it asks about something else, or when "you" is the assistant being asked to do something ("can you turn on the lamp?").`);
   }
   if(active&&sel?.mode!=='score')q.followup=score(`The previous answer was about "${active.key}". Is user_question a follow-up about that same thing (a pronoun such as "it" or "that", or an elliptical continuation)? No for a new subject.`);
   if(referents.length){
@@ -39,6 +39,16 @@ export function resolveGrounding(view,a){
     referent={entity:null,key:view.snap.active_info.key,name:view.snap.active_info.key,kind:'object',source:'follow-up'};
   const clarify=reference.status==='unresolved'&&!zone&&!referent;
   return {referent,reference,clarify};
+}
+
+// A question put to the thing in the second person ("can I eat you?") while the user looks at it, and judged to be about it: the thing is
+// the referent even when grounding's own score stayed under the bar. "You" as the assistant ("can you turn on…") is not this.
+const ADDRESSES_ASSISTANT=/\b(can|could|would|will)\s+you\s+(please\s+)?(tell|show|turn|switch|help|find|send|remind|make|set|open|start|stop|give|play|take|describe|draft)\b/i;
+export function addressedReferent(view,question,questions){
+  if(!view.candidate||String(view.candidate).startsWith('zone:')||!view.selection)return null;
+  const text=String(question||'');
+  if(!/\b(you|your|yourself)\b/i.test(text)||ADDRESSES_ASSISTANT.test(text)||!questions.some(q=>q.about==='referent'))return null;
+  return {entity:view.candidate,key:view.selection.key,name:view.nameOf(view.candidate),kind:'object',source:'addressed'};
 }
 
 export function clarifyText(view,question){

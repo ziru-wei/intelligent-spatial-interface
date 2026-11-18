@@ -38,9 +38,11 @@ test('spot score: near, facing the box face toward the viewer, clean',async()=>{
   // On the surface the person relates to: everything perfect; no relation known: neutral; another surface related to: less.
   assert.deepEqual(infoSpotScore(pose(-2.01),flyer,eye,null,1,'wall'),{near:1,facing:1,clean:1,level:1,relation:1,score:1});
   assert.equal(infoSpotScore(pose(-2.01),flyer,eye).score,.95);assert.equal(infoSpotScore(pose(-2.01),flyer,eye,null,1,'desk').score,.9);
-  const {infoSettles}=await import('../src/placement.mjs');const side=infoSpotScore(pose(-2.01,Math.PI/2),flyer,eye);assert.ok(side.facing<1e-6&&side.score<infoSpotScore(pose(-2.01),flyer,eye).score);
-  // Cluttered, even right by the box and turned like it: not good enough to settle (clean weighs most).
-  const cluttered=infoSpotScore(pose(-2.01,0,4),flyer,eye,null,1,'wall');assert.equal(cluttered.score,.45);assert.ok(!infoSettles(cluttered));
+  const {surfaceScore,embedsText,DEFAULT_TEXT_UI}=await import('../src/placement.mjs');const side=infoSpotScore(pose(-2.01,Math.PI/2),flyer,eye);assert.ok(side.facing<1e-6&&side.score<infoSpotScore(pose(-2.01),flyer,eye).score);
+  // Cluttered, even right by the box and turned like it: it ranks lower, and its surface score keeps the text floating (Embedded Text
+  // needs surface.score ≥ 0.5; the clutter cost alone makes it 0).
+  const cluttered=infoSpotScore(pose(-2.01,0,4),flyer,eye,null,1,'wall');assert.equal(cluttered.score,.45);
+  const cam=new THREE.PerspectiveCamera();cam.position.copy(eye);cam.updateMatrixWorld(true);assert.equal(surfaceScore({...pose(-2.01,0,4),position:new THREE.Vector3(.2,1.5,-2.01),width:.3},cam),0);assert.ok(!embedsText(DEFAULT_TEXT_UI,0));assert.ok(embedsText(DEFAULT_TEXT_UI,.6));
 });
 
 test('facing: a small box on a table seen from above shows its top most, so text on the table faces it better than text on the wall',async()=>{

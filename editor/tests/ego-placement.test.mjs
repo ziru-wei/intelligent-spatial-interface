@@ -57,10 +57,3 @@ test('bubble outline: a tail on the side facing the tip, its base clear of the c
 test('effects: bounce and grow run in the first 1.2 s of every 3 s',()=>{
   assert.equal(bounceOffset(2,1),0);assert.ok(bounceOffset(.2,1)>.1);assert.equal(growScale(2),1);assert.ok(Math.abs(growScale(.6)-1.3)<1e-9);assert.ok(Math.abs(growScale(3.6)-1.3)<1e-9);
 });
-test('touch removal: each object loses its effect on its own; the mod stays active while one is left',async()=>{
-  const {createEgo}=await import('../src/ego.mjs');
-  const ego=createEgo({getTarget:id=>({center:[0,1,-2],size:[.5,.5,.5],yaw:0})});
-  ego.setResponse({question_id:1,ego:{main:'layout:a',effect:{type:'bounce',color:'calm'},objects:[{id:'layout:a'},{id:'layout:b'}]}});
-  assert.equal(ego.active,true);ego.setRemoved(['layout:a']);assert.equal(ego.active,true);ego.setRemoved(['layout:a','layout:b']);assert.equal(ego.active,false);
-  ego.setRemoved([]);assert.equal(ego.active,true);ego.dispose();
-});

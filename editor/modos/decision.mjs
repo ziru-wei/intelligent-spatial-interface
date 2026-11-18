@@ -1,6 +1,6 @@
 // ModOS decision module (modos-system-design.md 6.4). The pipeline never calls a model directly: every bounded decision is a
 // `choose` (one option) or a `score` (0-1 per question) sent through decide(stage, state, questions). An engine turns those into
-// its own calls; today the engine is Jev (scripts/jev-pipeline.mjs createJev). Any other decision model plugs in by implementing
+// its own calls; today the engine is Jev (scripts/jev.mjs createJev). Any other decision model plugs in by implementing
 // engine.ask(stage, state, questions) with the same two question kinds, and every decision is logged (stage, inputs, outputs,
 // latency) so the same requests can be replayed through different engines and compared.
 

@@ -8,7 +8,7 @@ import * as THREE from 'three';
 //            fading and growing in when the answer appears;
 //   arrow    once the answer is fixed in the room (settled on a surface or floating by the box): drawn flat over the recorded
 //            camera's view (src/app.mjs, arrowBetween): a short straight line on the line from the text's centre to the centre of the
-//            box's face, ending at the box's outline, with an open head; one path with one soft border (Behavior: arrow thickness, arrow halo). Its ends follow the room's anchors
+//            box's face, ending at the box's outline, with an open head; drawn as the library's Text Arrow (src/spatial-ui/cues.mjs textArrow; thickness: UI library › Text › Text Arrow). Its ends follow the room's anchors
 //            (the text's ink rectangle, the box's face) every frame; no arrow when they overlap on screen or it would leave the view.
 // The corners are in the scene: real surfaces (the scan, the recording's depth) hide them like any placed object; they sit a little
 // toward the viewer so the surface they are on does not.

@@ -37,22 +37,6 @@
         "targets": {
           "kind": "pick-many",
           "from": "entities"
-        },
-        "tone": {
-          "kind": "enum",
-          "values": [
-            "neutral",
-            "attention",
-            "warning"
-          ]
-        },
-        "dismiss": {
-          "kind": "setting",
-          "values": [
-            "never",
-            "hand-approach"
-          ],
-          "default": "never"
         }
       }
     },
@@ -71,30 +55,6 @@
         "speaker": {
           "kind": "pick-one",
           "from": "entities"
-        },
-        "effect": {
-          "kind": "enum",
-          "values": [
-            "bounce",
-            "grow",
-            "color"
-          ]
-        },
-        "tone": {
-          "kind": "enum",
-          "values": [
-            "neutral",
-            "attention",
-            "warning"
-          ]
-        },
-        "dismiss": {
-          "kind": "setting",
-          "values": [
-            "never",
-            "hand-touch"
-          ],
-          "default": "never"
         }
       }
     },

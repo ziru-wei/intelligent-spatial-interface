@@ -1,6 +1,6 @@
 """ModOS response parts that point at things of the twin, resolved into what the editor and the headset draw (scripts/agent_store.py):
 
-  highlight  {targets: [entity ids], tones?: {id: neutral|attention|warning}, door?: true, guidance?: bool, label?: bool}
+  highlight  {targets: [entity ids], tones?: {id: neutral|attention|warning}, states?: {id: text}, door?: true, guidance?: bool, label?: bool}
              each target's box (center, size, yaw, label); with door, a target place becomes its door: the door or opening on the place's
              boundary nearest to where the question was asked (Wayfinding)
   control    {device: entity id, action?: one of its actions}
@@ -57,18 +57,19 @@ def door_of(d, zone, frame=0):
                                               math.dist(cam, b['center']) if cam else 0))
     return door_first[0]
 
-# Things whose surface carries what the user reads (a cue must not cover it: Corner Brackets instead of a box).
-CONTENT = re.compile(r'poster|flyer|booklet|book|paper|document|sign|notice|board|screen|monitor|tv|television|display|menu|map', re.I)
-
+# Things whose surface carries what the user reads (a cue must not cover it: Corner Brackets instead of a box): the twin's `content` trait.
 def has_content(entity, box=None):
-    return bool(CONTENT.search(' '.join(str(x or '') for x in (entity.get('category'), entity.get('name'), (box or {}).get('label')))))
+    return 'content' in (entity.get('traits') or [])
 
 def resolve_highlight(d, value, frame=0):
-    if not isinstance(value, dict) or set(value)-{'targets', 'tones', 'door', 'guidance', 'label'}: raise ValueError('Bad highlight.')
+    if not isinstance(value, dict) or set(value)-{'targets', 'tones', 'states', 'door', 'guidance', 'label'}: raise ValueError('Bad highlight.')
     ids = value.get('targets')
     if not (isinstance(ids, list) and 0 < len(ids) <= MAX_TARGETS and all(isinstance(i, str) for i in ids)): raise ValueError('Highlight needs 1-8 targets.')
     tones = value.get('tones') or {}
     if not isinstance(tones, dict) or any(t not in TONES for t in tones.values()): raise ValueError('Bad highlight tone.')
+    # each thing's state in a few words, from its status data (Status Pulse shows it; modos/selectors.mjs stateText)
+    states = value.get('states') or {}
+    if not isinstance(states, dict) or any(not isinstance(t, str) or len(t) > 60 for t in states.values()): raise ValueError('Bad highlight state.')
     boxes, ents, out = _boxes(d), modos_twin.entities(_space(d), d), []
     for i in ids:
         if value.get('door') and i.startswith('zone:'):
@@ -81,7 +82,7 @@ def resolve_highlight(d, value, frame=0):
         if not b: raise ValueError(f'{i} has no box in the scene.')
         e = ents.get(i, {})
         out.append(dict(id=i, label=e.get('name') or b['label'], center=b['center'], size=b['size'], yaw=b['yaw'], tone=tones.get(i, 'neutral'),
-                        has_content=has_content(e, b)))
+                        has_content=has_content(e, b), **({'state': states[i]} if states.get(i) else {})))
     return dict(version=1, targets=out, guidance=value.get('guidance') is True, label=value.get('label') is True)
 
 def apply_action(space, entity, key, op='set', value=None):

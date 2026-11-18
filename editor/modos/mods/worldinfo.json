@@ -31,6 +31,10 @@
             "cue": "embeddedText",
             "when": "surface.score>=0.5",
             "instead_of": "floatingText"
+          },
+          {
+            "cue": "textArrow",
+            "when": "text.apart"
           }
         ]
       }
@@ -41,15 +45,6 @@
       "anchor": {
         "kind": "object",
         "of": "referent"
-      },
-      "params": {
-        "effect": {
-          "allowed": [
-            "bounce",
-            "grow",
-            "color"
-          ]
-        }
       },
       "ui": {
         "flexible": [
@@ -66,23 +61,5 @@
     }
   ],
   "provider": "system",
-  "variants": {
-    "text": {
-      "label": "Text beside it",
-      "description": "The answer appears next to the thing, pointing at it.",
-      "slots": [
-        "answer"
-      ],
-      "text": "answer"
-    },
-    "voice": {
-      "label": "The thing speaks",
-      "description": "The thing answers in the first person in a bubble and makes a small motion.",
-      "slots": [
-        "voice"
-      ],
-      "text": "voice"
-    }
-  },
-  "default_variant": "text"
+  "text": "answer"
 }

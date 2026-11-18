@@ -131,20 +131,31 @@ test('variants: Weather as text only shows no weather view and asks nothing for 
   assert.equal(textHost([{mod:mod('weather'),score:.8}],null).slot,1);   // the full variant: text below the weather view
 });
 
-test('variants: WorldInfo set to let the thing speak; it answers in the first person with an authored-open motion', async()=>{
-  const voice=mod('worldinfo',{variant:'voice'});
-  const r=await run('Can I eat you?',{yes:['looking at','candy bowl','grow'],selection:{box_id:'comp:c3',key:'candy',mode:'jev'},mods:[voice]});
-  assert.deepEqual(r.ui.map(p=>p.ego),[{objects:['comp:c3'],main:'comp:c3',effect:{type:'grow',color:'calm'}}]);
-  assert.deepEqual(r.ui[0].mod,{id:'worldinfo',variant:'voice',slot:'voice',settings:{dismiss:'never'},ui:{voice:{use:'ego-object',ui:{flexible:[{cue:'dialogue',when:'target.pointed & request.second_person'},{cue:'asset:ego-motion',when:'target.pointed & request.second_person'}]}}},facts:{'target.pointed':true,'request.second_person':true,'question.about':'referent'}});
+test('WorldInfo: the thing speaks in the first person only by its rule (pointed at, asked as "you"); its motion is the library\'s', async()=>{
+  const info=mod('worldinfo');
+  assert.equal(info.variant??null,null);   // one representation: no variant to switch the voice on
+  const r=await run('Can I eat you?',{yes:['looking at','candy bowl'],selection:{box_id:'comp:c3',key:'candy',mode:'jev'},mods:[info]});
+  assert.deepEqual(r.ui.map(p=>p.ego),[{objects:['comp:c3'],main:'comp:c3',effect:{type:'bounce',color:'calm'}}]);
+  assert.equal(r.ui[0].mod.slot,'voice');assert.deepEqual(r.ui[0].mod.settings,{});
   assert.equal(r.contexts[0].voice.speak_as,'candy');
   assert.equal(r.text[0].info,undefined);
-  // A setting fixes the motion: no question is asked for it.
-  const fixed=mod('worldinfo',{variant:'voice',settings:{voice:{effect:'bounce'}}});
-  assert.equal(partsFor(fixed,{},{referent:{entity:'comp:c3'},question:'What are you?'})[0].ego.effect.type,'bounce');
-  // Asked about it, not to it (no second person): the thing does not speak; Object-centric Dialogue is only for a thing addressed as you.
-  assert.deepEqual(partsFor(fixed,{},{referent:{entity:'comp:c3'},question:'Can I eat this?'}),[]);
-  // A place cannot speak: the answer falls back to text beside it.
-  assert.deepEqual(textHost([{mod:voice,score:1}],{key:'Lab',entity:'zone:lab-2f',kind:'place'}).extra,{info:{key:'Lab'}});
+  // Asked about it, not to it (no second person): text beside it, no voice, no motion.
+  const t=await run('Can I eat this?',{yes:['looking at','candy bowl'],selection:{box_id:'comp:c3',key:'candy',mode:'jev'},mods:[info]});
+  assert.equal(t.ui.length,0);assert.equal(t.contexts[0].voice,undefined);
+  assert.deepEqual(partsFor(info,{},{referent:{entity:'comp:c3'},question:'Can I eat this?'}),[]);
+  // A place cannot speak: the answer stays text beside it.
+  assert.deepEqual(textHost([{mod:info,score:1}],{key:'Lab',entity:'zone:lab-2f',kind:'place'},null,'What are you?').extra.info,{key:'Lab'});
+});
+
+test('grounding: a thing asked in the second person is the referent even when grounding scored it under the bar', async()=>{
+  const voice=mod('worldinfo'),selection={box_id:'comp:c3',key:'candy',mode:'jev'};
+  // grounding says no; the request's `about` picks the thing looked at (its option reads "the thing the user is looking at")
+  const r=await run('Can I eat you?',{yes:['the thing the user is looking'],selection,mods:[voice]});
+  assert.deepEqual(r.ui.map(p=>p.ego?.main),['comp:c3']);
+  assert.equal(r.contexts[0].voice.speak_as,'candy');
+  // "you" as the assistant is not the thing
+  const a=await run('Can you tell me what time it is?',{yes:['the thing the user is looking'],selection,mods:[voice]});
+  assert.equal(a.ui.length,0);
 });
 
 test('tailoring: knowledge added to a MOD is read by its text when it is chosen, without being required', async()=>{
@@ -189,4 +200,12 @@ test('one need, two ways to show it: the better MOD stays; two needs in one sent
   }
   assert.equal((await chosen('Is the printer free?',['ObjectStatus','IoTControl','printer'],[mod('objectstatus'),mod('iotcontrol')])).length,1);
   assert.deepEqual((await chosen('Should I bring my umbrella?',['Weather','FindMy','umbrella'],[mod('weather'),mod('findmy')])).sort(),['findmy','weather']);
+});
+
+test('status: the state in a few words from the data, never the thing\'s name', async()=>{
+  const {stateText}=await import('../modos/selectors.mjs');
+  assert.equal(stateText({summary:'Lab printer: in use, printing a 12-page poster for Ana; about 4 minutes left.'}),'In use');
+  assert.equal(stateText({summary:'Espresso machine: water tank almost empty; refill before making coffee.'}),'Water tank almost empty');
+  assert.equal(stateText({state:'Paper low',summary:'Lab printer: in use'}),'Paper low');
+  assert.equal(stateText({summary:'No name and state here'}),'');
 });

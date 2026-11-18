@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import {createResponseWidget,updateResponseWidget} from '../src/agent.mjs';
 // A measuring canvas exercises real widget geometry/texture updates without needing WebGL.
 const canvas=()=>{const image={width:0,height:0,calls:[]};const ctx={font:'500 46px sans-serif',measureText(text){const size=Number(this.font.match(/(\d+)px/)[1]);return {width:text.length*size*.5,actualBoundingBoxAscent:size*.55,actualBoundingBoxDescent:0};},fillText(...args){image.calls.push(args);}};image.getContext=()=>ctx;return image;};
-test('streaming preserves surface pose, glyph scale, geometry and controls footprint across partial/final text',async()=>{
+test('streaming preserves surface pose, glyph scale and geometry across partial/final text (no controls footer)',async()=>{
  const previous=globalThis.document;globalThis.document={createElement:canvas};
  try{
   let placements=0;const camera=new THREE.PerspectiveCamera();camera.updateMatrixWorld(true);
@@ -14,7 +14,7 @@ test('streaming preserves surface pose, glyph scale, geometry and controls footp
   for(const body of ['Pick up ','Pick up your book.','Continue around page 68.']){
    assert.equal(updateResponseWidget(w,{...response,title:'Read tonight',body}),true);
    assert.equal(d.text.geometry,geometry);assert.equal(d.glass.geometry,glass);assert.equal(d.pose,pose);assert.ok(w.position.equals(position));assert.ok(w.quaternion.equals(quaternion));assert.equal(d.width,width);assert.equal(d.height,height);
-   assert.equal(d.text.material.map.image.weatherFooter,352);
+   assert.equal(d.text.material.map.image.weatherFooter,0);   // Weather's controls are placed on their own, not in the answer's footer
   }
   assert.equal(placements,1);
   const before=d.text.material.map.image.calls.find(v=>v[0]==='Continue around page 68.')[2];

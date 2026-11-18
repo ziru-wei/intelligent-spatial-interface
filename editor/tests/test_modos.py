@@ -53,7 +53,7 @@ class RegistryTest(unittest.TestCase):
             self.assertEqual(t['slots'][0]['params']['duration'], {'fixed': '5s'})
             for change, message in [({'variant': 'radio'}, 'no variant'), ({'settings': {'answer': {'duration': 'forever'}}}, 'cannot be'),
                                     ({'settings': {'sky': {'effect': 'rain'}}}, 'cannot be set by hand'), ({'scope': 'nowhere'}, 'scope'),
-                                    ({'variant': 'text', 'text': False}, 'needs slots')]:
+                                    ({'text': False}, 'Unknown customization')]:   # text comes with the variant, never switched apart
                 with self.subTest(message), self.assertRaisesRegex(ValueError, message): modos_registry.customize(space, 'weather', change)
             self.assertEqual(modos_registry.all_mods(space)['weather']['variant'], 'text')     # a refused change is not saved
             f = modos_registry.fork(space, 'weather', 'weather-bedroom', 'Weather (bedroom)')
@@ -65,10 +65,10 @@ class RegistryTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Only a fork'): modos_registry.remove_fork(space, 'weather')
             modos_registry.remove_fork(space, 'weather-bedroom')
             self.assertNotIn('weather-bedroom', modos_registry.all_mods(space))
-            v = modos_registry.customize(space, 'worldinfo', {'variant': 'voice'})
-            self.assertEqual((v['text'], v['slots'][0]['use']), ('voice', 'ego-object'))
+            # WorldInfo has one representation: its voice comes by rule, not by a variant; nothing about how it shows is left to a model
+            with self.assertRaisesRegex(ValueError, 'no variant'): modos_registry.customize(space, 'worldinfo', {'variant': 'voice'})
             row = next(m for m in modos_registry.catalog(space) if m['id'] == 'worldinfo')
-            self.assertEqual(next(s for s in row['settings'] if s['param'] == 'effect')['value'], 'auto')
+            self.assertEqual([s['param'] for s in row['settings']], ['duration'])
 
     def test_install_caches_the_feeds_a_mod_needs(self):
         with tempfile.TemporaryDirectory() as tmp:

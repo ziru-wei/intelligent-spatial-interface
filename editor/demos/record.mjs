@@ -2,8 +2,11 @@
 // Record the MOD demo videos described in demos/modos-videos.json. A tool around the editor, not part of ModOS.
 //   node demos/record.mjs                      every clip
 //   node demos/record.mjs findmy weather-lab   only these
+//   node demos/record.mjs weather iotcontrol   every clip of these MODs (a name is a clip, a MOD, or a name prefix)
+//   npm run record -- weather                  the same, asking again, into the reel (../../context/recordings)
+// The clips run as one queue: a clip that fails is reported at the end and the others are still recorded.
 //   --reask      ask again even when the clip's question was already asked (else its conversation is reused and only recorded)
-//   --out DIR    where the videos go (default demos/videos)
+//   --out DIR    where the videos go (default the reel, ../../context/recordings, when it exists; else demos/videos)
 //   --spec FILE  another spec
 //   --server URL another editor server (e.g. http://127.0.0.1:8777, so a server someone is using is left alone)
 // For each clip: the agent bridge runs for its recording; the question is asked through the editor's own ask box at ask_at (so the
@@ -20,12 +23,16 @@ const EDITOR=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const args=process.argv.slice(2),flag=k=>{const i=args.indexOf(k);return i<0?null:args.splice(i,2)[1];};
 const reask=args.includes('--reask');if(reask)args.splice(args.indexOf('--reask'),1);
 const specPath=path.resolve(flag('--spec')||path.join(EDITOR,'demos/modos-videos.json'));
-const out=path.resolve(flag('--out')||path.join(EDITOR,'demos/videos'));
+const REEL=path.resolve(EDITOR,'../../context/recordings');
+const out=path.resolve(flag('--out')||(existsSync(REEL)?REEL:path.join(EDITOR,'demos/videos')));
 const spec=JSON.parse(readFileSync(specPath,'utf8'));
 const serverFlag=flag('--server');if(serverFlag||process.env.SERVER)spec.server=serverFlag||process.env.SERVER;   // e.g. a second editor server, not to disturb one in use
 const statePath=path.join(path.dirname(specPath),'.record-state.json');
 const state=existsSync(statePath)?JSON.parse(readFileSync(statePath,'utf8')):{};
-const clips=spec.clips.filter(c=>!args.length||args.includes(c.name));
+const picks=args.map(a=>a.toLowerCase()),picked=c=>picks.some(a=>c.name===a||String(c.mod||'').toLowerCase()===a||c.name.startsWith(a+'-'));
+const clips=spec.clips.filter(c=>!picks.length||picked(c));
+const unknown=picks.filter(a=>!spec.clips.some(c=>c.name===a||String(c.mod||'').toLowerCase()===a||c.name.startsWith(a+'-')));
+if(unknown.length){console.error(`No clip or MOD named: ${unknown.join(', ')}`);process.exit(1);}
 const [W,H]=spec.viewport||[1600,900];
 const session=c=>`./spaces/${spec.space}/scenarios/${c.recording}/session.json`;
 const signature=c=>JSON.stringify([c.recording,c.ask_at,c.question,c.setup||{}]);
@@ -128,8 +135,9 @@ const health=await fetch(spec.server).catch(()=>null);
 if(!health?.ok){console.error(`The editor server is not running at ${spec.server} (npm start).`);process.exit(1);}
 mkdirSync(out,{recursive:true});
 const browser=await chromium.launch({executablePath:chromePath(),headless:true,args:['--use-angle=metal','--enable-gpu','--ignore-gpu-blocklist']});
+const done=[],failed=[];
 try{
-  for(const c of [...clips].sort((a,b)=>a.recording.localeCompare(b.recording))){
+  for(const c of [...clips].sort((a,b)=>a.recording.localeCompare(b.recording)))try{
     console.log(`${c.name} (${c.mod||''}) · ${c.recording} @ ${c.ask_at}s · "${c.question}"`);
     let conversation=state[c.name]?.signature===signature(c)&&!reask?state[c.name].conversation:null;
     if(!conversation){await startBridge(c);
@@ -147,5 +155,8 @@ try{
       latency:q?.latency??null,agent_speed:spec.agent_speed||1};
     manifest.recorded=new Date().toISOString();writeFileSync(mpath,JSON.stringify(manifest,null,1));
     writeFileSync(path.join(out,'manifest.js'),`window.MANIFEST=${JSON.stringify(manifest)};\n`);   // for the dashboard opened as a local file
-  }
+    done.push(c.name);
+  }catch(e){console.log(`  FAILED: ${e.message}`);failed.push(`${c.name} (${e.message})`);}
 }finally{stopBridge();await browser.close();}
+console.log(`\nrecorded ${done.length}/${clips.length} into ${out}${done.length?`: ${done.join(', ')}`:''}`);
+if(failed.length){console.log(`failed: ${failed.join('; ')}`);process.exitCode=1;}

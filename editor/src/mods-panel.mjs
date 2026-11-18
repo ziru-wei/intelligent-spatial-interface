@@ -2,7 +2,6 @@
 // here people pick among it:
 //   Representation  one of the MOD's variants (which primitive representations it shows, and where its text goes)
 //   Settings        settled params of its slots (how long text stays, when a highlight goes away, an object's motion, ...)
-//   Answer text     off: the MOD shows only its visual parts
 //   Where           everywhere, or only in some places (a MOD scoped to "what the user asks about" stays so)
 //   Knowledge       extra items it may read; Examples: extra questions it should answer
 //   Duplicate       a new MOD from this one (same parts, its own choices), e.g. "Weather, text only" for the bedroom
@@ -10,8 +9,8 @@
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const slug=s=>String(s).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48);
 const USE={'situated-text':'text','ego-object':'object speaks','highlight':'highlight','guidance':'direction','data-widget':'controls','ambient-effect':'ambient','scene-asset':'animation','label':'label','control':'device control'};
-const PARAM={dismiss:'Goes away',duration:'Text stays',lock:'Sky',effect:'Motion',tone:'Tone'};
-const VALUE={never:'never','hand-approach':'when a hand comes near','hand-touch':'when touched',stay:'until the next answer','5s':'5 seconds',follow:'follows the controls',lock:'stays as first shown',auto:'chosen per answer'};
+const PARAM={duration:'Text stays',lock:'Sky'};
+const VALUE={stay:'until the next answer','5s':'5 seconds',follow:'moves to where you look',lock:'stays where it first showed'};
 
 export function createModsPanel({root,space}){
   let mods=[],places=[],items=[],open=null,status='';
@@ -43,9 +42,7 @@ export function createModsPanel({root,space}){
       +`<b>${esc(v.label)}</b><span>${esc(v.description)}</span><span>${v.slots.map(s=>`<i class="twin-chip${s.id===v.text?' know':''}">${esc(USE[s.use]||s.use)}</i>`).join('')}</span></label>`).join('')}</div>`:'';
     const settings=m.settings.filter(s=>s.active);
     const sets=settings.length?`<h4>Settings</h4>${settings.map(s=>`<div class="take-row"><label title="${esc(s.slot)} · ${esc(s.use)}">${esc(PARAM[s.param]||s.param)}${settings.filter(x=>x.param===s.param).length>1?` <span class="muted">(${esc(USE[s.use]||s.slot)})</span>`:''}</label>`
-      +`<select class="mod-setting" data-slot="${esc(s.slot)}" data-param="${esc(s.param)}">${(s.kind==='enum'?['auto',...s.values]:s.values).map(v=>`<option value="${esc(v)}"${v===s.value?' selected':''}>${esc(VALUE[v]||v)}</option>`).join('')}</select></div>`).join('')}`:'';
-    const textSlot=m.variants.find(v=>v.id===m.variant)?.slots.find(s=>s.id===m.variants.find(v=>v.id===m.variant)?.text);
-    const text=textSlot?.use==='situated-text'&&m.variants.find(v=>v.id===m.variant).slots.length>1||m.text_off?`<label class="switch">Answer text<input id="mod-text" class="sw" type="checkbox"${m.text_off?'':' checked'}></label>`:'';
+      +`<select class="mod-setting" data-slot="${esc(s.slot)}" data-param="${esc(s.param)}">${s.values.map(v=>`<option value="${esc(v)}"${v===s.value?' selected':''}>${esc(VALUE[v]||v)}</option>`).join('')}</select></div>`).join('')}`:'';
     const fixedScope=m.base_scope==='referent';
     const chosen=Array.isArray(m.scope)?new Set(m.scope):new Set();
     const where=`<h4>Where</h4>${fixedScope?'<p class="muted">Whatever the user asks about.</p>':`<label class="switch">Everywhere<input id="mod-global" class="sw" type="checkbox"${m.scope==='global'?' checked':''}></label>`
@@ -53,14 +50,14 @@ export function createModsPanel({root,space}){
     const knowledge=`<h4>Knowledge</h4><p class="muted">${m.knowledge.map(k=>esc(k.ref||k.type)).join(', ')||'none'}</p>`
       +`<div class="mod-places">${items.filter(i=>!m.knowledge.some(k=>k.ref===i.id)).map(i=>`<label title="${esc(i.summary)}"><input type="checkbox" class="mod-know" value="${esc(i.id)}"${m.extra_knowledge.some(k=>k.ref===i.id)?' checked':''}> ${esc(i.id)}</label>`).join('')}</div>`;
     const examples=`<h4>Examples</h4><p class="muted">${m.examples.map(esc).join(' / ')}</p><textarea id="mod-examples" rows="2" placeholder="More questions it should answer, one per line">${esc(m.extra_examples.join('\n'))}</textarea>`;
-    return `<li class="mod-card on">${head}<p class="muted">${esc(m.description)}</p>${variants}${text}${sets}${where}${knowledge}${examples}
+    return `<li class="mod-card on">${head}<p class="muted">${esc(m.description)}</p>${variants}${sets}${where}${knowledge}${examples}
       <div class="take-row"><button id="mod-save">Save</button>${m.origin==='base'?`<button id="mod-reset"${m.customized?'':' disabled'} title="Back to how its author made it">Reset</button>`:'<button id="mod-remove">Delete</button>'}</div>
       <details class="twin-add"><summary>Duplicate as a new MOD</summary><div class="take-row"><input id="mod-fork-name" type="text" placeholder="Name, e.g. ${esc(m.name)} (bedroom)" maxlength="60"><button id="mod-fork">Duplicate</button></div></details></li>`;
   }
 
   function render(){
-    root.innerHTML=`<section class="behavior twin mods"><div class="panel-head"><h2>MODs</h2><button id="mods-refresh" title="Reload">↻</button></div>
-      <p class="muted">Tailor what each MOD shows in this space: pick a representation, settle its settings, choose where it applies, or duplicate it. The parts and decisions stay the MOD author's.</p>
+    root.innerHTML=`<section class="behavior twin mods"><div class="panel-head"><h2>MODs <button type="button" class="help" data-tip="Tailor what each MOD shows in this space: pick a representation, settle its settings, choose where it applies, or duplicate it. The parts and decisions stay the MOD author's." aria-label="About this">?</button></h2><button id="mods-refresh" title="Reload">↻</button></div>
+      
       ${status?`<p class="muted twin-status">${esc(status)}</p>`:''}<ul class="items mod-list">${mods.map(card).join('')}</ul></section>`;
     wire();
   }
@@ -71,10 +68,9 @@ export function createModsPanel({root,space}){
     for(const c of root.querySelectorAll('.mod-install'))c.onchange=()=>act({op:c.checked?'install':'uninstall',mod:c.dataset.id});
     const m=mods.find(x=>x.id===open);if(!m)return;
     for(const r of root.querySelectorAll('[name=mod-variant]'))r.onchange=()=>act({op:'customize',mod:m.id,change:{variant:r.value}});
-    const settingsNow=()=>{const s={};for(const el of root.querySelectorAll('.mod-setting'))if(el.value!=='auto')(s[el.dataset.slot]??={})[el.dataset.param]=el.value;
-      for(const x of m.settings.filter(x=>!x.active&&x.value!=='auto'))(s[x.slot]??={})[x.param]??=x.value;return s;};
+    const settingsNow=()=>{const s={};for(const el of root.querySelectorAll('.mod-setting'))(s[el.dataset.slot]??={})[el.dataset.param]=el.value;
+      for(const x of m.settings.filter(x=>!x.active))(s[x.slot]??={})[x.param]??=x.value;return s;};
     for(const el of root.querySelectorAll('.mod-setting'))el.onchange=()=>act({op:'customize',mod:m.id,change:{settings:settingsNow()}});
-    if($('mod-text'))$('mod-text').onchange=()=>act({op:'customize',mod:m.id,change:{text:$('mod-text').checked?null:false}});
     if($('mod-global'))$('mod-global').onchange=()=>{root.querySelector('.mod-places').hidden=$('mod-global').checked;};
     $('mod-save').onclick=()=>{
       const change={knowledge:[...root.querySelectorAll('.mod-know:checked')].map(c=>({ref:c.value})),

@@ -57,14 +57,6 @@ function enumerated(name,sel){
   return {questions:{[name]:choose(sel.instructions||`Which ${name} fits user_question?`,options)},data:null,interpret(a){return {kind:'enum',value:a[name].choice};}};
 }
 
-// A slot param of kind enum that the MOD's author left open (listed with `allowed`, not settled with `fixed`) is chosen per answer:
-// e.g. the motion an object makes while it speaks. Its selection is keyed "<slot>.<param>" (compose.mjs paramOf reads it).
-function slotParam(mod,slot,name,p){
-  const options=Object.fromEntries(p.allowed.map(v=>[v,v]));
-  return {questions:{[`${slot.id}__${name}`]:choose(`For "${mod.name}", the ${slot.use} "${slot.id}" can show its ${name} as one of these. Which fits user_question best?`,options)},
-    data:null,interpret(a){return {kind:'enum',value:a[`${slot.id}__${name}`].choice};}};
-}
-
 /** The selectors the MOD's active slots read (a variant that hides a slot does not ask for its data). */
 const reads=(slot,name)=>Array.isArray(slot.data)?slot.data.includes(name):slot.data===name;
 export const activeSelectors=mod=>Object.entries(mod.selectors||{}).filter(([name])=>mod.slots.some(s=>reads(s,name)));
@@ -111,7 +103,15 @@ function fromContext(name,sel,ctx){
     // The things asked about (0.5 and above); when none clearly is, the most likely one if it is still plausible (0.3).
     const sc=items.map((_,i)=>a[`${name}_${i}`].score),best=sc.indexOf(Math.max(...sc));
     const on=items.filter((_,i)=>sc[i]>=.5).concat(items.length&&sc[best]>=.3&&!sc.some(x=>x>=.5)?[items[best]]:[]);
-    return on.length?{kind:'entities',ids:on.map(entityOf),tones:Object.fromEntries(on.map(i=>[entityOf(i),i.level||'neutral']))}:null;}};
+    return on.length?{kind:'entities',ids:on.map(entityOf),tones:Object.fromEntries(on.map(i=>[entityOf(i),i.level||'neutral'])),states:Object.fromEntries(on.map(i=>[entityOf(i),stateText(i)]).filter(([,t])=>t))}:null;}};
+}
+
+/** A status item's state in a few words, from its data: its `state`, else the summary's first phrase after the thing's name
+ *  ("Lab printer: in use, printing…" → "In use"). Nothing when the data has no such phrase (never the thing's name). */
+export function stateText(item){
+  if(typeof item?.state==='string'&&item.state.trim())return item.state.trim().slice(0,40);
+  const m=String(item?.summary||'').match(/^[^:]{1,40}:\s*([^,;.]{2,40})/);if(!m)return '';
+  const t=m[1].trim();return t[0].toUpperCase()+t.slice(1);
 }
 
 // pick-one over the user's contacts: to whom
@@ -130,10 +130,9 @@ function place(name,sel,ctx){
     interpret(a){const c=a[name].choice;return c==='none'?null:{kind:'place',entity:places[Number(c.slice(1))].id};}};
 }
 
-/** For one MOD: {questions, data, interpret(answers) → {selector or "slot.param": selection}}. bodies: {itemId: body} of the items
+/** For one MOD: {questions, data, interpret(answers) → {selector: selection}}. Only data is chosen here, never how it is shown. bodies: {itemId: body} of the items
  *  selectors read. No questions means no decision call. */
 export function selectorQuestions(mod,bodies,ctx){
-  const open=mod.slots.flatMap(slot=>Object.entries(slot.params||{}).filter(([,p])=>!('fixed' in p)&&p.allowed?.length>1).map(([n,p])=>[`${slot.id}.${n}`,slotParam(mod,slot,n,p)]));
   const parts=activeSelectors(mod).map(([name,sel])=>{
     if(sel.kind==='enum')return [name,enumerated(name,sel)];
     if(sel.from==='allowed')return [name,allowed(name,sel,mod)];
@@ -146,7 +145,6 @@ export function selectorQuestions(mod,bodies,ctx){
     if(Array.isArray(body.data)&&body.data[0]?.email&&sel.kind==='pick-one')return [name,contact(name,body)];
     throw Error(`MOD ${mod.id}: selector ${name} (${sel.kind} over ${body.type}) is not supported yet.`);
   });
-  parts.push(...open);
   return {
     questions:Object.assign({},...parts.map(([,p])=>p.questions)),
     data:Object.fromEntries(parts.filter(([,p])=>p.data).map(([n,p])=>[n,p.data])),

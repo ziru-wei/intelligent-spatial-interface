@@ -47,7 +47,7 @@
       "ask_at": 1.5,
       "question": "Will it rain this weekend?",
       "start": 0,
-      "duration": 14
+      "duration": 20
     },
     {
       "name": "weather-corridor",
@@ -74,12 +74,7 @@
       "ask_at": 18.1,
       "question": "Can I eat you?",
       "start": 15.5,
-      "duration": 18,
-      "setup": {
-        "worldinfo": {
-          "variant": "voice"
-        }
-      }
+      "duration": 18
     },
     {
       "name": "iotcontrol-brighter",

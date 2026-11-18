@@ -24,6 +24,16 @@ class TwinTest(unittest.TestCase):
             self.assertEqual(e['layout:poster']['kind'], 'artifact')
             self.assertEqual(e['layout:shelf-bottom']['parent'], 'layout:shelf')
 
+    def test_content_is_a_trait_derived_by_default_and_set_in_the_editor(self):
+        import modos_parts
+        with tempfile.TemporaryDirectory() as tmp:
+            sp = space(tmp); e = twin.entities(sp)
+            self.assertIn('content', e['layout:poster']['traits'])        # named a poster: it carries something to read
+            self.assertNotIn('content', e['layout:shelf']['traits'])
+            self.assertTrue(modos_parts.has_content(e['layout:poster']))
+            twin.update(sp, 'layout:shelf', {'traits': ['container', 'surface', 'content']})   # a shelf of books, marked in the editor
+            self.assertTrue(modos_parts.has_content(twin.entities(sp)['layout:shelf']))
+
     def test_items_and_devices_are_authored_with_hierarchy_rules(self):
         with tempfile.TemporaryDirectory() as tmp:
             sp = space(tmp)

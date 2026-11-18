@@ -9,7 +9,7 @@
 // Only bounded decisions use a model (decision.mjs) before the text: one call for 1, one per chosen MOD for 4. Nothing searches the whole
 // space: what a MOD reads is what it asks for.
 import {createView,merge,split} from './view.mjs';
-import {groundingQuestions,groundingState,resolveGrounding,clarifyText} from './grounding.mjs';
+import {groundingQuestions,groundingState,resolveGrounding,addressedReferent,clarifyText} from './grounding.mjs';
 import {splitRequest,requestQuestions,resolveRequest} from './request.mjs';
 import {eligible,placeModFor} from './mod-selection.mjs';
 import {requestContext,fallbackContext} from './context-request.mjs';
@@ -36,10 +36,11 @@ export async function runModos({question,memory,context,items,decide,answer,publ
   // Stage 1: grounding and the request in one decision call.
   const questions=splitRequest(question.text);
   const a=await decide('modos_request',{...view.state,...groundingState(view)},merge({grounding:groundingQuestions(view),request:requestQuestions(view,questions,askable)}));
-  const ga=split(a,'grounding'),{referent,reference,clarify}=resolveGrounding(view,ga);
-  filler.setReference(reference);
-  if(clarify){const text=clarifyText(view,question);await publish(text);return text;}
+  const ga=split(a,'grounding'),grounded=resolveGrounding(view,ga),{reference}=grounded;
   const req=resolveRequest(questions,askable,split(a,'request')),abouts=[...new Set(req.questions.map(q=>q.about))];
+  const referent=grounded.referent||(reference.status==='resolved'?null:addressedReferent(view,question.text,req.questions));
+  filler.setReference(reference);
+  if(grounded.clarify&&!referent){const text=clarifyText(view,question);await publish(text);return text;}
   trace('modos_request',JSON.stringify({referent,reference:reference.status,questions:req.questions.map(q=>({text:q.text,about:q.about}))}));
   trace('view_grounding',JSON.stringify({looking:view.candidate?view.nameOf(view.candidate):null,score:ga.referent?r2(ga.referent.score):null,referent:referent?.name||null,reference:reference.status,
     questions:req.questions.map(q=>({text:q.text,about:q.about==='referent'&&view.candidate?view.nameOf(view.candidate):q.about==='here'&&view.places.length?view.nameOf(view.places[0]):ABOUT[q.about]}))}));

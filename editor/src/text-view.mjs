@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 // CSS pixels in the recorded-video canvas, not source-image pixels or the inspection camera.
 export const TEXT_VIEW={minPx:2.8,targetPx:4.8,maxPx:8,margin:.04};
-// metrics.scale (Behavior: body size, src/agent.mjs): the text is wanted that many times larger, so its sizes are measured against
+// metrics.scale (UI library › Text › Lettering: body size, src/agent.mjs): the text is wanted that many times larger, so its sizes are measured against
 // the targets divided by it (a 1.5× answer is placed 1.5× as wide and still counts as readable).
 export function textViewMetrics(pose,camera,viewport,metrics={}){
  const scale=metrics.scale||1,ratio=metrics.xHeightRatio||24/1024,aspect=pose.height/pose.width,box=metrics.box||{x0:.06,x1:.94,y0:.06,y1:.94};

@@ -5,11 +5,10 @@
 
 import {partsToDraw} from './ui-rules.mjs';
 
-const TONE_COLOR={neutral:'calm',attention:'attention',warning:'warning'};
 const EGO_ID=/^(layout|comp):/;   // what can speak: furniture, openings and scene objects (scripts/ego.py catalog), not places
 
-/** The value of a slot param: the author's setting, the fill's choice, or the primitive's first value. */
-export const paramOf=(slot,name,selection={},fallback)=>slot.params?.[name]?.fixed??selection?.[`${slot.id}.${name}`]?.value??fallback;
+// A speaking thing's motion is the library's (asset:ego-motion): one, the same for every MOD, never chosen per answer.
+const SPEAKING={type:'bounce',color:'calm'};
 
 /** The entity an ego-object slot makes speak (its anchor's), when it can speak. */
 // The facts of the request itself: a thing clearly pointed at (the referent was resolved) and the question put to it in the second person.
@@ -41,7 +40,7 @@ export function partsFor(mod,selection,{referent=null,abouts=[],question=''}={})
   for(const slot of mod.slots){
     if(slot.use==='ego-object'){
       const speaker=speakerOf(slot,referent);
-      if(speaker&&speaks(slot,factsFor(null)))out.push({part:'ui',ego:{objects:[speaker],main:speaker,effect:{type:paramOf(slot,'effect',selection,'bounce'),color:TONE_COLOR[paramOf(slot,'tone',selection,'neutral')]}},...meta(mod,slot,factsFor(null))});
+      if(speaker&&speaks(slot,factsFor(null)))out.push({part:'ui',ego:{objects:[speaker],main:speaker,effect:SPEAKING},...meta(mod,slot,factsFor(null))});
       continue;
     }
     // An action card (Delegate): what will be done, for whom and with what; it runs only when the user confirms it.
@@ -60,7 +59,7 @@ export function partsFor(mod,selection,{referent=null,abouts=[],question=''}={})
     // direction arrow and sign on the same choice travel with it.
     if(slot.use==='highlight'&&['entities','device','place'].includes(sel.kind)){
       const same=use=>mod.slots.some(s=>s.use===use&&s.data===slot.data);
-      out.push({part:'ui',highlight:{targets:sel.kind==='entities'?sel.ids:[sel.entity],...(sel.tones?{tones:sel.tones}:{}),...(sel.kind==='place'?{door:true}:{}),
+      out.push({part:'ui',highlight:{targets:sel.kind==='entities'?sel.ids:[sel.entity],...(sel.tones?{tones:sel.tones}:{}),...(sel.states&&Object.keys(sel.states).length?{states:sel.states}:{}),...(sel.kind==='place'?{door:true}:{}),
         guidance:same('guidance'),label:same('label')},...meta_()});
     }
     if(slot.use==='control'&&sel.kind==='device')out.push({part:'ui',control:{device:sel.entity,action:sel.action||null},...meta_()});
@@ -74,17 +73,22 @@ export function partsFor(mod,selection,{referent=null,abouts=[],question=''}={})
   return out;
 }
 
+// The text form the host's text slot declares (Embedded or Floating Text by surface.score, §4.4) and its settings (how long it stays):
+// they travel with the text part; the client decides the form once it knows the surface (src/placement.mjs).
+const textUi=(mod,slot)=>slot?.use==='situated-text'?{...(slot.ui?{text_ui:slot.ui}:{}),
+  text_mod:{id:mod.id,settings:Object.fromEntries(Object.entries(slot.params||{}).filter(([,p])=>'fixed' in p).map(([k,p])=>[k,p.fixed]))}}:{};
+
 /** Where a MOD's text goes: in a speaking object's voice, or as situated text. Layout slot 1 is the place below a data view (the
  *  weather view) the text is placed relative to; everything else uses slot 0. */
 function hostOf(mod,referent,said={}){
   const slot=mod.slots.find(s=>s.id===mod.text);
   if(slot?.use==='action-card')return {extra:{},slot:0,mod:mod.id,draft:true};   // the text is the draft inside the card
-  if(slot?.use==='ego-object'&&speaks(slot,said)){
-    const speaker=speakerOf(slot,referent);
-    if(speaker)return {extra:{},slot:0,mod:mod.id,voice:{speaker,name:referent?.entity===speaker?referent.name:null}};
-  }
+  // Object-centric Dialogue: when the MOD declares it and its rule holds (the thing pointed at, asked as "you"), the thing says the answer
+  // in the first person; otherwise the MOD's text slot shows it.
+  const voice=mod.slots.find(s=>s.use==='ego-object'&&s.ui&&speaks(s,said)&&speakerOf(s,referent));
+  if(voice){const speaker=speakerOf(voice,referent);return {extra:{},slot:0,mod:mod.id,voice:{speaker,name:referent?.entity===speaker?referent.name:null}};}
   const to=slot?.anchor?.kind==='relative'?mod.slots.find(s=>s.id===slot.anchor.to):null;
-  return {extra:{},slot:to&&['ambient-effect','data-widget'].includes(to.use)?1:0,mod:mod.id};
+  return {extra:textUi(mod,slot),slot:to&&['ambient-effect','data-widget'].includes(to.use)?1:0,mod:mod.id};
 }
 
 /** Which chosen MOD carries the answer text: the referent's first, then the highest scored one with a text slot. */
@@ -98,7 +102,7 @@ export function textHost(chosen,referent,placeMod=null,question=''){
     const own=placeMod||chosen.find(c=>c.mod.scope==='referent')?.mod||null;
     const host=own?.text?hostOf(own,referent,said):null;
     if(host?.voice)return host;
-    return {extra:{info:{key:referent.key}},slot:0,mod:own?.id||'worldinfo'};
+    return {extra:{info:{key:referent.key},...(own?textUi(own,own.slots.find(s=>s.id===own.text)):{})},slot:0,mod:own?.id||'worldinfo'};
   }
   // Whether a MOD shows text is authored (its variant's text slot). When MODs were chosen and none of them has one, the response has
   // no text; with no MOD at all, the text is the whole response and goes in front of the user.

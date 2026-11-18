@@ -34,8 +34,6 @@ GET  /api/agent/status?session=&conversation=       bridge connected + the conve
 GET  /api/agent/questions/next?session=            bridge long-poll (≤25 s); POST /api/agent/questions/trace {session,id,step}, …/done {session,id,message,duration}
 GET  /api/agent/info?session=&question_id=&key=       one info key's value (scripts/info_context.py payload); POST /api/agent/questions/info
                                                    {session,id,key,interaction_id?,source}: the info item a question was answered with
-GET  /api/agent/visible?session=&question_id=&ids=a,b  share of each object (scripts/ego.py id) in view, not hidden, at the question's frame
-GET  /api/agent/context?session=                   household context (scenario or space context.json, else agent/mock-context.json) + the user's pose
                                                    at the question being answered, else at the frame the editor shows (POST /api/agent/state)
 POST /api/agent/placement-log {session,question_id,event}  debug: one placement event of an answer (agent/placement-log/q<id>.jsonl)
 POST /api/agent/responses {session,…}              UI/full text; text streams use {part:'text',stream:{seq,status}} snapshots
@@ -53,7 +51,7 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
-import agent_store as store, spaces, composition, weather, findmy, ego, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts
+import agent_store as store, spaces, composition, weather, findmy, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts
 busy = threading.Lock()
 MOCK_CONTEXT = ROOT/'agent'/'mock-context.json'
 
@@ -104,9 +102,6 @@ def agent_context(session, groups=None, question_id=None):
         # Where the user is: the zone they are in, one they face (scripts/location.py), and what "here" / "this lab" mean.
         if running and running.get('location'): ctx['location'] = location.context(d, running['location'])
         if store.active_info(conversation, running): ctx['active_info'] = store.active_info(conversation, running)
-    ctx['interaction'] = dict(weather_mod=bool((running or live or {}).get('weather_mod', False)),findmy_mod=bool((running or live or {}).get('findmy_mod', False)),ego_mod=bool((running or live or {}).get('ego_mod', False)))
-    if ctx['interaction']['ego_mod']: ctx['ego_catalog'] = ego.for_jev(ego.catalog(d))
-    if 'storage' in ctx.get('loaded_groups',[]): ctx['findmy_catalog'] = findmy.catalog(d,ctx)[0]
     if running:
         ctx['question'] = dict(id=running['id'], text=running['text'], asked_at_s=running['t'])
         live = dict(frame=running['frame'], t=running['t'], **running['pose']) if running.get('pose') else frame_pose(d, running['frame'])
@@ -143,7 +138,7 @@ def ask(body):
     selection = info_context.selection(space, sem, body.get('selection'), body.get('selection_mode', 'jev'), session=d) if body.get('selection') else None
     # A recording asked about in the editor: where the recorded camera stands and looks (a headset sends its own).
     where = location.check(d, body.get('location')) if body.get('location') is not None or sm.get('live') else location.from_camera(d, sm, frame)
-    with store.lock: return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), body.get('weather_mod', False), body.get('text_response'), body.get('findmy_mod', False), body.get('ego_mod', False), selection, pose, where)
+    with store.lock: return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), selection, pose, where)
 
 def agent_get(path, session, q):
     if path == '/api/agent/questions/next': return next_question(session)
@@ -153,17 +148,11 @@ def agent_get(path, session, q):
         if path == '/api/agent/conversations': return store.listing(d)
         if path == '/api/agent/conversations/export': return store.read(d, cid)
         if path == '/api/agent/status': return store.status(d, cid)
-        if path == '/api/agent/visible':
-            # Whether objects are in view (and not hidden) at the question's frame (scripts/ego.py visibility).
-            _, question = store._find_question(d, int(q.get('question_id', ['-1'])[0]))
-            if not question: raise ValueError('Unknown question.')
-            frame = question['frame']
     if path == '/api/agent/info':
         # One info key's value for the bridge (scripts/info_context.py payload): text, or a file's text or bytes.
         with store.lock:
             if not store._find_question(d, q.get('question_id', [''])[0])[1]: raise ValueError('Unknown question.')
         return info_context.payload(d, q.get('key', [''])[0])
-    if path == '/api/agent/visible': return ego.visibility(d, frame, [i for i in q.get('ids', [''])[0].split(',') if i])
     raise KeyError(path)
 
 def agent_post(path, body):
@@ -171,7 +160,7 @@ def agent_post(path, body):
     d = session_dir(body.get('session')); cid = body.get('conversation')
     with store.lock:
         store._prepare(d)
-        if path == '/api/agent/state': store.editor_state[str(d)] = {k: body.get(k) for k in ('conversation', 'frame', 't', 'position', 'quaternion', 'forward', 'weather_mod', 'findmy_mod', 'ego_mod')}; return dict(ok=True)
+        if path == '/api/agent/state': store.editor_state[str(d)] = {k: body.get(k) for k in ('conversation', 'frame', 't', 'position', 'quaternion', 'forward')}; return dict(ok=True)
         if path == '/api/agent/conversations': return store.create(d, body.get('name'))
         if path == '/api/agent/conversations/delete': return store.delete_conversation(d, cid)
         if path == '/api/agent/conversations/rename': return store.rename(d, cid, body.get('name'))
@@ -251,11 +240,8 @@ class Handler(SimpleHTTPRequestHandler):
         if url.path == '/api/agent/command':
             try: return self.reply(200, dict(command=agent_command(session, self.headers.get('Host', '127.0.0.1:8766')), config_path=str(ROOT/'agent-config.local.json'), gemini_setup_command=' '.join(map(shlex.quote,[shutil.which('node') or 'node',str(ROOT/'scripts/gemini-setup.mjs')])), restart_command=' '.join(map(shlex.quote, ['npm', '--prefix', str(ROOT), 'start']))))
             except ValueError as e: return self.reply(400, dict(error=str(e)))
-        if url.path == '/api/agent/context':
-            try: return self.reply(200, agent_context(session, q.get('groups', [None])[0].split(',') if q.get('groups', [None])[0] else ([] if 'catalog' in q else None), q.get('question_id', [None])[0]))
-            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if url.path == '/api/modos/entities':
-            # The digital twin's one entity view (scripts/modos_twin.py) for the editor's Twin tab: every entity with its kind,
+            # The digital twin's one entity view (scripts/modos_twin.py) for the editor's Space tab (Entities): every entity with its kind,
             # traits, parent and device, plus the knowledge items attached to it.
             try:
                 sp = spaces.space_dir(q.get('space', [''])[0]); d = session_dir(session) if session else None

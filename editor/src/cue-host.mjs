@@ -8,6 +8,7 @@ import * as cues from './spatial-ui/cues.mjs';
 import {label} from './spatial-ui/kit.mjs';
 import {highlightOf} from './highlight.mjs';
 import {partsToDraw} from '../modos/ui-rules.mjs';
+import {createRouter,along} from './floor-route.mjs';
 
 const LEVEL={neutral:'ok',attention:'attention',warning:'warning'};
 const ringOf=r=>{const p=r?.polygon?.[0];return Array.isArray(p?.[0]?.[0])?p[0]:p;};
@@ -19,7 +20,9 @@ function fallbackUi(h){
     ...(h.label?{sign:{use:'label',ui:{fixed:['text:sign']}}}:{})};
 }
 
-export function createCueHost({getRooms=()=>[]}={}){
+export function createCueHost({getRooms=()=>[],getLayout=()=>null}={}){
+  // the walking route for Floor Path, over the twin's rooms, doors and walls (rebuilt when the layout changes)
+  let router=null,routerFor=null;const routerOf=()=>{const l=getLayout(),k=l?l.boxesRevision??l.revision??l:null;if(k!==routerFor){routerFor=k;router=l?createRouter(l.rooms||getRooms(),l.openings||[],l.walls||[]):null;}return router;};
   const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));{const l=new THREE.DirectionalLight(0xffffff,1.6);l.position.set(.4,1,1.2);scene.add(l);}
   let key=null,h=null,ui=null,facts={},drawn=[],drawnKey='',checked=0,inView=true,sign=null;
   const roomAt=p=>getRooms().find(r=>{const ring=ringOf(r),f=r.floorY??0;return ring&&p.y>=f-.3&&p.y<f+3.5&&inside([p.x,p.z],ring);})||null;
@@ -37,11 +40,15 @@ export function createCueHost({getRooms=()=>[]}={}){
     const eye=camera.position.clone(),t0=h.targets[0],add=c=>{if(c){scene.add(c.group);drawn.push(c);}};
     for(const name of list){
       if(['breathingBox','cornerBrackets','footprintRing'].includes(name)){for(const t of h.targets)add(cues[name](t));for(const p of h.faint||[])add(cues.breathingBox(p,{strength:.35}));}
-      else if(name==='statusPulse')for(const t of h.targets)add(cues.statusPulse(t,{level:LEVEL[t.tone]==='ok'?'ok':LEVEL[t.tone],message:t.label}));
+      else if(name==='statusPulse')for(const t of h.targets)add(cues.statusPulse(t,{level:LEVEL[t.tone]==='ok'?'ok':LEVEL[t.tone],message:t.state||''}));   // the state from the data ("In use"), never the thing's name
       else if(name==='floorArea'){const r=roomById(t0.of)||roomAt(new THREE.Vector3(...t0.center)),ring=ringOf(r);if(ring)add(cues.floorArea({ring,floorY:r.floorY??0}));}
       else if(name==='doorwayGlow')add(cues.doorwayGlow(t0,t0.label,eye));
       else if(name==='arrowAhead')add(cues.arrowAhead(t0,camera));
-      else if(name==='floorPath'){const r=roomAt(eye);add(cues.floorPath(eye,t0.center,r?.floorY??eye.y-1.5));}
+      else if(name==='floorPath'){
+        // the route from where the user stands to the target (a room's door, or the thing); no route in the twin: no path (never through walls)
+        const route=routerOf()?.route([eye.x,eye.z],[t0.center[0],t0.center[2]]);
+        if(route)add(cues.floorPath(along(route,{spacing:.45,skip:.6,max:14})));
+      }
       else if(name==='text:sign'&&!list.includes('doorwayGlow')){
         sign=label(t0.label,{size:.06,weight:700});sign.geometry.translate(-sign.userData.width/2,0,0);sign.position.set(t0.center[0],t0.center[1]+t0.size[1]/2+.12,t0.center[2]);scene.add(sign);}
     }

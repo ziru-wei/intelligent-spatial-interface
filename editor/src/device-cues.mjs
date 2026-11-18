@@ -2,7 +2,8 @@
 // value; the MOD's declaration (its `controls` slot's `ui`) says by rule which cue a value gets — a level being changed gets a Slider,
 // a task a Progress Rail, a command an Icon Button from the presets (modos/buttons.json) or a Text Button when none fits. The same rules
 // serve a lamp, a printer or a washer. The cues stack on the device: a task's rail on top, the buttons above it; the slider on its
-// right edge, readings pinned beside it, choices along its bottom edge. Pressing one changes the device (POST /api/modos/devices).
+// right edge, readings pinned beside it, choices along its bottom edge. These Adjust cues change the device (POST /api/modos/devices): a
+// press sends at once; the Slider previews while dragged and sends when the user lets go.
 import * as THREE from 'three';
 import * as cues from './spatial-ui/cues.mjs';
 import {holds} from '../modos/ui-rules.mjs';
@@ -71,7 +72,7 @@ export function createDeviceCues(){
     let y=box.center[1]+box.size[1]/2+.03;
     for(const p of top){p.group.scale.setScalar(k);scene.add(p.group);p.group.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(p.group);p.group.position.y+=y-b.min.y;y+=b.max.y-b.min.y+.02*k;drawn.push(p);}
     cues.setScale(1);
-    scene.traverse(o=>{if(o.userData.onHit)hits.push(o);});
+    scene.traverse(o=>{if(o.userData.onHit||o.userData.onDrag)hits.push(o);});
   }
   return {
     get active(){return !!c;},
@@ -92,7 +93,14 @@ export function createDeviceCues(){
       onChange=changed;
       const hit=e=>{if(!c||!hits.length)return null;const b=element.getBoundingClientRect(),ray=new THREE.Raycaster();
         ray.setFromCamera(new THREE.Vector2((e.clientX-b.left)/b.width*2-1,1-(e.clientY-b.top)/b.height*2),getCamera());scene.updateMatrixWorld(true);return ray.intersectObjects(hits,false)[0]||null;};
-      element.addEventListener('pointerdown',e=>{const h=hit(e);if(!h)return;e.preventDefault();e.stopImmediatePropagation();h.object.userData.onHit(h.point);changed();},true);
+      // Adjust: a press sends at once; a drag (Slider) previews on the thing and sends when the user lets go.
+      let drag=null;const rayAt=e=>{const b=element.getBoundingClientRect(),ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((e.clientX-b.left)/b.width*2-1,1-(e.clientY-b.top)/b.height*2),getCamera());return ray.ray;};
+      element.addEventListener('pointerdown',e=>{const h=hit(e);if(!h)return;e.preventDefault();e.stopImmediatePropagation();const u=h.object.userData;
+        if(u.onDrag){const cam=getCamera(),n=new THREE.Vector3(0,0,-1).applyQuaternion(cam.quaternion);drag={u,plane:new THREE.Plane().setFromNormalAndCoplanarPoint(n,h.point)};u.onDrag(h.point);element.setPointerCapture?.(e.pointerId);}
+        else u.onHit(h.point);changed();},true);
+      element.addEventListener('pointermove',e=>{if(!drag)return;const p=rayAt(e).intersectPlane(drag.plane,new THREE.Vector3());if(p)drag.u.onDrag(p);e.preventDefault();e.stopImmediatePropagation();changed();},true);
+      const release=e=>{if(!drag)return;const u=drag.u;drag=null;u.onRelease?.();e.preventDefault();e.stopImmediatePropagation();changed();};
+      element.addEventListener('pointerup',release,true);element.addEventListener('pointercancel',release,true);
       element.addEventListener('click',e=>{if(hit(e)){e.preventDefault();e.stopImmediatePropagation();}},true);
     },
   };

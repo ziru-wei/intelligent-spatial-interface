@@ -3,9 +3,9 @@ and responses, so a new conversation starts with an empty timeline. Question ids
 the agent only echoes the number back. All access goes through `lock`; the bridge long-polls on it."""
 import json, re, threading, time
 from pathlib import Path
-import weather, findmy, ego, conversation_context, modos_parts
+import weather, findmy, conversation_context, modos_parts
 
-UI_KINDS = ('weather', 'findmy', 'ego', 'highlight', 'control', 'action')   # one of them per ui part
+UI_KINDS = ('weather', 'findmy', 'highlight', 'control', 'action')   # one of them per ui part
 from datetime import datetime
 
 lock = threading.Condition()
@@ -104,18 +104,15 @@ def running_question(d):
     if not running: return None, None
     _, c, q = max(running, key=lambda x: x[0]); return c, q
 
-def ask(d, cid, frame, t, text, live=None, weather_mod=False, text_response=None, findmy_mod=False, ego_mod=False, selection=None, pose=None, location=None):
+def ask(d, cid, frame, t, text, live=None, selection=None, pose=None, location=None):
     """live = {read_s}: asked in the editor, which held the video on the question's frame while the agent answered and for `read_s`
-    real seconds after the answer appeared; replays hold the same way, using the measured latency.
-    text_response = {default: bool, <mod>: bool}: whether a text answer is wanted, for answers in no mod and per mod that is on
-    (src/response-settings.mjs); off skips the language model (scripts/jev-pipeline.mjs). Missing: always."""
+    real seconds after the answer appeared; replays hold the same way, using the measured latency."""
     c = read(d, cid)
-    q = dict(weather_mod=weather_mod is True, findmy_mod=findmy_mod is True, ego_mod=ego_mod is True, id=_next_qid(d), text=text[:500], frame=frame, t=t, status='queued', created=time.time())
+    q = dict(id=_next_qid(d), text=text[:500], frame=frame, t=t, status='queued', created=time.time())
     if isinstance(live, dict):
         read_s = float(live.get('read_s', 5))
         if not 0 <= read_s <= 30: raise ValueError('Bad live timing.')
         q['live'] = dict(read_s=read_s)
-    if isinstance(text_response, dict): q['text_response'] = {str(k): v is not False for k, v in text_response.items()}
     if selection: q['selection'] = selection   # an information box the user looked at, pointed at or touched (scripts/info_context.py selection)
     if pose: q['pose'] = pose   # asked live on a headset (a live session, no recording): the user's head pose then, in scene coordinates
     if location: q['location'] = location   # the zone the user is in and one they face (scripts/location.py)
@@ -135,7 +132,7 @@ def take_next(d):
     return dict(q, conversation=c['id'])
 
 def set_info(d, qid, info_key, interaction_id=None, source=None):
-    """The info key a question was answered with (scripts/jev-pipeline.mjs info route) and the language model's interaction id, so a
+    """The info key a question was answered with (modos/text.mjs) and the language model's interaction id, so a
     follow-up about the same item continues from it instead of sending the info again."""
     c, q = _find_question(d, qid)
     if not q: raise ValueError('Unknown question.')
@@ -206,19 +203,6 @@ def delete_question(d, cid, qid):
     c['questions'].remove(q); c['responses'] = [r for r in c['responses'] if str(r.get('question_id')) != str(qid)]
     _write(d, c); return dict(ok=True)
 
-def _installed(d, mod_id):
-    """Whether a MOD is installed in the question's space (ModOS replaces the per-question mod switches with installed MODs).
-    mod_id 'ego' asks whether an installed MOD shows an ego-object (its active variant), e.g. WorldInfo set to let the thing speak."""
-    import modos_registry
-    space = Path(d).parent.parent
-    if not (space/'modos').is_dir(): return False   # a space that does not use ModOS keeps the per-question switches
-    try:
-        mods = modos_registry.installed(space)
-        if mod_id == 'ego': return any(s['use'] == 'ego-object' for m in mods for s in m['slots'])
-        # A fork renders with its base MOD's part (a forked Weather still makes a weather part).
-        return any(m['id'] == mod_id or m.get('from') == mod_id for m in mods)
-    except (OSError, ValueError): return False
-
 def _mod_meta(m):
     """Which MOD, variant and slot made a part, with the slot's settled settings (shown and logged; renderers read it later)."""
     if not isinstance(m, dict) or not isinstance(m.get('id'), str): raise ValueError('Bad mod metadata.')
@@ -266,7 +250,7 @@ def add_response(d, body):
         body=str(body.get('body') or ''), items=[str(i) for i in body.get('items') or []][:12], anchor=body.get('anchor') or None)
     if body.get('reserve_text') is True: r['reserve_text'] = True
     if body.get('mod') is not None: r['mod'] = _mod_meta(body['mod'])
-    # A zone's animation (scripts/jev-pipeline.mjs ZONE_ANIMATIONS: the lab's diorama), played on the headset beside the text.
+    # A zone's animation (LabInfo's diorama), played on the headset beside the text.
     if part == 'animation':
         a = body.get('animation')
         if not (isinstance(a, dict) and isinstance(a.get('id'), str) and re.fullmatch(r'[A-Za-z0-9_-]{1,64}', a['id'])): raise ValueError('Bad animation.')
@@ -275,6 +259,8 @@ def add_response(d, body):
     if body.get('info') is not None:
         if part != 'text' or not q: raise ValueError('Only a text part of a question can carry info.')
         r['info'] = response_info(c, q, body['info'])
+    if part == 'text' and isinstance(body.get('text_ui'), dict): r['text_ui'] = _text_ui(body['text_ui'])
+    if part == 'text' and isinstance(body.get('text_mod'), dict): r['text_mod'] = _text_mod(body['text_mod'])
     if sum(body.get(k) is not None for k in UI_KINDS) > 1: raise ValueError('Only one mod per response.')
     # ModOS parts that point at things of the twin (scripts/modos_parts.py): a highlight (ObjectStatus, Wayfinding, IoTControl's device)
     # and a device's controls (IoTControl, which applies the asked action).
@@ -287,14 +273,9 @@ def add_response(d, body):
     if body.get('control') is not None:
         if not (Path(d).parent.parent/'modos').is_dir(): raise ValueError('Control parts need ModOS.')
         r['control'] = modos_parts.resolve_control(d, body['control'])
-    if body.get('ego') is not None:
-        if not (at.get('ego_mod') or _installed(d, 'ego')): raise ValueError('Object mod was not enabled for this question.')
-        r['ego'] = ego.resolve(d, body['ego'])
     if body.get('findmy') is not None:
-        if not (at.get('findmy_mod') or _installed(d, 'findmy')): raise ValueError('FindMy mod was not enabled for this question.')
         r['findmy'] = findmy.resolve(d,body['findmy'])
     if body.get('weather') is not None:
-        if not (at.get('weather_mod',at.get('weather_mode')) or _installed(d, 'weather')): raise ValueError('Weather mod was not enabled for this question.')
         r['weather'] = weather.resolve(d, body['weather'])
     reference_ids = body.get('referenced_item_ids', [])
     if r.get('findmy', {}).get('status') == 'found':
@@ -314,6 +295,18 @@ def add_response(d, body):
         if not part: q['status'] = 'answered'
     else: _link_orphans(d, c)
     _write(d, c); lock.notify_all(); return r
+
+def _text_ui(ui):
+    # The text form a MOD's text slot declares (modos-system-design.md 4.4): fixed parts and flexible ones with a `when` rule.
+    fixed = [p for p in ui.get('fixed', []) if isinstance(p, str)][:4]
+    flexible = [dict(cue=f['cue'], when=str(f.get('when', ''))[:200], **({'instead_of': f['instead_of']} if isinstance(f.get('instead_of'), str) else {}))
+                for f in ui.get('flexible', []) if isinstance(f, dict) and isinstance(f.get('cue'), str)][:4]
+    return dict(fixed=fixed, flexible=flexible)
+
+def _text_mod(m):
+    # The MOD hosting the text and its text slot's settings (e.g. duration: stay | 5s), read by the client.
+    settings = m.get('settings') if isinstance(m.get('settings'), dict) else {}
+    return dict(id=str(m.get('id') or '')[:64], settings={str(k)[:32]: v for k, v in list(settings.items())[:8] if isinstance(v, (str, int, float, bool))})
 
 def _fail_stream(r, q):
     now = time.time(); stream = r['stream']
@@ -351,6 +344,8 @@ def _add_stream(d, c, q, body):
         q.setdefault('parts', {})['text'] = dict(response=r['id'], latency=at)
     r.update(title=title, body=text, items=[], anchor=anchor, referenced_entities=refs, reserve_text=True)
     if body.get('info') is not None: r['info'] = response_info(c, q, body['info'])
+    if isinstance(body.get('text_ui'), dict): r['text_ui'] = _text_ui(body['text_ui'])
+    if isinstance(body.get('text_mod'), dict): r['text_mod'] = _text_mod(body['text_mod'])
     r['stream'].update(seq=stream['seq'], status=stream['status'])
     q['parts']['text']['status'] = stream['status']
     r['stream']['updates'].append(dict(seq=stream['seq'], status=stream['status'], at=at, created=now, title=title, body=text, anchor=anchor, referenced_entities=refs))

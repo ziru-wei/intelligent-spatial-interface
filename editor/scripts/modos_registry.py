@@ -7,8 +7,7 @@ Three layers make the MODs a space uses (modos-system-design.md 7):
 
 A customization changes only what a MOD lets people change, never its code or its decision questions:
   variant    one of the MOD's representation variants (which slots it shows; the MOD's author defines them)
-  settings   {slot: {param: value}} for a slot param of kind `setting` (dismiss, duration, lock, ...) or to fix an `enum`
-  text       false: no answer text (the variant's text slot is dropped)
+  settings   {slot: {param: value}} for a slot param of kind `setting` (duration, lock)
   scope      where it applies ('global', or a list of places / objects)
   knowledge  extra knowledge refs; examples: extra example questions (both appended)
 
@@ -23,7 +22,7 @@ MODOS = ROOT/'modos'
 SELECTOR_KINDS = {'enum', 'pick-one', 'pick-many'}
 TEXT_USES = {'situated-text', 'ego-object', 'action-card'}
 ID = re.compile(r'^[a-z0-9][a-z0-9-]{0,47}$')
-CUSTOM_KEYS = {'variant', 'settings', 'text', 'scope', 'knowledge', 'examples'}
+CUSTOM_KEYS = {'variant', 'settings', 'scope', 'knowledge', 'examples'}   # whether a MOD shows text is its variant's text slot
 
 def _json(p):
     return json.loads(Path(p).read_text())
@@ -42,12 +41,12 @@ def _check_scope(mid, scope):
 # Parts are library cues, or the MOD's own `ambient:`, `asset:` and `text:` parts; `iconButton:<preset>` names a preset button.
 CUES = {'breathingBox', 'cornerBrackets', 'footprintRing', 'floorArea', 'doorwayGlow', 'arrowAhead', 'floorPath', 'gauge', 'progressRail',
         'pinnedTags', 'statusPulse', 'cardStack', 'slider', 'edgeTabs', 'iconButton', 'textButton', 'datePicker', 'playback', 'tetherSend',
-        'bodyArrow', 'contactChip', 'textInput', 'photoCapture'}
+        'bodyArrow', 'contactChip', 'textInput', 'photoCapture', 'textArrow'}
 # Text forms of the library (not cues): text floating by its anchor, written onto a surface, or spoken by an object.
 TEXT_FORMS = {'floatingText', 'embeddedText', 'dialogue'}
 UI_OWN = ('ambient:', 'asset:')
 WHEN_FACTS = {'target.has_content', 'target.out_of_view', 'target.other_room', 'target.door_in_view', 'user.in_target', 'data.days',
-              'data.steps_per_day', 'value.type', 'value.io', 'intent', 'preset.found', 'state.level', 'question.about', 'surface.score', 'target.pointed', 'request.second_person', 'attachment.kind'}
+              'data.steps_per_day', 'value.type', 'value.io', 'intent', 'preset.found', 'state.level', 'question.about', 'surface.score', 'target.pointed', 'request.second_person', 'attachment.kind', 'text.apart'}
 
 def _check_ui(mid, sid, ui):
     def part(p):
@@ -118,17 +117,15 @@ def effective(base, custom=None, prims=None):
     if variants:
         if variant not in variants: raise ValueError(f'MOD {base["id"]} has no variant {variant}.')
         active, text = variants[variant]['slots'], variants[variant].get('text')
+    elif custom.get('variant'): raise ValueError(f'MOD {base["id"]} has no variant {custom["variant"]}.')
     else: active, text = [s['id'] for s in base['slots']], base.get('text')
-    if custom.get('text') is False:
-        if text and next(s for s in base['slots'] if s['id'] == text)['use'] == 'situated-text': active = [s for s in active if s != text]
-        text = None
     settings = custom.get('settings') or {}
     for sid, params in settings.items():
         slot = next((s for s in base['slots'] if s['id'] == sid), None)
         if slot is None: raise ValueError(f'MOD {base["id"]} has no slot {sid}.')
         for pname, value in params.items():
             spec = specs[slot['use']]['params'].get(pname)
-            if not spec or spec['kind'] not in ('setting', 'enum'): raise ValueError(f'{sid}.{pname} cannot be set by hand.')
+            if not spec or spec['kind'] != 'setting': raise ValueError(f'{sid}.{pname} cannot be set by hand.')
             allowed = (slot.get('params', {}).get(pname, {}).get('allowed')) or spec.get('values')
             if value not in allowed: raise ValueError(f'{sid}.{pname} cannot be {value!r}.')
     mod['slots'] = []
@@ -242,7 +239,8 @@ def uninstall(space, mod_id):
 
 def customize(space, mod_id, change):
     """Tailor a MOD of the space: a base MOD's override, or a fork's own fields. Validated before it is saved."""
-    change = {k: v for k, v in (change or {}).items() if k in CUSTOM_KEYS}
+    change = dict(change or {}); unknown = set(change)-CUSTOM_KEYS
+    if unknown: raise ValueError('Unknown customization: '+', '.join(sorted(unknown)))
     c = custom(space); fork = next((f for f in c['forks'] if f['id'] == mod_id), None)
     if fork is not None: fork.update(change)
     elif mod_id in base_mods(space): c['overrides'][mod_id] = dict(c['overrides'].get(mod_id, {}), **change)
@@ -299,9 +297,9 @@ def catalog(space):
         for s in base['slots']:
             for pname, spec in specs[s['use']]['params'].items():
                 own = s.get('params', {}).get(pname, {})
-                if spec['kind'] == 'setting' or (spec['kind'] == 'enum' and len(own.get('allowed', [])) > 1):
+                if spec['kind'] == 'setting':
                     values = own.get('allowed') or spec['values']
-                    current = cust.get('settings', {}).get(s['id'], {}).get(pname, own.get('fixed', spec.get('default') if spec['kind'] == 'setting' else 'auto'))
+                    current = cust.get('settings', {}).get(s['id'], {}).get(pname, own.get('fixed', spec.get('default')))
                     settings.append(dict(slot=s['id'], use=s['use'], param=pname, kind=spec['kind'], values=values, value=current,
                                          active=any(x['id'] == s['id'] for x in m['slots'])))
         out.append(dict(id=mid, name=m.get('name', mid), description=m['description'], origin=m['origin'], **({'from': m['from']} if 'from' in m else {}),
@@ -311,6 +309,5 @@ def catalog(space):
                         settings=settings, scope=m.get('scope', 'global'), base_scope=base.get('scope', 'global'),
                         knowledge=base.get('knowledge', []), extra_knowledge=cust.get('knowledge', []),
                         examples=base.get('examples', []), extra_examples=cust.get('examples', []),
-                        customized=bool(cust) if m['origin'] == 'base' else True,
-                        text_off=cust.get('text') is False))
+                        customized=bool(cust) if m['origin'] == 'base' else True))
     return out

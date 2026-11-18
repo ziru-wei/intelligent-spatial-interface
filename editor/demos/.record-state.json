@@ -4,7 +4,7 @@
   "signature": "[\"atlas_rec_5\",1,\"What does this lab work on?\",{}]"
  },
  "wayfinding-kitchen": {
-  "conversation": "20261117-141056-1794949856790593000",
+  "conversation": "20261117-155001-1794955801409267000",
   "signature": "[\"atlas_rec_4\",1,\"How do I get to the kitchen?\",{}]"
  },
  "iotcontrol-lamp": {
@@ -12,15 +12,15 @@
   "signature": "[\"atlas_rec_5\",1,\"Turn on the lamp\",{}]"
  },
  "objectstatus-printer": {
-  "conversation": "20261117-133450-1794947690979375000",
+  "conversation": "20261117-163110-1794958270026297000",
   "signature": "[\"atlas_rec_5\",1,\"Is the printer free?\",{}]"
  },
  "iotcontrol-printer": {
-  "conversation": "20261117-141134-1794949894402916000",
+  "conversation": "20261117-155230-1794955950840097000",
   "signature": "[\"atlas_rec_5\",1,\"How long until my print job is done?\",{}]"
  },
  "iotcontrol-brighter": {
-  "conversation": "20261117-133414-1794947654283900000",
+  "conversation": "20261117-155118-1794955878686738000",
   "signature": "[\"atlas_rec_5\",1,\"I want to make the light brighter\",{}]"
  },
  "delegate-poster": {
@@ -28,23 +28,23 @@
   "signature": "[\"atlas_rec_2\",7.1,\"Send this poster to Alice\",{}]"
  },
  "weather-corridor": {
-  "conversation": "20261117-141020-1794949820816515000",
+  "conversation": "20261117-154722-1794955642058194000",
   "signature": "[\"atlas_rec_2\",1,\"Do I need an umbrella tonight?\",{}]"
  },
  "worldinfo-text": {
-  "conversation": "20261116-134245-1794861765375725000",
+  "conversation": "20261117-182748-1794965268613506000",
   "signature": "[\"atlas_rec_3\",48.6,\"What is this study about?\",{}]"
  },
  "worldinfo-voice": {
-  "conversation": "20261117-133135-1794947495207115000",
-  "signature": "[\"atlas_rec_3\",18.1,\"Can I eat you?\",{\"worldinfo\":{\"variant\":\"voice\"}}]"
+  "conversation": "20261117-182828-1794965308793314000",
+  "signature": "[\"atlas_rec_3\",18.1,\"Can I eat you?\",{}]"
  },
  "labinfo-wall": {
   "conversation": "20261116-132812-1794860892794867000",
   "signature": "[\"atlas_rec_4\",1,\"What is this lab about?\",{}]"
  },
  "findmy": {
-  "conversation": "20261117-133214-1794947534581692000",
+  "conversation": "20261117-162941-1794958181201698000",
   "signature": "[\"atlas_rec_4\",7,\"Where are my headphones?\",{}]"
  },
  "agenda-afternoon": {
@@ -52,11 +52,11 @@
   "signature": "[\"atlas_rec_4\",2.5,\"What do I have this afternoon?\",{}]"
  },
  "weather-lab": {
-  "conversation": "20261117-133339-1794947619682903000",
+  "conversation": "20261117-163029-1794958229627723000",
   "signature": "[\"atlas_rec_5\",1.5,\"Will it rain this weekend?\",{}]"
  },
  "bookcompanion-lighthouse": {
-  "conversation": "20261116-133349-1794861229370093000",
+  "conversation": "20261117-155525-1794956125524673000",
   "signature": "[\"atlas_rec_5\",5,\"Remind me what happened in the part I'm reading\",{}]"
  },
  "stepguide-espresso": {
@@ -76,11 +76,11 @@
   "signature": "[\"atlas_rec_5\",1.5,\"Should I bring the umbrella?\",{}]"
  },
  "weather-umbrella": {
-  "conversation": "20261117-133605-1794947765994893000",
+  "conversation": "20261117-155617-1794956177750213000",
   "signature": "[\"atlas_rec_5\",1.5,\"Should I bring my umbrella?\",{}]"
  },
  "iotcontrol-tv": {
-  "conversation": "20261117-133644-1794947804791957000",
+  "conversation": "20261117-155656-1794956216015390000",
   "signature": "[\"atlas_rec_5\",1,\"Switch the TV to HDMI 2\",{}]"
  },
  "delegate-describe": {

@@ -1,3 +1,4 @@
+import {partsToDraw} from '../modos/ui-rules.mjs';
 import * as THREE from 'three';
 import {staticTextPlacement,visibleFraction,surfaceSupports,INFO_OVERFLOW,INFO_OVERHANG} from './text-surfaces.mjs';
 import {placementVisibility} from './placement-stability.mjs';
@@ -6,10 +7,10 @@ import {TEXT_VIEW,textViewMetrics,viewSizedWidth,footprintPoints,centeredPose} f
 // width in metres.
 //
 //   I. An answer about a thing carrying info (response.info, scripts/info_context.py; ctx.infoTarget(response) → its box): on a surface
-//      near the box (within INFO_NEAR) where the spot scores well (infoSpotScore at least INFO_SETTLE: close to the box, facing the way
+//      near the box (within INFO_NEAR) where the declared text form says Embedded Text (surface.score ≥ 0.5; the spots are ranked by infoSpotScore: close to the box, facing the way
 //      its face toward the viewer does, on a clean background) it settles and stays there, whatever the viewer does next. Until such a spot shows up it floats next to the box, near eye height, where it is most visible
 //      from the viewer at that moment, and stays there too (world-fixed: it never follows the viewer).
-//   0. An answer the object mod carries (response.ego, src/ego.mjs) is a speech bubble on its main object, turned to the viewer: above
+//   0. Object-centric Dialogue (response.dialogue, a library text form) is a speech bubble on the thing that speaks, turned to the viewer: above
 //      it with its tail down to it, else on its side facing the viewer; while no spot on it is in the recorded view, it is held at the
 //      edge of the view on the object's side, its tail pointing toward the object (the fallback of step 3 only if even that cannot fit).
 //   1. A placed answer keeps its world anchor while it stays readable, visible, on its surface and uncluttered (a short grace period,
@@ -23,7 +24,7 @@ import {TEXT_VIEW,textViewMetrics,viewSizedWidth,footprintPoints,centeredPose} f
 //      the question caption (src/agent.mjs, on an unreadable pose). It returns to a surface when one fits.
 //
 // ctx = {frames, frameCamera(i), viewport(), relationAt(i), getStaticSurfaces(), getSettings(response), getSurfaceQuality(i),
-//        visible(i, points, {staticSurface}) -> booleans, egoTarget(id) -> {center, size, yaw}}. response.aspect: text height / width.
+//        visible(i, points, {staticSurface}) -> booleans, entityBox(id) -> {center, size, yaw}}. response.aspect: text height / width.
 const UP=new THREE.Vector3(0,1,0);
 export function projectedSurfaceBasis(normal,position,camera){
  camera.updateMatrixWorld(true);
@@ -92,13 +93,13 @@ async function surfacePlacement(response,ctx){
  if(!pose)return retained||unavailable(eye,viewQ,`No readable spot on ${relation.surfaceId} (${relation.relation})`);
  state.badSince=null;return {...pose,relation:relation.relation,relationKind:relation.kind};
 }
-// An answer the objects carry (object mod): a speech bubble on its main object, upright and turned to the viewer, sized for the view
+// Object-centric Dialogue: a speech bubble on the thing that speaks, upright and turned to the viewer, sized for the view
 // like any answer, its tail's tip at pose.tail (world). Best just above the object, the tail down to its top; when that is not in the
 // recorded view (a tall object, a close one, the view cut off above it), the bubble comes down onto the object's side that faces the
 // viewer, then sideways along it, wherever it fits in the view first (wholly in view). Once placed it stays put while the viewer moves,
 // as long as at least BUBBLE_KEEP_IN_VIEW of it is in view and the viewer's direction to the object turns less than BUBBLE_TURN, more
 // with Placement stability (up to BUBBLE_TURN_STABLE at 1); past that, it still stays for a grace period (.8 s × stability) before it
-// is placed again. When no spot on the object is in view: edgeBubble. ctx.egoTarget(id) → {center, size, yaw}.
+// is placed again. When no spot on the object is in view: edgeBubble. ctx.entityBox(id) → {center, size, yaw}.
 const BUBBLE_GAP=.06,BUBBLE_TURN=THREE.MathUtils.degToRad(4),BUBBLE_TURN_STABLE=THREE.MathUtils.degToRad(30),BUBBLE_KEEP_IN_VIEW=.5,BUBBLE_TAIL=.6;
 // Held in the view (pose.edge, placed again every frame): BUBBLE_EDGE_DEPTH in front of the recorded camera, the whole bubble and its
 // tail (BUBBLE_TAIL of its height long) inside the view's margin. An object in front whose spot on the screen is in the view: just above
@@ -197,12 +198,12 @@ function bubbleClutter(pose,aspect,camera,viewport,rects){
 const boxCorners=t=>{const q=new THREE.Quaternion().setFromAxisAngle(UP,THREE.MathUtils.degToRad(t.yaw||0)),out=[];
   for(const x of [-1,1])for(const y of [-1,1])for(const z of [-1,1])out.push(new THREE.Vector3(x*t.size[0]/2,y*t.size[1]/2,z*t.size[2]/2).applyQuaternion(q).add(new THREE.Vector3(...t.center)));return out;};
 function bubblePlacement(response,ctx){
-  const t=ctx.egoTarget?.(response.ego.main);if(!t)return null;
+  const t=ctx.entityBox?.(response.dialogue.speaker);if(!t)return null;
   const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),aspect=response.aspect||.45,eye=camera.position;
   const center=new THREE.Vector3(...t.center),top=center.clone().setY(t.center[1]+t.size[1]/2),yaw=Math.atan2(eye.x-center.x,eye.z-center.z);
   const quaternion=new THREE.Quaternion().setFromAxisAngle(UP,yaw),inView=pose=>textViewMetrics(centeredPose(pose,aspect),camera,viewport,response.textMetrics);
   const previous=response.previousPose,stability=ctx.getSettings?.(response)?.stability??0,state=response.anchorState||{};
-  if(previous?.kind==='bubble'&&!previous.edge&&previous.objectId===response.ego.main&&previous.objectCenter&&center.distanceTo(new THREE.Vector3(...previous.objectCenter))<1e-4){
+  if(previous?.kind==='bubble'&&!previous.edge&&previous.objectId===response.dialogue.speaker&&previous.objectCenter&&center.distanceTo(new THREE.Vector3(...previous.objectCenter))<1e-4){
     // Its text set again (streaming): the same type size at the new canvas width (response.bubbleWidthScale, src/agent.mjs).
     const kept=response.bubbleWidthScale&&response.bubbleWidthScale!==1?{...previous,width:previous.width*response.bubbleWidthScale}:previous;
     const turn=Math.abs(Math.atan2(Math.sin(yaw-previous.yaw),Math.cos(yaw-previous.yaw))),m=inView(kept);
@@ -218,7 +219,7 @@ function bubblePlacement(response,ctx){
   const candidates=[{at:top,above:true}];
   for(const k of [.25,.5,.75])candidates.push({at:center.clone().addScaledVector(toEye,front).setY(top.y-k*t.size[1])});
   for(const k of [-.5,.5,-1,1])candidates.push({at:center.clone().addScaledVector(toEye,front).addScaledVector(across,k*side).setY(top.y-.25*t.size[1])});
-  const others=screenRects(ctx,camera,viewport,response.ego.main),fits=[];
+  const others=screenRects(ctx,camera,viewport,response.dialogue.speaker),fits=[];
   for(const c of candidates){
     const width=viewSizedWidth(c.at,quaternion,camera,viewport,response.textMetrics,aspect),height=width*aspect;
     // Above: its lower edge just over the top. On the side: centred there, but never lower than the object's bottom.
@@ -227,7 +228,7 @@ function bubblePlacement(response,ctx){
     const reach=BUBBLE_TAIL*height,below=position.y-height/2-reach,over=position.y+height/2+reach,bottom=center.y-t.size[1]/2;
     const tail=c.above?top:position.clone().setY(below>=bottom?below:over<=top.y?over:position.y-height/2-reach);
     const pose={position,quaternion,width,align:'center',kind:'bubble',anchor:c.above?top.toArray():null,tail:tail.toArray(),
-      yaw,objectId:response.ego.main,objectCenter:center.toArray()};
+      yaw,objectId:response.dialogue.speaker,objectCenter:center.toArray()};
     const m=inView(pose);if(m.inView)fits.push({pose:{...pose,viewMetrics:{...m,points:undefined}},cost:BUBBLE_ORDER*fits.length+BUBBLE_COVER*bubbleClutter(pose,aspect,camera,viewport,others)});
   }
   // Of those that fit, the first in the order above unless it covers other things or its tail points at one on the screen.
@@ -235,13 +236,10 @@ function bubblePlacement(response,ctx){
   // Wholly out of the view (no corner of the object on the screen, or behind the viewer): the bubble shows a small model of it at
   // its tail's tip (src/agent.mjs).
   camera.updateMatrixWorld(true);const corners=boxCorners(t).map(p=>p.project(camera)),offscreen=!corners.some(p=>p.z>-1&&p.z<1&&Math.abs(p.x)<=1&&Math.abs(p.y)<=1);
-  return edgeBubble(response,ctx,center.toArray(),{yaw,objectId:response.ego.main,objectCenter:center.toArray(),offscreen})
+  return edgeBubble(response,ctx,center.toArray(),{yaw,objectId:response.dialogue.speaker,objectCenter:center.toArray(),offscreen})
     ||unavailable(eye,camera.getWorldQuaternion(new THREE.Quaternion()),'The bubble does not fit the view');
 }
-export const INFO_NEAR=1,INFO_SETTLE=.7,INFO_MIN_SHRINK=.55;   // INFO_MIN_SHRINK: the Behavior panel's default
-/** Whether a spot is good enough for an info answer to settle on (its score; clean weighs most, so clutter alone keeps it from settling
- *  however near and well turned the spot is). */
-export const infoSettles=spot=>!!spot&&spot.score>=INFO_SETTLE;
+export const INFO_NEAR=1,INFO_MIN_SHRINK=.55;
 /** How far (radians, 0 to π/2) the text's lines are from level on screen. */
 export function screenTilt(pose,camera,aspect=1){   // aspect: the view's width / height
   camera.updateMatrixWorld(true);const c=pose.position.clone(),r=c.clone().addScaledVector(new THREE.Vector3(1,0,0).applyQuaternion(pose.quaternion),pose.width/2);
@@ -271,7 +269,7 @@ export function infoSpotScore(pose,box,eye,camera=null,aspect=1,relationSurface=
 const INFO_FLOAT={gap:.04,maxWidth:1.2,parallel:80,moveAbove:.3};
 /** A floating panel's yaw: parallel to the box's upright face toward the viewer (it reads as belonging to the box, and its lines look as
  *  level as the box's edges; turned toward the eye instead, an upright panel seen from below slants on screen) when that face is within
- *  parallelDeg (Behavior; ctx.infoFloatParallel) of turning to the eye from where the panel is; else turned to the eye. */
+ *  parallelDeg of turning to the eye from where the panel is; else turned to the eye. */
 export function floatYaw(box,position,eye,parallelDeg=INFO_FLOAT.parallel){
   const toEye=Math.atan2(eye.x-position.x,eye.z-position.z),a=THREE.MathUtils.degToRad(box.yaw||0);
   // The box's four upright faces (local ±z, ±x turned by its yaw, as yaws) by how much of each the eye sees (facing × area): a flyer's
@@ -295,13 +293,15 @@ async function infoPlacement(response,ctx){
   // The surface search's best few spots (each 20 cm apart at least), ranked here by the info score (its own cost favours the view's
   // centre and the box's nearness; a cleaner spot a little further, e.g. on the poster's other side, should win).
   // The surface the person relates to (src/spatial-relations.mjs) is favoured in the search and always gets a spot in the shortlist when
-  // it has one; text may be set as small as the Behavior panel allows (ctx.infoMinShrink) to fit beside the box, and run a little past
+  // it has one; text may be set as small as INFO_MIN_SHRINK to fit beside the box, and run a little past
   // the edge of the view (INFO_OVERFLOW) and of its surface (INFO_OVERHANG).
   const relation=ctx.relationAt?.(response.frame)?.surfaceId||null;
-  const found=await staticTextPlacement({...response,near:{point:center,max:INFO_NEAR,avoid},candidates:8,preferSurfaceId:relation,minShrink:ctx.infoMinShrink?.()??INFO_MIN_SHRINK,overflow:INFO_OVERFLOW,overhang:INFO_OVERHANG},ctx,readableSurfaceBasis)||[];
+  const found=await staticTextPlacement({...response,near:{point:center,max:INFO_NEAR,avoid},candidates:8,preferSurfaceId:relation,minShrink:INFO_MIN_SHRINK,overflow:INFO_OVERFLOW,overhang:INFO_OVERHANG},ctx,readableSurfaceBasis)||[];
   const ranked=found.map(p=>({p,s:infoSpotScore(p,t,eye,camera,viewport.width/viewport.height,relation)})).sort((a,b)=>b.s.score-a.s.score);
   const pose=ranked[0]?.p&&{...ranked[0].p,infoShortlist:ranked.map(({p,s})=>({surface:p.surfaceId,at:p.surfaceAnchor.toArray().map(v=>+v.toFixed(2)),layout:p.layout,...s}))},spot=ranked[0]?.s;   // infoShortlist: for inspection
-  if(infoSettles(spot))return {...pose,infoBox:t.id,infoSettled:true,infoSpot:spot};
+  // Embedded Text when the declared text form holds for this surface score (response.text_ui, or the library default).
+  const score=pose?surfaceScore(pose,camera,viewport.width/viewport.height):0;
+  if(pose&&embedsText(response.text_ui||DEFAULT_TEXT_UI,score))return {...pose,infoBox:t.id,infoSettled:true,infoSpot:spot,surfaceScore:score};
   // A float stays where it was put, unless it did not fit the view then: it keeps looking, and moves only to a spot that fits and is
   // not well above the eye (INFO_FLOAT.moveAbove; looking up, nearly all that fits is above the eye, and text high above the line of
   // sight is worse than text a little past the edge of the view). Once in view it stays.
@@ -319,7 +319,7 @@ async function infoPlacement(response,ctx){
 // near the box; the best few are checked against the room (not hidden), the best of those wins.
 async function floatNearBox(response,ctx,t){
   const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),eye=camera.position,center=new THREE.Vector3(...t.center);
-  const parallelDeg=ctx.infoFloatParallel?.()??INFO_FLOAT.parallel,yaw=floatYaw(t,center,eye,parallelDeg),quaternion=new THREE.Quaternion().setFromAxisAngle(UP,yaw);
+  const parallelDeg=INFO_FLOAT.parallel,yaw=floatYaw(t,center,eye,parallelDeg),quaternion=new THREE.Quaternion().setFromAxisAngle(UP,yaw);
   const n=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),r=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
   // The box's extent in that plane (half sizes along r and up, depth along n) from its corners.
   const by=THREE.MathUtils.degToRad(t.yaw||0),bq=new THREE.Quaternion().setFromAxisAngle(UP,by);let hr=0,hu=t.size[1]/2,hn=0;
@@ -348,17 +348,49 @@ async function floatNearBox(response,ctx,t){
   }
   return best?.pose||unavailable(eye,camera.getWorldQuaternion(new THREE.Quaternion()),'No floating spot by the box');
 }
-export async function place(response,ctx){
-  const info=response.info?.key?await infoPlacement(response,ctx):null;
-  const bubble=!info&&response.ego?.main?bubblePlacement(response,ctx):null;
-  const surface=info||bubble||await surfacePlacement(response,ctx);
-  if(!surface.unreadable||ctx.getSettings?.(response)?.fallback!=='floating')return surface;
-  const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),aspect=response.aspect||.45;
-  const quaternion=camera.getWorldQuaternion(new THREE.Quaternion());
-  const position=new THREE.Vector3(0,0,-1.25).applyMatrix4(camera.matrixWorld);
-  const width=viewSizedWidth(position,quaternion,camera,viewport,response.textMetrics,aspect);
-  const pose={position,quaternion,width,align:'center',kind:'view-fallback'};
+// The text form a MOD declares for its text slot (modos-system-design.md 4.4): Embedded Text when the surface scores ≥ 0.5, else
+// Floating Text (modos/ui-rules.mjs decides; response.text_ui from compose). surface.score, 0-1: the spot's clean background (the
+// clutter cost, 0 → 1, 4 or more → 0) times how level its lines look and how near the eye's height it is; with a level spot it is ≥ 0.5
+// when the clutter cost is 2 or less.
+export function surfaceScore(pose,camera,aspect=1){
+  if(!pose||pose.unreadable||!pose.surfaceAnchor)return 0;const eye=camera.position;
+  const clean=ramp(pose.surfaceQuality?.cost??0,0,4),level=ramp(THREE.MathUtils.radToDeg(screenTilt(pose,camera,aspect)),4,20)*ramp(Math.max(0,pose.surfaceAnchor.y-eye.y-.1),0,.5);
+  return Math.round(clean*level*1000)/1000;
+}
+/** Whether the declared text form for this spot is Embedded Text (no declaration: the earlier behaviour, decided by the caller). */
+export const embedsText=(ui,score)=>partsToDraw(ui,{'surface.score':score}).includes('embeddedText');
+
+// Floating Text in front of the user (the anchor `user-view`, or no surface good enough): upright, turned to the user, a little below the
+// eye, view-sized; placed once and kept while at least half of it is in view (then placed again in front of the user, still floating).
+function floatInView(response,ctx,reason){
+  const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),aspect=response.aspect||.45,previous=response.previousPose;
+  if(previous?.declaredFloat){const m=textViewMetrics(centeredPose(previous,aspect),camera,viewport,response.textMetrics);if(m.inView||(m.inShare??0)>=.5)return {...previous,reusedSurface:true};}
+  const eye=camera.position,f=new THREE.Vector3(0,0,-1).applyQuaternion(camera.getWorldQuaternion(new THREE.Quaternion()));f.y=0;f.normalize();
+  const position=eye.clone().addScaledVector(f,1.1);position.y=eye.y-.08;
+  const quaternion=new THREE.Quaternion().setFromAxisAngle(UP,Math.atan2(eye.x-position.x,eye.z-position.z));
+  const width=viewSizedWidth(position,quaternion,camera,viewport,response.textMetrics,aspect),pose={position,quaternion,width,align:'center',kind:'view-fallback',declaredFloat:true,reason};
   const metrics=textViewMetrics(centeredPose(pose,aspect),camera,viewport,response.textMetrics);
-  // Do not replace an unavailable surface with an oversized or clipped panel.
-  return metrics.readable?{...pose,viewMetrics:{...metrics,points:undefined},reason:surface.reason}:surface;
+  return {...pose,viewMetrics:{...metrics,points:undefined}};
+}
+
+// Text without a MOD declaration (an answer no MOD hosts) follows the library's default text form: Embedded Text on a surface that
+// scores well enough, else Floating Text (modos-system-design.md 4.4).
+export const DEFAULT_TEXT_UI={fixed:['floatingText'],flexible:[{cue:'embeddedText',when:'surface.score>=0.5',instead_of:'floatingText'}]};
+
+export async function place(response,ctx){
+  if(!response.text_ui)response={...response,text_ui:DEFAULT_TEXT_UI};
+  const info=response.info?.key?await infoPlacement(response,ctx):null;
+  const bubble=!info&&response.dialogue?.speaker?bubblePlacement(response,ctx):null;
+  if(bubble)return bubble;if(info)return info;
+  // The declaration decides Embedded vs Floating Text for a spot on a surface (an info answer decides it in infoPlacement). Once shown,
+  // the form stays: a float stays a float (placed again in front of the user only once it is mostly out of view); text on a surface
+  // stays while it scores 0.4 or more there (no flicker at 0.5).
+  if(response.previousPose?.declaredFloat)return floatInView(response,ctx,'declared floating');
+  const surface=await surfacePlacement(response,ctx);
+  const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),score=surfaceScore(surface,camera,viewport.width/viewport.height);
+  const held=surface.reusedSurface&&score>=.4;
+  // A declaration without Floating Text (embeddedText only) has no float: it waits for a surface.
+  const floats=partsToDraw(response.text_ui,{'surface.score':0}).includes('floatingText');
+  if(floats&&(surface.unreadable||!held&&!embedsText(response.text_ui,score)))return {...floatInView(response,ctx,surface.unreadable?surface.reason:'declared floating'),surfaceScore:score};
+  return {...surface,surfaceScore:score};
 }

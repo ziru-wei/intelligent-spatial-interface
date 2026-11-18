@@ -1,5 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import * as THREE from 'three';
-import {TEXT_VIEW,textViewMetrics,viewSizedWidth} from '../src/text-view.mjs';import {place} from '../src/placement.mjs';
+import {TEXT_VIEW,textViewMetrics,viewSizedWidth} from '../src/text-view.mjs';import {place as placeText} from '../src/placement.mjs';
+// Surface placement itself: an answer whose declaration has only Embedded Text (no float), so a missing surface stays unreadable.
+const EMBEDDED={fixed:['embeddedText']},place=(r,ctx)=>placeText({text_ui:EMBEDDED,...r},ctx);
 const metrics={xHeightRatio:35/1024,box:{x0:.06,x1:.94,y0:.1,y1:.9}},viewport={width:540,height:720};
 const camera=()=>{const c=new THREE.PerspectiveCamera(60,.75,.02,100);c.updateMatrixWorld(true);return c;};
 test('world size grows with distance while recorded-view glyph pixels stay constant',()=>{
@@ -26,10 +28,10 @@ test('screen-readable text goes on the surface the person relates to, with only 
  const pose=await place({frame:0,aspect:.4,textMetrics:metrics},surfaceContext());
  assert.equal(pose.unreadable,undefined);assert.equal(pose.kind,'plane');assert.equal(pose.surfaceId,'wall:front');assert.equal(pose.relation,'B');assert.ok(Math.abs(pose.position.z+2)<=.04);assert.ok(pose.viewMetrics.minPx>=TEXT_VIEW.minPx&&pose.viewMetrics.maxPx<=TEXT_VIEW.maxPx);
 });
-test('no relation: no surface pose (the agent pins it Fixed), or Floating when chosen',async()=>{
+test('no relation: no surface pose for embedded-only text; the default text form floats instead',async()=>{
  const ctx=surfaceContext();ctx.relationSurface=null;
  const pose=await place({frame:0,aspect:.4,textMetrics:metrics},ctx);assert.equal(pose.unreadable,true);assert.equal(pose.kind,'unavailable');
- ctx.getSettings=()=>({fallback:'floating'});assert.equal((await place({frame:0,aspect:.4,textMetrics:metrics},ctx)).kind,'view-fallback');
+ const float=await placeText({frame:0,aspect:.4,textMetrics:metrics},ctx);assert.equal(float.kind,'view-fallback');assert.equal(float.declaredFloat,true);
 });
 test('blocked surfaces do not become a floating eye-facing panel',async()=>{
  const ctx=surfaceContext();ctx.visible=async(_,pts)=>pts.map(()=>false);
@@ -37,19 +39,17 @@ test('blocked surfaces do not become a floating eye-facing panel',async()=>{
  assert.equal(pose.unreadable,true);assert.equal(pose.kind,'unavailable');
 });
 
-test('optional fallback is readable, follows the recorded camera, and returns to a surface',async()=>{
- const ctx=surfaceContext();ctx.getSettings=()=>({fallback:'floating'});
- const visible=ctx.visible;ctx.visible=async(_,pts)=>pts.map(()=>false);
+test('Floating Text (the default form with no good surface) is view-sized in front of the user, and stays a float',async()=>{
+ const ctx=surfaceContext();const visible=ctx.visible;ctx.visible=async(_,pts)=>pts.map(()=>false);
  const response={frame:0,aspect:.4,textMetrics:metrics};
- const fallback=await place(response,ctx);assert.equal(fallback.kind,'view-fallback');
- assert.ok(Math.abs(fallback.viewMetrics.minPx-TEXT_VIEW.targetPx)<.001);assert.equal(fallback.viewMetrics.inView,true);
- const c=camera();c.position.set(3,2,1);c.rotation.y=.5;c.updateMatrixWorld(true);ctx.frameCamera=()=>c;
- const moved=await place(response,ctx);const p=moved.position.clone().applyMatrix4(c.matrixWorldInverse);
- assert.ok(p.distanceTo(new THREE.Vector3(0,0,-1.25))<1e-8);
- ctx.frameCamera=()=>camera();ctx.visible=visible;
- assert.equal((await place(response,ctx)).kind,'plane');
- ctx.visible=async(_,pts)=>pts.map(()=>false);ctx.getSettings=()=>({fallback:'fixed'});
- assert.equal((await place(response,ctx)).unreadable,true);
+ const float=await placeText(response,ctx);assert.equal(float.kind,'view-fallback');assert.equal(float.declaredFloat,true);
+ assert.ok(Math.abs(float.viewMetrics.minPx-TEXT_VIEW.targetPx)<.001);assert.equal(float.viewMetrics.inView,true);
+ // once shown it stays a float, even when a surface fits again
+ ctx.visible=visible;const kept=await placeText({...response,previousPose:float},ctx);assert.equal(kept.reusedSurface,true);assert.equal(kept.kind,'view-fallback');
+ // out of view: placed again in front of the user, still floating (upright, a little below the eye)
+ const c=camera();c.position.set(3,2,1);c.rotation.y=Math.PI;c.updateMatrixWorld(true);ctx.frameCamera=()=>c;
+ const moved=await placeText({...response,previousPose:float},ctx);const p=moved.position.clone().applyMatrix4(c.matrixWorldInverse);
+ assert.equal(moved.declaredFloat,true);assert.ok(p.distanceTo(new THREE.Vector3(0,-.08,-1.1))<1e-6);
 });
 
 test('a valid existing anchor skips the search but rechecks current depth and full footprint',async()=>{

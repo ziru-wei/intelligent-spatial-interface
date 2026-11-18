@@ -1,5 +1,5 @@
 // The Vision Pro app's settings in the editor (?vision=1, or /vision.html): the space's scan and boxes in the 3D view, edited as ever
-// (Scene tab: layout, objects, info), with the recorded camera hidden; a Vision Pro tab sets what the headset's window sets (the same
+// (Space tab: layout, objects, info), with the recorded camera hidden; a Vision Pro tab sets what the headset's window sets (the same
 // names as scripts/vision.py DEFAULTS). The headset reads both within seconds. Tune: the headset's alignment, by hand in the 3D view
 // (src/app.mjs startHeadsetTune). Questions: those asked on the headset (its live session), each deletable.
 const SECTIONS=[

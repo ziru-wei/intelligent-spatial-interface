@@ -4,7 +4,7 @@ The source files stay as they are, because the scan pipeline and the layout edit
   scan/semantic.json       rooms (zone:<id>), boxes (layout:<id>), doors and windows (layout:<id>)
   composition.json         scene objects (comp:<id>), for the space and for a recording
   the user context         registered belongings (stored_items), until they are authored in the twin
-On top, spaces/<space>/modos/entities.json holds what ModOS adds and what people author in the editor's Twin tab:
+On top, spaces/<space>/modos/entities.json holds what ModOS adds and what people author in the editor's Space tab (Entities):
 
     {"version": 1,
      "entities": {<id>: {kind?, category?, traits?, parent?, place?, device?, name?}},   overrides of the derived view
@@ -16,7 +16,7 @@ Every ModOS module reads entities from here, never from the source files:
 
 kind     layout: place · fixture: structure (walls, ceilings), opening (doors, windows), furniture (large, static) ·
          object: item, artifact (a poster, a booklet, a book), device
-traits   what representations can attach to: container, surface, window, door, display, iot
+traits   what representations can attach to: container, surface, window, door, display, iot, content (carries something to read)
 device   only for connected devices (trait iot): {protocol, class?, inputs: {name: typed value}, outputs: {name: typed value}}, value types
          toggle, level, choice, color, command, time, reading, task, queue, alert, media (modos-system-design.md 3.7)
 No dependencies beyond the other scripts: used by the server and tests."""
@@ -30,7 +30,10 @@ KINDS = ('place', 'structure', 'opening', 'furniture', 'item', 'artifact', 'devi
 # (things that move or are added: items, artifacts, devices).
 LAYER = {'place': 'layout', 'structure': 'fixture', 'opening': 'fixture', 'furniture': 'fixture', 'item': 'object', 'artifact': 'object', 'device': 'object'}
 LAYOUT_KINDS = ('place',)
-TRAITS = ('container', 'surface', 'window', 'door', 'display', 'iot')
+TRAITS = ('container', 'surface', 'window', 'door', 'display', 'iot', 'content')
+# content: the thing carries something the user reads (a poster, a book, a screen), so a cue marks it without covering it (Corner
+# Brackets, modos-system-design.md 4.4). Derived from its name and scan category by default; set or cleared in the editor.
+CONTENT = re.compile(r'poster|flyer|booklet|book|paper|document|sign|notice|board|screen|monitor|tv|television|display|menu|map', re.I)
 ID = re.compile(r'^(zone|layout|comp|item|device):[A-Za-z0-9][A-Za-z0-9 _.\-/]{0,95}$')
 
 # Scan categories → (kind, category, traits). The first matching prefix wins.
@@ -154,6 +157,8 @@ def _derived(space, session=None):
 def entities(space, session=None):
     """{id: entity} of the space: derived from the source files, overridden and extended by modos/entities.json."""
     space = Path(space); store = _store(space); out = _derived(space, session)
+    for e in out.values():
+        if CONTENT.search(f"{e.get('category') or ''} {e.get('name') or ''}") and 'content' not in e['traits']: e['traits'] = [*e['traits'], 'content']
     for e in store['added']: out[e['id']] = dict(dict(traits=[], parent=None, place=None, category=e.get('kind')), **e, source='authored')
     for eid, patch in store['entities'].items():
         if eid in out: out[eid] = dict(out[eid], **patch)

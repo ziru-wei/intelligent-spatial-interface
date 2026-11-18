@@ -1,11 +1,10 @@
 import * as THREE from 'three';
 import {responseReady,responseSlot,presentationResponses,latestPresentation} from './response-parts.mjs';
 import {place,readableSurfaceBasis} from './placement.mjs';
-import {viewFixedPose} from './placement-stability.mjs';
 import {pickStyle} from './legibility.mjs';
 import {createLegibilityTracker} from './legibility-temporal.mjs';
 import {questionCaption,captionQuestion} from './question-caption.mjs';
-import {bubbleOutline} from './ego.mjs';
+import {bubbleOutline} from './spatial-ui/dialogue.mjs';
 import {drawWritten,writtenLength,loadOutlines,outlinesReady} from './text-writing.mjs';
 // The agent on a real surface, replayed in scenario time: from the frame a question is asked, its thinking streams as faint text on
 // input area (each step when it really happened); responses alone appear as softly glowing text,
@@ -17,7 +16,7 @@ const PX=1024,PAD=64,FONT='system-ui,-apple-system,"PingFang SC","Hiragino Sans 
 // their first texture is drawn.
 const INFO_FONT=`Mansalva,${FONT}`;let infoFont=null;
 const fontFor=r=>r.info?.key?INFO_FONT:FONT;
-// How answer text is set (Behavior panel, src/app.mjs; setTextBehavior): bodySize scales the whole answer in the room (the body's x-height
+// How answer text is set (UI library › Text, src/app.mjs; setTextBehavior): bodySize scales the whole answer in the room (the body's x-height
 // on screen, src/text-view.mjs), headingSize the heading against the body, showHeading shows or hides the title and markdown headings
 // ("# …", "## …" lines) in the body. writing: an answer that appears while the user waits for it (asked, or replayed) is written
 // character by character at writingSpeed characters per second, writingStrokes drawing each with a pen (src/text-writing.mjs).
@@ -47,11 +46,11 @@ function wrap(ctx,text,width){
 function bodyXHeight(ctx,font){ctx.font=`500 46px ${font}`;const m=ctx.measureText('x');return m.actualBoundingBoxAscent+m.actualBoundingBoxDescent||22;}
 // White text with a soft cool glow on a transparent canvas.
 // previousBudget.columns: the canvas width (the line length; the type size is the same in every width, LAYOUT_COLUMNS).
-// An answer objects carry (r.ego: a speech bubble) wraps at EGO_COLUMNS and its canvas is only as wide and tall as its text, so the
+// Object-centric Dialogue (r.dialogue: a speech bubble on the thing) wraps at DIALOGUE_COLUMNS and its canvas is only as wide and tall as its text, so the
 // bubble fits the text (no room kept while it streams).
-const EGO_COLUMNS=640;
+const DIALOGUE_COLUMNS=640;
 function glowTexture(r,dark=false,previousBudget=null){
-  const FONT=fontFor(r),ego=!!r.ego,COLS=previousBudget?.columns||(ego?EGO_COLUMNS:PX),reserve=r.reserve_text&&!ego;let W=COLS;
+  const FONT=fontFor(r),ego=!!r.dialogue,COLS=previousBudget?.columns||(ego?DIALOGUE_COLUMNS:PX),reserve=r.reserve_text&&!ego;let W=COLS;
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),inner=W-2*PAD,lines=[];
   const add=(text,weight,size,gap,item=false)=>{ctx.font=`${weight} ${size}px ${FONT}`;for(const [i,l] of wrap(ctx,text,inner-(item?48:0)).entries())lines.push({text:l,weight,size,gap:i?6:gap,indent:item,bullet:item&&!i});};
   if(r.findmy?.status==='not_found')add('No mapped location found',600,46,0);
@@ -71,7 +70,7 @@ function glowTexture(r,dark=false,previousBudget=null){
   for(const item of r.items||[])add(item,500,46,12,true);
   // A bubble whose words are still coming (the objects' UI comes first): "…" in it, so the bubble shows at once. Not ink: never written.
   if(ego&&r.reserve_text&&!lines.some(l=>l.text)){add('…',500,46,0);lines.at(-1).placeholder=true;}
-  const footer=Math.max(previousBudget?.footer||0,r.weather&&(r.weather.timeline||r.weather.forecast||[]).length>1&&r.weather.preview?.component!=='weather-single'?352:0);
+  const footer=0;   // Weather's controls are placed on their own (src/weather-preview.mjs), not as a footer of the answer
   if(ego){let widest=0;for(const l of lines){ctx.font=`${l.weight} ${l.size}px ${FONT}`;widest=Math.max(widest,(l.indent?48:0)+ctx.measureText(l.text).width);}W=Math.max(2*PAD+1,Math.ceil(2*PAD+widest));}
   canvas.width=W;canvas.height=Math.ceil(PAD*2+lines.reduce((h,l)=>h+l.gap+l.size*1.22,0)+footer);canvas.weatherFooter=footer;
   canvas.layoutBudget={titleLines,bodyLines,footer,columns:COLS};
@@ -142,11 +141,11 @@ function styleFor(rating){
 }
 // Line lengths an answer may be set in (canvas widths; same type size): the default, three wider and shorter, three narrower and taller. Placement
 // (src/text-surfaces.mjs) takes the one that fits the cleanest spot, e.g. a short wide block in a whiteboard's blank strip. Measured once
-// per text; not for answers with weather controls or carried by an object.
+// per text; not for answers carried by an object.
 export const LAYOUT_COLUMNS=[PX,1280,1600,1920,832,640,512];
 const layoutCache=new WeakMap();
 export function textLayouts(r){
-  if(r.weather||r.ego||r.reserve_text&&!r.title&&!r.body)return null;
+  if(r.dialogue||r.reserve_text&&!r.title&&!r.body)return null;
   const key=JSON.stringify([r.title,r.body,r.items,textBehavior,!!r.info?.key]),hit=layoutCache.get(r);if(hit?.key===key)return hit.layouts;
   const layouts=LAYOUT_COLUMNS.map(columns=>{const m=glowTexture(r,false,{columns});const out={columns,aspect:m.image.height/m.image.width,textMetrics:m.image.textMetrics};m.dispose();return out;});
   layoutCache.set(r,{key,layouts});return layouts;
@@ -158,7 +157,7 @@ export async function createResponseWidget(r,ctx,stack=0,frame=r.frame,previous=
   // A bubble set again as its text streams in: its canvas is as wide as the text (glowTexture), so the same type size takes a width in
   // proportion to the canvas's (bubbleWidthScale). Its first words (after the "…" it showed while they came) must fit the view wholly
   // where it is (bubbleRequireInView), else it is placed afresh.
-  const was=previous?.userData.text.material.map.image.width,placeholder=previous?.userData.response.ego&&!previous.userData.response.title&&!previous.userData.response.body;
+  const was=previous?.userData.text.material.map.image.width,placeholder=previous?.userData.response.dialogue&&!previous.userData.response.title&&!previous.userData.response.body;
   const anchorState=previous?.userData.anchorState||{};
   const pose=await place({...r,frame,aspect,textMetrics:map.image.textMetrics,layouts:textLayouts(r),previousPose:previous?.userData.pose,anchorState,
     bubbleWidthScale:was?map.image.width/was:1,bubbleRequireInView:!!placeholder},ctx);
@@ -226,12 +225,12 @@ function moveResponseWidget(w,pose,stack){
  const uniforms=d.glass.material.uniforms;uniforms.size.value.set(inner.x+2*feather,inner.y+2*feather);uniforms.inner.value.copy(inner);uniforms.feather.value=feather;
  Object.assign(d,{width,height,pose,kind:pose.kind});bend(d.text,pose.surface,shift);bend(d.glass,pose.surface,shift);syncTail(w);
 }
-// A speech bubble (object mod, pose.kind 'bubble'): a rounded box around the ink, filled (no outline), with a tail to pose.tail (the
+// A speech bubble (Object-centric Dialogue, pose.kind 'bubble'): a rounded box around the ink, filled (no outline), with a tail to pose.tail (the
 // object, or toward it from the edge of the view: src/placement.mjs). Always white text on a dark fill: no colour adaptation (bubbleStyle).
 // When the
 // object is wholly out of the view (pose.offscreen), a small copy of its 3D model turns slowly at the tail's tip, so one knows who speaks.
 const BUBBLE_FILL=.78,BUBBLE_LINE=0,ICON=.45;   // ICON: the model's size, of the bubble's height
-let modelOf=()=>null;   // object id → its model (Object3D) in the room (createAgentLayer: ctx.egoTarget)
+let modelOf=()=>null;   // object id → its model (Object3D) in the room (createAgentLayer: ctx.entityBox)
 // A copy of a model for the bubble: its geometry shared (userData.sharedGeometry: not disposed with the widget), unlit materials (the
 // answers' pass has no lights), drawn over everything like the bubble, scaled to fit a unit cube about its centre.
 function modelIcon(model){
@@ -310,7 +309,7 @@ function captionTexture(text,shown=text){
   const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;return map;
 }
 export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onAnimate,...ctx}){
-  ctx.frames=frames;modelOf=id=>ctx.egoTarget?.(id)?.model||null;
+  ctx.frames=frames;modelOf=id=>ctx.entityBox?.(id)?.model||null;
   const group=new THREE.Group();group.name='agent-responses';scene.add(group);
   const widgets=new Map(),thoughts=new Map();let hold=null,conversation=null,generation=0,time=0,timer=null,reportTimer=null,pending=null,syncing=null,questions=[],lastQuestionsKey='';
   let sourceResponses=[],reconciling=false;
@@ -381,11 +380,11 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         const old=widgets.get(r.id);
         if(old&&old.userData.response.component_key===r.component_key)continue;
         // Streamed text updates in place; an object mod part that arrives meanwhile (or changes) places the answer again, on its object.
-        if(old&&r.reserve_text&&(old.userData.response.ego?.main||null)===(r.ego?.main||null)&&updateResponseWidget(old,r)){changed=true;continue;}
+        if(old&&r.reserve_text&&(old.userData.response.dialogue?.speaker||null)===(r.dialogue?.speaker||null)&&updateResponseWidget(old,r)){changed=true;continue;}
         const q=questions.find(q=>q.id===r.question_id),frame=q?.frame??r.frame;
         const w=await createResponseWidget(r,ctx,list.filter(o=>o.id<r.id&&o.frame===r.frame).length,frame,old);
         const current=presentationResponses(sourceResponses,questions,hold,deliveryClocks()).find(p=>p.id===r.id);
-        if(gen!==generation||epoch!==placementEpoch||!current||(current.component_key!==r.component_key&&((current.ego?.main||null)!==(r.ego?.main||null)||!updateResponseWidget(w,current)))){dispose(w);continue;}
+        if(gen!==generation||epoch!==placementEpoch||!current||(current.component_key!==r.component_key&&((current.dialogue?.speaker||null)!==(r.dialogue?.speaker||null)||!updateResponseWidget(w,current)))){dispose(w);continue;}
         if(old){group.remove(old);dispose(old);}
         widgets.set(r.id,w);group.add(w);changed=true;
       }
@@ -396,8 +395,8 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
   // During a hold (hold = {id, h, shownAt}): negative h types the question, then thinking until the answer at h = shownAt. Outside a hold, an answer
   // shows from its question's moment on (with auto-hide, only on that very frame: it was read during the hold). A replay fades the
   // answer in with a short glow pulse.
-  // Per response {autoHide, fixedText, stability}: the global settings or its mod's overrides (src/response-settings.mjs).
-  const settingsOf=r=>({autoHide:false,fixedText:false,stability:0,...ctx.getSettings?.(r)});
+  // Per response {autoHide, stability}: its text MOD's duration and the library's placement stability (src/ui-settings.mjs answerSettings).
+  const settingsOf=r=>({autoHide:false,stability:0,...ctx.getSettings?.(r)});
   function apply(){
     void reconcileWidgets().catch(e=>console.warn('response container',e));
     const now=performance.now(),clocks=deliveryClocks();
@@ -415,37 +414,25 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
       w.visible=o>0;w.userData.text.material.opacity=o;if(w.userData.bubble){const {fill,line}=w.userData.bubble.userData;fill.material.opacity=BUBBLE_FILL*o;line.material.opacity=BUBBLE_LINE*o;w.userData.bubble.userData.icon?.traverse(c=>{if(c.isMesh)for(const m of [c.material].flat())m.opacity=o;});}w.userData.glass.material.uniforms.opacity.value=o;
     }
   }
-  // Pinned in the recorded view (Fixed text, and the Fixed fallback when no surface fits).
-  const fixedPose=(w,frame,i,camera=ctx.frameCamera(frame))=>{const d=w.userData;
-    return viewFixedPose(camera,d.aspect,responseSlot(d.response,i),d.aspect-Math.max(0,(d.text.material.map.image.weatherFooter||0)-192)/1024);};
-  // Drawn in the fixed pass (above hands and scene effects): Fixed text, or a response pinned because no surface fits.
-  const drawnFixed=w=>!!settingsOf(w.userData.response).fixedText||!!w.userData.fallbackFixed;
   const layer={group,widgets,thoughts,
     // Refit the existing placement strategy as the recording moves; never anchor text to the weather patch.
     adapt(frame){
       layer.currentFrame=frame;
-      const visible=[...widgets.values()].filter(w=>w.visible),cfg=w=>settingsOf(w.userData.response),fixed=visible.filter(w=>cfg(w).fixedText);
-      if(fixed.length){const camera=ctx.frameCamera(frame);for(const w of fixed){const i=visible.indexOf(w),stability=cfg(w).stability;
-        const d=w.userData,pose=fixedPose(w,frame,i,camera);
-        if(!d.fixedText||Math.abs(d.width-pose.width)>.0001)moveResponseWidget(w,pose,0);
-        else{w.position.copy(pose.position);w.quaternion.copy(pose.quaternion);}
-        if(d.adaptedFrame!==frame)d.compositeInitialized=false;
-        Object.assign(d,{fixedText:true,placementHidden:false,adaptedFrame:frame,adaptedStability:stability});
-      }}
+      const visible=[...widgets.values()].filter(w=>w.visible),cfg=w=>settingsOf(w.userData.response);
       const viewport=ctx.viewport?.(),viewKey=viewport?`${viewport.width}:${viewport.height}`:'';
-      const todo=visible.filter(w=>!cfg(w).fixedText&&(w.userData.fixedText||w.userData.adaptedFrame!==frame||w.userData.adaptedView!==viewKey||w.userData.adaptedStability!==cfg(w).stability||w.userData.adaptedFallback!==cfg(w).fallback));
+      const todo=visible.filter(w=>w.userData.adaptedFrame!==frame||w.userData.adaptedView!==viewKey||w.userData.adaptedStability!==cfg(w).stability);
       if(!todo.length)return;
       if(adapting)return adapting;
       const gen=generation;
       adapting=Promise.all(todo.map(async w=>{
-        const d=w.userData,stability=cfg(w).stability,fallback=cfg(w).fallback;
+        const d=w.userData,stability=cfg(w).stability;
         d.anchorState||={};
-        const previous=d.fixedText?null:(d.pendingSurfacePose||d.pose);
+        const previous=d.pendingSurfacePose||d.pose;
         const pose=await place({...d.response,frame,aspect:d.aspect,textMetrics:d.text.material.map.image.textMetrics,layouts:textLayouts(d.response),
           previousPose:previous,anchorState:d.anchorState,allowSearch:performance.now()-(d.lastSurfaceSearch??-Infinity)>=250,
           onSearch:()=>{d.lastSurfaceSearch=performance.now();}},ctx);
         if(previous===d.pendingSurfacePose)pose.reusedSurface=false;
-        return {w,pose,stability,fallback};
+        return {w,pose,stability};
       })).then(results=>{
         if(gen!==generation)return;
         if(layer.currentFrame!==frame){
@@ -454,19 +441,15 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
           for(const {w,pose} of results)if(widgets.get(w.userData.response.id)===w&&!pose.unreadable&&!pose.reusedSurface)w.userData.pendingSurfacePose=pose;
           return;
         }
-        for(const {w,pose,stability,fallback} of results)if(widgets.get(w.userData.response.id)===w&&!cfg(w).fixedText){
+        for(const {w,pose,stability} of results)if(widgets.get(w.userData.response.id)===w){
           w.userData.pendingSurfacePose=null;
-          // No surface fits (and no floating pose either): the response still shows, pinned in the view like Fixed text, until one does.
-          if(pose.unreadable){const d=w.userData,fp=fixedPose(w,frame,visible.indexOf(w));
-            if(!d.fixedText||Math.abs(d.width-fp.width)>.0001)moveResponseWidget(w,fp,0);else{w.position.copy(fp.position);w.quaternion.copy(fp.quaternion);}
-            if(d.adaptedFrame!==frame)d.compositeInitialized=false;
-            if(!d.fallbackFixed)ctx.onPlacement?.(d.response,pose,frame);
-            Object.assign(d,{placementHidden:false,fixedText:true,fallbackFixed:true,adaptedFrame:frame,adaptedView:viewKey,adaptedStability:stability,adaptedFallback:fallback,
-              placementDecision:{hold:false,reason:'fixed-fallback',detail:pose.reason}});continue;}
+          // Nowhere to place it yet (placement always offers Floating Text, so this is only a moment): hidden until it can be placed.
+          if(pose.unreadable){Object.assign(w.userData,{placementHidden:true,adaptedFrame:frame,adaptedView:viewKey,adaptedStability:stability,
+              placementDecision:{hold:false,reason:'unplaced',detail:pose.reason}});continue;}
           if(w.userData.adaptedFrame!=null&&Math.abs(frames[frame].t-frames[w.userData.adaptedFrame].t)>1){w.userData.legibility?.reset();w.userData.compositeInitialized=false;}
           // Search failure is presentation state, never a replacement world anchor.
-          if(!pose.unreadable&&(!pose.reusedSurface||w.userData.fixedText)){moveResponseWidget(w,pose,responseSlot(w.userData.response,visible.indexOf(w)));w.userData.compositeInitialized=false;ctx.onPlacement?.(w.userData.response,pose,frame);}
-          Object.assign(w.userData,{placementHidden:false,fixedText:false,fallbackFixed:false,adaptedFrame:frame,adaptedView:viewKey,adaptedStability:stability,adaptedFallback:fallback,
+          if(!pose.reusedSurface){moveResponseWidget(w,pose,responseSlot(w.userData.response,visible.indexOf(w)));w.userData.compositeInitialized=false;ctx.onPlacement?.(w.userData.response,pose,frame);}
+          Object.assign(w.userData,{placementHidden:false,adaptedFrame:frame,adaptedView:viewKey,adaptedStability:stability,
             placementDecision:{hold:!!pose.reusedSurface,reason:pose.anchorGrace?'transient-loss':pose.reusedSurface?'world-anchor':pose.kind==='view-fallback'?'floating-fallback':pose.kind==='info-float'?'info-float':pose.infoSettled?'info-surface':'new-surface'}});
         }
       }).catch(e=>console.warn('live placement',e)).finally(()=>{adapting=null;onAnimate?.();});
@@ -490,7 +473,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         if(controls?.userData.responseOffset&&controls.userData.owner){const owner=controls.userData.owner;controls.quaternion.copy(owner.quaternion);controls.position.copy(owner.position).add(controls.userData.responseOffset.clone().applyQuaternion(owner.quaternion));}
       }
       // An answer with an action card (Delegate) shows its text inside the card (src/action-cues.mjs: the message's Text Input), not as text of its own.
-      const excluded=[...widgets.values(),...thoughts.values()].filter(w=>w.visible&&(w.userData.response?.action||pass!=='all'&&(pass==='fixed'?!drawnFixed(w):drawnFixed(w))));
+      const excluded=[...widgets.values(),...thoughts.values()].filter(w=>w.visible&&(w.userData.response?.action||pass==='fixed'));
       const originalControlsVisible=controls?.visible;
       for(const w of excluded)w.visible=false;
       if(controls?.userData.owner&&excluded.includes(controls.userData.owner))controls.visible=false;
@@ -498,7 +481,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         group.visible=true;if(!controls?.visible&&![...widgets.values(),...thoughts.values()].some(w=>w.visible))return;
         let passes=backgrounds.get(renderer);if(!passes){passes=new Map();backgrounds.set(renderer,passes);}
         let bg=passes.get(pass);if(!bg){const canvas=new OffscreenCanvas(1,1);bg={canvas,ctx:canvas.getContext('2d',{willReadFrequently:true}),texture:new THREE.CanvasTexture(canvas),last:-Infinity};bg.texture.colorSpace=THREE.SRGBColorSpace;passes.set(pass,bg);}
-        const pendingBeforeSample=[...widgets.values()].filter(w=>w.visible&&!w.userData.fixedText&&(w.userData.placementHidden||w.userData.pose.unreadable));
+        const pendingBeforeSample=[...widgets.values()].filter(w=>w.visible&&(w.userData.placementHidden||w.userData.pose.unreadable));
         if([...widgets.values(),...thoughts.values()].filter(w=>w.visible).every(w=>pendingBeforeSample.includes(w))&&(!controls?.visible||pendingBeforeSample.includes(controls.userData.owner)))return;
         const revision=ctx.getStyleRevision?.();
         if(performance.now()-bg.last>180||sample&&(bg.frame!==frame||bg.revision!==revision||[...widgets.values()].some(w=>w.visible&&(!w.userData.compositeInitialized||w.userData.compositePass!==pass)))){bg.frame=frame;bg.revision=revision;const source=renderer.domElement;bg.canvas.width=Math.min(768,source.width);bg.canvas.height=Math.max(1,Math.round(bg.canvas.width*source.height/source.width));bg.ctx.drawImage(source,0,0,bg.canvas.width,bg.canvas.height);bg.texture.needsUpdate=true;bg.last=performance.now();
@@ -515,7 +498,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         const controlGlass=controls?.userData.adaptiveGlass;if(controlGlass){const u=controlGlass.material.uniforms;u.tFrame.value=bg.texture;u.useFrame.value=1;renderer.getDrawingBufferSize(u.resolution.value);}
         const parent=group.parent,controlParent=controls?.parent,auto=renderer.autoClear;group.visible=true;presentationScene.add(group);if(controls)presentationScene.add(controls);
         // World anchors remain visible during async validation; sustained loss hides them without deleting them.
-        const pending=[...widgets.values()].filter(w=>w.visible&&!w.userData.fixedText&&(w.userData.placementHidden||w.userData.pose.unreadable));
+        const pending=[...widgets.values()].filter(w=>w.visible&&(w.userData.placementHidden||w.userData.pose.unreadable));
         for(const w of pending)w.visible=false;
         const controlsVisible=controls?.visible;if(controls?.userData.owner&&pending.includes(controls.userData.owner))controls.visible=false;
         try{renderer.autoClear=false;renderer.clearDepth();renderer.render(presentationScene,camera);}finally{for(const w of pending)w.visible=true;if(controls)controls.visible=controlsVisible;parent?.add(group);if(controls)controlParent?.add(controls);renderer.autoClear=auto;}
@@ -547,7 +530,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     stop(){clearTimeout(timer);},
     orient(camera){
       for(const w of widgets.values()){
-        const d=w.userData;if(!w.visible||settingsOf(d.response).fixedText||d.pose.unreadable||!d.pose.surfaceAnchor)continue;
+        const d=w.userData;if(!w.visible||d.pose.unreadable||!d.pose.surfaceAnchor)continue;
         d.pose.surfaceNormal||=new THREE.Vector3(0,0,1).applyQuaternion(d.pose.quaternion);
         const b=readableSurfaceBasis(d.pose.surfaceNormal,camera.quaternion,w.position,camera.position,camera),q=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(b.right,b.up,d.pose.surfaceNormal));
         if(d.pose.surface&&w.quaternion.angleTo(q)>1e-6){
@@ -566,7 +549,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     // The surfaces changed (the recording's depth correction finished, the layout was saved): every response is placed again from its
     // question's frame, as if seen for the first time. Saved conversations keep no poses, so a replay always uses the current placement.
     relayout(){placementEpoch++;for(const w of widgets.values()){group.remove(w);dispose(w);}widgets.clear();apply();},
-    /** The response settings changed (src/response-settings.mjs): show, hide and place again. */
+    /** The settings changed (src/ui-settings.mjs, a MOD's): show, hide and place again. */
     refreshSettings(){apply();},
     replay(responseId){const w=widgets.get(responseId)||[...widgets.values()].find(w=>w.userData.response.component_ids?.includes(responseId));if(!w)return;w.userData.replay=performance.now();
       const step=()=>{apply();onAnimate?.();if(w.userData.replay)requestAnimationFrame(step);};requestAnimationFrame(step);},

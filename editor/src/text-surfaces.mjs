@@ -92,7 +92,7 @@ export async function staticTextPlacement(response,ctx,basis){
    const oldWidth=previous?.surfaceAnchor&&previous.width;
    const widths=response.lockWidth&&oldWidth?[oldWidth]:oldWidth
     ?[oldWidth,...[1,.85,.7,.55].map(s=>THREE.MathUtils.clamp(wanted*s,oldWidth*.85,oldWidth*1.15))]
-    :[...new Set([...[1,.85,.7,.55,.45,.35,.25].filter(s=>s>=(response.minShrink??.55)-1e-9),response.minShrink??.55])].map(s=>wanted*s);   // minShrink: an info answer's floor (Behavior)
+    :[...new Set([...[1,.85,.7,.55,.45,.35,.25].filter(s=>s>=(response.minShrink??.55)-1e-9),response.minShrink??.55])].map(s=>wanted*s);   // minShrink: an info answer's floor (src/placement.mjs INFO_MIN_SHRINK)
    for(const width of new Set(widths)){
     const scale=width/wanted;
     const pose={position,quaternion:q,width,align:'center',kind:'plane',surfaceAnchor:contact.clone(),normalLift:.018,surfaceId:target.id,source:target.source||'parametric-layout',...(target.source==='smoothed-scan'?{supportTarget:target}:{}),...(L.columns?{layout:L.columns}:{})};

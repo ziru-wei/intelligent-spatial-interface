@@ -31,6 +31,10 @@
             "cue": "embeddedText",
             "when": "surface.score>=0.5",
             "instead_of": "floatingText"
+          },
+          {
+            "cue": "textArrow",
+            "when": "text.apart"
           }
         ]
       }

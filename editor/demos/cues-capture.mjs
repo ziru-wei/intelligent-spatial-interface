@@ -25,6 +25,7 @@ const SHOTS=[
   ['floorArea','atlas_rec_5',.5,'zone:lab-2f'],
   ['doorwayGlow','atlas_rec_4',1.0,'layout:lab-entry',{name:'Lab corridor'}],
   ['arrowAhead','atlas_rec_4',.5,'layout:kitchen-south-entry'],
+  ['textArrow','atlas_rec_5',.5,'layout:lab-central-tv'],
   ['floorPath','atlas_rec_4',1.0,'layout:lab-entry',{floorY:5.6}],
   ['haloDial','atlas_rec_5',.5,'layout:lab-desk-lamp',{value:60,name:'brightness',unit:'%'}],
   ['edgeBar','atlas_rec_5',.5,'layout:lab-central-tv',{value:20,name:'volume'}],

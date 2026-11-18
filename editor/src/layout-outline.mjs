@@ -1,13 +1,15 @@
 import {path} from './layout-tree.mjs';
 import {swapHTML,wireSwap} from './model-fit.mjs';
 
-// The layout as a tree in the Scene panel: groups (zones, or types: furniture, doors and windows, objects; built by src/app.mjs) →
-// boxes → nested boxes. Each row can be collapsed, hidden and locked; hiding or locking a group or a box does the same to everything under
+// The space's entities as a tree in the Space tab (Entities): groups (places, or types: furniture, doors and windows, objects, walls;
+// built by src/app.mjs from the twin, scripts/modos_twin.py) → entities → what is inside them. Rows are entity ids (layout:, comp:,
+// zone:, item:, device:). The selected row opens its panel right under it (detailFor(id): an element, src/twin-panel.mjs). Each row can be collapsed, hidden and locked; hiding or locking a group or a box does the same to everything under
 // it. A locked row cannot be picked, moved or deleted. Clicking a row selects it. Which rows are collapsed, hidden or locked is a
 // per-viewer setting, kept in localStorage per scene (not in the layout). In edit mode (setEditing) rows that are not locked have a
 // delete button. Double-clicking a row frames it in the 3D view (onFrame); on its name, it also renames it in place (onRename with the
 // new last part of its label).
-// A row's icon follows its kind: a layout box (furniture), a door or window (opening), or an object (a persistent object of the scene).
+// A row's icon follows its kind: a place, furniture, a door or window (opening), a wall or ceiling (structure), an item or artifact
+// (object), or a connected device. Entities without geometry (known by name) cannot be hidden or locked.
 const EYE='<svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const EYE_OFF='<svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
 const LOCK='<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
@@ -17,11 +19,15 @@ const CHEVRON='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
 const ICONS={
   furniture:'<svg class="kind" viewBox="0 0 24 24"><path d="M5 11V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3zM5 18v2M19 18v2"/></svg>',
   opening:'<svg class="kind" viewBox="0 0 24 24"><path d="M6 21V4h12v17M3 21h18M14 12.5v1"/></svg>',
-  object:'<svg class="kind object" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg>'};
+  object:'<svg class="kind object" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg>',
+  artifact:'<svg class="kind object" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5"/></svg>',
+  device:'<svg class="kind device" viewBox="0 0 24 24"><path d="M9 3v4M15 3v4M7 7h10v4a5 5 0 0 1-10 0zM12 16v5"/></svg>',
+  structure:'<svg class="kind" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18M8 6v6M16 6v6M12 12v6"/></svg>',
+  place:'<svg class="kind place" viewBox="0 0 24 24"><path d="M4 6l8-3 8 3v12l-8 3-8-3zM12 3v18"/></svg>'};
 
 // In edit mode a piece of furniture also offers its swap (src/model-fit.mjs): swapOf(id) 'box' (offer a model: onModel(id, file)) or 'model'
 // (offer its box back: onBox(id)); null for none.
-export function createOutline({root,scene,onSelect,onHidden,onRename,onLocked=()=>{},onDelete=()=>{},onFrame=()=>{},swapOf=()=>null,onModel=()=>{},onBox=()=>{},onError=()=>{}}){
+export function createOutline({root,scene,onSelect,onHidden,onRename,onLocked=()=>{},onDelete=()=>{},onFrame=()=>{},swapOf=()=>null,onModel=()=>{},onBox=()=>{},onError=()=>{},detailFor=()=>null}){
   const key=`spatial-take:layout-view:${scene}`;let state={hidden:[],collapsed:[],locked:[]};
   try{state={...state,...JSON.parse(localStorage.getItem(key)||'{}')};}catch{}
   const hidden=new Set(state.hidden),collapsed=new Set(state.collapsed),locked=new Set(state.locked);let groups=[],selected=null,editing=false;
@@ -37,14 +43,14 @@ export function createOutline({root,scene,onSelect,onHidden,onRename,onLocked=()
   const lockedBoxes=()=>under(locked);
   const count=nodes=>nodes.reduce((s,n)=>s+1+count(n.children),0);
 
-  function row({key,label,depth,children,isGroup,id,off,dim,n,kind,lockOn,lockInherited}){
+  function row({key,label,depth,children,isGroup,id,off,dim,n,kind,lockOn,lockInherited,bare=false}){
     const el=document.createElement('div');el.className='node'+(isGroup?' zone':'')+(dim?' off':'')+(lockOn||lockInherited?' locked':'');el.style.setProperty('--depth',depth);el.dataset.key=key;
     if(id&&id===selected)el.setAttribute('aria-current','true');
     el.innerHTML=`${children?`<button class="twist" aria-label="${collapsed.has(key)?'Expand':'Collapse'}" aria-expanded="${!collapsed.has(key)}">${CHEVRON}</button>`:'<span class="twist"></span>'}${ICONS[kind]||''}<span class="name"></span>${n?`<span class="n">${n}</span>`:''}`
       +`${editing&&id&&kind==='furniture'&&!lockOn&&!lockInherited?swapHTML(swapOf(id)):''}`
       +`${editing&&id&&!lockOn&&!lockInherited?`<button class="del" aria-label="Delete" title="Delete">${TRASH}</button>`:''}`
-      +`<button class="lock" aria-label="${lockOn?'Unlock':'Lock'}" aria-pressed="${!!lockOn}" title="${lockInherited?'Locked with the row above':lockOn?'Unlock':'Lock'}" ${lockInherited?'disabled':''}>${lockOn||lockInherited?LOCK:UNLOCK}</button>`
-      +`<button class="eye" aria-label="${off?'Show':'Hide'}" aria-pressed="${off}">${off?EYE_OFF:EYE}</button>`;
+      +(bare?'':`<button class="lock" aria-label="${lockOn?'Unlock':'Lock'}" aria-pressed="${!!lockOn}" title="${lockInherited?'Locked with the row above':lockOn?'Unlock':'Lock'}" ${lockInherited?'disabled':''}>${lockOn||lockInherited?LOCK:UNLOCK}</button>`
+      +`<button class="eye" aria-label="${off?'Show':'Hide'}" aria-pressed="${off}">${off?EYE_OFF:EYE}</button>`);
     el.querySelector('.name').textContent=label;
     el.onclick=e=>{
       if(e.target.closest('.twist')&&children){collapsed.has(key)?collapsed.delete(key):collapsed.add(key);save();render();return;}
@@ -65,21 +71,25 @@ export function createOutline({root,scene,onSelect,onHidden,onRename,onLocked=()
     const frag=document.createDocumentFragment();
     const add=(n,depth,parentOff,parentLock)=>{const b=n.box,off=hidden.has(b.id),lockOn=locked.has(b.id);
       frag.append(row({key:b.id,id:b.id,label:path(b.label).at(-1)||b.id,depth,children:n.children.length,off,dim:off||parentOff,n:n.children.length?count(n.children):0,
-        kind:b.isObject?'object':b.kind==='opening'?'opening':'furniture',lockOn,lockInherited:parentLock}));
+        kind:b.kind||(b.isObject?'object':'furniture'),lockOn,lockInherited:parentLock,bare:!!b.bare}));
+      // the selected entity's panel, right under its row
+      if(b.id===selected){const d=detailFor(b.id);if(d){d.classList.add('node-detail');d.style.setProperty('--depth',depth);frag.append(d);}}
       if(!collapsed.has(b.id))n.children.forEach(c=>add(c,depth+1,off||parentOff,lockOn||parentLock));};
-    for(const g of groups){const k=groupKey(g),off=hidden.has(k),lockOn=locked.has(k);
-      frag.append(row({key:k,label:g.zone.name,depth:0,children:g.nodes.length,isGroup:true,off,dim:off,n:count(g.nodes),lockOn}));
+    for(const g of groups){const k=groupKey(g),off=hidden.has(k),lockOn=locked.has(k),gid=g.zone.entity||null;
+      frag.append(row({key:k,id:gid,label:g.zone.name,depth:0,children:g.nodes.length,isGroup:true,off,dim:off,n:count(g.nodes),lockOn,kind:gid?'place':undefined}));
+      if(gid&&gid===selected){const d=detailFor(gid);if(d){d.classList.add('node-detail');d.style.setProperty('--depth',0);frag.append(d);}}
       if(!collapsed.has(k))g.nodes.forEach(n=>add(n,1,off,lockOn));}
     root.replaceChildren(frag);
   }
   return {
     setTree(next){groups=next;render();},
     setEditing(on){editing=on;render();},
+    render,
     setSelected(id){selected=id;
       // Open the groups and parents above it, then bring its row into view.
       if(id)for(const g of groups){const find=(n,up)=>n.box.id===id?up:n.children.map(c=>find(c,[...up,n.box.id])).find(Boolean);
         const hit=g.nodes.map(n=>find(n,[])).find(Boolean);if(hit){[groupKey(g),...hit].forEach(k=>collapsed.delete(k));save();break;}}
       render();root.querySelector('[aria-current=true]')?.scrollIntoView({block:'nearest'});},
-    hiddenBoxes,lockedBoxes,get hidden(){return hidden;}
+    hiddenBoxes,lockedBoxes,get hidden(){return hidden;},get selected(){return selected;}
   };
 }

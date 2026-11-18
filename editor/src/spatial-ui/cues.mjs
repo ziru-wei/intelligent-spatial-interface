@@ -6,6 +6,9 @@
 //   direction          arrowAhead · floorPath
 //   values / controls  haloDial · edgeBar · powerPuck · edgeTabs
 //   progress / status  progressRail · cardStack · pinnedTags · statusPulse
+//   link               textArrow (text → the thing it is about; not a direction)
+//   adjust (sent)      edgeBar (Slider: sent when let go) · edgeTabs · iconButton · text button: the change goes to the thing
+//   explore (local)    datePicker · playback: moves through information; nothing is sent
 //   action             tetherSend
 import * as THREE from 'three';
 import {label,wrapLines} from './kit.mjs';
@@ -99,15 +102,31 @@ export function arrowAhead(target,camera){
     g.position.copy(camera.position).addScaledVector(f,.55).addScaledVector(side,dir.x*.12).addScaledVector(up,dir.y*.08-.06+Math.sin(now/260)*.006);
     g.quaternion.copy(camera.quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),Math.atan2(dir.y,dir.x)));}};
 }
-export function floorPath(from,to,floorY){
-  // flat chevrons lying on the floor, lighting up one after another toward the target
-  // it starts a step ahead of the user and runs at most 4 m toward the target (a route, not a line through walls, comes from the twin later)
-  const g=new THREE.Group(),a0=new THREE.Vector3(from.x,floorY+.012,from.z),b0=new THREE.Vector3(to[0],floorY+.012,to[2]),dir0=b0.clone().sub(a0).normalize(),
-    a=a0.clone().addScaledVector(dir0,.6),b=a0.distanceTo(b0)>4.6?a0.clone().addScaledVector(dir0,4.6):b0,len=a.distanceTo(b),n=Math.max(3,Math.floor(len/.4)),dots=[];
-  const dir=b.clone().sub(a).normalize(),yaw=Math.atan2(dir.x,dir.z);
+export function floorPath(points){
+  // flat chevrons lying on the floor along a walking route (src/floor-route.mjs: through rooms and doors), lighting up one after another
+  // toward the target; points: [[x,z,floorY,yaw], …] spaced along the route
+  const g=new THREE.Group(),dots=[];
   const sh=new THREE.Shape();sh.moveTo(0,.09);sh.lineTo(.09,-.02);sh.lineTo(.05,-.05);sh.lineTo(0,.02);sh.lineTo(-.05,-.05);sh.lineTo(-.09,-.02);sh.closePath();
-  for(let i=1;i<=n;i++){const m=new THREE.Mesh(new THREE.ShapeGeometry(sh),glow(CYAN,.8));m.geometry.rotateX(-Math.PI/2);m.rotation.y=yaw+Math.PI;m.position.copy(a.clone().lerp(b,i/(n+1)));g.add(m);dots.push(m);}
-  return {group:g,update(now){dots.forEach((d,i)=>{d.material.opacity=.2+.75*Math.max(0,Math.sin(now/240-i*.7));});}};
+  for(const [x,z,y,yaw] of points){const m=new THREE.Mesh(new THREE.ShapeGeometry(sh),glow(CYAN,.8));m.geometry.rotateX(-Math.PI/2);m.rotation.y=yaw+Math.PI;m.position.set(x,y+.012,z);g.add(m);dots.push(m);}
+  return {group:g,update(now){dots.forEach((d,i)=>{d.material.opacity=.2+.75*Math.max(0,Math.sin(now/240-i*.45));});}};
+}
+
+// Text Arrow: links a piece of text to the thing it is about, when the text stands apart from it (Floating or Embedded Text beside a
+// poster, a bowl). Not a direction: Arrow Ahead and Floor Path lead the user somewhere; this only says "this text is about that".
+// A bright cyan polyline, a shaft and an open head, flat and turned to the viewer, in the glow style of the other cues.
+// start, end: world points (the text's edge, just short of the thing's outline).
+export function textArrow(start,end,{opacity=1,width=1}={}){   // width: the UI library's Text Arrow thickness (×)
+  const g=new THREE.Group(),a=new THREE.Vector3(...(start.toArray?start.toArray():start)),b=new THREE.Vector3(...(end.toArray?end.toArray():end)),L=a.distanceTo(b);
+  const w=Math.min(.01,Math.max(.004,L*.05))*width,head=Math.min(.05,Math.max(.022,L*.3)),ang=THREE.MathUtils.degToRad(30);
+  const core=glow(CYAN,.95*opacity),soft=glow(CYAN,.22*opacity);
+  // strips in the arrow's own plane: x along the arrow (0 at the tip), y across it
+  const strip=(x0,y0,x1,y1,width,mat)=>{const len=Math.hypot(x1-x0,y1-y0)+width,m=new THREE.Mesh(new THREE.PlaneGeometry(len,width),mat);
+    m.position.set((x0+x1)/2,(y0+y1)/2,0);m.rotation.z=Math.atan2(y1-y0,x1-x0);return m;};
+  for(const [width,mat] of [[w*3,soft],[w,core]]){
+    g.add(strip(-L,0,0,0,width,mat),strip(0,0,-head*Math.cos(ang),head*Math.sin(ang),width,mat),strip(0,0,-head*Math.cos(ang),-head*Math.sin(ang),width,mat));}
+  g.position.copy(b);const x=b.clone().sub(a).normalize();
+  return {group:g,update(now,camera){if(!camera)return;const toEye=camera.position.clone().sub(b),z=toEye.addScaledVector(x,-toEye.dot(x)).normalize(),y=z.clone().cross(x);
+    g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z));}};
 }
 
 // ——— values and controls on the thing ———
@@ -126,11 +145,13 @@ export function edgeBar(box,eye,{value=20,min=0,max=100,name='volume',unit='',fr
   const knob=new THREE.Mesh(new THREE.SphereGeometry(.016,20,14),lit(0xffffff,.2));g.add(track,fill,knob);
   // a wider invisible grip, so the bar is easy to drag
   const grip=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,len,8),new THREE.MeshBasicMaterial({visible:false}));g.add(grip);
-  if(onSet)grip.userData.onHit=point=>{const y=g.worldToLocal(point.clone()).y,k=Math.min(1,Math.max(0,(y+len/2)/len));onSet(min+k*(max-min));};
+  // Adjust: dragging shows the value on the bar; the change is sent once, when the user lets go (onSet)
+  let live=null;const valueAt=point=>{const y=g.worldToLocal(point.clone()).y,k=Math.min(1,Math.max(0,(y+len/2)/len));return min+k*(max-min);};
+  if(onSet){grip.userData.onDrag=point=>{live=valueAt(point);};grip.userData.onRelease=()=>{if(live!==null)onSet(live);};}
   let t=null,shown=null;const set=v=>{const k=Math.min(1,Math.max(0,kOf(v)));fill.scale.y=Math.max(.001,len*k);fill.position.y=-len/2+len*k/2;knob.position.y=-len/2+len*k;
     const txt=`${name} ${Math.round(v)}${unit}`;if(txt!==shown){shown=txt;if(t)g.remove(t);t=tag(txt,{size:.03});t.position.set(0,len/2+.04,0);g.add(t);}};
   set(from??value);g.position.copy(at(f,{x:f.w/2+.06,z:f.d/2}));facing(g,f);
-  return {group:g,update(now){if(from===null||!changeAt)return set(value);const u=Math.min(1,Math.max(0,(now-changeAt)/700)),e=u*u*(3-2*u);set(from+(value-from)*e);}};
+  return {group:g,update(now){if(live!==null)return set(live);if(from===null||!changeAt)return set(value);const u=Math.min(1,Math.max(0,(now-changeAt)/700)),e=u*u*(3-2*u);set(from+(value-from)*e);}};
 }
 // An icon button: the icon and what pressing it does, side by side (toggles and commands: power, cancel, pause, send).
 // icon: a preset's icon (modos/buttons.json); null for a text-only button the system wrote when no preset fits.
@@ -185,7 +206,7 @@ export function pinnedTags(box,eye,{tags=[['paper','60 sheets'],['toner','35 %']
 export function statusPulse(box,{level='attention',message='Paper low'}={}){
   const g=new THREE.Group(),color=level==='warning'?RED:level==='attention'?AMBER:CYAN,dot=new THREE.Mesh(new THREE.SphereGeometry(.018,20,14),lit(color,.6));
   const ripple=new THREE.Mesh(new THREE.RingGeometry(.025,.03,40),glow(color,.8));g.add(dot,ripple);
-  const t=label(message,{size:.022,weight:650});t.position.set(.03,0,0);g.add(t);
+  if(message){const t=label(message,{size:.022,weight:650});t.position.set(.03,0,0);g.add(t);}   // no state in the data: the dot alone
   g.position.set(box.center[0],box.center[1]+box.size[1]/2+.1,box.center[2]);
   return {group:g,update(now,camera){const k=(now%1400)/1400;ripple.scale.setScalar(1+k*2.2);ripple.material.opacity=.8*(1-k);if(camera){g.quaternion.copy(camera.quaternion);}}};
 }

@@ -33,13 +33,3 @@ export function chooseStablePlacement({current,candidate,camera,stability=0,kind
  return {hold:keepCost<=moveCost+.035*s,current:a,candidate:b,keepCost,moveCost,reason:'cost'};
 }
 
-// Constant screen footprint, expressed as a world pose for the existing text/control renderer.
-export function viewFixedPose(camera,aspect,stack=0,sizingAspect=aspect){
- camera.updateMatrixWorld(true);const distance=1.25,e=camera.projectionMatrix.elements;
- const viewportWidth=2*distance/e[0],viewportHeight=2*distance/e[5];
- const width=.5*Math.min(viewportWidth*.70,viewportHeight*.38/sizingAspect),height=width*aspect;
- const y=-.38+Math.min(stack,2)*Math.max(.43,2*height/viewportHeight+.06);
- const position=new THREE.Vector3(0,y,0).unproject(camera),local=position.applyMatrix4(camera.matrixWorldInverse);
- local.multiplyScalar(distance/-local.z).applyMatrix4(camera.matrixWorld);
- return {position:local,quaternion:camera.getWorldQuaternion(new THREE.Quaternion()),width,height,kind:'view-fixed',align:'center'};
-}
