@@ -11,10 +11,10 @@ them is built from the kinds of state, not per device (src/device-panel.mjs):
   power            "on" / "off"                                   a switch
   a level          a number with `ranges: {name: [min, max]}`       a slider (brightness, volume, temperature)
   a choice         a value with `options: {name: [...]}`            segments (input, mode)
-  a task           {title, total, done?, unit, total_s, elapsed_s}  progress with the time left, live (a print job, a cycle)
+  a task           {title, done, total, unit, owner?}             progress as done of total (a print job's pages, a cycle's steps)
   a queue          [{title, total, unit}]                           what comes next
   other actions    momentary buttons (cancel job)
-The only protocol so far is `mock`: an action changes the stored state; a task's progress runs from elapsed_s at the moment it is read.
+The only protocol so far is `mock`: an action changes the stored state; a task's progress is what is stored (done of total).
 No dependencies beyond the other scripts."""
 import json, math, re
 from pathlib import Path
@@ -114,7 +114,7 @@ def apply_action(space, entity, key, op='set', value=None):
         task = outs.get(inp.get('for') or '')
         if value == 'cancel' and task:
             queue = outs.get('queue', {}).get('items', []) if isinstance(outs.get('queue'), dict) else []
-            outs[inp['for']] = dict(type='task', **{k: v for k, v in queue[0].items() if k != 'type'}, elapsed_s=0) if queue else dict(type='task', title=None)
+            outs[inp['for']] = dict(type='task', **{k: v for k, v in queue[0].items() if k != 'type'}, done=0) if queue else dict(type='task', title=None)
             if queue: outs['queue']['items'] = queue[1:]
         elif value in ('pause', 'resume') and task: task['paused'] = value == 'pause'
         inp['last'] = value

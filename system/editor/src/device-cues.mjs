@@ -56,7 +56,7 @@ export function createDeviceCues(){
         else if(cue==='iconButton'||cue==='textButton'){
           const action=val.cmd?{key:val.key,op:'command',value:val.cmd}:{key:val.key,op:'toggle'};
           buttons.push(cues.iconButton(box,eye,{icon:cue==='iconButton'?val.preset.icon:null,text:cue==='iconButton'?val.preset.label:word(val.cmd||val.key),on:true,onPress:()=>press(action)}));}
-        else if(cue==='progressRail')top.push(cues.progressRail(box,eye,{title:val.v.title,total:val.v.total,unit:val.v.unit,totalS:val.v.total_s,elapsedS:val.v.elapsed_s},shownAt));
+        else if(cue==='progressRail')top.push(cues.progressRail(box,eye,{title:val.v.title,owner:val.v.owner,done:val.v.done,total:val.v.total,unit:val.v.unit},shownAt));
         else if(cue==='cardStack'&&val.v.items?.length)add(cues.cardStack(box,eye,{items:val.v.items.map(i=>`${i.title}${i.total?` · ${i.total} ${i.unit||''}`:''}`)}),true);
         else if(cue==='pinnedTags')tags.push([val.key,`${val.v.value}${val.v.unit?' '+val.v.unit:''}`]);
         else if(cue==='statusPulse')for(const a of val.v.items||[])top.push(cues.statusPulse(box,{level:a.level||'attention',message:a.message}));

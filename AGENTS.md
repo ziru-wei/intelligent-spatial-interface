@@ -116,18 +116,21 @@ MODs live in `editor/modos/mods/*.json` (12 foundational: 7 built, 5 spec). They
 - **Generalize, never overfit.** No small feature made for one MOD or one scene (hand dismissal, per-MOD text switches, per-answer-type knobs). A feature that is not used is removed in the code, the data format and the tests, not only hidden in the UI.
 - **Editor UI.** The agent log opens in Pipeline view. A handle between the recorded camera and the 3D scene sets their widths. The side panel is not a floating card: a thin line parts it from the views, and its tabs stick to its top with no frame. Explanations sit behind a hoverable "?" (`.help[data-tip]`), never as exposed paragraphs. Names say what a control does. Related views are seg controls (Space: Scene | Entities; an entity: Semantics | Knowledge).
 - **Editor follows the design.** MOD choices live only in MOD settings (MODs tab); the UI library tab adjusts only shared text and cue parameters; Input holds info selection and hands. No per-mod overrides, no pinned or fallback text.
+- **Headings.** A yes/no question (opening with an auxiliary verb, no "or" choice) is answered under the heading Yes, No or Not sure, by rule (`isYesNo`, `modos/text.mjs`); other answers keep the model's short title.
+- **Device tasks report progress, not time.** A task is done of total (a print job's pages) and whose it is; no "x min left".
+- **Clip questions sound like people:** situated, casual, sometimes broken ("wait, where did I put my headphones"). Never ask what can simply be seen (whether the printer is printing); ask what can't (how far along, whose job).
 - **Object-centric Dialogue has no heading**: the bubble shows only what the thing says.
 - **The main page** (`index.html`):
   - Four sections, **Demo** (ModOS itself: the editor filling the whole window, dark, not a framed embed), **Gallery** (the recordings), **Vocabulary** and **About** (Memory, Decisions, Walkthrough: tabs left empty until written; a new one is an entry of `SUBS.about`), switched by a fixed, nearly opaque floating capsule control at the bottom. Vocabulary and About have tabs at their top; the active tab is bold with a thin underline.
   - No page header or explanation. Helvetica light, bold only for what matters most (names, the answer time, the active switch). No horizontal lines. Light theme for Gallery, Vocabulary, About and the bottom switch; Demo is dark. Neutral greys only: no cyan in the page's own UI (cyan is the spatial UI's, seen in the recordings).
   - Gallery is a masonry (waterfall) of MOD blocks, with no built/spec split. A MOD block is a Lucide icon and its name, with a thin line down its left joining it to its clips. A clip is its question (light, in quotes) above the camera view only: the recording's left 3/4, never the pipeline beside it. No time.
-  - Quiet until looked at: every MOD block is dim, the one under the pointer brighter, and the clip under the pointer fully opaque and playing (muted). Opened, a clip shows only its video.
+  - Quiet until looked at: every MOD block is dim, the one under the pointer brighter, and the clip under the pointer fully opaque and playing (muted). Opened, a clip plays the whole recording, pipeline included (only the cards hide it).
   - The vocabulary has three categories as tabs at the top: **Cues**, **Text** (the text forms) and **Assets** (Ambient Asset, Scene Asset: a MOD's own, not shared). Under Cues, four groups with large headings: **Mark** (highlighting a physical entity), **Guidance** (leading to somewhere), **Visualization** (visualizing information) and **Controls**; Controls has three rows with smaller headings: **Adjust**, **Explore**, **Interactive**. Each group heading has its Lucide icon (Mark scan, Guidance navigation, Visualization gauge, Controls sliders-horizontal); the rows under Controls have their names in a thin capsule. Headings get smaller with each level so the levels never mix. Text and Assets show their parts larger.
 - **Ask before** committing, pushing, or deleting anything the user made. Show results as screenshots or recordings, and ask the user to choose before large visual changes.
 
 ## What to do next
 
-Follow the prioritized list in `context/docs/modos-system-design.md` §10.16. In short:
+Follow the prioritized list in `context/docs/modos-system-design.md` §10.17. In short:
 1. The rest of the placement module (§4.5): site allocator, `beside` clusters with occlusion checks.
 2. Wayfinding: nearest door by route length.
 3. Spec MODs.

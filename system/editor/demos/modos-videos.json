@@ -18,7 +18,7 @@
       "mod": "LabInfo",
       "recording": "atlas_rec_5",
       "ask_at": 1.0,
-      "question": "What does this lab work on?",
+      "question": "so what do they actually work on in here?",
       "start": 0,
       "duration": 20
     },
@@ -27,7 +27,7 @@
       "mod": "LabInfo",
       "recording": "atlas_rec_4",
       "ask_at": 1.0,
-      "question": "What is this lab about?",
+      "question": "what's this lab about, all these posters…",
       "start": 0,
       "duration": 15
     },
@@ -36,7 +36,7 @@
       "mod": "FindMy",
       "recording": "atlas_rec_4",
       "ask_at": 7.0,
-      "question": "Where are my headphones?",
+      "question": "wait, where did I put my headphones",
       "start": 5.5,
       "duration": 26
     },
@@ -45,7 +45,7 @@
       "mod": "Weather",
       "recording": "atlas_rec_5",
       "ask_at": 1.5,
-      "question": "Will it rain this weekend?",
+      "question": "is it gonna rain this weekend?",
       "start": 0,
       "duration": 20
     },
@@ -54,7 +54,7 @@
       "mod": "Weather",
       "recording": "atlas_rec_2",
       "ask_at": 1.0,
-      "question": "Do I need an umbrella tonight?",
+      "question": "hmm, do I need an umbrella tonight?",
       "start": 0,
       "duration": 14
     },
@@ -63,7 +63,7 @@
       "mod": "WorldInfo",
       "recording": "atlas_rec_3",
       "ask_at": 48.6,
-      "question": "What is this study about?",
+      "question": "what's this study about?",
       "start": 46.5,
       "duration": 18
     },
@@ -72,7 +72,7 @@
       "mod": "WorldInfo",
       "recording": "atlas_rec_3",
       "ask_at": 18.1,
-      "question": "Can I eat you?",
+      "question": "hey, can I eat you?",
       "start": 15.5,
       "duration": 18
     },
@@ -81,7 +81,7 @@
       "mod": "IoTControl",
       "recording": "atlas_rec_5",
       "ask_at": 1.0,
-      "question": "I want to make the light brighter",
+      "question": "kinda dark here… a bit brighter please",
       "start": 0,
       "duration": 16,
       "devices": {
@@ -96,7 +96,7 @@
       "mod": "ObjectStatus",
       "recording": "atlas_rec_5",
       "ask_at": 1.0,
-      "question": "Is the printer free?",
+      "question": "whose is that printing?",
       "start": 0,
       "duration": 16
     },
@@ -105,7 +105,7 @@
       "mod": "Wayfinding",
       "recording": "atlas_rec_4",
       "ask_at": 1.0,
-      "question": "How do I get to the kitchen?",
+      "question": "how do I get to the kitchen from here",
       "start": 0,
       "duration": 16
     },
@@ -114,7 +114,7 @@
       "mod": "IoTControl",
       "recording": "atlas_rec_5",
       "ask_at": 1.0,
-      "question": "How long until my print job is done?",
+      "question": "how far along is the poster?",
       "start": 0,
       "duration": 18
     },
@@ -123,7 +123,7 @@
       "mod": "Delegate",
       "recording": "atlas_rec_2",
       "ask_at": 7.1,
-      "question": "Send this poster to Alice",
+      "question": "send this to Alice",
       "start": 5.5,
       "duration": 20,
       "press": {
@@ -135,7 +135,7 @@
       "mod": "Delegate",
       "recording": "atlas_rec_2",
       "ask_at": 7.1,
-      "question": "Describe this and draft a message to Alice",
+      "question": "describe this for Alice, like a quick message",
       "start": 5.5,
       "duration": 20,
       "press": {
@@ -147,7 +147,7 @@
       "mod": "Delegate",
       "recording": "atlas_rec_2",
       "ask_at": 7.1,
-      "question": "Take a photo of this and send it to Alice",
+      "question": "take a pic of this, send it to Alice",
       "start": 5.5,
       "duration": 20,
       "press": {
@@ -159,7 +159,7 @@
       "mod": "Agenda",
       "recording": "atlas_rec_4",
       "ask_at": 2.5,
-      "question": "What do I have this afternoon?",
+      "question": "what's on this afternoon?",
       "start": 1.0,
       "duration": 16
     },
@@ -168,7 +168,7 @@
       "mod": "BookCompanion",
       "recording": "atlas_rec_5",
       "ask_at": 5.0,
-      "question": "Remind me what happened in the part I'm reading",
+      "question": "wait, what happened in this part again?",
       "start": 3.5,
       "duration": 18
     },
@@ -177,7 +177,7 @@
       "mod": "StepGuide",
       "recording": "atlas_rec_5",
       "ask_at": 47.0,
-      "question": "How do I make an espresso with this?",
+      "question": "how do I even use this… for an espresso?",
       "start": 45.5,
       "duration": 18
     },
@@ -186,7 +186,7 @@
       "mod": "LiveCoach",
       "recording": "atlas_rec_5",
       "ask_at": 5.5,
-      "question": "How should I stretch after sitting all day?",
+      "question": "my back's killing me, any stretches?",
       "start": 4.0,
       "duration": 18
     },
@@ -195,7 +195,7 @@
       "mod": "Reminder",
       "recording": "atlas_rec_5",
       "ask_at": 48.5,
-      "question": "Remind me to refill the water tank tomorrow morning",
+      "question": "remind me tomorrow morning, refill the water tank",
       "start": 47.0,
       "duration": 16
     },
@@ -204,7 +204,7 @@
       "mod": "Weather",
       "recording": "atlas_rec_5",
       "ask_at": 1.5,
-      "question": "Should I bring my umbrella?",
+      "question": "should I bring my umbrella?",
       "start": 0,
       "duration": 18
     },
@@ -213,7 +213,7 @@
       "mod": "IoTControl",
       "recording": "atlas_rec_5",
       "ask_at": 1.0,
-      "question": "Switch the TV to HDMI 2",
+      "question": "put the TV on HDMI 2",
       "start": 0,
       "duration": 16,
       "devices": {

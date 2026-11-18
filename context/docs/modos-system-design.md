@@ -875,7 +875,14 @@ The rebuild exists so that computation generalizes. Small, concrete features mad
 - **Legacy pipeline removed:** `scripts/jev-pipeline.mjs` (`--pipeline legacy`), `scripts/mcp.mjs` and the old tool-agent prompt (`agent/AGENTS.md`), the `/api/agent/context` and `/api/agent/visible` endpoints, the `weather_mod` / `findmy_mod` / `ego_mod` / `text_response` question flags, the old FindMy renderer, and the `@modelcontextprotocol/sdk` dependency. The Jev client is `scripts/jev.mjs`; the scene's boxes and the recorded camera pose moved from `ego.py` to `scripts/modos_twin.py` (`boxes`, `camera_pose`).
 - Tests: Node 195, Python 85, all pass. The WorldInfo clips are re-recorded: "Can I eat you?" is a bubble on the candy bowl.
 
-### 10.16 Not Done Yet (2026-11-17, in priority order)
+### 10.16 Headings, Device Progress, Natural Questions (2026-11-17)
+
+- **Yes/no questions get Yes, No or Not sure as the heading.** A rule (`isYesNo` in `modos/text.mjs`: an auxiliary verb first, possibly after a filler, and no "or" choice) marks them; the model is told (`context.title_form`) and its title is held to the three words while it streams. Other answers keep the model's short title. Object-centric Dialogue has no heading.
+- **A device task is done of total, and whose.** `{title, done, total, unit, owner?}`: no time estimate anywhere (the context summary, the Progress Rail). A printer reports pages, not minutes.
+- **The panel components are gone** (`src/spatial-ui/kit.mjs` keeps only text: `label`, `wrapLines`); the cues replaced them (§4.3 describes the earlier panel library).
+- **Clip questions read like speech:** situated, casual, sometimes broken, and never about what can simply be seen.
+
+### 10.17 Not Done Yet (2026-11-17, in priority order)
 
 1. **Placement module (4.5), the rest.** The user-reach cluster exists; still missing are the per-thing site allocator, `beside` clusters with occlusion and overlap checks (the Delegate message column can still cover the poster), and one solver shared by all MODs.
 2. **Wayfinding picks the nearest door of the target room** by the user's straight-line distance, not by route length.

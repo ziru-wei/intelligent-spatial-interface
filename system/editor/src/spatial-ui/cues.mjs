@@ -174,17 +174,16 @@ export function edgeTabs(box,eye,{options=['HDMI 1','HDMI 2','HDMI 3'],value='HD
 }
 
 // ——— progress, queue, readings, status ———
-export function progressRail(box,eye,{title='Ana\'s CHI poster',total=12,unit='pages',totalS=300,elapsedS=170}={},shownAt=performance.now()){
-  const f=frameOf(box,eye),g=new THREE.Group(),len=Math.max(f.w,.3);
+export function progressRail(box,eye,{title='Ana\'s CHI poster',owner='',done=7,total=12,unit='pages'}={}){
+  // a task's progress as the device reports it: done of total (no time estimate)
+  const f=frameOf(box,eye),g=new THREE.Group(),len=Math.max(f.w,.3),k=Math.min(1,Math.max(0,(done||0)/(total||1)));
   const track=new THREE.Mesh(new THREE.CylinderGeometry(.005,.005,len,16),lit(0x3a3e46,0));track.rotation.z=Math.PI/2;
-  const fill=new THREE.Mesh(new THREE.CylinderGeometry(.0068,.0068,1,16),lit());fill.rotation.z=Math.PI/2;
-  const token=new THREE.Mesh(new THREE.BoxGeometry(.016,.022,.003),lit(0xffffff,.1));g.add(track,fill,token);
-  const name=tag(title,{size:.026,weight:700});name.position.y=.045;g.add(name);let info=null,last='';
+  const fill=new THREE.Mesh(new THREE.CylinderGeometry(.0068,.0068,Math.max(.001,len*k),16),lit());fill.rotation.z=Math.PI/2;fill.position.x=-len/2+len*k/2;
+  const token=new THREE.Mesh(new THREE.BoxGeometry(.016,.022,.003),lit(0xffffff,.1));token.position.set(-len/2+len*k,.014,0);g.add(track,fill,token);
+  const name=tag(owner&&!title.toLowerCase().includes(owner.split(' ')[0].toLowerCase())?`${title} · ${owner}`:title,{size:.026,weight:700});name.position.y=.045;g.add(name);
+  const info=tag(`${done} of ${total} ${unit}`.trim(),{size:.022,weight:500,color:'#d6f9fc'});info.position.y=-.03;g.add(info);
   const row=new THREE.Group();row.add(g);row.position.copy(at(f,{y:f.h/2+.03,z:f.d/2}));facing(row,f);
-  return {group:row,update(now){const el=Math.min(totalS,elapsedS+(now-shownAt)/1000),k=el/totalS,n=Math.floor(total*k);
-    fill.scale.y=Math.max(.001,len*k);fill.position.x=-len/2+len*k/2;token.position.set(-len/2+len*k,.014,0);
-    const s=Math.max(0,Math.round(totalS-el)),txt=`${n} of ${total} ${unit} · ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')} left`;
-    if(txt!==last){last=txt;if(info)g.remove(info);info=tag(txt,{size:.022,weight:500,color:'#d6f9fc'});info.position.y=-.03;g.add(info);}}};
+  return {group:row,update(){}};
 }
 export function cardStack(box,eye,{items=['Lab meeting slides · 3 pages','Consent forms · 8 pages']}={}){
   const f=frameOf(box,eye),g=new THREE.Group();

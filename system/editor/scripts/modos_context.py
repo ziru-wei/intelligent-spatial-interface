@@ -95,8 +95,8 @@ def _device_state(dev):
         for k, v in (dev.get(side) or {}).items():
             t = v.get('type')
             if t == 'task' and v.get('title'):
-                k_ = min(1, (v.get('elapsed_s') or 0)/max(1, v.get('total_s') or 1))
-                out.append(f"{k}: {v['title']}, {int((v.get('total') or 0)*k_)} of {v.get('total')} {v.get('unit', '')}, about {max(0, round(((v.get('total_s') or 0)-(v.get('elapsed_s') or 0))/60))} min left{' (paused)' if v.get('paused') else ''}")
+                who = f" ({v['owner']}'s)" if v.get('owner') else ''
+                out.append(f"{k}: {v['title']}{who}, {v.get('done', 0)} of {v.get('total')} {v.get('unit', '')}".rstrip())
             elif t == 'queue': out.append(f"{len(v.get('items') or [])} waiting in {k}")
             elif t == 'command': out.append(f"can {', '.join(v.get('commands') or [])} ({k})")
             elif t in ('toggle', 'choice', 'level', 'reading'): out.append(f"{k} {v.get('value')}{(' '+v['unit']) if v.get('unit') else ''}")

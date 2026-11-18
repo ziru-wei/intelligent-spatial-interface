@@ -59,7 +59,6 @@ main{padding:16px 0 120px}
   .mod:hover>*{opacity:.75}
   .mod:hover>.clip:hover{opacity:1}
 }
-.dlg-cam{aspect-ratio:4/3;max-height:88vh;margin:0 auto;border-radius:14px}
 /* cards */
 .part{width:min(220px,70vw);margin:0}
 .part img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000;cursor:zoom-in}
@@ -79,7 +78,7 @@ main{padding:16px 0 120px}
 .switch.sub button{font-size:13px;padding:7px 14px}
 button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
 /* Demo frames the editor, which stays dark: its own page */
-dialog{border:0;padding:0;background:transparent;max-width:min(1100px,94vw,117vh);width:100%}
+dialog{border:0;padding:0;background:transparent;max-width:min(1280px,94vw,150vh);width:100%}
 dialog::backdrop{background:rgba(5,6,8,.92)}
 dialog video,dialog img{display:block;width:100%;border-radius:14px;background:#000}
 .close{position:absolute;top:12px;right:12px;font:300 13px var(--font);color:#f1f2f4;background:rgba(20,22,26,.8);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}
@@ -107,7 +106,7 @@ body.dark .switch button[aria-pressed="true"]{background:#f1f2f4;color:#111111}
 <div class="bar">
   <nav class="switch" id="nav" aria-label="Section"><button type="button" data-tab="demo" aria-pressed="true">Demo</button><button type="button" data-tab="gallery" aria-pressed="false">Gallery</button><button type="button" data-tab="vocabulary" aria-pressed="false">Vocabulary</button><button type="button" data-tab="about" aria-pressed="false">About</button></nav>
 </div>
-<dialog id="dlg" aria-label="Recording"><div class="cam dlg-cam"><video id="vid" controls playsinline preload="metadata"></video></div><button class="close" type="button" data-close>Close</button></dialog>
+<dialog id="dlg" aria-label="Recording"><video id="vid" controls playsinline preload="metadata"></video><button class="close" type="button" data-close>Close</button></dialog>
 <dialog id="zoom" aria-label="Image"><img alt=""><button class="close" type="button" data-close>Close</button></dialog>
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 <script src="context/recordings/manifest.js"></script>
@@ -158,7 +157,7 @@ async function showDemo(){
   catch{demoShown=false;$('demo').innerHTML=`<p>ModOS is not running. Start it with <code>cd system/editor && npm start</code>, then open Demo again.</p>`;}
 }
 // Gallery: a masonry of MODs (Lucide icon, name, how many; a line on the left to their clips). A clip is its question above the camera
-// view; under the pointer it plays (muted), opened it is only the video.
+// view (the card hides the pipeline); under the pointer it plays (muted); opened, the whole recording plays, pipeline included.
 const ICON={Weather:'cloud-sun',FindMy:'search',WorldInfo:'info',LabInfo:'flask-conical',IoTControl:'lightbulb',ObjectStatus:'activity',
   Wayfinding:'signpost',Delegate:'send',Agenda:'calendar',BookCompanion:'book-open',StepGuide:'list-ordered',LiveCoach:'person-standing',Reminder:'bell'};
 function renderClips(clips){
