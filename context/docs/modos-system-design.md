@@ -249,12 +249,12 @@ Digital twin 里的实体：`place`（区域）、`object`（家具、物品、�
 
 | 组成 | 是什么 | 来源 | 例子 |
 | --- | --- | --- | --- |
-| **Ambient Effect** | 和环境融为一体、由数据驱动的效果 | MOD 专有（如 Weather） | 天空、日月、雨雪、雾、地面倒影 |
-| **Asset** | 预制的模型、动画、图片 | MOD 或空间主人提供 | Lab 的 diorama |
+| **Assets: Ambient Asset** | 和环境融为一体、由数据驱动的效果（代码里的 primitive 仍叫 `ambient-effect`） | MOD 专有（如 Weather） | 天空、日月、雨雪、雾、地面倒影 |
+| **Assets: Scene Asset** | 预制的模型、动画、图片（primitive `scene-asset`） | MOD 或空间主人提供 | Lab 的 diorama |
 | **Spatial Cue** | 贴在物体、地面、门上的标记、方向、显示和控件 | 公共库（4.4 节），所有 MOD 共用 | Breathing Box、Slider、Icon Button |
 | **Text** | 文字形式：Floating Text、Embedded Text、Object-centric Dialogue（4.4 节） | 公共库，所有 MOD 共用；内容来自 Gemini 写的文字 slot 或数据里的值 | 回答、门牌、草稿、物体说的话 |
 
-公共库 = Spatial Cue + Text 的文字形式。文字形式不是 cue：cue 贴着物体或地面的几何，文字形式承载语言内容。MOD 不应该有专用的控件或文字样式：都从公共库里选。MOD 专有的只有 Ambient Effect 和 Asset。
+公共库 = Spatial Cue + Text 的文字形式。文字形式不是 cue：cue 贴着物体或地面的几何，文字形式承载语言内容。MOD 不应该有专用的控件或文字样式：都从公共库里选。MOD 专有的只有 Assets（Ambient Asset、Scene Asset）。
 
 ### 4.1 Primitive Representation Spec
 

@@ -121,7 +121,7 @@ MODs live in `editor/modos/mods/*.json` (12 foundational: 7 built, 5 spec). They
   - Two sections, **Demo** (the system: its recordings) and **Document** (Spatial vocabulary now; Memory, Walkthrough and others are added as entries of `DOCS`), switched by a fixed floating capsule control at the bottom; a Document with several parts gets a second capsule row for them.
   - No page header or explanation. Helvetica light, bold only for what matters most (names, the answer time, the active switch). No horizontal lines. Neutral greys only: no cyan in the page's own UI (cyan is the spatial UI's, seen in the recordings).
   - Demo is grouped by MOD, with no built/spec split. A card shows only "Answered in <time>"; the opened player shows only the video.
-  - The vocabulary has three categories as tabs at the top: **Cues** (Mark, Direction, Display, A MOD's own), **Controls** (Adjust, Explore, Interactive) and **Text** (the text forms). Each group is one row of cards that scrolls sideways (Demo's MODs too), never a long vertical grid.
+  - The vocabulary has four categories as tabs at the top: **Cues** (Mark, Direction, Display), **Controls** (Adjust, Explore, Interactive), **Text** (the text forms) and **Assets** (Ambient Asset, Scene Asset: a MOD's own, not shared). Each group is one row of cards that scrolls sideways (Demo's MODs too), never a long vertical grid.
 - **Ask before** committing, pushing, or deleting anything the user made. Show results as screenshots or recordings, and ask the user to choose before large visual changes.
 
 ## What to do next
