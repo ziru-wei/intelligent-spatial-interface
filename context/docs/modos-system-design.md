@@ -889,6 +889,46 @@ The rebuild exists so that computation generalizes. Small, concrete features mad
 1. **Placement module (4.5), the rest.** The user-reach cluster exists; still missing are the per-thing site allocator, `beside` clusters with occlusion and overlap checks (the Delegate message column can still cover the poster), and one solver shared by all MODs.
 2. **Wayfinding picks the nearest door of the target room** by the user's straight-line distance, not by route length.
 3. **Spec MODs** (Agenda, BookCompanion, StepGuide, LiveCoach, Reminder) are chosen and answer in text only. LiveCoach's `bodyArrow` is not in the library; Reminder has no time trigger.
-4. **Vision Pro.** The cues, text forms, routing and message parts exist only in the web editor (`editor/src`); `visionos/` still renders the earlier parts.
+4. **Vision Pro (later): every update since the web rebuild.** The cues, text forms, routing, message parts, MOD-declared UI and placement exist only in the web editor (`editor/src`); `visionos/` still renders the earlier parts and settings. Port all of it, ideally against the platform-neutral surface messages of §11 so both renderers read one format.
 5. **Feeds and tailoring.** Weather and the rest use mock data (no real fetchers or refresh). The MODs tab can switch variants, settings, forks and knowledge, but there is no test loop yet; the Agent panel's old per-mod response settings should move into MOD settings.
 6. **Small data issues.** In the Lab example retrieval also picks an unrelated poster; in the atlas mock items the brush's container is not in the layout, so FindMy cannot find it.
+7. **User actions back to the agent (later; after A2UI).** Today a press goes straight to the device or the outbox (`/api/modos/devices`, `/api/modos/actions`) and the conversation never learns of it, so "a bit more" or "send it to Ryo instead" cannot follow. A2UI sends an `action` event (name + a context that may read data-model paths) to the agent, and `sendDataModel` can attach the surface's whole data model to it. ModOS should do the same: an Adjust or Interactive press becomes an event in the conversation's context, and the next request is answered knowing it.
+
+## 11 Next: Structure and Data Apart, Progressive Rendering (Plan, after A2UI)
+
+Reference: A2UI v1.0 (current), `specification/v1_0/docs/a2ui_protocol.md` and the TypeScript web core (`typescript/core/web_core/src/state/data-model.ts`, `surface-model.ts`, `processing/message-processor.ts`), repository `google/A2UI` at `0d3ebdc` (2026-11-17).
+
+### 11.1 What A2UI Does
+
+- **Four messages on one stream.** `createSurface` (a surface id, a catalog id, optionally the first components and data model), `updateComponents` (components to add or replace), `updateDataModel` (a JSON Pointer path and a value; upsert, `null` deletes, no path replaces all), `deleteSurface`.
+- **Structure is a flat adjacency list.** Each component has an `id` and its type; containers name their children by id; the one with `id: root` mounts on the surface. Components may arrive in any order; the renderer keeps a map and builds the tree when `root` exists.
+- **Data lives apart and is bound by path.** A property is a literal or `{"@path": "/flight/gate"}`. The renderer's data model keeps one signal per path; a write notifies the path, its ancestors and its descendants, so only the components reading those paths update. Lists bind to an array path with a template (relative paths per item).
+- **Progressive rendering is part of the contract.** A missing child or an undefined path renders as a placeholder; it fills in when its message arrives.
+- **Inputs are two-way but local.** A TextField or Slider writes its path in the renderer's data model at once (other components bound to it update), and nothing is sent until an `action` fires; the action's context reads the paths it needs.
+- **Layout.** The agent (a model, or server code: "macros", a state machine) emits the tree with layout containers (Row, Column, List, Card, Tabs, Modal) and coarse hints (`justify`, `align`, `weight`, a List's `direction`); geometry is the native framework's (flex on the web). Choosing parts and arranging them are the same act, one output; there are no coordinates. `allowedParents` / `allowedChildren` constrain nesting.
+
+### 11.2 How It Maps to ModOS
+
+| A2UI | ModOS |
+| --- | --- |
+| surface | one answer (a question's parts): created once the MODs are chosen |
+| catalog | the spatial UI library (`modos/spatial-ui`: cues, text forms, assets) |
+| component (`id`, type, props) | a cue instance from a slot's declared `ui`, with its anchor (a thing, a place, the user) and props |
+| data model, `@path` | the values the cues show and change: targets and states, device inputs and outputs (`/device/brightness`), task progress (`/job/done`), the draft (`/draft/body`), the forecast cursor, the text |
+| `updateComponents` | stage 5: what the declarations and facts say to draw (a cue appears or goes when a `when` changes) |
+| `updateDataModel` | Fill results, the text stream, device events, the user's own input |
+| two-way input | Slider, Text Input, Date Picker, Playback write their path locally; Adjust sends on release, Interactive on Send |
+| layout | not the agent's: placement (§4.5) from anchors in the room. Selection comes from the MOD declaration, arrangement from placement; ModOS keeps them apart on purpose |
+
+Kept as is: MODs choose and fill; declarations choose cues by rule; no model writes the component tree.
+
+### 11.3 Steps
+
+1. **Message format and store.** Define ModOS surface messages after A2UI's envelope (`createSurface`, `updateComponents`, `updateDataModel`, `deleteSurface`; JSON Pointer bindings; catalog id `modos/spatial-ui`). The store keeps, per question, the component map, the data model and an ordered log of messages with their times (replays play the log). Parts as they are now go away, not kept beside it.
+2. **Client data model.** A small data model with per-path subscriptions (notify the path, ancestors, descendants), and a surface that holds the component map and mounts cues as their messages arrive; placeholders for what is not there yet.
+3. **Cues take data.** Each cue binds its props to paths and updates in place (`set`), instead of being rebuilt: Slider value, Progress Rail done/total, Text Input text, Status Pulse state, Gauge level, Date Picker / Playback cursor, the highlight targets.
+4. **Renderers onto the surface,** one at a time, each checked on its clips: device controls (live device state; the slider writes `/device/<key>` and sends on release), the message column (the draft streams into Text Input with no rebuild), marks and guidance (targets and states), Weather's controls (cursor).
+5. **Progressive rendering in the pipeline.** Emit as soon as each piece is known: after stage 1 and 2 the surface and what needs only the referent or the chosen MOD (the referent's mark); after Fill each MOD's cues and data; the text as it streams. Measure time to first cue against today on the reel's clips.
+6. **Docs and reel.** Update §6 (pipeline), §4.4 (cues are data-bound), the code map in `AGENTS.md`; re-record and compare first-cue times.
+
+Open: the transport (today the editor polls; a stream such as SSE fits A2UI's model better), and whether to keep the envelope byte-compatible with A2UI so an A2UI renderer (or an A2UI-style baseline that lets a model build the tree from the same catalog) can read ModOS surfaces.

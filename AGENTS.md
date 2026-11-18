@@ -130,11 +130,14 @@ MODs live in `editor/modos/mods/*.json` (12 foundational: 7 built, 5 spec). They
 
 ## What to do next
 
-Follow the prioritized list in `context/docs/modos-system-design.md` §10.17. In short:
+Immediate: the plan in `context/docs/modos-system-design.md` §11, after A2UI's architecture: keep **structure and data apart** (surface messages, a data model bound by path, cues that update in place) and **render progressively** (emit each piece as soon as the pipeline knows it). Read the A2UI spec and web core again before each step.
+
+Then the prioritized list in §10.17:
 1. The rest of the placement module (§4.5): site allocator, `beside` clusters with occlusion checks.
 2. Wayfinding: nearest door by route length.
 3. Spec MODs.
-4. Vision Pro port.
+4. Vision Pro: every update since the web rebuild (later).
 5. Real feeds and the tailoring test loop.
+6. User actions back to the agent, after A2UI's `action` events (later).
 
 After each change: run the tests, re-record the affected clips, and update §10 of the design doc.
