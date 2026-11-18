@@ -33,7 +33,9 @@
             "instead_of": [
               "floatingText",
               "embeddedText",
-              "textArrow"
+              "textArrow",
+              "cornerBrackets",
+              "breathingBox"
             ]
           },
           {
@@ -44,6 +46,14 @@
           {
             "cue": "textArrow",
             "when": "text.apart"
+          },
+          {
+            "cue": "cornerBrackets",
+            "when": "target.has_content"
+          },
+          {
+            "cue": "breathingBox",
+            "when": "!target.has_content"
           }
         ]
       }

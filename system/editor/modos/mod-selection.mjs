@@ -8,7 +8,7 @@ export function eligible(mod,{places,candidate,referent,itemIds,aboutIds}){
   if(scope==='referent'){if(!referent)return false;}
   else if(scope!=='global'&&!scope.some(e=>places.includes(e)||e===candidate))return false;
   return (mod.knowledge||[]).every(k=>{
-    if(k.added||!k.ref)return true;   // added when tailoring, or a type only (a spec MOD): never a condition   // knowledge added when tailoring the MOD: read if there, never a condition
+    if(!k.ref)return true;   // a type only (a spec MOD): never a condition
     if(k.ref==='referent')return mod.scope!=='referent'||!!referent;   // for a global MOD, what is pointed at is context to read, not a condition
     if(k.ref.startsWith('about:'))return aboutIds.has(k.ref.slice(6));
     return itemIds.has(k.ref);

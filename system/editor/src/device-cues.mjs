@@ -3,9 +3,13 @@
 // a task a Progress Rail, a command an Icon Button from the presets (modos/buttons.json) or a Text Button when none fits. The same rules
 // serve a lamp, a printer or a washer. The cues stack on the device: a task's rail on top, the buttons above it; the slider on its
 // right edge, readings pinned beside it, choices along its bottom edge. These Adjust cues change the device (POST /api/modos/devices): a
-// press sends at once; the Slider previews while dragged and sends when the user lets go.
+// press sends at once; the Slider previews while dragged and sends when the user lets go. A device that was out of view when the question
+// was asked (a lamp behind the user) has nothing in view to carry its controls: they go on the view stack (src/cluster-placement.mjs),
+// fixed in the user's view above the answer's text, and stay there for that answer.
 import * as THREE from 'three';
+import {viewAnchor,STACK} from './cluster-placement.mjs';
 import * as cues from './spatial-ui/cues.mjs';
+import {currentMeta,modsRevision} from './current-mods.mjs';
 import {holds} from '../modos/ui-rules.mjs';
 
 let PRESETS=[];fetch(new URL('../modos/buttons.json',import.meta.url)).then(r=>r.json()).then(j=>{PRESETS=j.presets||[];}).catch(()=>{});
@@ -31,19 +35,26 @@ function valuesOf(c,facts){
   return out;
 }
 
+// In the view stack the cues are built around a stand-in box seen from straight ahead, at the distance they were sized for.
+const STAND_IN={center:[0,0,0],size:[.12,.08,.02],yaw:0},STAND_IN_EYE=new THREE.Vector3(0,0,1.1);
+/** Whether a point is in the view of a camera. */
+function inView(camera,point){const p=new THREE.Vector3(...point).project(camera);return p.z<1&&Math.abs(p.x)<=1&&Math.abs(p.y)<=1;}
+
 export function createDeviceCues(){
   const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));{const l=new THREE.DirectionalLight(0xffffff,1.6);l.position.set(.4,1,1.2);scene.add(l);}
-  let c=null,ui=null,facts={},key=null,space=null,shownAt=0,changeAt=0,eye=null,drawn=[],hits=[],onChange=()=>{};
+  let c=null,ui=null,facts={},key=null,space=null,shownAt=0,changeAt=0,seenFrom=null,drawn=[],hits=[],onChange=()=>{},fixed=false,natural=null;
+  const root=new THREE.Group();
   async function press(action){
     if(!c)return;
     const r=await fetch(new URL('/api/modos/devices',location.href),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({space,id:c.device.id,...action})});
     const j=await r.json();if(!r.ok)return;
-    c={...c,before:{inputs:c.inputs,outputs:c.outputs},inputs:j.device.inputs,outputs:j.device.outputs,changed:action.key};changeAt=performance.now();build();onChange();
+    // the user's own change: shown as it now is, with no transition (that is for showing what the answer changed)
+    c={...c,before:null,inputs:j.device.inputs,outputs:j.device.outputs,changed:null};changeAt=0;build();onChange();
   }
   function build(){
-    scene.clear();scene.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));drawn=[];hits=[];
-    const box=c.device,d=eye.distanceTo(new THREE.Vector3(...box.center)),k=Math.min(2.4,Math.max(1,d/1.1));cues.setScale(k);
-    const top=[],buttons=[],add=(part,grow=false)=>{if(!part)return;if(grow)part.group.scale.setScalar(k);scene.add(part.group);drawn.push(part);return part;};
+    scene.clear();scene.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));root.clear();root.position.set(0,0,0);root.quaternion.identity();root.scale.setScalar(1);scene.add(root);drawn=[];hits=[];
+    const box=fixed?STAND_IN:c.device,eye=fixed?STAND_IN_EYE:seenFrom,d=eye.distanceTo(new THREE.Vector3(...box.center)),k=Math.min(2.4,Math.max(1,d/1.1));cues.setScale(k);
+    const top=[],buttons=[],add=(part,grow=false)=>{if(!part)return;if(grow)part.group.scale.setScalar(k);root.add(part.group);drawn.push(part);return part;};
     const flex=ui?.ui?.flexible||[],cueFor=f=>flex.filter(x=>holds(x.when,f)).map(x=>x.cue);
     const tags=[];
     for(const val of valuesOf(c,facts)){
@@ -52,7 +63,7 @@ export function createDeviceCues(){
         if(cue==='slider')add(cues.edgeBar(box,eye,{value:Number(val.v.value),min:val.v.min??0,max:val.v.max??100,name:word(val.key).toLowerCase(),unit:val.v.unit==='%'?'%':'',
           from:at&&was!=null?Number(was):null,changeAt:at,onSet:v=>press({key:val.key,op:'set',value:Math.round(v/(val.v.step||1))*(val.v.step||1)})}));
         else if(cue==='gauge')add(cues.haloDial(box,eye,{value:Number(val.v.value),min:val.v.min??0,max:val.v.max??100,unit:val.v.unit||'',name:word(val.key).toLowerCase()}));
-        else if(cue==='edgeTabs')add(cues.edgeTabs(box,eye,{options:val.v.options||[],value:val.v.value,onPick:o=>press({key:val.key,op:'set',value:o})}),true);
+        else if(cue==='choice')add(cues.choice(box,eye,{options:val.v.options||[],value:val.v.value,onPick:o=>press({key:val.key,op:'set',value:o})}),true);
         else if(cue==='iconButton'||cue==='textButton'){
           const action=val.cmd?{key:val.key,op:'command',value:val.cmd}:{key:val.key,op:'toggle'};
           buttons.push(cues.iconButton(box,eye,{icon:cue==='iconButton'?val.preset.icon:null,text:cue==='iconButton'?val.preset.label:word(val.cmd||val.key),on:true,onPress:()=>press(action)}));}
@@ -70,8 +81,9 @@ export function createDeviceCues(){
       top.push({group:row,update:now=>buttons.forEach(b=>b.update(now))});}
     // stack above the device: the rail, then the buttons, then any alerts
     let y=box.center[1]+box.size[1]/2+.03;
-    for(const p of top){p.group.scale.setScalar(k);scene.add(p.group);p.group.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(p.group);p.group.position.y+=y-b.min.y;y+=b.max.y-b.min.y+.02*k;drawn.push(p);}
+    for(const p of top){p.group.scale.setScalar(k);root.add(p.group);p.group.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(p.group);p.group.position.y+=y-b.min.y;y+=b.max.y-b.min.y+.02*k;drawn.push(p);}
     cues.setScale(1);
+    root.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(root);natural=b.isEmpty()?null:{x:(b.min.x+b.max.x)/2,y:b.min.y,h:b.max.y-b.min.y};
     scene.traverse(o=>{if(o.userData.onHit||o.userData.onDrag)hits.push(o);});
   }
   return {
@@ -80,13 +92,21 @@ export function createDeviceCues(){
     get debug(){return {facts,ui,values:c?valuesOf(c,facts).map(v=>[v.key,v.facts]):[],drawn:drawn.length,hits:hits.length};},
     /** r: the answer with a control part (null clears it); camera: where its question was asked; spaceName: the space. */
     setResponse(r,camera,spaceName){
-      const k=r?.control?`${r.id}@${r.created}`:null;if(k===key)return;key=k;space=spaceName;
+      const k=r?.control?`${r.id}@${r.created}@${modsRevision()}`:null;if(k===key)return;key=k;space=spaceName;
       if(!r?.control||r.control.panel===false||!r.control.inputs){c=null;scene.clear();drawn=[];hits=[];return;}
-      c=r.control;const m=r.mods?.control||r.mod;ui=Object.values(m?.ui||{}).find(s=>s.use==='control')||{ui:{flexible:[]}};facts=m?.facts||{intent:c.changed?'change':'read'};
-      shownAt=performance.now();changeAt=c.changed?shownAt+1300:0;camera.updateMatrixWorld(true);eye=camera.position.clone();build();   // seen as it was, then changing
+      c=r.control;const m=currentMeta(r.mods?.control||r.mod);ui=Object.values(m?.ui||{}).find(s=>s.use==='control')||{ui:{flexible:[]}};facts=m?.facts||{intent:c.changed?'change':'read'};
+      shownAt=performance.now();changeAt=c.changed?shownAt+1300:0;camera.updateMatrixWorld(true);seenFrom=camera.position.clone();fixed=!inView(camera,c.device.center);build();   // seen as it was, then changing
+    },
+    /** Whether the controls are on the view stack (their device was out of view when asked). */
+    get fixed(){return !!c&&fixed;},
+    /** On the view stack: place them for this frame just above `bottom` (the top of what stands in view); returns the stack's new top. */
+    place(camera,bottom=null){
+      if(!c||!fixed||!natural)return bottom;const k=STACK.distance/STAND_IN_EYE.z,a=viewAnchor(camera,(bottom??STACK.base)+STACK.gap);
+      root.quaternion.copy(a.quaternion);root.scale.setScalar(k);root.position.copy(a.point).sub(new THREE.Vector3(natural.x,natural.y,0).multiplyScalar(k).applyQuaternion(a.quaternion));
+      root.updateMatrixWorld(true);return a.top(natural.h*k);
     },
     render(renderer,camera,now=performance.now()){
-      if(!c)return;for(const p of drawn)p.update(now,camera);
+      if(!c)return;for(const p of drawn)p.update(now,fixed?null:camera);
       const auto=renderer.autoClear;renderer.autoClear=false;try{renderer.clearDepth();renderer.render(scene,camera);}finally{renderer.autoClear=auto;}
     },
     attach(element,getCamera,changed=()=>{}){
@@ -95,13 +115,15 @@ export function createDeviceCues(){
         ray.setFromCamera(new THREE.Vector2((e.clientX-b.left)/b.width*2-1,1-(e.clientY-b.top)/b.height*2),getCamera());scene.updateMatrixWorld(true);return ray.intersectObjects(hits,false)[0]||null;};
       // Adjust: a press sends at once; a drag (Slider) previews on the thing and sends when the user lets go.
       let drag=null;const rayAt=e=>{const b=element.getBoundingClientRect(),ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((e.clientX-b.left)/b.width*2-1,1-(e.clientY-b.top)/b.height*2),getCamera());return ray.ray;};
-      element.addEventListener('pointerdown',e=>{const h=hit(e);if(!h)return;e.preventDefault();e.stopImmediatePropagation();const u=h.object.userData;
+      // a press a control takes is the control's to the end: the click that follows is swallowed too (see src/action-cues.mjs)
+      let took=false;
+      element.addEventListener('pointerdown',e=>{const h=hit(e);took=!!h;if(!h)return;e.preventDefault();e.stopImmediatePropagation();const u=h.object.userData;
         if(u.onDrag){const cam=getCamera(),n=new THREE.Vector3(0,0,-1).applyQuaternion(cam.quaternion);drag={u,plane:new THREE.Plane().setFromNormalAndCoplanarPoint(n,h.point)};u.onDrag(h.point);element.setPointerCapture?.(e.pointerId);}
         else u.onHit(h.point);changed();},true);
       element.addEventListener('pointermove',e=>{if(!drag)return;const p=rayAt(e).intersectPlane(drag.plane,new THREE.Vector3());if(p)drag.u.onDrag(p);e.preventDefault();e.stopImmediatePropagation();changed();},true);
       const release=e=>{if(!drag)return;const u=drag.u;drag=null;u.onRelease?.();e.preventDefault();e.stopImmediatePropagation();changed();};
       element.addEventListener('pointerup',release,true);element.addEventListener('pointercancel',release,true);
-      element.addEventListener('click',e=>{if(hit(e)){e.preventDefault();e.stopImmediatePropagation();}},true);
+      element.addEventListener('click',e=>{if(took||hit(e)){took=false;e.preventDefault();e.stopImmediatePropagation();}},true);
     },
   };
 }

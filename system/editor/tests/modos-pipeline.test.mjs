@@ -50,7 +50,8 @@ async function run(text,{yes,selection=null,location=null,mods=MODS,stages=[]}){
 test('weather: the feed is retrieved, the Weather MOD fills days, layout is derived', async()=>{
   const r=await run('What is the weather this weekend?',{yes:['weather','2026-10-10','2026-10-11','08:00']});
   assert.deepEqual(r.ui.map(p=>Object.keys(p).find(k=>k==='weather'||k==='findmy')),['weather']);
-  assert.deepEqual(r.ui[0].weather,{forecast_ids:['sat-am','sun-am'],preview:{component:'weather-day-buttons'}});
+  // the focus: the moment that answers the question (the scripted engine picks the first moment of Saturday), one of the selected
+  assert.deepEqual(r.ui[0].weather,{forecast_ids:['sat-am','sun-am'],focus:'sat-am-08',preview:{component:'weather-day-buttons'}});
   assert.equal(r.text[0].layout_slot,1);
 });
 
@@ -157,14 +158,6 @@ test('grounding: a thing asked in the second person is the referent even when gr
   assert.equal(a.text.at(-1)?.dialogue,undefined);
 });
 
-test('tailoring: knowledge added to a MOD is read by its text when it is chosen, without being required', async()=>{
-  const w=mod('weather',{knowledge:[{ref:'info:window'}]});
-  const ids=new Set(['feed:weather']);
-  assert.equal(eligible(w,{places:[],candidate:null,referent:null,itemIds:ids,aboutIds:new Set()}),true);
-  const r=await run('What is the weather this weekend?',{yes:['weather','2026-10-10','08:00'],mods:[w]});
-  assert.ok(r.contexts[0].items.some(i=>i.id==='info:window'));
-});
-
 test('the request: split into its questions by rules (no model)', async()=>{
   const {splitRequest}=await import('../modos/request.mjs');
   assert.deepEqual(splitRequest('What is the weather next week and what should I bring?'),['What is the weather next week','what should I bring?']);
@@ -207,4 +200,25 @@ test('status: the state in a few words from the data, never the thing\'s name', 
   assert.equal(stateText({summary:'Espresso machine: water tank almost empty; refill before making coffee.'}),'Water tank almost empty');
   assert.equal(stateText({state:'Paper low',summary:'Lab printer: in use'}),'Paper low');
   assert.equal(stateText({summary:'No name and state here'}),'');
+});
+
+test('send: recipients are picked many (the selector kind), and the draft names nobody (they can still change in the Choice)', async()=>{
+  const send=mod('send'),people=[{id:'alice',name:'Alice Chen',role:'PhD student',email:'alice@example.edu'},{id:'ryo',name:'Ryo Suzuki',role:'advisor',email:'ryo@example.edu'},
+    {id:'ana',name:'Ana Ruiz',role:'PhD student',email:'ana@example.edu'}];
+  BODIES['user:contacts']={id:'user:contacts',type:'text',data:people};ITEMS.push({id:'user:contacts',about:['user:me'],type:'text',summary:'The user\'s contacts.'});
+  try{
+    const r=await run('send a note to Alice and Ryo',{yes:['reaches other people','Alice','Ryo','nothing attached'],mods:[send]});
+    const a=r.ui.find(p=>p.action)?.action;
+    assert.deepEqual(a,{kind:'send',to:['alice','ryo'],pick:'many',capture:'none'});
+    const draft=r.contexts.find(c=>c.draft)?.draft;assert.ok(draft&&!('to' in draft),'the draft context names no recipient');
+  }finally{delete BODIES['user:contacts'];ITEMS.pop();}
+});
+
+test('days: a stray stretch beside the strongest one is dropped; two days asked for together stay', async()=>{
+  const {stretches}=await import('../modos/selectors.mjs');
+  const D=['2026-11-18','2026-11-19','2026-11-20','2026-11-21','2026-11-22'];
+  assert.deepEqual([...stretches(D,i=>[.69,.06,.07,.96,.94][i])],['2026-11-21','2026-11-22']);
+  assert.deepEqual([...stretches(D,i=>[.9,.1,.1,.88,.2][i])],['2026-11-18','2026-11-21']);
+  assert.deepEqual([...stretches(D,i=>[.8,.7,.1,.1,.1][i])],['2026-11-18','2026-11-19']);
+  assert.deepEqual([...stretches(D,()=>.1)],[]);
 });

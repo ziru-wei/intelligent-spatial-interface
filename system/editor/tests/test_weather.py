@@ -41,6 +41,15 @@ class WeatherTest(unittest.TestCase):
         self.assertEqual(across['presentation']['anchor'], 'user-view')
         with self.assertRaises(ValueError): weather.resolve(d, {'forecast_ids':[rows[4]['id'],rows[1]['id']], 'preview':{'component':'weather-timeline'}})
 
+    def test_focus(self):
+        d = Path('/tmp/no-weather-scenario'); rows = weather.context(d)['weather']['forecast']
+        sample = rows[1]['samples'][1]['id']
+        self.assertEqual(weather.resolve(d, {'forecast_ids':[rows[1]['id']], 'focus':sample, 'preview':{'component':'weather-timeline'}})['preview']['focus'], sample)
+        # a period stands for its first moment; no focus, none in the preview
+        self.assertEqual(weather.resolve(d, {'forecast_ids':[rows[1]['id']], 'focus':rows[1]['id'], 'preview':{'component':'weather-timeline'}})['preview']['focus'], rows[1]['samples'][0]['id'])
+        self.assertNotIn('focus', weather.resolve(d, {'forecast_ids':[rows[1]['id']]})['preview'])
+        with self.assertRaises(ValueError): weather.resolve(d, {'forecast_ids':[rows[1]['id']], 'focus':'invented'})
+
     def test_invalid_forecasts(self):
         d = Path('/tmp/no-weather-scenario'); first = weather.context(d)['weather']['forecast'][0]['id']
         for value in (None, {}, {'forecast_ids': []}, {'forecast_ids': ['invented']}, {'forecast_ids': [first, first]}, {'forecast_ids': [1]}, {'forecast_ids': [first]*25}):

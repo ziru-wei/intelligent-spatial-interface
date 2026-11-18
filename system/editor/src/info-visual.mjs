@@ -1,18 +1,19 @@
 import * as THREE from 'three';
+import * as cues from './spatial-ui/cues.mjs';
+import {partsToDraw} from '../modos/ui-rules.mjs';
+import {currentText} from './current-mods.mjs';
 
-// What an info answer (response.info, src/placement.mjs) draws besides its text. The corners and the arrow each get their own colour,
-// picked like the text's (src/legibility.mjs pickStyle) against what the recorded camera shows behind them (colorAt, src/app.mjs);
-// the text's colour until a frame is sampled:
-//   corners  glowing right angles at the four corners of its box's face toward the viewer, a little inside them (CORNER.inset of the
-//            face's shorter side), slightly thick, with a soft halo (light around dark text, the text's own colour around light text),
-//            fading and growing in when the answer appears;
-//   arrow    once the answer is fixed in the room (settled on a surface or floating by the box): drawn flat over the recorded
-//            camera's view (src/app.mjs, arrowBetween): a short straight line on the line from the text's centre to the centre of the
-//            box's face, ending at the box's outline, with an open head; drawn as the library's Text Arrow (src/spatial-ui/cues.mjs textArrow; thickness: UI library › Text › Text Arrow). Its ends follow the room's anchors
-//            (the text's ink rectangle, the box's face) every frame; no arrow when they overlap on screen or it would leave the view.
-// The corners are in the scene: real surfaces (the scan, the recording's depth) hide them like any placed object; they sit a little
-// toward the viewer so the surface they are on does not.
-const CORNER={arm:.3,min:.025,max:.09,width:.007,glow:4,inset:.12,lift:.02},APPEAR=.6;
+// What an info answer (response.info, src/placement.mjs) draws besides its text, as its MOD now declares in its text slot (`text_ui`,
+// src/current-mods.mjs), with
+// the library's parts:
+//   Mark        on the thing it is about: Corner Brackets when the thing has content (a poster, a screen: info.has_content, from the
+//               twin's content trait), else Breathing Box (modos/mods/worldinfo.json);
+//   Text Arrow  once the answer is fixed in the room (settled on a surface or floating by the box) and its text stands apart from the
+//               thing: drawn by src/app.mjs (drawInfoArrows) along arrowBetween, a short straight line on the line from the text's
+//               centre to the centre of the box's face, ending at the box's outline; its ends follow the room's anchors every frame;
+//               none when they overlap on screen or it would leave the view.
+// The marks are drawn over the room, like every cue of the library (src/cue-host.mjs). No colours of their own: the library's.
+const APPEAR=.6;
 
 /** The box's face toward the eye: {center, normal, a, b, ha, hb} (a, b: in-plane unit axes, ha, hb: half sizes along them). */
 export function faceToward(box,eye){
@@ -22,16 +23,6 @@ export function faceToward(box,eye){
   const [ka,kb]=axes.filter(k=>k!==best.k),unit=k=>new THREE.Vector3(k==='x'?1:0,k==='y'?1:0,k==='z'?1:0).applyQuaternion(q);
   const normal=unit(best.k).multiplyScalar(best.s);
   return {center:c.clone().addScaledVector(normal,h[best.k]),normal,a:unit(ka),b:unit(kb),ha:h[ka],hb:h[kb]};
-}
-/** The corner marks of a face: [{at, arms: [dir, dir]}] (arms point along the face's edges, inward), and the arm length. */
-export function cornerMarks(face){
-  const arm=THREE.MathUtils.clamp(Math.min(face.ha,face.hb)*2*CORNER.arm,CORNER.min,CORNER.max),marks=[];
-  for(const sa of [-1,1])for(const sb of [-1,1]){
-    const inset=THREE.MathUtils.clamp(Math.min(face.ha,face.hb)*2*CORNER.inset,.004,.03);
-    const at=face.center.clone().addScaledVector(face.a,sa*(face.ha-inset)).addScaledVector(face.b,sb*(face.hb-inset));
-    marks.push({at,arms:[face.a.clone().multiplyScalar(-sa),face.b.clone().multiplyScalar(-sb)]});
-  }
-  return {marks,arm};
 }
 const V2=(x,y)=>new THREE.Vector2(x,y);
 // Screen geometry (pixels) for the arrow.
@@ -61,66 +52,36 @@ export function arrowBetween(textPoly,boxPoly,{aim=null,gap=6,head=.3,minLength=
   return {d:`M${f(s)}L${f(e)}M${f(b1)}L${f(e)}L${f(b2)}`,start:s,end:e,barbs:[b1,b2],length:L};
 }
 
-export function createInfoVisual({scene,onAnimate=()=>{}}){
-  const root=new THREE.Group();root.name='info-answer-visuals';scene.add(root);
-  const items=new Map();   // response id → {group, key, started}
-  const material=opacity=>new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity,depthWrite:false,toneMapped:false,side:THREE.DoubleSide});
-  // The halo fades across the strip and toward its ends (a soft glow, not a lighter block).
-  const haloMap=(()=>{const c=document.createElement('canvas');c.width=64;c.height=32;const x=c.getContext('2d'),img=x.createImageData(64,32);
-    for(let j=0;j<32;j++)for(let i=0;i<64;i++){const v=(j+.5)/32-.5,u=(i+.5)/64,a=Math.exp(-v*v/.02)*Math.min(1,u/.25,(1-u)/.25);img.data.set([255,255,255,Math.round(255*a)],(j*64+i)*4);}
-    x.putImageData(img,0,0);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;})();
-  const glowMaterial=()=>Object.assign(material(.45),{map:haloMap});
-  function dispose(id){const it=items.get(id);root.remove(it.group);it.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});items.delete(id);}   // haloMap is shared: kept
-  // An arm: a flat strip in the face's plane from p along dir, and a wider faint strip around it for the glow.
-  // Its geometry starts at the corner, so growing it (scale.x) grows it from there.
-  function strip(p,dir,len,normal,width,mat){const g=new THREE.PlaneGeometry(len,width).translate(len/2-width/2,0,0),m=new THREE.Mesh(g,mat),x=dir.clone().normalize(),z=normal.clone(),y=z.clone().cross(x);
-    m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z));m.position.copy(p);return m;}
-  function build(id,face){
-    const g=new THREE.Group(),core=material(1),glow=glowMaterial(),{marks,arm}=cornerMarks(face);
-    const corners=new THREE.Group();corners.renderOrder=4;
-    // The halo strip starts a little before the corner so the glow wraps round it.
-    for(const m of marks)for(const dir of m.arms){corners.add(strip(m.at.clone().addScaledVector(dir,-CORNER.width*1.2),dir,arm+CORNER.width*1.2,face.normal,CORNER.width*CORNER.glow,glow));corners.add(strip(m.at,dir,arm,face.normal,CORNER.width,core));}
-    g.add(corners);
-    g.userData.cornerPoints=marks.flatMap(m=>[m.at,...m.arms.map(d=>m.at.clone().addScaledVector(d,arm))]);
-    Object.assign(g.userData,{corners,core,glow,face});root.add(g);return g;
-  }
-  /** answers: [{id, box, panel: {center, right, up, width, height} (world: the text's ink), fixed, locked, color: THREE.Color (the text's)}]
-   *  for the info answers shown now; colorAt(points, kind) → {color, halo?} (THREE.Color) for marks over those world points against the
-   *  camera view (kind 'corners': like text; 'arrow': a vivid accent and its border), or null; frame: sampled again when it changes.
-   *  Returns the arrows to draw over the view (src/app.mjs, arrowBetween): [{id, text, box (world corners), color, border, opacity}]
-   *  for the answers fixed in the room;
-   *  eye: the viewer. Others are removed. */
-  function update(answers,eye,{colorAt=()=>null,frame=null}={}){
+/** The facts an info answer's declared parts are chosen by (modos/ui-rules.mjs). */
+export const infoFacts=(response,apart=false)=>({'target.has_content':!!response.info?.has_content,'text.apart':apart});
+
+export function createInfoVisual({onAnimate=()=>{}}={}){
+  const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));
+  const items=new Map();   // response id → {marks: [part], key, started}
+  function dispose(id){const it=items.get(id);for(const m of it.marks){scene.remove(m.group);m.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose?.();});}items.delete(id);}
+  /** answers: [{id, box, response, panel: {center, right, up, width, height} (world: the text's ink), fixed}] for the info answers shown
+   *  now; eye: the viewer. Draws each one's declared Mark; returns the Text Arrows' anchors for the answers fixed in the room:
+   *  [{id, text, box (world corners), aim, opacity}]. Others are removed. */
+  function update(answers,eye){
     const now=performance.now(),ids=new Set(answers.map(a=>a.id));
     for(const id of [...items.keys()])if(!ids.has(id))dispose(id);
     let animating=false;const arrows=[];
     for(const a of answers){
-      const face=faceToward(a.box,eye);face.center.addScaledVector(face.normal,CORNER.lift);
-      // The arrow's anchors: the text's ink rectangle and the box's face, as world corners (laid out on the screen by src/app.mjs).
-      let arrow=null;
+      const parts=partsToDraw(currentText(a.response).text_ui||{},infoFacts(a.response)),mark=['cornerBrackets','breathingBox'].find(c=>parts.includes(c))||null;
+      const key=JSON.stringify([mark,a.box.center,a.box.size,a.box.yaw]);
+      let it=items.get(a.id);
+      if(!it||it.key!==key){const started=it?.started??now;if(it)dispose(a.id);it={marks:mark?[cues[mark](a.box)]:[],key,started};for(const m of it.marks)scene.add(m.group);items.set(a.id,it);}
+      const k=Math.min(1,(now-it.started)/1000/APPEAR),ease=k*k*(3-2*k);if(k<1)animating=true;
       if(a.fixed){const p=a.panel,corner=(sx,sy)=>p.center.clone().addScaledVector(p.right,sx*p.width/2).addScaledVector(p.up,sy*p.height/2);
         const f=faceToward(a.box,eye),fc=(sa,sb)=>f.center.clone().addScaledVector(f.a,sa*f.ha).addScaledVector(f.b,sb*f.hb);
-        arrow={id:a.id,text:[corner(-1,-1),corner(1,-1),corner(1,1),corner(-1,1)],box:[fc(-1,-1),fc(1,-1),fc(1,1),fc(-1,1)],aim:f.center.clone()};}
-      const key=JSON.stringify([face.center.toArray().map(v=>v.toFixed(3)),face.normal.toArray().map(v=>v.toFixed(2))]);
-      let it=items.get(a.id);
-      if(!it||it.key!==key){const started=it?.started??now;if(it)dispose(a.id);it={group:build(a.id,face),key,started,frame:null};items.set(a.id,it);}
-      // Each mark's colour against its own background in the camera view, eased toward a new sample so it does not flicker.
-      // Locked (a.locked): the colours sampled until then stay.
-      if(it.frame!==frame&&!(a.locked&&it.cornerColor&&(!arrow||it.arrowColor))){it.frame=frame;const ud=it.group.userData;it.cornerColor=colorAt(ud.cornerPoints,'corners')?.color||it.cornerColor;
-        if(arrow){const mid=arrow.text[0].clone().add(arrow.text[2]).multiplyScalar(.5).lerp(arrow.box[0].clone().add(arrow.box[2]).multiplyScalar(.5),.5);
-          const c=colorAt([mid,...arrow.box.map(b=>b.clone().lerp(mid,.5))],'arrow');if(c){it.arrowColor=c.color;it.arrowBorder=c.halo;}}}
-      // Appearing: the corners fade in and their arms grow from the corners.
-      const k=Math.min(1,(now-it.started)/1000/APPEAR),ease=k*k*(3-2*k);if(k<1)animating=true;
-      const {core,glow,corners}=it.group.userData,ease2=(c,target)=>target?c.lerp(target,it.seen?.35:1):c.copy(a.color);
-      ease2(core.color,it.cornerColor);it.ink||=a.color.clone();it.border||=new THREE.Color(1,1,1);
-      if(it.arrowColor)it.ink.lerp(it.arrowColor,it.seen?.35:1);if(it.arrowBorder)it.border.lerp(it.arrowBorder,it.seen?.35:1);it.seen=true;
-      if(arrow)arrows.push({...arrow,color:it.ink.clone(),border:it.border.clone(),opacity:ease});
-      const dark=core.color.r*.2126+core.color.g*.7152+core.color.b*.0722<.5;glow.color.copy(dark?new THREE.Color(1,1,1):core.color);
-      core.opacity=ease;glow.opacity=(dark?.55:.45)*ease;
-      for(const m of corners.children)m.scale.x=.35+.65*ease;
+        arrows.push({id:a.id,text:[corner(-1,-1),corner(1,-1),corner(1,1),corner(-1,1)],box:[fc(-1,-1),fc(1,-1),fc(1,1),fc(-1,1)],aim:f.center.clone(),opacity:ease});}
     }
     if(animating)onAnimate();
     return arrows;
   }
-  return {update,get group(){return root;},get count(){return items.size;}};
+  function render(renderer,camera,now=performance.now()){
+    if(!items.size)return;for(const it of items.values())for(const m of it.marks)m.update(now,camera);
+    const auto=renderer.autoClear;renderer.autoClear=false;try{renderer.clearDepth();renderer.render(scene,camera);}finally{renderer.autoClear=auto;}
+  }
+  return {update,render,get active(){return [...items.values()].some(it=>it.marks.length);},get count(){return items.size;}};
 }

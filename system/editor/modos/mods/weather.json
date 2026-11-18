@@ -48,7 +48,7 @@
       "use": "data-widget",
       "data": "entries",
       "anchor": {
-        "kind": "user-reach"
+        "kind": "user-view"
       },
       "ui": {
         "flexible": [

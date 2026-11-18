@@ -1,15 +1,12 @@
 // Spatial UI cues (modos-system-design.md 4.4): UI that belongs to the room, attached to a thing's own geometry or to the floor, not a
 // panel. Each cue is built for one target ({center, size, yaw} of a thing, or a room's floor polygon) as seen from where the question was
 // asked; which face, edge or surround it uses follows from the thing's size and which side faces the user. Bright cyan, breathing.
-//   point to a thing   breathingBox · footprintRing · beacon · cornerBrackets
-//   point to a place   floorArea · doorwayGlow
-//   direction          arrowAhead · floorPath
-//   values / controls  haloDial · edgeBar · powerPuck · edgeTabs
-//   progress / status  progressRail · cardStack · pinnedTags · statusPulse
-//   link               textArrow (text → the thing it is about; not a direction)
-//   adjust (sent)      edgeBar (Slider: sent when let go) · edgeTabs · iconButton · text button: the change goes to the thing
-//   explore (local)    datePicker · playback: moves through information; nothing is sent
-//   action             tetherSend
+//   mark            breathingBox · cornerBrackets · footprintRing · floorArea · doorwayGlow
+//   guidance        arrowAhead · floorPath · textArrow (text → the thing it is about)
+//   visualization   haloDial (Gauge) · progressRail · pinnedTags · statusPulse · cardStack
+//   controls        edgeBar (Slider) · choice · iconButton (and its text-only form) · textInput · arPhoto · datePicker · playback
+//                   When a control's value is sent is how a MOD uses it, not the control: on change (a device), on Send (a message), never
+//                   (moving through information).
 import * as THREE from 'three';
 import {label,wrapLines} from './kit.mjs';
 
@@ -31,7 +28,8 @@ const at=(f,{x=0,y=0,z=0})=>f.c.clone().addScaledVector(f.r,x).addScaledVector(f
 const facing=(obj,f)=>{obj.rotation.set(0,f.yaw,0);return obj;};
 // Labels read at the same size whatever the distance (setScale: the cue's distance / arm's length).
 let K=1;export const setScale=k=>{K=k;};
-const tag=(text,opts={})=>{const l=label(text,{size:.03,weight:650,...opts,size:(opts.size||.03)*K,maxWidth:(opts.maxWidth||.4)*K});l.geometry.translate(-l.userData.width/2,0,0);return l;};
+// opts.scale: the scale the cue was built at (a label made later, e.g. while a slider is dragged, keeps its cue's size)
+const tag=(text,opts={})=>{const k=opts.scale??K,l=label(text,{size:.03,weight:650,...opts,size:(opts.size||.03)*k,maxWidth:(opts.maxWidth||.4)*k});l.geometry.translate(-l.userData.width/2,0,0);return l;};
 // Every clickable is a capsule: a rounded slab whose ends are half circles.
 export function capsule(w,h,d=.01){
   const r=Math.min(h,w)/2,x=w/2-r,sh=new THREE.Shape();sh.moveTo(-x,-r);sh.lineTo(x,-r);sh.absarc(x,0,r,-Math.PI/2,Math.PI/2,false);sh.lineTo(-x,r);sh.absarc(-x,0,r,Math.PI/2,Math.PI*1.5,false);
@@ -68,9 +66,10 @@ export function beacon(box){
   return {group:g,update(now){const k=breathe(now,1200);col.material.opacity=.15+.3*k;cap.position.y=hgt+.03*k;}};
 }
 export function cornerBrackets(box){
-  const g=new THREE.Group(),[sx,sy,sz]=box.size.map(v=>v/2*1.04),l=Math.min(sx,sy,sz,.12)*1.2,m=glow(CYAN,.95);
+  // each arm as long as the thing allows: a flat thing (a poster, a screen) keeps full arms across its face, short ones through its depth
+  const g=new THREE.Group(),half=box.size.map(v=>v/2*1.04),[sx,sy,sz]=half,l=Math.min([...half].sort((a,b)=>a-b)[1],.12)*1.2,m=glow(CYAN,.95);
   for(const x of [-1,1])for(const y of [-1,1])for(const z of [-1,1]){const p=new THREE.Vector3(x*sx,y*sy,z*sz),pts=[];
-    for(const axis of [[1,0,0],[0,1,0],[0,0,1]]){const q=p.clone().add(new THREE.Vector3(...axis).multiply(new THREE.Vector3(-x,-y,-z)).multiplyScalar(l));pts.push(p.clone(),q);}
+    for(const [i,axis] of [[1,0,0],[0,1,0],[0,0,1]].entries()){const arm=Math.min(l,half[i]*2);if(arm<.01)continue;const q=p.clone().add(new THREE.Vector3(...axis).multiply(new THREE.Vector3(-x,-y,-z)).multiplyScalar(arm));pts.push(p.clone(),q);}
     g.add(tubes(pts,.008,m));}
   g.position.fromArray(box.center);g.rotation.y=THREE.MathUtils.degToRad(box.yaw||0);
   return {group:g,update(now){m.opacity=.5+.45*breathe(now);g.scale.setScalar(1+.015*breathe(now));}};
@@ -94,13 +93,19 @@ export function doorwayGlow(door,name,eye){
 }
 
 // ——— direction ———
-export function arrowAhead(target,camera){
-  const g=new THREE.Group(),m=lit();const shaft=new THREE.Mesh(new THREE.CylinderGeometry(.009,.009,.07,20),m);shaft.rotation.z=Math.PI/2;shaft.position.x=-.02;
-  const head=new THREE.Mesh(new THREE.ConeGeometry(.024,.05,24),m);head.rotation.z=-Math.PI/2;head.position.x=.035;g.add(shaft,head);
+export function arrowAhead(target,camera,{name=''}={}){
+  // the arrow turns toward the target; what it points at is named at its tip, upright (the name does not turn with the arrow)
+  const g=new THREE.Group(),arrow=new THREE.Group(),m=lit();const shaft=new THREE.Mesh(new THREE.CylinderGeometry(.009,.009,.07,20),m);shaft.rotation.z=Math.PI/2;shaft.position.x=-.02;
+  const head=new THREE.Mesh(new THREE.ConeGeometry(.024,.05,24),m);head.rotation.z=-Math.PI/2;head.position.x=.035;arrow.add(shaft,head);g.add(arrow);
+  const label=name?tag(name,{size:.016,weight:650}):null;if(label)g.add(label);
   return {group:g,update(now){camera.updateMatrixWorld(true);const f=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion),up=new THREE.Vector3(0,1,0).applyQuaternion(camera.quaternion),side=new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion);
     const local=new THREE.Vector3(...target.center).applyMatrix4(camera.matrixWorldInverse),dir=new THREE.Vector2(local.x,local.y).normalize();
-    g.position.copy(camera.position).addScaledVector(f,.55).addScaledVector(side,dir.x*.12).addScaledVector(up,dir.y*.08-.06+Math.sin(now/260)*.006);
-    g.quaternion.copy(camera.quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),Math.atan2(dir.y,dir.x)));}};
+    arrow.position.copy(camera.position).addScaledVector(f,.55).addScaledVector(side,dir.x*.12).addScaledVector(up,dir.y*.08-.06+Math.sin(now/260)*.006);
+    arrow.quaternion.copy(camera.quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),Math.atan2(dir.y,dir.x)));
+    if(label){const w=label.userData.width||.06;label.quaternion.copy(camera.quaternion);
+      // just past the tip, along the arrow; pointing sideways the name sits beyond the tip, pointing up or down above or below it
+      label.position.copy(arrow.position).addScaledVector(side,dir.x*.075).addScaledVector(up,dir.y*.075);
+      if(Math.abs(dir.x)>.4)label.position.addScaledVector(side,Math.sign(dir.x)*(w/2+.008));else label.position.addScaledVector(up,Math.sign(dir.y||1)*.016);}}};
 }
 export function floorPath(points){
   // flat chevrons lying on the floor along a walking route (src/floor-route.mjs: through rooms and doors), lighting up one after another
@@ -148,13 +153,50 @@ export function edgeBar(box,eye,{value=20,min=0,max=100,name='volume',unit='',fr
   // Adjust: dragging shows the value on the bar; the change is sent once, when the user lets go (onSet)
   let live=null;const valueAt=point=>{const y=g.worldToLocal(point.clone()).y,k=Math.min(1,Math.max(0,(y+len/2)/len));return min+k*(max-min);};
   if(onSet){grip.userData.onDrag=point=>{live=valueAt(point);};grip.userData.onRelease=()=>{if(live!==null)onSet(live);};}
-  let t=null,shown=null;const set=v=>{const k=Math.min(1,Math.max(0,kOf(v)));fill.scale.y=Math.max(.001,len*k);fill.position.y=-len/2+len*k/2;knob.position.y=-len/2+len*k;
-    const txt=`${name} ${Math.round(v)}${unit}`;if(txt!==shown){shown=txt;if(t)g.remove(t);t=tag(txt,{size:.03});t.position.set(0,len/2+.04,0);g.add(t);}};
+  let t=null,shown=null;const S=K;const set=v=>{const k=Math.min(1,Math.max(0,kOf(v)));fill.scale.y=Math.max(.001,len*k);fill.position.y=-len/2+len*k/2;knob.position.y=-len/2+len*k;
+    const txt=`${name} ${Math.round(v)}${unit}`;if(txt!==shown){shown=txt;if(t)g.remove(t);t=tag(txt,{size:.03,scale:S});t.position.set(0,len/2+.04,0);g.add(t);}};
   set(from??value);g.position.copy(at(f,{x:f.w/2+.06,z:f.d/2}));facing(g,f);
   return {group:g,update(now){if(live!==null)return set(live);if(from===null||!changeAt)return set(value);const u=Math.min(1,Math.max(0,(now-changeAt)/700)),e=u*u*(3-2*u);set(from+(value-from)*e);}};
 }
 // An icon button: the icon and what pressing it does, side by side (toggles and commands: power, cancel, pause, send).
 // icon: a preset's icon (modos/buttons.json); null for a text-only button the system wrote when no preset fits.
+/** Choice: when one of several options is picked (a TV's input, who a message goes to), to pick it where it acts. A few short options
+ *  (up to INLINE_MAX, INLINE_CHARS letters in all) stand in a row of capsules, the chosen one lit: one press. More, or longer, collapse into
+ *  a dropdown: a capsule with the chosen option and ▾; pressed, the options open below it, pressed again (or one picked) it closes.
+ *  An option is a string or {value, label, initials} (initials: a person's, shown in a small disc). With a box, the choice stands along
+ *  the thing's lower edge, turned to the user; without one it is built at the origin, facing +z, for the caller to place. */
+const INLINE_MAX=4,INLINE_CHARS=24;
+// open / onToggle: the dropdown's open state kept by the caller (when the caller rebuilds on every change); without them it is kept here.
+// multiple: several may be chosen (the value is a list; a press adds or removes one; the dropdown stays open while picking), as when
+// what it shows is a pick-many selection (Send's recipients). onPick gets the new value: one option's, or the list.
+export function choice(box,eye,{options=[],value=null,onPick=null,y=null,open=false,onToggle=null,multiple=false}={}){
+  const opts=options.map(o=>typeof o==='string'?{value:o,label:o}:{label:o.value,...o}),g=new THREE.Group(),H=.05,GAP=.012;
+  const chosen=new Set(multiple?(value||[]):[value]),isOn=o=>chosen.has(o.value);
+  const pick=o=>{if(!onPick)return;if(!multiple)return onPick(o.value);const next=new Set(chosen);next.has(o.value)?next.delete(o.value):next.add(o.value);onPick(opts.filter(x=>next.has(x.value)).map(x=>x.value));};
+  const pill=(o,on,{chevron=false}={})=>{const cell=new THREE.Group(),ink=on?'#062a2e':'#ffffff',t=tag(o.label+(chevron?'  ▾':''),{size:.024,weight:on?700:500,color:ink,stroke:false});
+    const lead=o.initials?.044:.024,w=lead+t.userData.width+.026,p=new THREE.Mesh(capsule(w,H,.012),lit(on?CYAN:0x2b2e34,on?.45:0));cell.add(p);
+    if(o.initials){const av=new THREE.Mesh(new THREE.CircleGeometry(.016,32),new THREE.MeshBasicMaterial({color:on?0x062a2e:CYAN,toneMapped:false}));av.position.set(-w/2+.026,0,.007);
+      const ini=tag(o.initials,{size:.013,weight:800,color:on?'#9ff8ff':'#062a2e',stroke:false});ini.position.set(-w/2+.026,0,.008);cell.add(av,ini);}
+    t.position.set(-w/2+lead+t.userData.width/2,0,.008);cell.add(t);cell.userData.width=w;return {cell,pad:p};};
+  const inline=opts.length<=INLINE_MAX&&opts.reduce((n,o)=>n+String(o.label).length,0)<=INLINE_CHARS;
+  if(inline){const cells=opts.map(o=>pill(o,isOn(o))),total=cells.reduce((a,c)=>a+c.cell.userData.width,0)+GAP*(cells.length-1);let x=-total/2;
+    cells.forEach((c,i)=>{c.cell.position.x=x+c.cell.userData.width/2;x+=c.cell.userData.width+GAP;c.pad.userData.onHit=()=>pick(opts[i]);g.add(c.cell);});}
+  else{const on=opts.filter(isOn),first=on[0]||opts[0];
+    // the head: the chosen option (several: the first and how many more; none yet: an empty pick)
+    const head=pill({...first,label:on.length>1?`${first.label} +${on.length-1}`:on.length?first.label:'Choose…',initials:on.length?first.initials:null},!!on.length,{chevron:true}),list=new THREE.Group();
+    list.visible=!!open;g.add(head.cell,list);
+    opts.forEach((o,i)=>{const c=pill(o,isOn(o));c.cell.position.set(-head.cell.userData.width/2+c.cell.userData.width/2,-(i+1)*(H+GAP),.004);
+      // a closed list catches no presses (what lies under it stays pressable)
+      c.pad.raycast=(r,hits)=>{if(list.visible)THREE.Mesh.prototype.raycast.call(c.pad,r,hits);};
+      c.pad.userData.onHit=()=>{if(!multiple){list.visible=false;onToggle?.(false);}pick(o);};list.add(c.cell);});
+    // an open list lies over what is below it (the draft, the button): drawn above it
+    // (in the transparent pass, which comes after every opaque one; capsule, then disc, then words)
+    list.traverse(o=>{if(!o.material)return;o.material=o.material.clone();Object.assign(o.material,{transparent:true,depthTest:false,depthWrite:false});
+      o.renderOrder=40+(o.position.z>=.008?2:o.position.z>=.007?1:0);});
+    head.pad.userData.onHit=()=>{if(onToggle)onToggle(!list.visible);else list.visible=!list.visible;};}
+  if(box){const f=frameOf(box,eye);g.position.copy(at(f,{y:y??-f.h/2+.05,z:f.d/2+.03}));facing(g,f);}
+  return {group:g,height:H,update(){}};
+}
 export function iconButton(box,eye,{icon='⏻',text='Turn off',on=true,onPress=null}={}){
   const f=frameOf(box,eye),g=new THREE.Group(),ink=on?'#062a2e':'#e6e8ec',words=tag(text,{size:.026,weight:650,color:ink,stroke:!on}),lead=icon?.06:.03,w=lead+words.userData.width+.03;
   const pill=new THREE.Mesh(capsule(w,.05),lit(on?CYAN:0x2b2e34,on?.45:0));if(onPress)pill.userData.onHit=onPress;g.add(pill);
@@ -165,13 +207,6 @@ export function iconButton(box,eye,{icon='⏻',text='Turn off',on=true,onPress=n
   return {group:g,update(now){if(on)pill.material.emissiveIntensity=.3+.25*breathe(now);}};
 }
 export const powerPuck=iconButton;
-export function edgeTabs(box,eye,{options=['HDMI 1','HDMI 2','HDMI 3'],value='HDMI 2',onPick=null}={}){
-  const f=frameOf(box,eye),g=new THREE.Group(),span=Math.max(f.w*.8,.3),w=span/options.length;
-  options.forEach((o,i)=>{const on=o===value,p=new THREE.Mesh(capsule(w-.012,.045,.012),lit(on?CYAN:0x2b2e34,on?.45:0));if(onPick)p.userData.onHit=()=>onPick(o);
-    const t=tag(o,{size:.024,color:on?'#062a2e':'#ffffff',stroke:false});t.position.z=.008;const cell=new THREE.Group();cell.add(p,t);cell.position.x=-span/2+w/2+i*w;cell.position.z=on?.012:0;g.add(cell);});
-  const row=new THREE.Group();row.add(g);row.position.copy(at(f,{y:-f.h/2+.05,z:f.d/2+.03}));facing(row,f);
-  return {group:row,update(){}};
-}
 
 // ——— progress, queue, readings, status ———
 export function progressRail(box,eye,{title='Ana\'s CHI poster',owner='',done=7,total=12,unit='pages'}={}){
@@ -210,31 +245,20 @@ export function statusPulse(box,{level='attention',message='Paper low'}={}){
   return {group:g,update(now,camera){const k=(now%1400)/1400;ripple.scale.setScalar(1+k*2.2);ripple.material.opacity=.8*(1-k);if(camera){g.quaternion.copy(camera.quaternion);}}};
 }
 
-// ——— action ———
-export function tetherSend(box,eye,{to='Alice Chen',initials='AC',sent=false,toPoint=null}={}){
-  // a line from what is sent to whom it goes; a pulse runs along it until it is sent. `end` is where the recipient stands (the draft and
-  // the Send button go under it).
-  const f=frameOf(box,eye),g=new THREE.Group(),from=at(f,{x:f.w/2,y:f.h/4,z:f.d/2+.01}),badgeAt=toPoint?toPoint.clone():at(f,{x:f.w/2+.32*K,y:f.h/2+.05,z:f.d/2+.12});
-  const curve=new THREE.QuadraticBezierCurve3(from,from.clone().lerp(badgeAt,.5).add(new THREE.Vector3(0,.12,0)),badgeAt),pts=curve.getPoints(40);
-  const segs=[];for(let i=0;i<pts.length-1;i++)segs.push(pts[i],pts[i+1]);g.add(tubes(segs,.004,glow(CYAN,.9)));
-  const pulse=new THREE.Mesh(new THREE.SphereGeometry(.01,12,8),lit(0xffffff,.3));pulse.visible=!sent;g.add(pulse);
-  const badge=new THREE.Group(),disc=new THREE.Mesh(new THREE.CylinderGeometry(.04*K,.04*K,.01,32),lit(CYAN,.4));disc.rotation.x=Math.PI/2;
-  const ini=tag(initials,{size:.03,weight:800,color:'#062a2e',stroke:false});ini.position.z=.007;const nm=tag(to,{size:.024});nm.position.y=-.065*K;badge.add(disc,ini,nm);
-  badge.position.copy(badgeAt);badge.rotation.set(0,Math.atan2(eye.x-badgeAt.x,eye.z-badgeAt.z),0);if(!toPoint)g.add(badge);   // with toPoint, a Contact Chip stands there
-  return {group:g,end:badgeAt.clone().add(new THREE.Vector3(0,-.1*K,0)),update(now){if(!sent)pulse.position.copy(curve.getPoint((now/1400)%1));}};
-}
 
 // ——— time: a calendar and a playback, shared by every MOD with dated or timed data (Weather, Agenda, a print queue's schedule) ———
 // Both stand in front of the thing they belong to, turned to the user. Each clickable carries userData.action for the platform's pointer.
 const MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'],WEEKDAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
 const toUser=(g,eye)=>{g.rotation.set(0,Math.atan2(eye.x-g.position.x,eye.z-g.position.z),0);return g;};
 /** Date Picker: when data is dated and the user can move between days, to pick one. The month once above; each day a capsule (weekday, day). */
+// An invisible pad around a small control, carrying its action: easier to hit with a pointer or a hand ray than the control itself.
+const hitPad=(w,h,action)=>{const p=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({visible:false}));p.position.z=.014;p.userData.action=action;return p;};
 export function datePicker(box,eye,{dates=[],value=null,y=null}={}){
   const f=frameOf(box,eye),g=new THREE.Group(),cw=.15,ch=.085,gap=.016,span=dates.length*cw+(dates.length-1)*gap;
   dates.forEach((iso,i)=>{const d=new Date(iso+'T12:00:00'),on=iso===value,ink=on?'#062a2e':'#ffffff';
     const chip=new THREE.Mesh(capsule(cw,ch,.012),lit(on?CYAN:0x454b55,on?.45:0));chip.userData.action={kind:'date',value:iso};
     const wd=tag(WEEKDAYS[d.getDay()],{size:.016,weight:650,color:on?'#0b3a3f':'#9fe9ef',stroke:false}),day=tag(String(d.getDate()),{size:.027,weight:700,color:ink,stroke:false});
-    wd.position.set(0,.021,.008);day.position.set(0,-.013,.008);const cell=new THREE.Group();cell.add(chip,wd,day);cell.position.x=-span/2+cw/2+i*(cw+gap);cell.position.z=on?.01:0;g.add(cell);});
+    wd.position.set(0,.021,.008);day.position.set(0,-.013,.008);const cell=new THREE.Group();cell.add(chip,wd,day,hitPad(cw+gap,ch+.03,{kind:'date',value:iso}));cell.position.x=-span/2+cw/2+i*(cw+gap);cell.position.z=on?.01:0;g.add(cell);});
   const months=[...new Set(dates.map(iso=>MONTHS[Number(iso.slice(5,7))-1]))].join(' – '),m=tag(months,{size:.02,weight:700,color:'#9fe9ef'});m.position.set(0,ch/2+.03,0);g.add(m);
   g.position.copy(at(f,{y:y??f.h/2+.1,z:f.d/2+.03}));toUser(g,eye);
   return {group:g,update(){}};
@@ -243,9 +267,9 @@ export function datePicker(box,eye,{dates=[],value=null,y=null}={}){
  *  A Play/Pause Icon Button, a rail with a stop per entry, the thumb, and the current time riding above the thumb. */
 export function playback(box,eye,{stops=[],index=0,playing=true,y=null}={}){
   const f=frameOf(box,eye),g=new THREE.Group(),railW=.42,x0=-railW/2+.07,x1=railW/2+.07;
-  const btn=new THREE.Group(),pill=new THREE.Mesh(capsule(.11,.05),lit(CYAN,.45)),glyph=tag(playing?'⏸':'▶',{size:.024,weight:700,color:'#062a2e',stroke:false}),word=tag(playing?'Pause':'Play',{size:.022,weight:650,color:'#062a2e',stroke:false});
-  const bw=.03+.03+word.userData.width+.03;pill.geometry.dispose();pill.geometry=capsule(bw,.05);
-  glyph.position.set(-bw/2+.03,0,.007);word.position.set(-bw/2+.055+word.userData.width/2,0,.007);btn.add(pill,glyph,word);btn.position.x=x0-.03-bw/2;pill.userData.action={kind:playing?'pause':'play'};g.add(btn);
+  // Play/Pause: the icon alone, in a round button
+  const bw=.05,btn=new THREE.Group(),pill=new THREE.Mesh(capsule(bw,bw),lit(CYAN,.45)),glyph=tag(playing?'⏸':'▶',{size:.024,weight:700,color:'#062a2e',stroke:false});
+  glyph.position.set(0,0,.007);btn.add(pill,glyph,hitPad(bw+.04,.09,{kind:playing?'pause':'play'}));btn.position.x=x0-.03-bw/2;pill.userData.action={kind:playing?'pause':'play'};g.add(btn);
   const rail=new THREE.Mesh(capsule(x1-x0+.016,.016,.008),lit(0x454b55,0));rail.position.x=(x0+x1)/2;rail.userData.action={kind:'scrub'};g.add(rail);
   // a taller invisible grip over the rail, so it is easy to press and drag; the rail's ends and stops say which entry a point is
   const grip=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0+.06,.09),new THREE.MeshBasicMaterial({visible:false}));grip.position.set((x0+x1)/2,0,.012);grip.userData.action={kind:'scrub'};g.add(grip);
@@ -259,18 +283,8 @@ export function playback(box,eye,{stops=[],index=0,playing=true,y=null}={}){
   return {group:g,update(now){thumb.material.emissiveIntensity=playing?.15+.2*breathe(now,900):.2;}};
 }
 
-// ——— message: who, what is said, what is shown — shared by every MOD that reaches people (Delegate today; a reminder for someone,
+// ——— message: who, what is said, what is shown — shared by every MOD that reaches people (Send today; a reminder for someone,
 // a reply). They are laid out by the caller (a column beside the thing); each is built at the origin, facing +z. ———
-/** Contact Chip: when an action reaches a person, to show who (avatar initials and name); with several candidates each is a chip to pick. */
-export function contactChip({name='Alice Chen',sub='',initials='AC',selected=true,onPick=null}={}){
-  const g=new THREE.Group(),ink=selected?'#062a2e':'#ffffff',nm=tag(name,{size:.024,weight:650,color:ink,stroke:false}),w=.05+nm.userData.width+.035,h=.05;
-  const pill=new THREE.Mesh(capsule(w,h),lit(selected?CYAN:0x2b2e34,selected?.4:0));if(onPick)pill.userData.onHit=onPick;g.add(pill);
-  const av=new THREE.Mesh(new THREE.CircleGeometry(.019,32),new THREE.MeshBasicMaterial({color:selected?0x062a2e:CYAN,toneMapped:false}));av.position.set(-w/2+.026,0,.006);g.add(av);
-  const ini=tag(initials,{size:.015,weight:800,color:selected?'#9ff8ff':'#062a2e',stroke:false});ini.position.set(-w/2+.026,0,.007);g.add(ini);
-  nm.position.set(-w/2+.05+nm.userData.width/2,0,.007);g.add(nm);
-  if(sub){const s=tag(sub,{size:.015,weight:500,color:'#c9d6d8'});s.position.set(0,-h/2-.016,0);g.add(s);}
-  return {group:g,width:w,height:h+(sub?.03:0),update(){}};
-}
 /** Text Input: when the user may change what will be said (a drafted message, a note), to show the text in a field they can edit.
  *  A rounded field (clickable, so its corners are round), the text wrapped inside, a caret while editing. */
 export function textInput({title='',body='',width=.36,editing=false,placeholder='Write a message…',onEdit=null}={}){
@@ -287,20 +301,14 @@ export function textInput({title='',body='',width=.36,editing=false,placeholder=
   if(last)caret.position.set(-width/2+pad+last.userData.width+.004,last.position.y,.009);g.add(caret);
   return {group:g,width,height:h,update(now){caret.material.opacity=editing&&Math.floor(now/530)%2===0?1:0;}};
 }
-/** Photo Capture: when what is sent is a photo of the thing, to show the photo being taken there — its corners framed, a shutter flash. */
-export function photoCapture(box,{flashAt=performance.now()}={}){
-  const frame=cornerBrackets(box),g=frame.group,c=new THREE.Vector3(...box.center);
-  const flash=new THREE.Mesh(new THREE.BoxGeometry(...box.size.map(v=>v*1.04)),glow(0xffffff,0));flash.position.copy(c);flash.rotation.y=THREE.MathUtils.degToRad(box.yaw||0);
-  const scene=new THREE.Group();scene.add(g,flash);
-  return {group:scene,update(now){frame.update(now);const u=(now-flashAt)/450;flash.material.opacity=u>=0&&u<1?.8*(1-u):0;}};
-}
-/** The photo as a card (the camera frame cropped to the thing), for the message it goes with. */
-export function photoCard(canvas,{width=.16,label:text=''}={}){
-  const g=new THREE.Group(),aspect=canvas?canvas.height/canvas.width:.75,h=width*aspect;
+/** AR Photo: when what is sent is a photo of the thing, to show the photo about to be sent (the camera frame cropped to the thing). */
+export function arPhoto(canvas,{width=.16,label:text=''}={}){
+  // drawn above everything around it (the column's field and buttons, the marks): no depth test, last in order
+  const g=new THREE.Group(),aspect=canvas?canvas.height/canvas.width:.75,h=width*aspect,top=o=>{o.renderOrder=30;o.material.depthTest=false;o.material.depthWrite=false;return o;};
   // not clickable: a plain white border, like a printed photo
-  const back=new THREE.Mesh(new THREE.PlaneGeometry(width+.012,h+.012),new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false}));g.add(back);
+  const back=top(new THREE.Mesh(new THREE.PlaneGeometry(width+.012,h+.012),new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false})));g.add(back);
   const tex=canvas?new THREE.CanvasTexture(canvas):null;if(tex)tex.colorSpace=THREE.SRGBColorSpace;
-  const img=new THREE.Mesh(new THREE.PlaneGeometry(width,h),new THREE.MeshBasicMaterial({map:tex,color:tex?0xffffff:0x2b2e34,toneMapped:false}));img.position.z=.002;g.add(img);
-  if(text){const t=tag(text,{size:.014,weight:600});t.position.set(0,-h/2-.02,0);g.add(t);}
+  const img=top(new THREE.Mesh(new THREE.PlaneGeometry(width,h),new THREE.MeshBasicMaterial({map:tex,color:tex?0xffffff:0x2b2e34,toneMapped:false})));img.renderOrder=31;img.position.z=.002;g.add(img);
+  if(text){const t=top(tag(text,{size:.014,weight:600}));t.renderOrder=32;t.position.set(0,-h/2-.02,0);g.add(t);}
   return {group:g,width:width+.012,height:h+.012+(text?.03:0),update(){}};
 }

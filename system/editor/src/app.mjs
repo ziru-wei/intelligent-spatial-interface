@@ -7,8 +7,8 @@ import {createHandPerception} from './hand-perception/index.mjs';
 import {locateHands} from './hand-perception/spatial.mjs';
 import {selectInfoBox,FOVEA} from './user-selection.mjs';
 import {createSelectionMarks} from './selection-marks.mjs';
-import {createInfoVisual,arrowBetween} from './info-visual.mjs';
-import {pickStyle,accentStyle} from './legibility.mjs';
+import {createInfoVisual,arrowBetween,infoFacts} from './info-visual.mjs';
+import {pickStyle} from './legibility.mjs';
 import {labelRoom} from './layout-labels.mjs';
 import {weatherResponse} from './response-parts.mjs';
 import * as THREE from 'three';
@@ -36,8 +36,10 @@ import {questionClock} from './question-caption.mjs';
 import {readModel,modelBounds,fitScale,boxFromModel,swapHTML,wireSwap} from './model-fit.mjs';
 import {createDiorama} from './diorama.mjs';
 import {createCueHost} from './cue-host.mjs';
+import {loadCurrentMods,currentText} from './current-mods.mjs';
+// A MOD was tailored (MODs tab): what is shown is drawn again with its new settings and declarations; no new answer is needed.
+addEventListener('modos-mods-changed',async()=>{if(!here[0])return;await loadCurrentMods(here[0]);agent?.refreshSettings();agent?.relayout?.();update();});
 import {partsToDraw} from '../modos/ui-rules.mjs';
-import {createRouter,along} from './floor-route.mjs';
 import {createDeviceCues} from './device-cues.mjs';
 import {createActionCues} from './action-cues.mjs';
 import * as cues from './spatial-ui/cues.mjs';
@@ -46,6 +48,11 @@ import {questionCaption} from './question-caption.mjs';
 import {buildTextTargets,calibrate,applyOffsets} from './layout-surfaces.mjs';
 import {createRelationTracker,viewOf} from './spatial-relations.mjs';
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search);
+// A Gallery example's view (?example=; see exampleOpened): its question, the questions asked there, the stills already sent.
+const EXAMPLE=params.get('example')||null,askedHere=new Set(),stillsSent=new Set();
+// ?still=1 (demos/gallery.mjs --stills): only take the example's still again from its replay; nothing is asked, no model runs.
+const STILL_ONLY=!!EXAMPLE&&params.get('still')==='1';let replayStill=null;
+if(EXAMPLE)document.body.classList.add('present','example');
 const sessionURL=new URL(params.get('session')||'./spaces/demo/scenarios/demo/session.json',location.href);
 const spaceURL=new URL('../../space.json',sessionURL);
 const renderer=new THREE.WebGLRenderer({canvas:$('stage'),antialias:true,stencil:true,preserveDrawingBuffer:true});
@@ -120,18 +127,18 @@ function infoTarget(r){
   const eye=frameCamera(r.frame).position,cands=infoCarriers().filter(c=>c.key===r.info?.key&&!c.id.startsWith('zone:')).map(c=>box(c.id)).filter(Boolean);
   return cands.length?cands.reduce((x,y)=>eye.distanceTo(new THREE.Vector3(...y.center))<eye.distanceTo(new THREE.Vector3(...x.center))?y:x):null;
 }
-// An info answer's corners on its box and, once it is fixed in the room, its arrow to the box (src/info-visual.mjs).
-const infoVisual=createInfoVisual({scene,onAnimate:()=>update()});
+// An info answer's declared Mark on its thing and, once it is fixed in the room, its Text Arrow to it (src/info-visual.mjs).
+const infoVisual=createInfoVisual({onAnimate:()=>update()});
 function showInfoVisuals(){
   const answers=!agent||!session?[]:[...agent.widgets.values()].filter(w=>w.visible&&w.userData.response.info?.key&&!w.userData.pose?.unreadable).map(w=>{
     const d=w.userData,box=infoTarget({...d.response,frame:index});if(!box)return null;
     w.updateWorldMatrix(true,true);const q=w.getWorldQuaternion(new THREE.Quaternion());
     // The ink's rectangle (src/agent.mjs canvas.box: pixels of the text canvas), not the padded panel.
     const img=d.text.material.map.image,b=img.box,ink=new THREE.Vector3(((b.x0+b.x1)/2/img.width-.5)*d.width,(.5-(b.y0+b.y1)/2/img.height)*d.height,0);
-    return {id:d.response.id,box,color:d.text.material.color,fixed:!d.fixedText&&!!(d.pose.infoSettled||d.pose.kind==='info-float'),locked:!!d.pose.infoSettled,
+    return {id:d.response.id,box,response:d.response,fixed:!d.fixedText&&!!(d.pose.infoSettled||d.pose.kind==='info-float'),
       panel:{center:d.text.localToWorld(ink),right:new THREE.Vector3(1,0,0).applyQuaternion(q),up:new THREE.Vector3(0,1,0).applyQuaternion(q),width:(b.x1-b.x0)/img.width*d.width,height:(b.y1-b.y0)/img.height*d.height}};}).filter(Boolean);
   showLocks();
-  camera.updateMatrixWorld();drawInfoArrows(infoVisual.update(answers,new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld),{colorAt:markColor,frame:index}));
+  camera.updateMatrixWorld();drawInfoArrows(infoVisual.update(answers,new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld)));
 }
 // Locked answers (settled in the room: src/placement.mjs infoSettled) get a lock beside their text's top-right corner in the 3D view
 // (twin.helper: not drawn in the recorded camera), and their lock goes to the placement log once.
@@ -184,8 +191,8 @@ function drawInfoArrows(arrows){
   for(const a of arrows){
     const text=a.text.map(toRef),box=a.box.map(toRef);if(text.some(v=>!v)||box.some(v=>!v))continue;
     const aim=toRef(a.aim),r=aim&&arrowBetween(text,box,{aim});
-    const ui=agent?.widgets.get(a.id)?.userData.response?.text_ui;
-    if(ui&&!partsToDraw(ui,{'text.apart':!!r}).includes('textArrow'))continue;
+    const resp=agent?.widgets.get(a.id)?.userData.response,ui=resp&&currentText(resp).text_ui;
+    if(ui&&!partsToDraw(ui,infoFacts(resp,!!r)).includes('textArrow'))continue;
     if(!r||![r.start,r.end,...r.barbs].every(inView))continue;
     const start=back(r.start,a.text),end=back(r.end,a.box);if(!start||!end)continue;
     const part=cues.textArrow(start,end,{opacity:a.opacity});textArrowScene.add(part.group);textArrows.push(part);
@@ -193,58 +200,9 @@ function drawInfoArrows(arrows){
 }
 function renderTextArrows(renderer){if(!textArrows.length)return;for(const p of textArrows)p.update(performance.now(),camera);
   const auto=renderer.autoClear;renderer.autoClear=false;try{renderer.clearDepth();renderer.render(textArrowScene,camera);}finally{renderer.autoClear=auto;}}
-// Colours for marks over some world points, against what the recorded camera shows there (the frame's image inside the points' screen
-// rectangle, a little larger; src/legibility.mjs): an info answer's corners like answer text ({color}); its arrow a vivid accent and a
-// border to put under it ({color, halo}). null until the frame is loaded.
-function markColor(points,kind='corners'){
-  const img=textures.get(index)?.image;if(!img?.width||!points?.length)return null;
-  camera.updateMatrixWorld();const ndc=points.map(p=>p.clone().project(camera)).filter(p=>p.z>-1&&p.z<1);if(!ndc.length)return null;
-  const W=img.width,H=img.height,xs=ndc.map(p=>(p.x+1)/2*W),ys=ndc.map(p=>(1-p.y)/2*H),pad=.02*W;
-  const x0=Math.max(0,Math.min(...xs)-pad),x1=Math.min(W,Math.max(...xs)+pad),y0=Math.max(0,Math.min(...ys)-pad),y1=Math.min(H,Math.max(...ys)+pad);
-  if(x1-x0<2||y1-y0<2)return null;
-  const w=24,h=Math.max(4,Math.min(24,Math.round(24*(y1-y0)/(x1-x0)))),c=new OffscreenCanvas(w,h).getContext('2d',{willReadFrequently:true});
-  c.drawImage(img,x0,y0,x1-x0,y1-y0,0,0,w,h);
-  const px=c.getImageData(0,0,w,h).data;
-  if(kind==='arrow'){const a=accentStyle(px,w,h);return {color:new THREE.Color().setRGB(...a.color),halo:new THREE.Color().setRGB(...a.halo)};}
-  return {color:new THREE.Color().setRGB(...pickStyle(px,w,h,0).text)};
-}
 const highlightScene=createCueHost({getRooms:()=>layoutRooms,getLayout:()=>layoutSem}),devicePanel=createDeviceCues();devicePanel.attach($('stage'),()=>camera,()=>update());
-// A photo of a thing (Delegate's Photo Capture): the recorded camera frame cropped to the thing's box as seen from `cam`, a little larger.
-function snapshot(box,cam=camera){
-  const img=textures.get(index)?.image;if(!img?.width)return null;
-  const c=new THREE.Vector3(...box.center),h=box.size.map(v=>v/2*1.15),pts=[];
-  for(const sx of [-1,1])for(const sy of [-1,1])for(const sz of [-1,1])pts.push(new THREE.Vector3(c.x+sx*h[0],c.y+sy*h[1],c.z+sz*h[2]).project(cam));
-  const W=img.width,H=img.height,xs=pts.map(p=>(p.x+1)/2*W),ys=pts.map(p=>(1-p.y)/2*H);
-  const x0=Math.max(0,Math.min(...xs)),x1=Math.min(W,Math.max(...xs)),y0=Math.max(0,Math.min(...ys)),y1=Math.min(H,Math.max(...ys));if(x1-x0<8||y1-y0<8)return null;
-  const w=Math.min(640,Math.round(x1-x0)),out=document.createElement('canvas');out.width=w;out.height=Math.round(w*(y1-y0)/(x1-x0));
-  out.getContext('2d').drawImage(img,x0,y0,x1-x0,y1-y0,0,0,out.width,out.height);return out;
-}
-const actionCard=createActionCues({getSnapshot:snapshot});actionCard.attach($('stage'),()=>camera,()=>update());
-window.modosUI={actionCard,devicePanel};
-// Spatial UI cue previews (src/spatial-ui/cues.mjs) for the cue gallery: window.modosCues.show(name, target id, options) puts one cue on a
-// thing ('layout:<box>') or a room ('zone:<room>') of this scene, seen from the current camera.
-const cueScene=new THREE.Scene();cueScene.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));{const l=new THREE.DirectionalLight(0xffffff,1.6);l.position.set(.4,1,1.2);cueScene.add(l);}
-let cueParts=[];
-window.modosCues={
-  show(name,target,options={},extra=null){
-    for(const p of cueParts)cueScene.remove(p.group);cueParts=[];if(!name)return update();
-    const box=id=>{const b=layout.boxes.find(x=>'layout:'+x.id===id);return b&&{center:b.center,size:b.size,yaw:b.yaw||0};};
-    const room=id=>{const r=layoutRooms.find(x=>'zone:'+x.id===id);if(!r)return null;const poly=r.polygon?.[0];const ring=Array.isArray(poly?.[0]?.[0])?poly[0]:poly;return {ring,floorY:r.floorY??0};};
-    const eye=camera.position.clone(),t=target?.startsWith('zone:')?room(target):box(target);
-    const make={breathingBox:()=>cues.breathingBox(t),footprintRing:()=>cues.footprintRing(t),beacon:()=>cues.beacon(t),cornerBrackets:()=>cues.cornerBrackets(t),
-      floorArea:()=>cues.floorArea(t),doorwayGlow:()=>cues.doorwayGlow(t,options.name||'Kitchen',eye),arrowAhead:()=>cues.arrowAhead(t,camera),
-      textArrow:()=>{const c=new THREE.Vector3(...t.center),toEye=eye.clone().sub(c).setY(0).normalize(),side=new THREE.Vector3(toEye.z,0,-toEye.x),half=Math.max(t.size[0],t.size[2])/2;return cues.textArrow(c.clone().addScaledVector(side,-(half+.3)).add(new THREE.Vector3(0,.05,0)),c.clone().addScaledVector(side,-(half+.03)));},floorPath:()=>{const r=layoutSem&&createRouter(layoutSem.rooms||[],layoutSem.openings||[],layoutSem.walls||[]).route([eye.x,eye.z],[t.center[0],t.center[2]]);return cues.floorPath(r?along(r,{spacing:.45,skip:.6,max:14}):[]);},haloDial:()=>cues.haloDial(t,eye,options),edgeBar:()=>cues.edgeBar(t,eye,options),
-      powerPuck:()=>cues.powerPuck(t,eye,options),iconButton:()=>cues.iconButton(t,eye,options),datePicker:()=>cues.datePicker(t,eye,options),playback:()=>cues.playback(t,eye,options),edgeTabs:()=>cues.edgeTabs(t,eye,options),progressRail:()=>cues.progressRail(t,eye,options),
-      cardStack:()=>cues.cardStack(t,eye,options),pinnedTags:()=>cues.pinnedTags(t,eye,options),statusPulse:()=>cues.statusPulse(t,options),tetherSend:()=>cues.tetherSend(t,eye,options)}[name];
-    if(!t||!make)throw Error(`No ${t?'cue':'target'} ${t?name:target}.`);
-    // controls and labels on a thing read at the same size whatever its distance (the same rule as the spatial panels)
-    const dist=t.center?eye.distanceTo(new THREE.Vector3(...t.center)):1,k=Math.min(2.4,Math.max(1,dist/1.1));cues.setScale(k);
-    const part=make();if(['haloDial','powerPuck','iconButton','datePicker','playback','edgeTabs','progressRail','cardStack','statusPulse'].includes(name))part.group.scale.setScalar(k);cues.setScale(1);
-    cueParts=[part,...(extra?[cues.breathingBox(box(extra))]:[])];for(const p of cueParts)cueScene.add(p.group);update();
-  },
-};
-function renderCues(renderer){if(!cueParts.length)return;const now=performance.now();for(const p of cueParts)p.update(now,camera);
-  const auto=renderer.autoClear;renderer.autoClear=false;try{renderer.clearDepth();renderer.render(cueScene,camera);}finally{renderer.autoClear=auto;}requestAnimationFrame(update);}   // demos/record.mjs presses an action card's Send through this
+const actionCard=createActionCues();actionCard.attach($('stage'),()=>camera,()=>update());
+window.modosUI={actionCard,devicePanel};   // a script can press an action card's Send through this
 const dioramaScene=createDiorama({loader,lighting:{environment:scene.environment,lights:scene.children.filter(o=>o.isLight).map(l=>l.clone())}});
 const handPerception=createHandPerception();
 const handCompositor=createHandCompositor();
@@ -308,7 +266,7 @@ function placement(){return {version:2,components:components.specs(),selected,ro
 function applyPlacement(p){if(!Array.isArray(p.position)||p.position.length!==3||![...p.position,p.scale,p.yaw].every(Number.isFinite)||p.scale<=0)throw Error('Invalid placement');setSelected({position:p.position,scale:p.scale,yaw:p.yaw,visible:p.visible!==false});}
 let paintRequest=0,lastTwinPaint=0;
 function update(){if(!paintRequest)paintRequest=requestAnimationFrame(()=>{paintRequest=0;paint();});}
-function paint(){
+function paint(){exampleStill();
   syncLidarMesh();components.update({t:session?session.frames[index].t:0,frame:index});syncGizmo();twin.helper.visible=false;
   const map=$('depth-occlude').checked?depths.get(index):null;depthOccluder.visible=!!map;
   const weatherDepth=depths.get(index)||null;
@@ -327,7 +285,7 @@ function paint(){
   if(dioramaScene.active)requestAnimationFrame(update);
   // ModOS parts that point at things of the twin: a highlight (ObjectStatus, Wayfinding, IoTControl) and a device's controls (IoTControl).
   // FindMy's found container (unless a hand reached it) and the other MODs' highlights: one spatial Highlight renderer.
-  highlightScene.setResponse(currentResponses.find(r=>r.question_id===latestQuestion&&r.highlight)||found);if(highlightScene.active)requestAnimationFrame(update);
+  highlightScene.setResponse(currentResponses.find(r=>r.question_id===latestQuestion&&r.highlight)||found);if(highlightScene.active)requestAnimationFrame(update);if(infoVisual.active)requestAnimationFrame(update);   // its Mark breathes
   const ctlAnswer=currentResponses.find(r=>r.question_id===latestQuestion&&r.control),ctlQuestion=ctlAnswer&&agent?.questions.find(q=>q.id===ctlAnswer.question_id);
   const actAnswer=currentResponses.find(r=>r.question_id===latestQuestion&&r.action),actQuestion=actAnswer&&agent?.questions.find(q=>q.id===actAnswer.question_id);
   actionCard.setResponse(actAnswer||null,actQuestion?frameCamera(actQuestion.frame):camera,here[0]);
@@ -336,7 +294,10 @@ function paint(){
   weatherScene.setResponse(latest?.weather?latest:null);weatherScene.refresh();
   agent?.orient(camera);
   const weatherWidget=latest?.weather?agent?.widgets.get(latest.id):null;
-  weatherSurfacePreview?.update(weatherWidget?.userData.text?weatherWidget:null,camera);
+  // the view stack (src/cluster-placement.mjs): UI on no real thing in view stands fixed in view, above the answer's text, bottom to top
+  let stackTop=agent?.viewTop(camera)??null;
+  stackTop=weatherSurfacePreview?weatherSurfacePreview.update(weatherWidget?.userData.text?weatherWidget:null,camera,stackTop):stackTop;
+  devicePanel.place(camera,stackTop);
   // Hide only during the recorded-camera render, including its shadow pass.
   const hidden=components.instances.filter(i=>i.root.visible&&!visibleInVideo(i)).map(i=>i.root);
   for(const r of hidden)r.visible=false;
@@ -345,7 +306,7 @@ function paint(){
     if(agent)agent.group.visible=false;if(controls)controls.visible=false;weatherScene.group.visible=false;
     renderer.render(scene,camera);weatherScene.group.visible=weatherVisible;weatherScene.render(renderer,camera);
     if(controls)controls.visible=controlVisible;
-    dioramaScene.render(renderer,camera);highlightScene.render(renderer,camera);devicePanel.render(renderer,camera);actionCard.render(renderer,camera);renderCues(renderer);renderTextArrows(renderer);
+    dioramaScene.render(renderer,camera);highlightScene.render(renderer,camera);infoVisual.render(renderer,camera);devicePanel.render(renderer,camera);actionCard.render(renderer,camera);renderTextArrows(renderer);
     handCompositor.render(renderer,scene.background,currentHandData);
     // Response text/controls intentionally draw over hands; effects remain protected.
     agent?.renderAfter(renderer,camera,controls,index,true);
@@ -359,7 +320,8 @@ function paint(){
 const pref=(k,fallback)=>{try{return localStorage.getItem('spatial-take:'+k)??fallback;}catch{return fallback;}},keep=(k,v)=>{try{localStorage.setItem('spatial-take:'+k,v);}catch{}};
 let selectionMode=pref('selection-mode','jev')==='score'?'score':'jev',lastSelection='',lastMarks='';
 $('show-selection').checked=pref('show-selection','on')!=='off';$('show-selection').onchange=()=>{keep('show-selection',$('show-selection').checked?'on':'off');selectionMarks.setEnabled($('show-selection').checked);twin.render();};
-$('fovea-zone').checked=pref('fovea-zone','off')==='on';   // off unless turned on$('fovea-zone').onchange=()=>{keep('fovea-zone',$('fovea-zone').checked?'on':'off');update();};
+$('fovea-zone').checked=pref('fovea-zone','off')==='on';   // off unless turned on
+$('fovea-zone').onchange=()=>{keep('fovea-zone',$('fovea-zone').checked?'on':'off');update();};
 for(const b of document.querySelectorAll('[data-selection]')){b.setAttribute('aria-pressed',b.dataset.selection===selectionMode);
   b.onclick=()=>{selectionMode=b.dataset.selection;keep('selection-mode',selectionMode);for(const x of document.querySelectorAll('[data-selection]'))x.setAttribute('aria-pressed',x===b);};}
 function computeSelection(){
@@ -1263,7 +1225,42 @@ async function showConversations(select){
   const id=list.some(c=>c.id===select)?select:list.at(-1)?.id;$('conv').value=id;return id;
 }
 async function openConversation(id){if(agent.conversation!==id){pause();replayFrom=null;}store.set(convKey,id);$('conv').value=id;await agent.setConversation(id);agent.report(userState());update();}
+// A Gallery example (?example=<name>&conversation=<id>; scripts/gallery.py): only the recorded camera with the answer, the player, the
+// ask box and the pipeline, as the recordings looked, but live. It opens on the example's question (its first, when several were asked
+// one after another), replayed from where it was asked;
+// a question asked here and answered sends a still of the camera view to the Gallery (it becomes the example). Delete removes the
+// conversation's latest question.
+async function exampleOpened(){
+  for(let i=0;i<40&&!agent.questions.length;i++)await new Promise(r=>setTimeout(r,100));
+  // several questions (asked one after another): replayed from the first; the still is the last one's
+  const answered=agent.questions.filter(x=>x.status==='answered'),q=answered.at(-1);if(q){replayQuestion(answered[0]);if(STILL_ONLY)replayStill={id:q.id,held:false};}
+}
+// The still is taken once the answer is written and its text is in the camera view: when it stands outside the view at the moment it
+// was asked (by a thing the camera turns to later), the recording plays on until it comes into view (at most 12 s), then stops there.
+const stillWait=new Map();
+function answerInView(q){
+  camera.updateMatrixWorld(true);const p=new THREE.Vector3();
+  return [...agent.widgets.values()].some(w=>{if(!w.visible||w.userData.response.question_id!==q.id||w.userData.placementHidden||!w.userData.pose||w.userData.pose.unreadable)return false;
+    w.getWorldPosition(p);const v=p.project(camera);return v.z<1&&Math.abs(v.x)<.9&&Math.abs(v.y)<.9;});
+}
+function exampleStill(){
+  if(!EXAMPLE||!agent)return;
+  // the replayed example's still, once its replay has shown the answer (its hold began and ended)
+  if(replayStill){if(hold?.id===replayStill.id)replayStill.held=true;else if(!hold&&replayStill.held){askedHere.add(replayStill.id);replayStill=null;}}
+  if(hold)return;
+  for(const id of askedHere){const q=agent.questions.find(x=>x.id===id);
+    if(!q||q.status!=='answered'||agent.writing(q.id)||stillsSent.has(id))continue;
+    const now=performance.now();if(!stillWait.has(id))stillWait.set(id,now+12000);
+    if(!answerInView(q)&&now<stillWait.get(id)){if(!playing)$('play').click();continue;}
+    stillsSent.add(id);if(playing)pause();
+    // a moment for the cues to settle where it stopped
+    setTimeout(()=>{paint();agentApi('/api/gallery/still',{conversation:agent.conversation,image:$('stage').toDataURL('image/jpeg',.85)}).catch(fail);},1200);}
+}
+if(EXAMPLE)setInterval(exampleStill,500);   // also when the page is in the background (no frames drawn then)
+$('ask-delete').onclick=()=>{const q=agent&&[...agent.questions].reverse()[0];if(q)agent.deleteQuestion(q.id).catch(fail);};
 async function startAgent(){
+  if(here[0])await loadCurrentMods(here[0]);   // parts are drawn with their MODs' current declarations and settings
+  if(EXAMPLE&&!STILL_ONLY)agentApi('/api/agent/bridge',{}).catch(e=>console.warn('bridge',e));   // an example can be asked again: its scene's bridge runs
   let command;try{const setup=await agentApi('/api/agent/command');command=setup.command;$('agent-command').textContent=command;$('agent-config-path').textContent=setup.config_path;$('editor-restart-command').textContent=setup.restart_command;$('gemini-setup-command').textContent=setup.gemini_setup_command||'';$('gemini-setup-copy').onclick=()=>navigator.clipboard.writeText(setup.gemini_setup_command||'');}catch{return;}
   agent=createAgentLayer({scene,getStyleRevision:()=>weatherScene.playback.state.entry?.id,getSettings:forResponse,frames:session.frames,sessionPath:sessionURL.pathname,intrinsics:session.intrinsics,frameCamera,viewport:answerView,
     visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,relationAt,entityBox,sceneBoxes,infoTarget,onPlacement:logPlacement,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
@@ -1272,8 +1269,9 @@ async function startAgent(){
     twinPanel=createTwinPanel({addRoot:$('space-add'),space:here[0],session:sessionURL.pathname,onLoad:showOutline,onDetail:showEntityDetail});twinPanel.load();
     const mt=document.querySelector('[data-tab=mods]');mt.disabled=false;mt.title='';createModsPanel({root:$('tab-mods'),space:here[0]}).load();}
   $('agent-panel').hidden=false;$('ask').hidden=false;agentTab.disabled=false;agentTab.title='';showTab(store.get('spatialTake.sideTab')||'scene');
-  let id=await showConversations(store.get(convKey));if(!id)id=await showConversations((await agentApi('/api/agent/conversations',{})).id);
+  let id=await showConversations(params.get('conversation')||store.get(convKey));if(!id)id=await showConversations((await agentApi('/api/agent/conversations',{})).id);
   await openConversation(id);agent.start();loadPipelineSkeleton();
+  if(EXAMPLE)exampleOpened();
   $('agent-copy').onclick=async()=>{await navigator.clipboard.writeText(command);const label=$('agent-copy').querySelector('span');label.textContent='Copied';setTimeout(()=>label.textContent='Copy command',1500);};
   $('conv').onchange=()=>openConversation($('conv').value).catch(fail);
   $('conv-new').onclick=async()=>{try{await openConversation(await showConversations((await agentApi('/api/agent/conversations',{})).id));}catch(e){fail(e);}};
@@ -1295,8 +1293,8 @@ async function startAgent(){
   $('conv-name').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();endRename(true);}else if(e.key==='Escape')endRename(false);};
   $('conv-name').onblur=()=>{if(!$('conv-name').hidden)endRename(true);};
 }
-// Status line under the question box, and one marker per question on the timeline: click to go back and replay the answer,
-// × (on hover) to delete the question and its answer.
+// Status line under the question box, and one marker per question on the timeline: click to go back and replay the answer (and pick
+// it: showPicked).
 let markersKey='';
 function showAgentStatus({connected:c,questions,responses}){
   connected=c;$('ask-input').disabled=!c;$('ask-send').disabled=!c;
@@ -1310,14 +1308,47 @@ function showAgentStatus({connected:c,questions,responses}){
     m.setAttribute('aria-label',`Question at ${q.t.toFixed(2)} s: ${q.text}`);
     m.onmouseenter=e=>{const tip=$('tooltip'),b=m.getBoundingClientRect();tip.textContent=`${q.text}${r?` → ${r.title}`:q.status==='failed'?' (no response)':' …'} · ${q.t.toFixed(2)} s`;tip.hidden=false;tip.style.left=b.left+'px';tip.style.top=b.bottom+8+'px';};
     m.onmouseleave=()=>$('tooltip').hidden=true;
-    // Replay lands where the answer appeared (after the agent's latency for live questions).
-    m.onclick=()=>replayQuestion(q);
-    const del=document.createElement('span');del.className='del';del.setAttribute('role','button');
-    del.innerHTML='<svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg>';
-    del.onclick=e=>{e.stopPropagation();$('tooltip').hidden=true;agent.deleteQuestion(q.id).catch(fail);};
-    m.append(del);$('markers').append(m);
+    // Replay lands where the answer appeared (after the agent's latency for live questions). Picked, it shows what can be done with
+    // it; shift-click picks the questions from the one picked first to this one (one after another).
+    m.dataset.id=q.id;
+    m.onclick=e=>{e.stopPropagation();const order=questions.map(x=>x.id);
+      if(e.shiftKey&&picked.from!=null&&order.includes(picked.from)){const a=order.indexOf(picked.from),b=order.indexOf(q.id);picked.ids=order.slice(Math.min(a,b),Math.max(a,b)+1);}
+      else{picked={from:q.id,ids:[q.id],added:null};replayQuestion(q);}
+      picked.added=null;showPicked(questions);};
+    $('markers').append(m);
   }
+  picked.ids=picked.ids.filter(id=>questions.some(q=>q.id===id));showPicked(questions);
 }
+// The picked questions (src/app.mjs markers): one shows × (delete it and its answer) and ★ (add it to the Gallery); several in a row
+// show ★ alone (they become one example, under the first one's MOD: scripts/gallery.py add). Escape or a click elsewhere (the
+// user's, not the replay's own Play) lets go.
+let picked={from:null,ids:[],added:null};
+const STAR='<svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.4.9-4.6 4.5 1.1 6.3L12 17.3l-5.7 3 1.1-6.3-4.6-4.5 6.4-.9z"/></svg>';
+function showPicked(questions=agent?.questions||[]){
+  const root=$('markers'),duration=session.frames.at(-1).t||1;root.querySelector('.marker-actions')?.remove();root.querySelector('.marker-range')?.remove();
+  for(const m of root.querySelectorAll('.marker'))m.setAttribute('aria-pressed',String(picked.ids.includes(Number(m.dataset.id))));
+  const qs=picked.ids.map(id=>questions.find(q=>q.id===id)).filter(Boolean);if(!qs.length)return;
+  const x0=qs[0].t/duration*100,x1=qs.at(-1).t/duration*100;
+  if(qs.length>1)root.append(Object.assign(document.createElement('div'),{className:'marker-range',style:`left:${x0}%;width:${x1-x0}%`}));
+  const box=Object.assign(document.createElement('div'),{className:'marker-actions'});box.style.left=`${(x0+x1)/2}%`;root.append(box);
+  const button=(html,label,run)=>{const b=Object.assign(document.createElement('button'),{type:'button',innerHTML:html,title:label});b.setAttribute('aria-label',label);b.onclick=e=>{e.stopPropagation();run(b);};box.append(b);return b;};
+  if(qs.length===1)button('<svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg>','Delete this question and its answer',()=>{$('tooltip').hidden=true;picked={from:null,ids:[],added:null};agent.deleteQuestion(qs[0].id).catch(fail);});
+  const ready=qs.every(q=>q.status==='answered');
+  const star=button(STAR,picked.added?`In the Gallery: ${picked.added}`:qs.length>1?`Add these ${qs.length} questions to the Gallery as one example`:'Add to the Gallery',async b=>{
+    if(picked.added||!ready)return;b.disabled=true;
+    try{const r=await agentApi('/api/gallery/add',{conversation:agent.conversation,ids:qs.map(q=>q.id)});picked.added=r.example.name;showPicked();takeStill(r);}
+    catch(e){b.disabled=false;fail(e);}});
+  star.classList.add('star');star.classList.toggle('on',!!picked.added);star.disabled=!ready&&!picked.added;
+}
+// A new example's still: its replay in a hidden example view (?still=1, as `npm run gallery -- --stills`), which sends it.
+function takeStill({example,conversation}){
+  const f=Object.assign(document.createElement('iframe'),{src:`?${new URLSearchParams({session:sessionURL.pathname,conversation,example:example.name,still:'1'})}`,title:'still',tabIndex:-1});
+  Object.assign(f.style,{position:'fixed',left:'-4000px',top:'0',width:'1920px',height:'1080px',border:'0',pointerEvents:'none'});f.setAttribute('aria-hidden','true');document.body.append(f);
+  const end=Date.now()+120000,poll=setInterval(async()=>{let done=Date.now()>end;
+    try{done||=!!(await agentApi('/api/gallery')).examples.find(e=>e.name===example.name)?.still;}catch{}if(done){clearInterval(poll);f.remove();}},2000);
+}
+document.addEventListener('click',e=>{if(e.isTrusted&&picked.ids.length&&!e.target.closest?.('#markers')){picked={from:null,ids:[],added:null};showPicked();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&picked.ids.length&&!e.target.closest?.('input,textarea')){picked={from:null,ids:[],added:null};showPicked();}});
 // The agent's work on the focused question (live while it answers, stored for replay): faint text under the question box, or (Pipeline)
 // the ModOS stages lit as the system reaches them. ?present=1 shows only the recorded camera and the pipeline (for recording demos).
 // The handle between the recorded camera and the 3D scene: drag (or arrow keys) to set how the width is split; remembered.
@@ -1345,7 +1376,9 @@ let pipelineSkeleton=null;
 async function loadPipelineSkeleton(){try{const m=await agentApi('/api/modos/context');pipelineSkeleton={mods:m.mods,items:m.items};traceKey='';showTrace();}catch{}}
 function showTrace(){
   // Only once the video has reached the question (or it is being asked / replayed now): before that the view shows the options only.
-  const focused=agent&&session?agent.focus():null,q=focused&&(hold?.id===focused.id||session.frames[index].t>=focused.t-.002)?focused:null;
+  // After it, it stays on the latest question asked by now until the next one (the video plays on past its moment).
+  const now=session?session.frames[index].t:0,focused=agent&&session?agent.focus():null;
+  const q=focused&&(hold?.id===focused.id||now>=focused.t-.002)?focused:agent?[...agent.questions].filter(x=>x.t<=now+.002).sort((a,b)=>a.t-b.t).at(-1)||null:null;
   const clock=hold||agent?.delivery;
   const replaying=!!hold&&!hold.live,steps=q?stepsAt(q,clock?.id===q.id?clock.h:Infinity):[];
   const tail=!q?'':replaying?(hold.h<0?'Typing question…':hold.h<(q.latency||0)?`Processing… ${Math.floor(hold.h)} s`:''):q.status==='running'?`thinking… ${Math.max(0,Math.round(Date.now()/1000-q.started))} s`:q.status==='failed'?`no response: ${q.message||''}`:q.duration!=null?`${q.duration.toFixed(1)} s`:'';
@@ -1369,7 +1402,7 @@ function setAskStatus(text){if(text!==askStatus){askStatus=text;$('ask-status').
 $('ask').onsubmit=async e=>{e.preventDefault();const text=$('ask-input').value.trim();if(!text||!agent||!connected)return;
   const wasPlaying=playing;
   try{const sel=computeSelection()?.selected||null;
-    const q=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},{selection:sel,selection_mode:selectionMode});$('ask-input').value='';startHold(q,{resume:wasPlaying,live:true});
+    const q=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},{selection:sel,selection_mode:selectionMode});$('ask-input').value='';if(EXAMPLE)askedHere.add(q.id);startHold(q,{resume:wasPlaying,live:true});
   }catch(err){$('ask-status').textContent='Error: '+err.message;}};
 function fail(e){$('status').textContent='Error: '+e.message;console.error(e);}
 async function sessionLoadError(status){
@@ -1422,4 +1455,4 @@ if(!saved&&!params.has('placement')&&!toSpace){await addComponent({component:'ca
 if(params.has('placement')){const u=new URL(params.get('placement'),location.href);if(u.origin!==location.origin)throw Error('Placement URL must use this server');const response=await fetch(u);if(!response.ok)throw Error('Placement not found');await loadPlacement(await response.json());}
 weatherSurfacePreview=await createWeatherSurfacePreview(scene,weatherScene.playback,()=>update());weatherSurfacePreview.attach($('stage'),()=>camera);weatherSurfacePreview.attach($('twin'),()=>twin.camera);
 await startAgent();new ResizeObserver(()=>update()).observe($('stage'));if(vision)showCut(twin.setView({mode:'orbit'}));   // Vision Pro mode: the whole space, to edit its boxes
-window.replay={ready:true,agent,get textSurfaces(){return textSurfaces;},get surfaceOffsets(){return surfaceOffsets;},relationAt,get handData(){return currentHandData;},handPerception,recordingHands,handCompositor,spatialHands,entityBox,weatherScene,weatherSurfacePreview,layout,editLayout,components,addComponent,loadGLB:glb,select,setSelected,editObjects,get selected(){return selected;},get anchor(){return anchor;},fineTune:{start:startFineTune,end:endFineTune,get state(){return fine;}},setFrame,at,placement,applyPlacement,loadPlacement,depthMap,surfaceAt,visibleIn,session,renderer,camera,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}
+window.replay={ready:true,agent,devicePanel,get textSurfaces(){return textSurfaces;},get surfaceOffsets(){return surfaceOffsets;},relationAt,get handData(){return currentHandData;},handPerception,recordingHands,handCompositor,spatialHands,entityBox,weatherScene,weatherSurfacePreview,layout,editLayout,components,addComponent,loadGLB:glb,select,setSelected,editObjects,get selected(){return selected;},get anchor(){return anchor;},fineTune:{start:startFineTune,end:endFineTune,get state(){return fine;}},setFrame,at,placement,applyPlacement,loadPlacement,depthMap,surfaceAt,visibleIn,session,renderer,camera,twin};}catch(e){fail(e);window.replay={ready:false,error:e.message};}

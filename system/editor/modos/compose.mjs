@@ -26,18 +26,20 @@ export function partsFor(mod,selection,{referent=null,abouts=[],question=''}={})
     ...(sel?.kind==='timeseries'?{'data.days':(sel.dates||[]).length,'data.steps_per_day':(sel.times||[]).length}:{}),
     ...(sel?.kind==='device'?{intent:sel.action?'change':'read'}:{})});
   for(const slot of mod.slots){
-    // An action card (Delegate): what will be done, for whom and with what; it runs only when the user confirms it.
+    // An action card (Send): what will be done, for whom and with what; it runs only when the user confirms it.
     if(slot.use==='action-card'){
       // what goes with the message: the thing itself, a photo taken of it, or nothing (the request says which)
       const [to,what,cap]=(slot.data||[]).map(d=>selection?.[d]),capture=what?.entity?(cap?.id||'thing'):'none';
-      if(to)out.push({part:'ui',action:{kind:'send',to:to.id,capture,...(capture!=='none'?{attachment:what.entity}:{})},...meta(mod,slot,{...factsFor(null),'attachment.kind':capture})});
+      // who it goes to: one person (pick-one) or several (pick-many); the Choice shown for it is single or multi-select alike
+      const ids=to?.kind==='contacts'?to.people.map(p=>p.id):to?.id?[to.id]:[];
+      if(ids.length)out.push({part:'ui',action:{kind:'send',to:ids,pick:to.kind==='contacts'?'many':'one',capture,...(capture!=='none'?{attachment:what.entity}:{})},...meta(mod,slot,{...factsFor(null),'attachment.kind':capture})});
       continue;
     }
     const sel=slot.data?selection?.[slot.data]:null;
     if(!sel)continue;
     const meta_=()=>meta(mod,slot,factsFor(sel));
     if((slot.use==='ambient-effect'||slot.use==='data-widget')&&sel.kind==='timeseries'&&!out.some(p=>p.weather))
-      out.push({part:'ui',weather:{forecast_ids:sel.ids,preview:{component:sel.layout}},...meta_()});
+      out.push({part:'ui',weather:{forecast_ids:sel.ids,...(sel.focus?{focus:sel.focus}:{}),preview:{component:sel.layout}},...meta_()});
     // Highlight from a choice of things (ObjectStatus: by state), a device (IoTControl) or a place (Wayfinding: its door); the MOD's
     // direction arrow and sign on the same choice travel with it.
     if(slot.use==='highlight'&&['entities','device','place'].includes(sel.kind)){

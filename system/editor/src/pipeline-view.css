@@ -77,3 +77,14 @@ body.present.pipeline-bottom #camera-col>#pipeline{grid-column:1;grid-row:2;widt
 body.present .pv-qs li{font-size:13px}body.present .pv-from{font-size:12px}
 
 .pv-opts li.alt{color:#b9bcc2}.pv-opts li.alt em{font-style:normal;color:#7d8088;font-size:.9em;margin-left:4px}.pv-opts li.alt .pv-bar i{background:#8b8e95}
+
+/* A Gallery example (?example=, src/app.mjs exampleOpened): the presentation view, with the player and the ask box under the camera so
+   it can be replayed and asked again; Delete removes the latest question. */
+#ask-delete{display:none}
+body.example #camera-col{grid-template-rows:minmax(0,1fr) auto auto;align-items:stretch;row-gap:8px;padding:0 24px 12px 0}
+body.example #camera-col>#stage{grid-row:1;height:min(calc(100vh - 104px),calc(64vw * .75))!important;align-self:center}
+body.example #camera-col>.player{display:flex!important;grid-column:1;grid-row:2;align-items:center;gap:8px;padding:0 14px}
+body.example #camera-col>#ask{display:flex!important;grid-column:1;grid-row:3;gap:6px;margin:0 14px}
+body.example #camera-col>#ask #ask-input{flex:1}
+body.example #ask-delete{display:inline-flex;align-items:center;padding:0 12px}
+body.example #camera-col>#pipeline{grid-row:1 / span 3}

@@ -5,11 +5,10 @@ Three layers make the MODs a space uses (modos-system-design.md 7):
   overrides  how a space tailors a base MOD, in spaces/<space>/modos/custom.json "overrides": {<id>: customization}
   forks      new MODs derived from a base one, in custom.json "forks": [{id, from, name, description?, ...customization}]
 
-A customization changes only what a MOD lets people change, never its code or its decision questions:
-  variant    one of the MOD's representation variants (which slots it shows; the MOD's author defines them)
-  settings   {slot: {param: value}} for a slot param of kind `setting` (duration, lock)
-  scope      where it applies ('global', or a list of places / objects)
-  knowledge  extra knowledge refs; examples: extra example questions (both appended)
+A customization changes only what a MOD lets people change, never its code, where it applies or what it knows:
+  variant      one of the MOD's representation variants (which slots it shows; the MOD's author defines them)
+  settings     {slot: {param: value}} for a slot param of kind `setting` (duration, lock)
+  description  what it is for, and examples: questions it answers (both replace the author's: the decision model chooses MODs by them)
 
 effective(base, customization) resolves all of this into the plain MOD the pipeline reads: `slots` holds only the active ones,
 `text` names the text slot (or is absent), and each slot's params carry {fixed: value} where the author settled them.
@@ -22,7 +21,7 @@ MODOS = ROOT/'modos'
 SELECTOR_KINDS = {'enum', 'pick-one', 'pick-many'}
 TEXT_USES = {'situated-text', 'action-card'}
 ID = re.compile(r'^[a-z0-9][a-z0-9-]{0,47}$')
-CUSTOM_KEYS = {'variant', 'settings', 'scope', 'knowledge', 'examples'}   # whether a MOD shows text is its variant's text slot
+CUSTOM_KEYS = {'variant', 'settings', 'description', 'examples'}   # whether a MOD shows text is its variant's text slot
 
 def _json(p):
     return json.loads(Path(p).read_text())
@@ -40,8 +39,8 @@ def _check_scope(mid, scope):
 # its `when` holds (a rule over the target, the data and the request, evaluated without a model) and may stand `instead_of` a fixed one.
 # Parts are library cues, or the MOD's own `ambient:`, `asset:` and `text:` parts; `iconButton:<preset>` names a preset button.
 CUES = {'breathingBox', 'cornerBrackets', 'footprintRing', 'floorArea', 'doorwayGlow', 'arrowAhead', 'floorPath', 'gauge', 'progressRail',
-        'pinnedTags', 'statusPulse', 'cardStack', 'slider', 'edgeTabs', 'iconButton', 'textButton', 'datePicker', 'playback', 'tetherSend',
-        'bodyArrow', 'contactChip', 'textInput', 'photoCapture', 'textArrow'}
+        'pinnedTags', 'statusPulse', 'cardStack', 'slider', 'choice', 'iconButton', 'textButton', 'datePicker', 'playback', 'tetherSend',
+        'bodyArrow', 'textInput', 'arPhoto', 'textArrow'}
 # Text forms of the library (not cues): text floating by its anchor, written onto a surface, or spoken by an object.
 TEXT_FORMS = {'floatingText', 'embeddedText', 'dialogue'}
 UI_OWN = ('ambient:', 'asset:')
@@ -112,7 +111,7 @@ def effective(base, custom=None, prims=None):
     """The plain MOD the pipeline reads: base + one customization, with the active variant's slots and settled params."""
     specs = (prims or primitives())[0]
     custom = custom or {}
-    unknown = set(custom)-CUSTOM_KEYS-{'id', 'from', 'name', 'description'}
+    unknown = set(custom)-CUSTOM_KEYS-{'id', 'from', 'name'}
     if unknown: raise ValueError('Unknown customization: '+', '.join(sorted(unknown)))
     mod = copy.deepcopy(base); variants = base.get('variants') or {}
     variant = custom.get('variant') or base.get('default_variant')
@@ -144,9 +143,15 @@ def effective(base, custom=None, prims=None):
         if a.get('kind') == 'relative' and a['to'] not in active: s['anchor'] = next(x['anchor'] for x in base['slots'] if x['id'] == a['to'])
     if text: mod['text'] = text
     else: mod.pop('text', None)
-    if 'scope' in custom: _check_scope(base['id'], custom['scope']); mod['scope'] = custom['scope']
-    mod['knowledge'] = base.get('knowledge', [])+[dict(k, added=True) for k in custom.get('knowledge', []) if isinstance(k, dict) and isinstance(k.get('ref'), str)]   # added: read when chosen, not required
-    mod['examples'] = base.get('examples', [])+list(custom.get('examples', []))
+    if 'description' in custom:
+        d = custom['description']
+        if not (isinstance(d, str) and d.strip() and len(d) <= 400): raise ValueError(f'MOD {base["id"]}: a description is 1-400 letters.')
+        mod['description'] = d.strip()
+    if 'examples' in custom:
+        ex = custom['examples']
+        if not (isinstance(ex, list) and len(ex) <= 12 and all(isinstance(e, str) and e.strip() and len(e) <= 160 for e in ex)):
+            raise ValueError(f'MOD {base["id"]}: examples are up to 12 questions.')
+        mod['examples'] = [e.strip() for e in ex]
     mod['variant'] = variant if variants else None
     mod['customization'] = {k: v for k, v in custom.items() if k in CUSTOM_KEYS}
     return mod
@@ -288,7 +293,7 @@ def feeds(mods):
 
 def catalog(space):
     """What the editor's MODs tab shows: each MOD of the space with what can be tailored (variants, settings of every slot the MOD
-    has, scope, extra knowledge and examples), the current choice, and whether it is installed."""
+    has, its description and examples, with the author's), the current choice, and whether it is installed."""
     specs = primitives()[0]; bases = base_mods(space); c = custom(space); mods = all_mods(space)
     on = {m['id'] for m in installed(space)}
     out = []
@@ -308,8 +313,7 @@ def catalog(space):
                         provider=m.get('provider'), extends=m.get('extends'), installed=mid in on, variant=m['variant'], text=bool(m.get('text')),
                         variants=[dict(id=k, label=v.get('label', k), description=v.get('description', ''), slots=[dict(id=s, use=next(x['use'] for x in base['slots'] if x['id'] == s)) for s in v['slots']], text=v.get('text'))
                                   for k, v in (base.get('variants') or {}).items()],
-                        settings=settings, scope=m.get('scope', 'global'), base_scope=base.get('scope', 'global'),
-                        knowledge=base.get('knowledge', []), extra_knowledge=cust.get('knowledge', []),
-                        examples=base.get('examples', []), extra_examples=cust.get('examples', []),
+                        settings=settings, examples=m.get('examples', []),
+                        authored=dict(description=base.get('description', ''), examples=base.get('examples', [])),
                         customized=bool(cust) if m['origin'] == 'base' else True))
     return out

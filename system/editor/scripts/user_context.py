@@ -38,12 +38,19 @@ def read(d, groups=None, now=None):
     if 'weather' in result:
         weather = result['weather']; weather['reference_date'] = current.date().isoformat()
         weather['forecast'] = sorted(weather.get('forecast', []), key=lambda e:(e['date'],e.get('time','')))
-        for row in weather['forecast']:
-            for e in [row]+row.get('samples', []):
-                offset = (date.fromisoformat(e['date'])-current.date()).days
-                e['day_offset'] = offset
-                e['day_label'] = 'Today' if offset == 0 else 'Tomorrow' if offset == 1 else date.fromisoformat(e['date']).strftime('%A, %b %d')
+        relabel(weather['forecast'], current.date())
     return result
+
+def relabel(forecast, today):
+    """A forecast's day words from its dates, seen from today: day_offset, day_label (Today, Tomorrow, else the weekday and date) and
+    label (the date and period, or the date and time of a sample)."""
+    for row in forecast:
+        for e in [row]+row.get('samples', []):
+            day = date.fromisoformat(e['date']); offset = (day-today).days
+            e['day_offset'] = offset
+            e['day_label'] = 'Today' if offset == 0 else 'Tomorrow' if offset == 1 else 'Yesterday' if offset == -1 else day.strftime('%A, %b %d')
+            e['label'] = f"{e['date']} {e['local_time']}" if e.get('parent_id') and e.get('local_time') else f"{day:%A, %b %d} · {e.get('period') or e.get('time', '')}"
+    return forecast
 
 def _occurs(e, day):
     """Whether a calendar entry happens on a day: weekly recurrence (weekdays), a date, or a 'when' that starts with its weekday and date."""

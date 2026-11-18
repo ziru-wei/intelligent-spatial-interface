@@ -5,7 +5,7 @@ import {selectorQuestions,selectorSources} from './selectors.mjs';
 const r2=x=>Math.round((x??0)*100)/100;
 const optionLabel=(k,v)=>{try{const o=JSON.parse(v);if(o?.item)return o.item;}catch{}
   if(/^t\d+$/.test(k))return String(v).replace(/^\(the user is pointing at it\) /,'').replace(/: .*$/,'');
-  if(/^(d\d+_|p\d+$|c\d+$)/.test(k))return String(v).replace(/ \(.*$/,'').replace(/: look at it.*$/,': look');return k.replace(/^item_\d+$/,'item');};
+  if(/^(d\d+_|p\d+$|c\d+$|e\d+$)/.test(k))return String(v).replace(/ \(.*$/,'').replace(/: look at it.*$/,': look');return k.replace(/^item_\d+$/,'item');};
 /** For the pipeline view: each selector's options and what was chosen. A choice lists its options with probabilities; the per-date and
  *  per-time scores of a timeseries selector are grouped and labelled by the date or time they ask about. */
 export function fillView(questions,a){
@@ -30,7 +30,7 @@ export function createFiller({view,items,decide,trace=()=>{}}){
     fill(mod,context=[]){
       if(!started.has(mod.id))started.set(mod.id,(async()=>{
         const sources=selectorSources(mod),bodies=sources.length?Object.fromEntries((await items(sources)).map(b=>[b.id,b])):{};
-        const qs=selectorQuestions(mod,bodies,{reference,view,context:context.map(id=>view.snap.items.find(i=>i.id===id)).filter(Boolean)});
+        const qs=selectorQuestions(mod,bodies,{reference,view,question:view.state?.user_question||'',context:context.map(id=>view.snap.items.find(i=>i.id===id)).filter(Boolean)});
         if(!Object.keys(qs.questions).length)return {};
         const a=await decide(`modos_fill_${mod.id}`,{...view.state,capability:{name:mod.name,description:mod.description},data:qs.data,reference_resolution:reference},qs.questions);
         const selection=qs.interpret(a);trace('modos_fill',JSON.stringify({mod:mod.id,selection}));

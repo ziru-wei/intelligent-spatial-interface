@@ -139,37 +139,44 @@ def resolve_control(d, value):
                 inputs=dev.get('inputs', {}), outputs=dev.get('outputs', {}), changed=(action or {}).get('key'), op=(action or {}).get('op'),
                 panel=value.get('panel') is not False)
 
-# Delegate's action card: a pending action, run only when the user presses its confirm button (POST /api/modos/actions).
+# Send's action card: a pending action, run only when the user presses its confirm button (POST /api/modos/actions).
 def _contacts(space):
     try: items = json.loads((space/'modos'/'items.json').read_text()).get('items', [])
     except (OSError, ValueError): items = []
     return {p['id']: p for i in items if i.get('id') == 'user:contacts' for p in i.get('data', [])}
 
 def resolve_action(d, value):
-    if not isinstance(value, dict) or set(value)-{'kind', 'to', 'attachment', 'capture'} or value.get('kind') != 'send': raise ValueError('Bad action.')
+    if not isinstance(value, dict) or set(value)-{'kind', 'to', 'pick', 'attachment', 'capture'} or value.get('kind') != 'send': raise ValueError('Bad action.')
     capture = value.get('capture') or ('thing' if value.get('attachment') else 'none')
     if capture not in ('thing', 'photo', 'none'): raise ValueError('Bad capture.')
-    space = _space(d); person = _contacts(space).get(value.get('to'))
-    if not person: raise ValueError('Unknown contact.')
-    out = dict(version=1, kind='send', to=dict(id=person['id'], name=person['name'], email=person['email']), status='draft', capture=capture)
+    # who it goes to: one person or several (pick: 'one' | 'many', the MOD's selector kind; the Choice is single or multi-select)
+    space = _space(d); book = _contacts(space); ids = value.get('to') if isinstance(value.get('to'), list) else [value.get('to')]
+    people = [book.get(i) for i in ids[:12]]
+    if not people or not all(people): raise ValueError('Unknown contact.')
+    out = dict(version=1, kind='send', to=[dict(id=p['id'], name=p['name'], email=p['email']) for p in people], pick='many' if value.get('pick') == 'many' else 'one',
+               status='draft', capture=capture)
+    # who else it could go to: the Choice of recipients (the chosen one first)
+    out['contacts'] = [dict(id=p['id'], name=p['name']) for p in _contacts(space).values() if p.get('email')][:12]
     if value.get('attachment'):
         b = _boxes(d).get(value['attachment'])
         if not b: raise ValueError('The attachment has no box in the scene.')
         name = modos_twin.entities(space, d).get(value['attachment'], {}).get('name') or b['label']
-        out['attachment'] = dict(id=value['attachment'], label=name, center=b['center'], size=b['size'], yaw=b['yaw'])
+        out['attachment'] = dict(id=value['attachment'], label=name, center=b['center'], size=b['size'], yaw=b['yaw'],
+                                 has_content=has_content(modos_twin.entities(space, d).get(value['attachment'], {}), b))
     return out
 
 def send(space, action, message):
     """Mock: the message goes to the space's outbox (spaces/<space>/modos/outbox.json); nothing leaves the machine."""
     if not isinstance(action, dict) or action.get('kind') != 'send': raise ValueError('Bad action.')
-    person = _contacts(space).get((action.get('to') or {}).get('id'))
-    if not person: raise ValueError('Unknown contact.')
+    book = _contacts(space); to = action.get('to') if isinstance(action.get('to'), list) else [action.get('to') or {}]
+    people = [book.get((t or {}).get('id')) for t in to]
+    if not people or not all(people): raise ValueError('Choose who it goes to.')
     if not isinstance(message, dict) or not str(message.get('body') or '').strip(): raise ValueError('The message is empty.')
     import time
     p = space/'modos'/'outbox.json'
     try: box = json.loads(p.read_text())
     except (OSError, ValueError): box = {'sent': []}
-    entry = dict(to=person['email'], name=person['name'], subject=str(message.get('title') or '')[:200], body=str(message['body'])[:4000],
+    entry = dict(to=[p['email'] for p in people], name=[p['name'] for p in people], subject=str(message.get('title') or '')[:200], body=str(message['body'])[:4000],
                  attachment=(action.get('attachment') or {}).get('label'), at=time.time())
     # A photo taken of the thing (the client's crop of the camera frame, a JPEG data URL) is kept beside the outbox.
     photo = message.get('photo')

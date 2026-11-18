@@ -31,6 +31,11 @@ def resolve(d, selection):
     timeline = [sample for e in chosen for sample in (e.get('samples') or [e])] if component!='weather-single' else chosen
     timeline = sorted({e['id']:e for e in timeline}.values(), key=lambda e:(e['date'],e.get('local_time',e.get('time','00:00'))))
     if any(e['condition'] not in CONDITIONS for e in timeline): raise ValueError('Unsupported weather sample.')
+    # the focus (the moment that answers the question, chosen in the fill): playback opens there; a period stands for its first sample
+    focus = selection.get('focus')
+    if focus is not None and (not isinstance(focus, str) or focus not in entries): raise ValueError('Unknown weather focus.')
+    if focus:
+        focus = next((e['id'] for e in timeline if e['id'] == focus), None) or next((e['id'] for e in timeline if e.get('parent_id') == focus), None)
     return dict(version=2, mod='weather', mock=True, forecast=chosen, timeline=timeline,
-                preview=dict(component=component, autoplay=True, seconds_per_period=8, dates=days),
+                preview=dict(component=component, autoplay=True, seconds_per_period=8, dates=days, **({'focus': focus} if focus else {})),
                 presentation=dict(anchor='user-view', background='composited-scene', tracking='recording-timeline', style='adaptive'))

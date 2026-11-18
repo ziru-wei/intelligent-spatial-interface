@@ -51,15 +51,17 @@ def _link_orphans(d, c):
         c['questions'].append(q); r['question_id'] = q['id']
     return bool(orphans)
 
-def create(d, name=None, questions=(), responses=()):
+def create(d, name=None, questions=(), responses=(), gallery_example=None):
+    """A new conversation. gallery_example = {name, mod} (scripts/gallery.py clean_tag): hidden; the conversation is a Gallery example."""
     now = datetime.now(); cid = f"{now:%Y%m%d-%H%M%S}-{time.time_ns()}"; n = 1
     while (folder(d)/f'{cid}.json').exists(): cid = f"{now:%Y%m%d-%H%M%S}-{n}"; n += 1
     c = dict(id=cid, name=(name or '').strip()[:80] or now.strftime('%Y-%m-%d %H:%M:%S'), created=time.time(), questions=list(questions), responses=list(responses))
+    if gallery_example: c['gallery_example'] = gallery_example
     _write(d, c); return c
 
 def listing(d):
     _prepare(d)
-    return sorted((dict(id=c['id'], name=c['name'], created=c['created'], questions=len(c['questions']), responses=len(c['responses'])) for c in _all(d)), key=lambda c: c['created'])
+    return sorted((dict(id=c['id'], name=c['name'], created=c['created'], questions=len(c['questions']), responses=len(c['responses']), **({'gallery_example': c['gallery_example']} if c.get('gallery_example') else {})) for c in _all(d)), key=lambda c: c['created'])
 
 def rename(d, cid, name):
     c = read(d, cid); name = str(name or '').strip()[:80]
@@ -370,4 +372,10 @@ def status(d, cid):
     questions = {q['id']: q for q in c['questions']}
     responses = [dict(r, info=response_info(c, questions[r['question_id']], dict(key=questions[r['question_id']]['info']['key'])))
                  if r.get('part') == 'text' and not r.get('info') and not r.get('dialogue') and questions.get(r.get('question_id'), {}).get('info') else r for r in c['responses']]
+    # what an info answer is about has content (the twin's `content` trait: a poster, a screen): its MOD's Mark can say so
+    if any((r.get('info') or {}).get('box_id') for r in responses):
+        import modos_twin
+        things = modos_twin.entities(Path(d).parents[1], d)
+        responses = [dict(r, info=dict(r['info'], has_content=modos_parts.has_content(things.get(r['info']['box_id'], {}))))
+                     if (r.get('info') or {}).get('box_id') else r for r in responses]
     return dict(connected=busy or time.time()-bridge_seen.get(str(d), 0) < 40, questions=c['questions'], responses=responses)

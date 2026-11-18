@@ -27,8 +27,12 @@ POST /api/rename {take,name}     display name of a recording (spaces/names.json)
 Agent (scripts/agent-bridge.mjs runs the ModOS pipeline for one recording and publishes its parts here).
 Questions and responses live in conversations ("sessions" in the UI), see scripts/agent_store.py:
 GET  /api/agent/command?session=                   pastable shell command that starts the bridge for this scene
+POST /api/agent/bridge {session}                    start that bridge from the editor (a Gallery example), unless one is already polling
 GET  /api/agent/conversations?session=             list; POST /api/agent/conversations {session,name?} creates an empty one
 POST /api/agent/conversations/rename|import         {session,conversation,name} | {session,data}; GET …/export?session=&conversation=
+GET  /api/gallery                                    the Gallery's examples (scripts/gallery.py), written to context/gallery as well
+POST /api/gallery/still {session,conversation,image}  a still of an example's answer; POST /api/gallery/replace {name,keep}: drop older examples of that name
+POST /api/gallery/add {session,conversation,ids}      a new example from answered questions (one, or several in a row)
 POST /api/agent/questions {session,conversation,frame,t,text,live?,selection?,selection_mode?}   ask at a frame (live = asked during playback); POST /api/agent/questions/delete
 GET  /api/agent/status?session=&conversation=       bridge connected + the conversation's questions and responses
 GET  /api/agent/questions/next?session=            bridge long-poll (≤25 s); POST /api/agent/questions/trace {session,id,step}, …/done {session,id,message,duration}
@@ -51,7 +55,7 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
-import agent_store as store, spaces, composition, weather, findmy, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts
+import agent_store as store, gallery, spaces, composition, weather, findmy, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts
 busy = threading.Lock()
 MOCK_CONTEXT = ROOT/'agent'/'mock-context.json'
 
@@ -82,6 +86,20 @@ def agent_command(session, host):
     d = session_dir(session); key = './'+d.relative_to(ROOT).as_posix()+'/session.json'
     settings=answer_settings()
     return ' '.join(map(shlex.quote, [shutil.which('node') or 'node', str(ROOT/'scripts'/'agent-bridge.mjs'), '--url', f'http://{host}', '--session', key, '--config', str(ROOT/'agent-config.local.json'), '--provider', settings['provider'], '--model', settings['model'], '--effort', settings['effort']]))
+
+# Bridges the editor started (POST /api/agent/bridge): one per scene, so a Gallery example (or the Demo) can be asked again without a
+# terminal. Not started when a bridge is already polling that scene (one started by hand, or by demos/gallery.mjs).
+bridges = {}
+def start_bridge(session, host):
+    d = session_dir(session); key = str(d)
+    if key in bridges and bridges[key].poll() is None: return dict(started=False, running=True)
+    if time.time()-store.bridge_seen.get(key, 0) < 30: return dict(started=False, running=True)
+    log = open(d/'agent'/'bridge.log', 'ab') if (d/'agent').is_dir() else subprocess.DEVNULL
+    bridges[key] = subprocess.Popen(shlex.split(agent_command(session, host)), cwd=ROOT, stdout=log, stderr=log, start_new_session=True)
+    return dict(started=True, running=True)
+def stop_bridges():
+    for p in bridges.values():
+        if p.poll() is None: p.terminate()
 
 def frame_pose(d, frame):
     f = json.loads((d/'session.json').read_text())['frames'][frame]; x, y, z, w = f['quaternion']
@@ -161,11 +179,11 @@ def agent_post(path, body):
     with store.lock:
         store._prepare(d)
         if path == '/api/agent/state': store.editor_state[str(d)] = {k: body.get(k) for k in ('conversation', 'frame', 't', 'position', 'quaternion', 'forward')}; return dict(ok=True)
-        if path == '/api/agent/conversations': return store.create(d, body.get('name'))
-        if path == '/api/agent/conversations/delete': return store.delete_conversation(d, cid)
+        if path == '/api/agent/conversations': return store.create(d, body.get('name'), gallery_example=gallery.clean_tag(body['gallery_example']) if body.get('gallery_example') else None)
+        if path == '/api/agent/conversations/delete': out = store.delete_conversation(d, cid); gallery.rebuild(); return out
         if path == '/api/agent/conversations/rename': return store.rename(d, cid, body.get('name'))
         if path == '/api/agent/conversations/import': return store.import_conversation(d, body.get('data'))
-        if path == '/api/agent/questions/delete': return store.delete_question(d, cid, body.get('id'))
+        if path == '/api/agent/questions/delete': out = store.delete_question(d, cid, body.get('id')); gallery.rebuild(); return out
         if path == '/api/agent/questions/trace': store.bridge_seen[str(d)] = time.time(); return store.add_trace(d, body.get('id'), body.get('step'))
         if path == '/api/agent/placement-log': return store.log_placement(d, body.get('question_id'), body.get('event'))
         if path == '/api/agent/questions/info': return store.set_info(d, body.get('id'), body.get('key'), body.get('interaction_id'), body.get('source'))
@@ -253,6 +271,15 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.reply(200, dict(entities=[dict(e, knowledge=about.get(e['id'], [])) for e in ents.values()],
                                             kinds=list(modos_twin.KINDS), traits=list(modos_twin.TRAITS)))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if url.path == '/api/gallery':
+            try:
+                with store.lock: return self.reply(200, dict(examples=gallery.rebuild()))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if url.path == '/api/modos/installed':
+            # The space's installed MODs as the pipeline reads them (effective: active variant, settled settings, declarations); the
+            # editor draws every part with these (src/current-mods.mjs).
+            try: return self.reply(200, dict(mods=modos_registry.installed(spaces.space_dir(q.get('space', [''])[0]))))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if url.path == '/api/modos/mods':
             # The space's MODs as the editor's MODs tab tailors them (scripts/modos_registry.py catalog).
             try: return self.reply(200, dict(mods=modos_registry.catalog(spaces.space_dir(q.get('space', [''])[0]))))
@@ -286,6 +313,16 @@ class Handler(SimpleHTTPRequestHandler):
                 if path == '/api/vision/alignment': return self.reply(200, vision.set_alignment(name, body))
                 return self.reply(200, vision.save_settings(name, body.get('settings')))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if path in ('/api/gallery/still', '/api/gallery/replace', '/api/gallery/add'):
+            # The Gallery (scripts/gallery.py): a still of an example's answer from the editor, or a newly answered example replacing
+            # the older ones of its name (demos/gallery.mjs).
+            body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
+            try:
+                with store.lock:
+                    if path == '/api/gallery/add': return self.reply(200, gallery.add(session_dir(body.get('session')), body.get('conversation'), body.get('ids')))
+                    if path == '/api/gallery/still': return self.reply(200, dict(example=gallery.save_still(session_dir(body.get('session')), body.get('conversation'), body.get('image'))))
+                    return self.reply(200, gallery.replace(gallery.clean_tag(dict(name=body.get('name')))['name'], body.get('keep')))
+            except (ValueError, OSError, KeyError) as e: return self.reply(400, dict(error=str(e)))
         if path == '/api/modos/entities':
             body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
             try:
@@ -297,7 +334,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.reply(400, dict(error='op is update, add or remove.'))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if path == '/api/modos/actions':
-            # An action card's confirm button (Delegate's Send): {space, action, message} → sent (mock: the space's outbox).
+            # An action card's confirm button (Send's confirm): {space, action, message} → sent (mock: the space's outbox).
             body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
             try: return self.reply(200, modos_parts.send(spaces.space_dir(body.get('space')), body.get('action'), body.get('message')))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
@@ -324,6 +361,9 @@ class Handler(SimpleHTTPRequestHandler):
         if path == '/api/modos/install':
             body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
             try: return self.reply(200, dict(installed=modos_registry.install(spaces.space_dir(body.get('space')), body.get('mod'))))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if path == '/api/agent/bridge':
+            try: return self.reply(200, start_bridge(json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}').get('session'), self.headers.get('Host', '127.0.0.1:8766')))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if path.startswith('/api/agent/'):
             try: return self.reply(200, agent_post(path, json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')))
@@ -378,4 +418,8 @@ if __name__ == '__main__':
     port = int(args[0]) if args else 8766
     if lan: LAN_TOKEN = lan_token()
     http = Server(('0.0.0.0' if lan else '127.0.0.1', port), partial(Handler, directory=str(ROOT)))
-    print(f'http://127.0.0.1:{http.server_port}'+(' (also on the local network: agent API only, token in agent-config.local.json visionToken)' if lan else ''), flush=True); http.serve_forever()
+    print(f'http://127.0.0.1:{http.server_port}'+(' (also on the local network: agent API only, token in agent-config.local.json visionToken)' if lan else ''), flush=True); 
+    import atexit, signal; atexit.register(stop_bridges)
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))   # stopped (kill): the bridges it started stop with it
+    try: http.serve_forever()
+    finally: stop_bridges()

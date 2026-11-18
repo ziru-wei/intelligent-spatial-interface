@@ -1,6 +1,7 @@
 // ModOS stage 3b: the questions a MOD's selectors turn into, and what the answers select. Questions are generated from the selector's
 // kind and the type of data it picks from, never written per MOD, so a new MOD made of known parts needs no code here.
-//   pick-many over a timeseries  → one score per date and one per time of day (the old jev_UI_dec, unchanged in substance)
+//   pick-many over a timeseries  → one score per date and one per time of day (the old jev_UI_dec, unchanged in substance), and one
+//                                  choose of the entry that answers the question (its focus: where a Playback or Date Picker opens)
 //   pick-one  over item-location → one choose among the available items, plus the selector's extra outcomes
 //   pick-one  from an allowed list → one choose among the allowed entries, by their descriptions
 //   enum                          → one choose among the values
@@ -8,16 +9,38 @@ import {choose,score} from './decision.mjs';
 
 const TIME=e=>e.local_time||e.time;
 
+// The days a question asks about come as stretches of consecutive days ("this weekend", "today and tomorrow"). Of the days scored
+// .5 or more, a stretch apart from the strongest one is kept only when it scores nearly as well (STRETCH_GAP): a stray day (today, out
+// of habit, beside "this weekend") is dropped, two days asked for together ("today or Saturday?") stay.
+const STRETCH_GAP=.2,DAY=86400000;
+export function stretches(dates,scoreOf){
+  const on=dates.map((d,i)=>({d,s:scoreOf(i)})).filter(x=>x.s>=.5),runs=[];
+  for(const x of on){const last=runs.at(-1)?.at(-1);if(last&&Date.parse(x.d)-Date.parse(last.d)===DAY)runs.at(-1).push(x);else runs.push([x]);}
+  const best=Math.max(...runs.map(r=>r.reduce((t,x)=>t+x.s,0)/r.length));
+  return new Set(runs.filter(r=>Math.max(...r.map(x=>x.s))>=best-STRETCH_GAP).flat().map(x=>x.d));
+}
+
 function timeseries(name,sel,body){
   const rows=body.data?.forecast||[];
   const dates=[...new Set(rows.map(e=>e.date))].sort();
   const slots=[...new Set(rows.flatMap(e=>(e.samples?.length?e.samples:[e]).map(TIME)))].sort();
   const questions={};
-  dates.forEach((date,i)=>questions[`${name}_date_${i}`]=score(`Does user_question ask about ${date}, directly or for a related calendar event? Resolve relative dates using time.date. Next week means the next seven days; this weekend means the coming Saturday and Sunday. With no date specified use today. Do not substitute an available date for an unavailable requested date.`));
+  // a date as people say it: its weekday and how far from today (a model does not work out that 2026-11-21 is this Saturday)
+  const WEEKDAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const said=date=>{const off=rows.find(e=>e.date===date)?.day_offset,wd=WEEKDAYS[new Date(date+'T12:00:00Z').getUTCDay()];
+    const rel=off==null?'':off===0?', today':off===1?', tomorrow':off===-1?', yesterday':off>1?`, in ${off} days`:`, ${-off} days ago`;return `${wd} ${date}${rel}`;};
+  dates.forEach((date,i)=>questions[`${name}_date_${i}`]=score(`Does user_question ask about ${said(date)}, directly or for a related calendar event? Resolve relative dates using time.date. Next week means the next seven days; this weekend means the coming Saturday and Sunday, not the days before them. Only when user_question names no day or time span at all does it ask about today. Do not substitute an available date for an unavailable requested date.`));
   slots.forEach((t,i)=>questions[`${name}_slot_${i}`]=score(`Is ${t} within the time of day user_question asks about? Morning=before 12:00, afternoon=12:00-17:59, evening/tonight=18:00 onward. Whole days include every time. An exact time selects the nearest available one; a bounded range includes only times within it. Available times: ${slots.join(', ')}.`));
-  const data={forecast:rows.map(({samples,...e})=>({id:e.id,date:e.date,period:e.period,time:e.time,summary:e.summary,temp_c:e.temp_c}))};
+  // the focus: the one entry that answers the question (when asked whether something happens, the entry where it happens); the selected
+  // entries then open there instead of at their start. A choice among the entries as the model sees them (data below), in the same
+  // call whatever is selected; within an entry, its moment of the same summary (else its first). Not asked over more entries than a
+  // choice holds.
+  const focus=`${name}_focus`,line=e=>[said(e.date),e.period||TIME(e),e.summary].filter(Boolean).join(' · ');
+  if(rows.length>1&&rows.length<255)questions[focus]=choose('Which one entry answers user_question most directly: where what it asks about happens, or the time it names? Choose none when no single entry answers it better than the others.',
+    {none:'no single entry',...Object.fromEntries(rows.map((e,i)=>[`e${i}`,line(e)]))});
+  const data={forecast:rows.map(({samples,...e})=>({id:e.id,date:e.date,day:said(e.date),period:e.period,time:e.time,summary:e.summary,temp_c:e.temp_c}))};
   return {questions,data,interpret(a){
-    const selDates=new Set(dates.filter((_,i)=>a[`${name}_date_${i}`].score>=.5)),selSlots=new Set(slots.filter((_,i)=>a[`${name}_slot_${i}`].score>=.5));
+    const selDates=stretches(dates,i=>a[`${name}_date_${i}`].score),selSlots=new Set(slots.filter((_,i)=>a[`${name}_slot_${i}`].score>=.5));
     const ids=[];
     for(const row of rows){
       if(!selDates.has(row.date))continue;
@@ -27,7 +50,10 @@ function timeseries(name,sel,body){
     if(!ids.length)return null;
     // derived (primitives.json data-widget.layout): the rule, not a model, picks the layout from what was selected.
     const layout=selDates.size>1?'weather-day-buttons':selSlots.size===1?'weather-single':'weather-timeline';
-    return {kind:'timeseries',ids,layout,dates:[...selDates],times:[...selSlots]};
+    // the focus counts only when it is one of the selected moments
+    const n=a[focus]?.choice?.match(/^e(\d+)$/),row=n&&rows[Number(n[1])],moments=row?(row.samples?.length?row.samples:[row]):[];
+    const pool=row&&ids.includes(row.id)?moments:moments.filter(m=>ids.includes(m.id)),f=pool.find(m=>m.summary&&m.summary===row.summary)||pool[0],inside=!!f;
+    return {kind:'timeseries',ids,layout,dates:[...selDates],times:[...selSlots],...(inside?{focus:f.id}:{})};
   }};
 }
 
@@ -67,7 +93,7 @@ export const activeSelectors=mod=>Object.entries(mod.selectors||{}).filter(([nam
 function fromContext(name,sel,ctx){
   const items=(ctx.context||[]).filter(i=>(!sel.type||i.type===sel.type)&&!i.about.every(a=>a.startsWith('user:')||a.startsWith('feed:')));
   const entityOf=i=>i.about[0],nameOf=i=>ctx.view?.nameOf(entityOf(i))||entityOf(i);
-  // pick-one over things (Delegate's attachment): which of the things around, by their information
+  // pick-one over things (Send's attachment): which of the things around, by their information
   if(sel.kind==='pick-one'&&sel.type!=='device-state'){
     // things only (not places), the one the user points at said so: "send this" means it
     const things=items.filter(it=>ctx.view?.entities.get(entityOf(it))?.kind!=='place'),pointed=ctx.view?.candidate;
@@ -76,8 +102,9 @@ function fromContext(name,sel,ctx){
     const pi=items.findIndex(it=>entityOf(it)===pointed);
     return {questions:{[name]:choose('Which of these things does user_question mean (what to send, share or act on)? "This", "it" or "the poster" while pointing means the thing the user is pointing at.',options)},data:null,
       interpret(a){let c=a[name].choice;
-        // a near tie with "not listed" goes to the thing pointed at
-        if(c==='none'&&pi>=0&&(a[name].probabilities?.[`t${pi}`]??0)>=.3)c=`t${pi}`;
+        // "this", "that" or "it" while pointing is the thing pointed at, by rule; otherwise a near tie with "not listed" goes to it
+        const deictic=/\b(this|that|it|these|those)\b/i.test(ctx.question||'');
+        if(c==='none'&&pi>=0&&(deictic||(a[name].probabilities?.[`t${pi}`]??0)>=.3))c=`t${pi}`;
         if(c==='none')return null;const it=items[Number(c.slice(1))];return {kind:'thing',entity:entityOf(it),item:it.id,label:nameOf(it)};}};
   }
   if(sel.kind==='pick-one'){
@@ -115,6 +142,17 @@ export function stateText(item){
 }
 
 // pick-one over the user's contacts: to whom
+// pick-many over contacts (Send's recipients): everyone the request names (first or full name, by rule), and one score per person for
+// those meant but not named ("my advisor"): everyone at .5 or above; with no one named or scored that high, the best one at .3 or above.
+const named=(p,q)=>[p.name,String(p.name).split(/\s+/)[0]].some(n=>n&&n.length>1&&new RegExp(`\\b${n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'i').test(q));
+function contacts(name,body,question=''){
+  const people=body.data,questions=Object.fromEntries(people.map((p,i)=>[`${name}_${i}`,score(`Does user_question want to send or share it with ${p.name} (${p.role})?`)]));
+  return {questions,data:null,interpret(a){const s=people.map((p,i)=>[p,a[`${name}_${i}`]?.score??0]);let on=s.filter(([,v])=>v>=.5);
+    on=[...new Set([...people.filter(p=>named(p,question)).map(p=>s.find(([x])=>x===p)),...on])];
+    if(!on.length){const best=[...s].sort((x,y)=>y[1]-x[1])[0];if(best&&best[1]>=.3)on=[best];}
+    on.sort((x,y)=>people.indexOf(x[0])-people.indexOf(y[0]));
+    return on.length?{kind:'contacts',people:on.map(([p])=>({id:p.id,name:p.name,email:p.email}))}:null;}};
+}
 function contact(name,body){
   const people=body.data,options={nobody:'Nobody named or meant'};people.forEach((p,i)=>options[`c${i}`]=`${p.name} (${p.role})`);
   return {questions:{[name]:choose('Who does user_question want to send or share it with?',options)},data:null,
@@ -143,6 +181,7 @@ export function selectorQuestions(mod,bodies,ctx){
     if(body.type==='timeseries'&&sel.kind==='pick-many')return [name,timeseries(name,sel,body)];
     if(body.type==='item-location'&&sel.kind==='pick-one')return [name,itemLocation(name,sel,body,ctx)];
     if(Array.isArray(body.data)&&body.data[0]?.email&&sel.kind==='pick-one')return [name,contact(name,body)];
+    if(Array.isArray(body.data)&&body.data[0]?.email&&sel.kind==='pick-many')return [name,contacts(name,body,ctx.question)];
     throw Error(`MOD ${mod.id}: selector ${name} (${sel.kind} over ${body.type}) is not supported yet.`);
   });
   return {

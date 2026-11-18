@@ -1,13 +1,16 @@
 // What people adjust in the editor that is not a MOD (modos-system-design.md 4.4, 5.4): the UI library's own parameters and the replay.
 // A MOD's choices (on/off, its representation, how long its text stays, whether the sky is locked) are MOD
 // settings, tailored in the MODs tab and carried by each part (`mod.settings`; read with modSetting); nothing here overrides them.
-//   text    Stability: how long text stays put before it moves to a better spot
+//   text    Stability: how long text stays put before it moves to a better spot; Anchor dialogue bubble: the bubble fixed above
+//           its thing, turned to the user, instead of moving to where it fits
 //   replay  Resume on first response: the replay goes on as soon as the first part of an answer shows
 // Text's lettering and writing stay in their own store (src/app.mjs textBehavior). No dependencies.
 
 export const SETTINGS={
   text:{stability:{label:'Stability',kind:'range',default:0,min:0,max:1,step:.01,ends:['Moves freely','Stays put'],
-    help:'How long text stays where it is before moving to a better spot when it is hidden or hard to read.'}},
+    help:'How long text stays where it is before moving to a better spot when it is hidden or hard to read.'},
+    bubbleAnchored:{label:'Anchor dialogue bubble',kind:'bool',default:false,
+      help:'On: an Object-centric Dialogue bubble stays just above the thing that speaks and keeps turning to the user. Off: it moves to where it fits in view (onto the thing\'s side, or held at the view\'s edge).'}},
   replay:{resumeOnResponse:{label:'Resume on first part',kind:'bool',default:false,
     help:'In a replay, go on as soon as the first part of an answer shows, without waiting for the text and the reading pause.'}},
 };
@@ -26,14 +29,15 @@ export function save(settings,store=globalThis.localStorage){try{store.setItem(K
 
 /** A MOD setting a part carries (modos/compose.mjs `mod.settings`): kind is the part's kind in a merged answer (findmy, highlight, ego,
  *  weather, text), so each keeps its own MOD's. */
+import {currentMeta,currentText} from './current-mods.mjs';
 export function modSetting(r,kind,name){
-  const m=kind==='text'?r?.text_mod:r?.mods?.[kind]||(r?.[kind]?r?.mod:null);
+  const m=kind==='text'?currentText(r).text_mod:currentMeta(r?.mods?.[kind]||(r?.[kind]?r?.mod:null));
   return m?.settings?.[name]??null;
 }
 
-/** What placement and showing read for an answer: the library's stability, and whether its text goes after reading (its MOD's
+/** What placement and showing read for an answer: the library's stability and bubble anchoring, and whether its text goes after reading (its MOD's
  *  situated-text `duration: 5s`). */
-export const answerSettings=(settings,r)=>({stability:settings.text.stability,autoHide:modSetting(r,'text','duration')==='5s'});
+export const answerSettings=(settings,r)=>({stability:settings.text.stability,bubbleAnchored:settings.text.bubbleAnchored,autoHide:modSetting(r,'text','duration')==='5s'});
 
 /** Whether the replay goes on at an answer's first part. */
 export const resumeOnFirstResponse=settings=>!!settings.replay.resumeOnResponse;

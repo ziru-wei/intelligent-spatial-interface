@@ -4,10 +4,10 @@
 <title>ModOS</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* The project's main page: Demo (ModOS itself, live: the editor served by system/editor), Gallery (the recordings) and Document
+/* The project's main page: Demo (ModOS itself, live: the editor served by system/editor), Gallery (examples asked in ModOS: context/gallery) and Document
    (Spatial vocabulary; Memory, Walkthrough… to come). Light; neutral greys only (cyan belongs to the spatial UI, not to this page). Helvetica
    light; bold only where the text matters most. Document: centred, one row per group; Gallery: a masonry of MODs. */
-:root{--bg:#fbfbfa;--card:#f0f0ee;--card-hi:#e7e7e4;--line:rgba(0,0,0,.08);--fg:#16171a;--muted:#5f636a;--faint:#9a9ea5;--rule:rgba(0,0,0,.16);
+:root{--q-hover:#24707a;--bg:#fbfbfa;--card:#f0f0ee;--card-hi:#e7e7e4;--line:rgba(0,0,0,.08);--fg:#16171a;--muted:#5f636a;--faint:#9a9ea5;--rule:rgba(0,0,0,.16);
   --pill:rgba(255,255,255,.97);--on:#16171a;--on-ink:#fbfbfa;--font:"Helvetica Neue",Helvetica,Arial,sans-serif;color-scheme:light}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:300 15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
@@ -29,7 +29,7 @@ main{padding:16px 0 120px}
 .group-head{display:flex;flex-direction:column;align-items:center;margin-bottom:14px}
 .group-head h2{font:700 24px/1.15 var(--font);margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
 .group-head h2 svg{width:22px;height:22px;flex:none}
-/* the rows inside a group (Controls: Adjust, Explore, Interactive): their names in a thin capsule */
+/* rows inside a group: their names in a thin capsule */
 .row-head h3{display:inline-block;border:1px solid var(--rule);border-radius:999px;padding:4px 14px;margin-bottom:4px}
 /* Text and Assets have few parts: show them larger */
 .cat-text .part,.cat-assets .part{width:min(360px,82vw)}
@@ -50,9 +50,9 @@ main{padding:16px 0 120px}
 .mod h2 .n{font-weight:300;color:var(--faint);font-size:13px}
 .clip{position:relative}
 .clip::before{content:"";position:absolute;left:-18px;top:.75em;width:12px;height:1px;background:var(--rule)}
-.clip .q{display:block;font:300 15px/1.35 var(--font);color:var(--fg);margin:0 0 7px}
+.clip .q{display:block;font:300 15px/1.35 var(--font);color:var(--fg);margin:0 0 7px;transition:color .2s}.clip:hover .q,.clip:focus-visible .q{color:var(--q-hover)}
 .cam{position:relative;display:block;aspect-ratio:4/3;overflow:hidden;border-radius:12px;background:#000}
-.cam img,.cam video{position:absolute;left:0;top:0;height:100%;width:133.6%;max-width:none;object-fit:cover;object-position:left center;display:block}
+.cam img{position:absolute;left:0;top:0;height:100%;width:100%;object-fit:cover;display:block}
 /* quiet until looked at: every MOD dim; the one under the pointer brighter; the clip under it whole, and playing */
 @media (hover:hover){
   .mod>*{opacity:.42;transition:opacity .2s}
@@ -61,7 +61,14 @@ main{padding:16px 0 120px}
 }
 /* cards */
 .part{width:min(220px,70vw);margin:0}
-.part img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000;cursor:zoom-in}
+.part .scene{display:block;width:100%;aspect-ratio:4/3;border:0;padding:0;border-radius:10px;background:transparent;cursor:grab;box-shadow:inset 0 0 0 1px var(--line)}
+.part .scene:hover{box-shadow:inset 0 0 0 1px var(--rule)}
+.part .scene.off{background:var(--card);color:var(--faint);font:300 12px/1.4 var(--font);cursor:default}
+/* a part opened: its scene, larger, to walk around (drag) and use */
+#part{max-width:none;width:min(1280px,94vw);height:min(80vh,70vw)}
+#part .view{width:100%;height:100%;border-radius:14px;overflow:hidden;background:#3b3d42}
+#part figcaption{position:absolute;left:16px;bottom:14px;color:#f1f2f4;font:300 14px/1.4 var(--font);pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+#part figcaption b{display:block;font-size:17px}
 .part figcaption{padding:7px 2px 0}
 .part b{display:block;font-size:15px;margin-bottom:3px}
 .part p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}
@@ -80,7 +87,10 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
 /* Demo frames the editor, which stays dark: its own page */
 dialog{border:0;padding:0;background:transparent;max-width:min(1280px,94vw,150vh);width:100%}
 dialog::backdrop{background:rgba(5,6,8,.92)}
-dialog video,dialog img{display:block;width:100%;border-radius:14px;background:#000}
+dialog img{display:block;width:100%;border-radius:14px;background:#000}
+#example{max-width:none;width:94vw;height:90vh}
+#example iframe{display:block;width:100%;height:100%;border:0;border-radius:14px;background:#0b0c0e}
+#example p{color:#ddd;font:300 15px/1.5 var(--font);padding:24px}
 .close{position:absolute;top:12px;right:12px;font:300 13px var(--font);color:#f1f2f4;background:rgba(20,22,26,.8);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}
 /* Demo is ModOS itself, the whole window, in its own dark */
 body.dark{background:#111111}
@@ -106,21 +116,27 @@ body.dark .switch button[aria-pressed="true"]{background:#f1f2f4;color:#111111}
 <div class="bar">
   <nav class="switch" id="nav" aria-label="Section"><button type="button" data-tab="demo" aria-pressed="true">Demo</button><button type="button" data-tab="gallery" aria-pressed="false">Gallery</button><button type="button" data-tab="vocabulary" aria-pressed="false">Vocabulary</button><button type="button" data-tab="about" aria-pressed="false">About</button></nav>
 </div>
-<dialog id="dlg" aria-label="Recording"><video id="vid" controls playsinline preload="metadata"></video><button class="close" type="button" data-close>Close</button></dialog>
-<dialog id="zoom" aria-label="Image"><img alt=""><button class="close" type="button" data-close>Close</button></dialog>
+<dialog id="example" aria-label="Example"><button class="close" type="button" data-close>Close</button></dialog>
+<dialog id="part" aria-label="Part"><div class="view"></div><figcaption></figcaption><button class="close" type="button" data-close>Close</button></dialog>
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
-<script src="context/recordings/manifest.js"></script>
+<!-- the Vocabulary is the system's own spatial UI library, live (system/editor/src/vocabulary.mjs): served with this page (python3 -m http.server) -->
+<script type="importmap">{"imports":{"three":"./system/editor/node_modules/three/build/three.module.js","three/addons/":"./system/editor/node_modules/three/examples/jsm/","three-mesh-bvh":"./system/editor/node_modules/three-mesh-bvh/build/index.module.js","harfbuzzjs":"./system/editor/node_modules/harfbuzzjs/dist/index.mjs"}}</script>
+<script type="module">
+import {createVocabulary,openVocabulary,VOCABULARY} from './system/editor/src/vocabulary.mjs';
+window.VOCAB={view:createVocabulary(),open:openVocabulary,parts:VOCABULARY};dispatchEvent(new Event('vocabulary-ready'));
+</script>
+<script src="context/gallery/examples.js"></script>
 <script>
-const REC='context/recordings/';   // the recordings and their manifest (system/editor/demos/record.mjs writes them)
-const MODS=["Weather", "FindMy", "WorldInfo", "LabInfo", "IoTControl", "ObjectStatus", "Wayfinding", "Delegate", "Agenda", "BookCompanion", "StepGuide", "LiveCoach", "Reminder"];
+const GAL='context/gallery/';   // the Gallery's examples and their stills (system/editor/scripts/gallery.py writes them)
+const MODS=["Weather", "FindMy", "WorldInfo", "LabInfo", "IoTControl", "ObjectStatus", "Wayfinding", "Send", "Agenda", "BookCompanion", "StepGuide", "LiveCoach", "Reminder"];
 // Spatial vocabulary (context/docs/modos-system-design.md 4.4): category → row → part
-const CATS=[{"id": "cues", "name": "Cues", "def": "Drawn on the room itself.", "rows": [{"name": "Mark", "def": "highlighting a physical entity", "items": [{"img": "breathingBox", "name": "Breathing Box", "use": "Draws the eye to a thing.", "eg": "FindMy"}, {"img": "cornerBrackets", "name": "Corner Brackets", "use": "Marks a thing without covering its content.", "eg": "WorldInfo"}, {"img": "footprintRing", "name": "Footprint Ring", "use": "Shows which thing is being operated.", "eg": "IoTControl"}, {"img": "floorArea", "name": "Floor Area", "use": "Shows a room or area; a place has no box.", "eg": "LabInfo"}, {"img": "doorwayGlow", "name": "Doorway Glow", "use": "Shows where to enter another room.", "eg": "Wayfinding"}]}, {"name": "Guidance", "def": "leading to somewhere", "items": [{"img": "arrowAhead", "name": "Arrow Ahead", "use": "Turns you toward a target in this room.", "eg": "FindMy"}, {"img": "floorPath", "name": "Floor Path", "use": "Leads along a route to another room.", "eg": "Wayfinding"}, {"img": "textArrow", "name": "Text Arrow", "use": "Links text to the thing it is about.", "eg": "WorldInfo"}]}, {"name": "Visualization", "def": "visualizing information", "items": [{"img": "haloDial", "name": "Gauge", "use": "How much: a level with a range.", "eg": "IoTControl"}, {"img": "progressRail", "name": "Progress Rail", "use": "A task’s progress and time left.", "eg": "IoTControl"}, {"img": "pinnedTags", "name": "Pinned Tags", "use": "Several readings of one thing.", "eg": "IoTControl"}, {"img": "statusPulse", "name": "Status Pulse", "use": "A state, and why.", "eg": "ObjectStatus"}, {"img": "cardStack", "name": "Card Stack", "use": "What waits in line.", "eg": "IoTControl"}]}, {"name": "Controls", "def": "what the user acts on", "rows": [{"name": "Adjust", "def": "changes the thing; sent", "items": [{"img": "edgeBar", "name": "Slider", "use": "Sets a level; sent on release.", "eg": "IoTControl"}, {"img": "edgeTabs", "name": "Edge Tabs", "use": "Picks one of a few options.", "eg": "IoTControl"}, {"img": "iconButton", "name": "Icon Button", "use": "Switches or triggers in one press.", "eg": "IoTControl"}, {"img": "textButton", "name": "Text Button", "use": "A command no preset fits.", "eg": "IoTControl"}]}, {"name": "Explore", "def": "moves through information", "items": [{"img": "datePicker", "name": "Date Picker", "use": "Moves between days.", "eg": "Weather"}, {"img": "playback", "name": "Playback", "use": "Plays through time, or scrubs.", "eg": "Weather"}]}, {"name": "Interactive", "def": "reaches a person", "items": [{"img": "contactChip", "name": "Contact Chip", "use": "Who it goes to.", "eg": "Delegate"}, {"img": "textInput", "name": "Text Input", "use": "What is said; tap to edit.", "eg": "Delegate"}, {"img": "tetherSend", "name": "Tether Send", "use": "What goes, and to whom.", "eg": "Delegate"}, {"img": "photoCapture", "name": "Photo Capture", "use": "A photo of the thing, sent along.", "eg": "Delegate"}]}]}]}, {"id": "text", "name": "Text", "def": "How the words appear.", "rows": [{"name": "", "def": "one per answer, by rule", "items": [{"img": "embeddedText", "name": "Embedded Text", "use": "Written on a surface that reads well.", "eg": "Weather"}, {"img": "floatingText", "name": "Floating Text", "use": "Beside its anchor when no surface fits.", "eg": "IoTControl"}, {"img": "dialogue", "name": "Object-centric Dialogue", "use": "The thing answers, when asked as “you”.", "eg": "WorldInfo"}]}]}, {"id": "assets", "name": "Assets", "def": "A MOD’s own; not shared.", "rows": [{"name": "", "def": "", "items": [{"img": "ambientEffect", "name": "Ambient Asset", "use": "The data as part of the room: sky, rain, fog.", "eg": "Weather"}, {"img": "asset", "name": "Scene Asset", "use": "A prepared model or animation, in place.", "eg": "LabInfo"}]}]}];
+const CATS=[{"id": "cues", "name": "Cues", "def": "Drawn on the room itself.", "rows": [{"name": "Mark", "def": "highlighting a physical entity", "items": [{"img": "breathingBox", "name": "Breathing Box", "use": "Draws the eye to a thing.", "eg": "FindMy"}, {"img": "cornerBrackets", "name": "Corner Brackets", "use": "Marks a thing without covering its content.", "eg": "WorldInfo"}, {"img": "footprintRing", "name": "Footprint Ring", "use": "Shows which thing is being operated.", "eg": "IoTControl"}, {"img": "floorArea", "name": "Floor Area", "use": "Shows a room or area; a place has no box.", "eg": "LabInfo"}, {"img": "doorwayGlow", "name": "Doorway Glow", "use": "Shows where to enter another room.", "eg": "Wayfinding"}]}, {"name": "Guidance", "def": "leading to somewhere", "items": [{"img": "arrowAhead", "name": "Arrow Ahead", "use": "Turns you toward a target in this room.", "eg": "FindMy"}, {"img": "floorPath", "name": "Floor Path", "use": "Leads along a route to another room.", "eg": "Wayfinding"}, {"img": "textArrow", "name": "Text Arrow", "use": "Links text to the thing it is about.", "eg": "WorldInfo"}]}, {"name": "Visualization", "def": "visualizing information", "items": [{"img": "haloDial", "name": "Gauge", "use": "How much: a level with a range.", "eg": "IoTControl"}, {"img": "progressRail", "name": "Progress Rail", "use": "A task’s progress and time left.", "eg": "IoTControl"}, {"img": "pinnedTags", "name": "Pinned Tags", "use": "Several readings of one thing.", "eg": "IoTControl"}, {"img": "statusPulse", "name": "Status Pulse", "use": "A state, and why.", "eg": "ObjectStatus"}, {"img": "cardStack", "name": "Card Stack", "use": "What waits in line.", "eg": "IoTControl"}]}, {"name": "Controls", "def": "what the user acts on: sent on change, on Send, or never", "items": [{"img": "edgeBar", "name": "Slider", "use": "Sets a level; sent on release."}, {"img": "choice", "name": "Choice", "use": "Picks one option: a few in a row, more in a dropdown."}, {"img": "iconButton", "name": "Icon Button", "use": "Does one thing in one press."}, {"img": "textButton", "name": "Text Button", "use": "A command no preset fits."}, {"img": "textInput", "name": "Text Input", "use": "Text to edit before it is sent."}, {"img": "arPhoto", "name": "AR Photo", "use": "The photo about to be sent."}, {"img": "datePicker", "name": "Date Picker", "use": "Moves between days; nothing sent."}, {"img": "playback", "name": "Playback", "use": "Plays through time; nothing sent."}]}]}, {"id": "text", "name": "Text", "def": "How the words appear.", "rows": [{"name": "", "def": "one per answer, by rule", "items": [{"img": "embeddedText", "name": "Embedded Text", "use": "Written on a surface that reads well.", "eg": "Weather"}, {"img": "floatingText", "name": "Floating Text", "use": "Beside its anchor when no surface fits.", "eg": "IoTControl"}, {"img": "dialogue", "name": "Object-centric Dialogue", "use": "The thing answers, when asked as “you”.", "eg": "WorldInfo"}]}]}, {"id": "assets", "name": "Assets", "def": "A MOD’s own; not shared.", "rows": [{"name": "", "def": "", "items": [{"img": "ambientEffect", "name": "Ambient Asset", "use": "The data as part of the room: sky, rain, fog.", "eg": "Weather"}, {"img": "asset", "name": "Scene Asset", "use": "A prepared model or animation, in place.", "eg": "LabInfo"}]}]}];
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $=id=>document.getElementById(id);
-// A part: its picture, name and one line.
-const part=i=>`<figure class="part"><img src="${REC}cues/${esc(i.img)}.jpg" alt="${esc(i.name)} in the room" loading="lazy" data-zoom><figcaption><b>${esc(i.name)}</b><p>${esc(i.use)}</p></figcaption></figure>`;
-// A group of a category (Mark, Guidance, Visualization, Controls…): a large heading, then its parts, or its own rows (Controls: Adjust,
-// Explore, Interactive) under smaller headings.
+// A part: its scene (live: the library's own part in an example room, drawn by system/editor/src/vocabulary.mjs), name and one line.
+const part=i=>`<figure class="part"><button class="scene" type="button" data-part="${esc(i.img)}" aria-label="Open ${esc(i.name)}"></button><figcaption><b>${esc(i.name)}</b><p>${esc(i.use)}</p></figcaption></figure>`;
+// A group of a category (Mark, Guidance, Visualization, Controls): a large heading, then its parts, or its own rows under smaller
+// headings.
 const GROUP_ICON={Mark:'scan',Guidance:'navigation',Visualization:'gauge',Controls:'sliders-horizontal'};
 const gh=g=>`<h2>${GROUP_ICON[g.name]?`<i data-lucide="${GROUP_ICON[g.name]}" aria-hidden="true"></i>`:''}${esc(g.name)}</h2>`;
 const group=g=>g.rows?`<section class="group"><div class="group-head pad">${gh(g)}${g.def?`<p>${esc(g.def)}</p>`:''}</div>${g.rows.map(r=>row(r.name,r.def,r.items.map(part))).join('')}</section>`
@@ -128,7 +144,17 @@ const group=g=>g.rows?`<section class="group"><div class="group-head pad">${gh(g
   :row('',g.def,g.items.map(part));
 // One row: its name and what it is for, then its parts side by side.
 const row=(name,def,cards)=>`<section class="row"><div class="row-head pad">${name?`<h3>${esc(name)}</h3>`:''}${def?`<p>${esc(def)}</p>`:''}</div><div class="strip pad">${cards.join('')}</div></section>`;
-function wireRows(root){for(const i of root.querySelectorAll('[data-zoom]'))i.onclick=()=>{$('zoom').querySelector('img').src=i.src;$('zoom').showModal();};}
+// The scenes: drawn live once the library has loaded (a page opened as a file cannot load it: then a note in each).
+let closePart=null;
+function wireRows(root){
+  const V=window.VOCAB;
+  for(const b of root.querySelectorAll('[data-part]')){const id=b.dataset.part,name=b.closest('.part').querySelector('b').textContent;
+    if(!V||!V.parts.includes(id)){b.classList.add('off');b.textContent=location.protocol==='file:'?'Serve this folder to see it live (python3 -m http.server).':'Loading…';continue;}
+    b.classList.remove('off');b.textContent='';V.view.tile(b,id);
+    b.onclick=()=>{const d=$('part');d.querySelector('figcaption').innerHTML=`<b>${esc(name)}</b>${esc(b.closest('.part').querySelector('p').textContent)}`;d.showModal();closePart=V.open(d.querySelector('.view'),id);};}
+}
+$('part').addEventListener('close',()=>{closePart?.();closePart=null;});
+addEventListener('vocabulary-ready',()=>{if(tab==='vocabulary')render();});
 // Sections with tabs at their top (Vocabulary: its categories; About: Memory, Decisions…): a tab is an id, a name and what it renders.
 const tabsBar=(sec,list,on)=>`<nav class="tabs pad" role="tablist" aria-label="${sec}">${list.map(x=>`<button type="button" role="tab" data-sub="${x.id}" aria-selected="${x.id===on}">${esc(x.name)}</button>`).join('')}</nav>`;
 const SUBS={
@@ -156,24 +182,32 @@ async function showDemo(){
   try{await fetch(SYSTEM,{mode:'no-cors',cache:'no-store'});$('demo').innerHTML=`<iframe src="${SYSTEM}?session=${encodeURIComponent(SESSION)}" title="ModOS" allow="autoplay; fullscreen"></iframe>`;}
   catch{demoShown=false;$('demo').innerHTML=`<p>ModOS is not running. Start it with <code>cd system/editor && npm start</code>, then open Demo again.</p>`;}
 }
-// Gallery: a masonry of MODs (Lucide icon, name, how many; a line on the left to their clips). A clip is its question above the camera
-// view (the card hides the pipeline); under the pointer it plays (muted); opened, the whole recording plays, pipeline included.
+// Gallery: a masonry of MODs (Lucide icon, name, how many; a line on the left to their examples). An example is a question asked in
+// ModOS (system/editor/scripts/gallery.py): its question (or questions, asked one after another) above a still of the camera view at its answer. Opened, ModOS shows it live in
+// its example view (the camera, the player, the ask box and the pipeline): replayed from where it was asked, and it can be asked again,
+// or deleted and asked anew; the Gallery follows (demos/gallery.mjs re-asks them all as a queue).
 const ICON={Weather:'cloud-sun',FindMy:'search',WorldInfo:'info',LabInfo:'flask-conical',IoTControl:'lightbulb',ObjectStatus:'activity',
-  Wayfinding:'signpost',Delegate:'send',Agenda:'calendar',BookCompanion:'book-open',StepGuide:'list-ordered',LiveCoach:'person-standing',Reminder:'bell'};
-function renderClips(clips){
-  $('gallery').innerHTML=`<div class="masonry pad">${MODS.filter(m=>clips.some(c=>c.mod===m)).map(m=>{const own=clips.filter(c=>c.mod===m);
-    return `<section class="mod"><h2><i data-lucide="${ICON[m]||'box'}" aria-hidden="true"></i>${esc(m)}<span class="n">${own.length}</span></h2>${own.map(c=>`<button class="clip" type="button" data-clip="${esc(c.name)}">
-      <span class="q">“${esc(c.question)}”</span><span class="cam"><img src="${REC}${esc(c.poster)}" alt="" loading="lazy"></span></button>`).join('')}</section>`;}).join('')}</div>`;
+  Wayfinding:'signpost',Send:'send',Agenda:'calendar',BookCompanion:'book-open',StepGuide:'list-ordered',LiveCoach:'person-standing',Reminder:'bell'};
+let examples=[];
+function renderExamples(){
+  if(!examples.length){$('gallery').innerHTML='<p class="pad">No examples yet. Ask them with <code>npm run gallery</code> in system/editor.</p>';return;}
+  $('gallery').innerHTML=`<div class="masonry pad">${MODS.filter(m=>examples.some(c=>c.mod===m)).map(m=>{const own=examples.filter(c=>c.mod===m);
+    return `<section class="mod"><h2><i data-lucide="${ICON[m]||'box'}" aria-hidden="true"></i>${esc(m)}<span class="n">${own.length}</span></h2>${own.map(c=>`<button class="clip" type="button" data-example="${esc(c.name)}">
+      ${(c.questions||[c.question]).map(q=>`<span class="q">“${esc(q)}”</span>`).join('')}<span class="cam">${c.still?`<img src="${GAL}${esc(c.still)}?v=${c.still_at}" alt="" loading="lazy">`:''}</span></button>`).join('')}</section>`;}).join('')}</div>`;
   try{window.lucide?.createIcons({attrs:{'stroke-width':1.75}});}catch{}
-  for(const b of document.querySelectorAll('[data-clip]')){const c=clips.find(x=>x.name===b.dataset.clip),cam=b.querySelector('.cam');let v=null;
-    b.onclick=()=>{const d=$('vid');d.src=REC+c.video;d.poster=REC+c.poster;$('dlg').showModal();d.play().catch(()=>{});};
-    if(matchMedia('(hover:hover)').matches){
-      b.addEventListener('mouseenter',()=>{v=document.createElement('video');Object.assign(v,{src:REC+c.video,muted:true,loop:true,playsInline:true,poster:REC+c.poster});cam.append(v);v.play().catch(()=>{});});
-      b.addEventListener('mouseleave',()=>{if(v){v.pause();v.removeAttribute('src');v.load();v.remove();v=null;}});}}
+  for(const b of document.querySelectorAll('[data-example]'))b.onclick=()=>openExample(examples.find(x=>x.name===b.dataset.example));
 }
+async function openExample(c){
+  const d=$('example');for(const x of d.querySelectorAll('iframe,p'))x.remove();
+  try{await fetch(SYSTEM,{mode:'no-cors',cache:'no-store'});
+    d.insertAdjacentHTML('afterbegin',`<iframe src="${SYSTEM}?${new URLSearchParams({session:c.session,conversation:c.conversation,example:c.name})}" title="${esc(c.question)}" allow="autoplay; fullscreen"></iframe>`);}
+  catch{d.insertAdjacentHTML('afterbegin','<p>ModOS is not running. Start it with <code>cd system/editor && npm start</code>, then open the example again.</p>');}
+  d.showModal();
+}
+// After an example was asked again or deleted there, read the examples anew (the editor's server rewrote them).
+async function reloadExamples(){try{examples=(await (await fetch(GAL+'examples.json',{cache:'no-store'})).json()).examples;renderExamples();}catch{}}
+$('example').addEventListener('close',()=>{for(const x of $('example').querySelectorAll('iframe'))x.remove();reloadExamples();});
 for(const d of document.querySelectorAll('dialog'))d.addEventListener('click',e=>{if(e.target===d||e.target.dataset.close!==undefined)d.close();});
-$('dlg').addEventListener('close',()=>{const v=$('vid');v.pause();v.removeAttribute('src');v.load();});
-const load=window.MANIFEST?Promise.resolve(window.MANIFEST):fetch(REC+'manifest.json').then(r=>r.json());
-load.then(m=>renderClips(Object.values(m.clips))).catch(()=>{$('gallery').innerHTML='<p class="pad">The recordings could not be loaded.</p>';});
+examples=window.GALLERY?.examples||[];renderExamples();if(!window.GALLERY)reloadExamples();
 route();
 </script>

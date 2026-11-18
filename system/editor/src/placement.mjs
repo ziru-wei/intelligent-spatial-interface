@@ -1,4 +1,5 @@
 import {partsToDraw} from '../modos/ui-rules.mjs';
+import {currentText} from './current-mods.mjs';
 import * as THREE from 'three';
 import {staticTextPlacement,visibleFraction,surfaceSupports,INFO_OVERFLOW,INFO_OVERHANG} from './text-surfaces.mjs';
 import {placementVisibility} from './placement-stability.mjs';
@@ -202,7 +203,16 @@ function bubblePlacement(response,ctx){
   const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),aspect=response.aspect||.45,eye=camera.position;
   const center=new THREE.Vector3(...t.center),top=center.clone().setY(t.center[1]+t.size[1]/2),yaw=Math.atan2(eye.x-center.x,eye.z-center.z);
   const quaternion=new THREE.Quaternion().setFromAxisAngle(UP,yaw),inView=pose=>textViewMetrics(centeredPose(pose,aspect),camera,viewport,response.textMetrics);
-  const previous=response.previousPose,stability=ctx.getSettings?.(response)?.stability??0,state=response.anchorState||{};
+  const previous=response.previousPose,settings=ctx.getSettings?.(response)||{},stability=settings.stability??0,state=response.anchorState||{};
+  // Anchored (UI library: Anchor dialogue bubble): always just above the thing, sized once for the view where it was asked; it does not
+  // move to fit the view, and it turns to the user every frame (src/agent.mjs orient).
+  if(settings.bubbleAnchored){
+    if(previous?.kind==='bubble'&&previous.anchored&&previous.objectId===response.dialogue.speaker)
+      return {...previous,width:previous.width*(response.bubbleWidthScale||1),reusedSurface:true};
+    const width=viewSizedWidth(top,quaternion,camera,viewport,response.textMetrics,aspect),height=width*aspect;
+    return {position:top.clone().addScaledVector(UP,BUBBLE_GAP+height/2),quaternion,width,align:'center',kind:'bubble',anchored:true,anchor:top.toArray(),
+      tail:top.toArray(),yaw,objectId:response.dialogue.speaker,objectCenter:center.toArray()};
+  }
   if(previous?.kind==='bubble'&&!previous.edge&&previous.objectId===response.dialogue.speaker&&previous.objectCenter&&center.distanceTo(new THREE.Vector3(...previous.objectCenter))<1e-4){
     // Its text set again (streaming): the same type size at the new canvas width (response.bubbleWidthScale, src/agent.mjs).
     const kept=response.bubbleWidthScale&&response.bubbleWidthScale!==1?{...previous,width:previous.width*response.bubbleWidthScale}:previous;
@@ -360,17 +370,34 @@ export function surfaceScore(pose,camera,aspect=1){
 /** Whether the declared text form for this spot is Embedded Text (no declaration: the earlier behaviour, decided by the caller). */
 export const embedsText=(ui,score)=>partsToDraw(ui,{'surface.score':score}).includes('embeddedText');
 
-// Floating Text in front of the user (the anchor `user-view`, or no surface good enough): upright, turned to the user, a little below the
-// eye, view-sized; placed once and kept while at least half of it is in view (then placed again in front of the user, still floating).
+// Floating Text (the text form when no surface scores well enough): fixed to the camera, not to the room. Centred, its bottom edge just
+// above the question's caption (FLOAT_VIEW.gap above the caption's top, ctx.captionTop, in the view's -1..1 height; with no caption,
+// FLOAT_VIEW.bottom: it settles lower once the caption goes), FLOAT_VIEW.distance
+// along the view, view-sized, and leaning back FLOAT_VIEW.lean degrees so it faces the eye a little from below. It grows upward from that
+// edge, so a streaming answer never covers the caption; placed again each frame from the camera, which also re-fits it once the stream
+// completes and its size is known.
+export const FLOAT_VIEW={gap:.03,bottom:-.9,distance:1.1,lean:12};
+// Floating Text takes the widest line length (src/agent.mjs LAYOUT_COLUMNS, canvas px) whose whole panel stays in the view, so it reads in
+// few, long lines; once set it keeps its width while that still fits (no reflow as the stream grows), else it takes the next narrower.
+export const FLOAT_COLUMNS=[1920,1600,1280];
 function floatInView(response,ctx,reason){
-  const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),aspect=response.aspect||.45,previous=response.previousPose;
-  if(previous?.declaredFloat){const m=textViewMetrics(centeredPose(previous,aspect),camera,viewport,response.textMetrics);if(m.inView||(m.inShare??0)>=.5)return {...previous,reusedSurface:true};}
-  const eye=camera.position,f=new THREE.Vector3(0,0,-1).applyQuaternion(camera.getWorldQuaternion(new THREE.Quaternion()));f.y=0;f.normalize();
-  const position=eye.clone().addScaledVector(f,1.1);position.y=eye.y-.08;
-  const quaternion=new THREE.Quaternion().setFromAxisAngle(UP,Math.atan2(eye.x-position.x,eye.z-position.z));
-  const width=viewSizedWidth(position,quaternion,camera,viewport,response.textMetrics,aspect),pose={position,quaternion,width,align:'center',kind:'view-fallback',declaredFloat:true,reason};
-  const metrics=textViewMetrics(centeredPose(pose,aspect),camera,viewport,response.textMetrics);
-  return {...pose,viewMetrics:{...metrics,points:undefined}};
+  const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport();camera.updateMatrixWorld(true);
+  const view=camera.getWorldQuaternion(new THREE.Quaternion()),forward=new THREE.Vector3(0,0,-1).applyQuaternion(view);
+  const cap=ctx.captionTop?.(),bottom=cap==null?FLOAT_VIEW.bottom:cap+FLOAT_VIEW.gap;
+  const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(0,bottom),camera);
+  const position=camera.position.clone().addScaledVector(ray.ray.direction,FLOAT_VIEW.distance/Math.max(.1,ray.ray.direction.dot(forward)));
+  const quaternion=view.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-THREE.MathUtils.degToRad(FLOAT_VIEW.lean)));
+  // the ink (textMetrics.box: where the letters are on the panel), not the panel, is centred: short text set wide stays in the middle
+  const right=new THREE.Vector3(1,0,0).applyQuaternion(quaternion);
+  const at=(aspect,textMetrics,layout)=>{const width=viewSizedWidth(position,quaternion,camera,viewport,textMetrics,aspect),b=textMetrics?.box;
+    // and the ink's bottom (not the panel's padding below it) stands on the anchor
+    const up=new THREE.Vector3(0,1,0).applyQuaternion(quaternion),centre=b?position.clone().addScaledVector(right,-((b.x0+b.x1)/2-.5)*width).addScaledVector(up,-(1-b.y1)*width*aspect):position;
+    const pose={position:centre,quaternion,width,align:'bottom',kind:'view-float',viewFixed:true,declaredFloat:true,reason,...(layout?{layout}:{})};
+    return {...pose,viewMetrics:{...textViewMetrics(centeredPose(pose,aspect),camera,viewport,textMetrics),points:undefined}};};
+  const kept=response.previousPose?.viewFixed?response.previousPose.layout:null;
+  const options=(response.layouts||[]).filter(L=>FLOAT_COLUMNS.includes(L.columns)&&(!kept||L.columns<=kept)).sort((a,b)=>b.columns-a.columns);
+  for(const L of options){const f=L.fit||L,pose=at(f.aspect,f.textMetrics,L.columns);if(pose.viewMetrics.inView)return pose;}
+  return at(response.aspect||.45,response.textMetrics,kept||null);
 }
 
 // Text without a MOD declaration (an answer no MOD hosts) follows the library's default text form: Embedded Text on a surface that
@@ -378,13 +405,15 @@ function floatInView(response,ctx,reason){
 export const DEFAULT_TEXT_UI={fixed:['floatingText'],flexible:[{cue:'embeddedText',when:'surface.score>=0.5',instead_of:'floatingText'}]};
 
 export async function place(response,ctx){
+  // the text form as its MOD declares it now (src/current-mods.mjs), else as when it was answered, else the library's default
+  {const now=currentText(response).text_ui;if(now!==response.text_ui)response={...response,text_ui:now};}
   if(!response.text_ui)response={...response,text_ui:DEFAULT_TEXT_UI};
   // Object-centric Dialogue is the text form the MOD's rule chose: it goes on the thing that speaks, before any info-answer placement.
   const bubble=response.dialogue?.speaker?bubblePlacement(response,ctx):null;if(bubble)return bubble;
   const info=response.info?.key?await infoPlacement(response,ctx):null;if(info)return info;
   // The declaration decides Embedded vs Floating Text for a spot on a surface (an info answer decides it in infoPlacement). Once shown,
-  // the form stays: a float stays a float (placed again in front of the user only once it is mostly out of view); text on a surface
-  // stays while it scores 0.4 or more there (no flicker at 0.5).
+  // the form stays: a float stays a float (fixed to the camera, placed again every frame); text on a surface stays while it scores 0.4
+  // or more there (no flicker at 0.5).
   if(response.previousPose?.declaredFloat)return floatInView(response,ctx,'declared floating');
   const surface=await surfacePlacement(response,ctx);
   const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),score=surfaceScore(surface,camera,viewport.width/viewport.height);

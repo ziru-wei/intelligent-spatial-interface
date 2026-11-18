@@ -8,6 +8,7 @@ import * as cues from './spatial-ui/cues.mjs';
 import {label} from './spatial-ui/kit.mjs';
 import {highlightOf} from './highlight.mjs';
 import {partsToDraw} from '../modos/ui-rules.mjs';
+import {currentMeta,modsRevision} from './current-mods.mjs';
 import {createRouter,along} from './floor-route.mjs';
 
 const LEVEL={neutral:'ok',attention:'attention',warning:'warning'};
@@ -43,7 +44,7 @@ export function createCueHost({getRooms=()=>[],getLayout=()=>null}={}){
       else if(name==='statusPulse')for(const t of h.targets)add(cues.statusPulse(t,{level:LEVEL[t.tone]==='ok'?'ok':LEVEL[t.tone],message:t.state||''}));   // the state from the data ("In use"), never the thing's name
       else if(name==='floorArea'){const r=roomById(t0.of)||roomAt(new THREE.Vector3(...t0.center)),ring=ringOf(r);if(ring)add(cues.floorArea({ring,floorY:r.floorY??0}));}
       else if(name==='doorwayGlow')add(cues.doorwayGlow(t0,t0.label,eye));
-      else if(name==='arrowAhead')add(cues.arrowAhead(t0,camera));
+      else if(name==='arrowAhead')add(cues.arrowAhead(t0,camera,{name:t0.label}));
       else if(name==='floorPath'){
         // the route from where the user stands to the target (a room's door, or the thing); no route in the twin: no path (never through walls)
         const route=routerOf()?.route([eye.x,eye.z],[t0.center[0],t0.center[2]]);
@@ -57,9 +58,9 @@ export function createCueHost({getRooms=()=>[],getLayout=()=>null}={}){
     get active(){return !!h;},
     /** r: an answer with a highlight or FindMy's found item (null clears it). */
     setResponse(r){
-      const next=highlightOf(r),k=next?JSON.stringify([r.id,r.created,next.targets.map(t=>t.id)]):null;if(k===key)return;key=k;h=next;drawnKey='';checked=0;inView=true;
+      const next=highlightOf(r),k=next?JSON.stringify([modsRevision(),r.id,r.created,next.targets.map(t=>t.id)]):null;if(k===key)return;key=k;h=next;drawnKey='';checked=0;inView=true;
       if(!h){scene.clear();drawn=[];return;}
-      const m=r.highlight?(r.mods?.highlight||r.mod):(r.mods?.findmy||r.mod);
+      const m=currentMeta(r.highlight?(r.mods?.highlight||r.mod):(r.mods?.findmy||r.mod));
       ui=m?.ui&&Object.keys(m.ui).length?m.ui:fallbackUi(h);facts=m?.facts||{};
     },
     render(renderer,camera,now=performance.now()){

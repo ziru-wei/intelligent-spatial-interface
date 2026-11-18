@@ -31,7 +31,7 @@ test('screen-readable text goes on the surface the person relates to, with only 
 test('no relation: no surface pose for embedded-only text; the default text form floats instead',async()=>{
  const ctx=surfaceContext();ctx.relationSurface=null;
  const pose=await place({frame:0,aspect:.4,textMetrics:metrics},ctx);assert.equal(pose.unreadable,true);assert.equal(pose.kind,'unavailable');
- const float=await placeText({frame:0,aspect:.4,textMetrics:metrics},ctx);assert.equal(float.kind,'view-fallback');assert.equal(float.declaredFloat,true);
+ const float=await placeText({frame:0,aspect:.4,textMetrics:metrics},ctx);assert.equal(float.kind,'view-float');assert.equal(float.viewFixed,true);
 });
 test('blocked surfaces do not become a floating eye-facing panel',async()=>{
  const ctx=surfaceContext();ctx.visible=async(_,pts)=>pts.map(()=>false);
@@ -39,17 +39,24 @@ test('blocked surfaces do not become a floating eye-facing panel',async()=>{
  assert.equal(pose.unreadable,true);assert.equal(pose.kind,'unavailable');
 });
 
-test('Floating Text (the default form with no good surface) is view-sized in front of the user, and stays a float',async()=>{
+test('Floating Text is fixed to the camera: centred, its bottom edge just above the caption, leaning back; it stays a float',async()=>{
+ const {FLOAT_VIEW}=await import('../src/placement.mjs');
  const ctx=surfaceContext();const visible=ctx.visible;ctx.visible=async(_,pts)=>pts.map(()=>false);
  const response={frame:0,aspect:.4,textMetrics:metrics};
- const float=await placeText(response,ctx);assert.equal(float.kind,'view-fallback');assert.equal(float.declaredFloat,true);
- assert.ok(Math.abs(float.viewMetrics.minPx-TEXT_VIEW.targetPx)<.001);assert.equal(float.viewMetrics.inView,true);
- // once shown it stays a float, even when a surface fits again
- ctx.visible=visible;const kept=await placeText({...response,previousPose:float},ctx);assert.equal(kept.reusedSurface,true);assert.equal(kept.kind,'view-fallback');
- // out of view: placed again in front of the user, still floating (upright, a little below the eye)
- const c=camera();c.position.set(3,2,1);c.rotation.y=Math.PI;c.updateMatrixWorld(true);ctx.frameCamera=()=>c;
- const moved=await placeText({...response,previousPose:float},ctx);const p=moved.position.clone().applyMatrix4(c.matrixWorldInverse);
- assert.equal(moved.declaredFloat,true);assert.ok(p.distanceTo(new THREE.Vector3(0,-.08,-1.1))<1e-6);
+ const float=await placeText(response,ctx);assert.equal(float.kind,'view-float');assert.equal(float.align,'bottom');assert.equal(float.viewFixed,true);
+ assert.ok(float.viewMetrics.minPx>=.85*TEXT_VIEW.targetPx,`readable: ${float.viewMetrics.minPx}`);   // view-sized at its edge; leaning back makes its far lines a little smaller
+ // no caption showing: the ink's bottom at FLOAT_VIEW.bottom (the panel's padding hangs below it)
+ const c0=camera(),ink=float.position.clone().addScaledVector(new THREE.Vector3(0,1,0).applyQuaternion(float.quaternion),(1-metrics.box.y1)*float.width*.4).project(c0);
+ assert.ok(Math.abs(ink.x)<1e-6&&Math.abs(ink.y-FLOAT_VIEW.bottom)<1e-3,`ink bottom at ${ink.x},${ink.y}`);
+ // a caption showing: just above its top
+ const capped=await placeText(response,{...ctx,captionTop:()=>-.8}),i2=capped.position.clone().addScaledVector(new THREE.Vector3(0,1,0).applyQuaternion(capped.quaternion),(1-metrics.box.y1)*capped.width*.4).project(c0);
+ assert.ok(Math.abs(i2.y-(-.8+FLOAT_VIEW.gap))<1e-3,`above the caption: ${i2.y}`);
+ // it leans back: its normal turns up from the view's backward axis by FLOAT_VIEW.lean
+ const n=new THREE.Vector3(0,0,1).applyQuaternion(float.quaternion);assert.ok(Math.abs(THREE.MathUtils.radToDeg(Math.asin(n.y))-FLOAT_VIEW.lean)<1e-6);
+ // once shown it stays a float, even when a surface fits again; and it follows the camera
+ ctx.visible=visible;const c=camera();c.position.set(3,2,1);c.rotation.y=Math.PI;c.updateMatrixWorld(true);ctx.frameCamera=()=>c;
+ const moved=await placeText({...response,previousPose:float},ctx);assert.equal(moved.kind,'view-float');
+ const v=moved.position.clone().project(c);assert.ok(Math.abs(v.x)<1e-6&&v.y<FLOAT_VIEW.bottom+.01);   // it follows the camera
 });
 
 test('a valid existing anchor skips the search but rechecks current depth and full footprint',async()=>{

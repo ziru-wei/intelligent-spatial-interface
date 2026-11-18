@@ -365,7 +365,7 @@ Digital twin 里的实体：`place`（区域）、`object`（家具、物品、�
 
 ### 4.4 Spatial UI Cues
 
-The components of §4.3 sit on a slab beside the thing and read as a flat panel. Spatial cues take the shape of what they are about instead: its box, its footprint, its edge, a doorway or the floor. Bright cyan (`#3ff0ff`); text is flat and always faces the user. Prototypes: `src/spatial-ui/cues.mjs`; screenshots: `recordings/cues/` and the reel dashboard.
+The components of §4.3 sit on a slab beside the thing and read as a flat panel. Spatial cues take the shape of what they are about instead: its box, its footprint, its edge, a doorway or the floor. Bright cyan (`#3ff0ff`); text is flat and always faces the user. Prototypes: `src/spatial-ui/cues.mjs`; pictures: `context/vocabulary/` and the main page's Vocabulary.
 
 Each cue is defined by when it is used and what it does, in seven groups. The two groups of controls differ in what a change does: **Adjust** cues change the thing itself, and the change is sent to it once the user makes it (a press, or letting go of a drag); **Explore** cues move through information the answer shows (another day, another hour), and nothing is sent, only what is shown changes.
 
@@ -384,30 +384,24 @@ Each cue is defined by when it is used and what it does, in seven groups. The tw
 |  | Pinned Tags | When the user needs several separate readings of one thing, to show each next to the part it is about. | Printer toner and paper |
 |  | Status Pulse | When something about a thing needs attention, to flag it in the state’s color and say why. | ObjectStatus “paper low” |
 |  | Card Stack | When things wait in line for a device, to show what is next and how many are waiting. | Print queue |
-| Adjust | Slider | When the user wants to change a level, to let them set it by dragging along the thing’s edge; the bar follows the drag and the new level is sent when they let go. | “Make the light brighter” |
-|  | Edge Tabs | When the user wants to switch between a few options, to pick one directly on the thing. | “Switch the TV to HDMI 2” |
+| Controls | Slider | When the user wants to change a level, to let them set it by dragging along the thing’s edge; the bar follows the drag and the new level is sent when they let go. | “Make the light brighter” |
+|  | Choice | When one of several options is picked (a TV's input, who a message goes to), to pick it where it acts: a few short options (up to 4) stand in a row of capsules, one press; more or longer ones collapse into a dropdown showing the chosen one. A person's option shows their initials. | “Put the TV on HDMI 2”; Send's recipient |
 |  | Icon Button | When the user wants to switch something on or off or trigger a command, to do it in one press: a preset icon with its word (Send, Confirm, Cancel, Turn on/off, Pause…). | Power, cancel a print job, Send |
-| Explore | Date Picker | When data is dated and the user can move between days, to pick a day: the month once above, each day a capsule with its weekday and date. | Weather days, Agenda |
+|  | Date Picker | When data is dated and the user can move between days, to pick a day: the month once above, each day a capsule with its weekday and date. | Weather days, Agenda |
 |  | Playback | When data runs through time, to play it and scrub to a moment: a Play/Pause button, a rail with a stop per entry, and the current time riding on the thumb. | Weather hours |
-| Act | Tether Send | When the system passes something to someone for the user, to show what goes to whom before it is sent. | “Send the poster to Alice” |
+|  | Text Input | When the user may change what will be said before it is sent, to show the drafted text in a field they tap to edit (keyboard or dictation); the text changes in place. | Send's draft |
+|  | AR Photo | When what is sent is a photo of a thing, to show the photo about to be sent (the camera frame cropped to the thing), in the message. | “take a pic of this, send it to Alice” |
 
-**Interactive (library; a row of Controls, beside Adjust and Explore; Controls is a group of cues beside Mark, Guidance and Visualization).** A MOD that reaches people composes the exchange from four library parts. These are not specific to Delegate; a reminder for someone or a reply uses the same ones:
+**Controls are grouped by component, not by what a press does.** Whether a control's value is sent on change (a device's Slider or Choice), on Send (a message's Choice of recipient, its Text Input) or never (Date Picker, Playback moving through information) is how a MOD uses it, as in A2UI, where inputs stay local until an action fires. The earlier Adjust / Explore / Interactive rows are gone, and with them Edge Tabs and Contact Chip (now Choice), Tether Send and Photo Capture (removed: the thing that goes with a message is marked with the library's Mark, Corner Brackets on something with content, else Breathing Box) and the photo card (now AR Photo).
 
-| Part | When to use it, to do what |
-|---|---|
-| Contact Chip | When an action reaches a person, to show who it goes to (initials, name); with several candidates each is a chip to pick |
-| Text Input | When the user may change what will be said, to show the drafted text in a field they tap to edit (keyboard or dictation); the text changes in place |
-| Photo Capture | When what is sent is a photo of the thing, to frame the thing and flash; the photo (the camera frame cropped to the thing) becomes a card in the message |
-| Tether Send | When the thing itself goes with the message, to draw a line from it to whom it goes |
-
-They stand as one column beside the thing, placed where all of it is in view (`src/beside.mjs`), with the Send preset button last. What goes with the message is a choice in Fill (Delegate's `capture` selector: the thing, a photo of it, or nothing), so "send this poster", "take a photo of this and send it" and "describe this and draft a message" differ only in that choice; the declaration draws `tetherSend` when `attachment.kind=thing|photo` and `photoCapture` when `attachment.kind=photo`.
+**Sending (the Send MOD, formerly Delegate).** A message is composed from library parts, none of them Send's own: a Choice of who it goes to (the best match chosen; the other contacts in its dropdown), the draft in a Text Input, an AR Photo when a photo goes with it, the Send preset button, and the attached thing marked. They stand as one column beside the thing (`src/beside.mjs`); with nothing attached, in front of the user. What goes with the message is a choice in Fill (Send's `capture` selector: the thing, a photo of it, or nothing).
 
 **Text forms (library, not cues).** Every MOD's language goes through one of three forms; a slot declares which (`floatingText`, `embeddedText`, `dialogue` in its `ui`):
 
 | Form | When to use it, to do what | Example |
 |---|---|---|
 | Embedded Text | When a surface at the anchor scores well for writing on (`surface.score` ≥ 0.5: the text-surface placement's score from legibility, size and clutter), to write the text onto it, handwritten, so it becomes part of the room | Weather's answer on the desk, LabInfo on the wall |
-| Floating Text | When no surface scores well enough (`surface.score` < 0.5), to show the text beside its anchor, always facing the user | an answer beside the lamp, a door's name, Delegate's draft |
+| Floating Text | When no surface scores well enough (`surface.score` < 0.5), to show the text fixed to the user's view: centred, just above the question's caption (never covering it), leaning back a little toward the eye | an answer beside the lamp, a door's name, Delegate's draft |
 | Object-centric Dialogue | Only when a thing is clearly pointed at (`target.pointed`) and the user speaks to it in the second person (`request.second_person`: "what are you?"), to let the thing answer in its own voice from where it is | WorldInfo's voice: "Can I eat you?" to the candy bowl |
 
 Situated-text slots declare `fixed: [floatingText]` with `embeddedText` `instead_of` it when `surface.score>=0.5`. Ego-object slots declare `dialogue` (and its motion) only `when: target.pointed & request.second_person`; otherwise the answer falls back to text. "Can I eat this?" is asked *about* the bowl, so it is answered in text.
@@ -428,7 +422,7 @@ Rules shared across MODs (used inside their declarations):
 |---|---|---|
 | level | Gauge | Slider |
 | toggle | Icon state | Icon Button |
-| choice | Tag | Edge Tabs |
+| choice | Tag | Choice |
 | command | — | Icon Button |
 | task | Progress Rail | Icon Button (cancel, pause) |
 | queue | Card Stack | — |
@@ -455,9 +449,9 @@ Text that does not come from data or a decision (for example "waiting for you") 
 
 | 锚定类 | 是什么 | 部件 | 怎么放 | 尺寸 |
 | --- | --- | --- | --- | --- |
-| **Object-anchored** | 贴在一个东西自己的几何上 | Breathing Box、Corner Brackets、Footprint Ring、Status Pulse、Pinned Tags、Slider、Edge Tabs、Progress Rail、Card Stack、Icon Button（设备上）、Photo Capture | 占这个东西上的一个 **site**：surround（box、brackets）、footprint（ring）、top（rail、按钮、status）、right（tags、slider）、bottom（tabs）、left（card stack） | 随距离放大，保持可读（k = 距离 / 1.1 m，1–2.4） |
+| **Object-anchored** | 贴在一个东西自己的几何上 | Breathing Box、Corner Brackets、Footprint Ring、Status Pulse、Pinned Tags、Slider、Choice、Progress Rail、Card Stack、Icon Button（设备上） | 占这个东西上的一个 **site**：surround（box、brackets）、footprint（ring）、top（rail、按钮、status）、right（tags、slider）、bottom（tabs）、left（card stack） | 随距离放大，保持可读（k = 距离 / 1.1 m，1–2.4） |
 | **Environment-embedded** | 嵌在房间的几何上 | Floor Area、Floor Path、Doorway Glow、Ambient Effect、Embedded Text | 在 twin 的地面、门、墙、窗、桌面上，按真实尺寸；不移动 | 真实尺寸 |
-| **Generic UI** | 不依附几何的内容 | Floating Text、消息列（Contact Chip、Text Input、照片卡、Send）、Date Picker、Playback、Arrow Ahead | 三种锚：**beside** 一个东西（旁边、整组在视野内）、**relative** 另一个部件（如回答下方）、**user**（视野内 / 手边）；没有可锚的东西时 float 在用户前方 | 保持视角大小 |
+| **Generic UI** | 不依附几何的内容 | Floating Text、消息列（Choice、Text Input、照片卡、Send）、Date Picker、Playback、Arrow Ahead | 三种锚：**beside** 一个东西（旁边、整组在视野内）、**relative** 另一个部件（如回答下方）、**user**（视野内 / 手边）；没有可锚的东西时 float 在用户前方 | 保持视角大小 |
 
 规则：
 
@@ -466,6 +460,7 @@ Text that does not come from data or a decision (for example "waiting for you") 
 3. **Environment-embedded 优先。** 它们不动；其他部件避开它们（文字不压在门框发光上、不压在地面路径上）。
 4. **多个 MOD。** 每个 MOD 一个 cluster；分数高的先选位置。指向同一个东西的 object-anchored 部件共用这个东西的 site 分配。
 5. **稳定。** 回答到达时，用提问那一刻的相机计算一次，之后锁在世界里。只有整组离开视野一段时间，或用户走远时才重新放置；Arrow Ahead 和 Floor Path 是例外，它们跟着用户。
+6. **View stack：不在眼前实物上的 UI 固定在视野里。** 一个回答的 UI 如果没有附着在用户眼前的一个真实东西上，就固定在用户眼前（完全跟随相机，每帧重放），居中，放在文字回答上方，互不重叠。自下而上：问题字幕 → Floating Text → 这些 UI（多个时依次往上叠）。文字不是 Floating（Embedded Text、Object-centric Dialogue）时，它们直接站在问题字幕上方。两种情况：(a) UI 不属于任何实物，比如 Weather 的 Date Picker 和 Playback（天气不是房间里的东西，锚 `user-view`）；(b) 东西存在，但提问那一刻不在画面里（身后的台灯），它的控件进入 view stack，并在这个回答期间一直留在眼前。`src/cluster-placement.mjs`（`viewAnchor`、`STACK`），`agent.viewTop` 给出栈底。
 
 现状：object-anchored 的 site 目前写在各个 cue 里，`src/device-cues.mjs` 只对设备做了 top 叠放和按钮排成一行；cluster 的放置用 `src/beside.mjs`（只检查视野，不检查遮挡和重叠）；回答文字仍走原来的 text surface 放置。还缺一个统一的 placement 模块：site 分配器加 cluster 求解。
 
@@ -542,8 +537,8 @@ Primitive representation 是固定的 block；**用户扩展的是 MOD**。新�
 | | sign | floatingText（门牌） | |
 | ObjectStatus | state | statusPulse | breathingBox（state.level≠ok），pinnedTags（value.type=reading） |
 | IoTControl | device | footprintRing | |
-| | controls | | gauge / slider / edgeTabs / iconButton / textButton / progressRail / cardStack / pinnedTags / statusPulse，按 value type 和 intent |
-| Delegate | card | contactChip，textInput，iconButton:send | tetherSend（attachment.kind=thing\|photo），photoCapture（attachment.kind=photo） |
+| | controls | | gauge / slider / choice / iconButton / textButton / progressRail / cardStack / pinnedTags / statusPulse，按 value type 和 intent |
+| Send | card | choice，textInput，iconButton:send | cornerBrackets / breathingBox（attachment.kind=thing\|photo，按 target.has_content），arPhoto（attachment.kind=photo） |
 | WorldInfo | answer | floatingText | dialogue（target.pointed & request.second_person，替换 floatingText、embeddedText、textArrow），embeddedText（surface.score≥0.5），textArrow（text.apart） |
 | LabInfo | diorama | asset:diorama | floorArea（question.about=here） |
 | Agenda（spec） | timeline | floatingText（列表） | datePicker（data.days>1） |
@@ -884,9 +879,82 @@ The rebuild exists so that computation generalizes. Small, concrete features mad
 - **What the user is reading** is a user-context item (`user:reading`, about the user and the book); BookCompanion always asks for it, so "what happened in this chapter again?" is answered even when the book is not grounded as the referent.
 - **"whose is that printing?"** is answered by IoTControl (the job's owner is device state), so it is its own IoTControl clip; ObjectStatus asks "anything running low over here?".
 
-### 10.17 Not Done Yet (2026-11-17, in priority order)
+### 10.17 The Gallery Is Asked, Not Recorded (2026-11-17)
 
-1. **Placement module (4.5), the rest.** The user-reach cluster exists; still missing are the per-thing site allocator, `beside` clusters with occlusion and overlap checks (the Delegate message column can still cover the poster), and one solver shared by all MODs.
+- **An example is a question asked in ModOS.** It is a conversation of a recording's session tagged with a hidden `gallery_example` = {name, mod}; the example is its latest answered question (`scripts/gallery.py`). The main page's Gallery reads `context/gallery/examples.json` (and `examples.js` for the file) and shows each example's question above a still of the camera view at its answer.
+- **A queue, not a re-recording.** `npm run gallery -- [examples or MODs]` (`demos/gallery.mjs`, the list in `demos/gallery-examples.json`) asks each example again through the editor's own ask box at its `ask_at`; when the answer settles the editor sends a still (`POST /api/gallery/still`); the older conversations of that example are then deleted (`POST /api/gallery/replace`). After a change, only the affected examples need to be queued.
+- **Opened, an example is live.** The Gallery opens the editor's example view (`?example=<name>&conversation=<id>`) in a dialog: the recorded camera with its cues and bubble, the player, the ask box and the pipeline, as the recordings looked. It replays the example from where it was asked; a question asked there (its scene's bridge starts by itself, `POST /api/agent/bridge`) becomes the example, still included; Delete removes the latest question.
+- **Removed:** the recordings (videos, posters, manifest, review frames) and `demos/record.mjs` with its clip list. The Vocabulary's cue pictures moved to `context/vocabulary/` (`npm run vocabulary`).
+- Tests: Node 195, Python 86, all pass.
+
+### 10.18 Floating Text Fixed to the View (2026-11-17)
+
+- **Floating Text follows the camera.** It is no longer a panel left in the room: it is centred in the view, the bottom of its letters 0.03 (of the view's -1..1 height) above the question caption's actual top (`ctx.captionTop`, one line or two; `FLOAT_VIEW.gap`), and once the caption is gone, at -0.9 (`FLOAT_VIEW.bottom`): it settles lower when the answer is done. It is placed again whenever the caption changes, even while the video is paused. 1.1 m along the view, view-sized, leaning back 12° so it faces the eye a little from below (`src/placement.mjs` floatInView). It grows upward from that edge, so a streaming answer never covers the caption, and it is placed again every frame, which also re-fits it once the stream completes (`src/agent.mjs` moves it without logging a new placement).
+- **Wide and centred.** It takes the widest line length whose whole panel stays in view (1920, 1600 or 1280 canvas px, `FLOAT_COLUMNS`), so it reads in few long lines, and keeps that width while it still fits (no reflow as the stream grows). Its ink, not its panel, is centred, so short text set wide stays in the middle.
+- **Drawing changes need no new answers.** Where and how an answer is drawn is computed by the editor when it shows the answer, so every Gallery example opened (or the Demo replayed) already shows the change. Only the Gallery's stills are images: `npm run gallery -- --stills` takes them again from each example's replay in the example view (`?still=1`), with nothing asked and no model called. `npm run gallery` (asking again) is for changes in what the answers are: the pipeline, MODs, data, prompts.
+- **Tighter heading.** A heading's lines sit closer (line height 1.08 of the type size, the body keeps 1.22) and the gap between the heading and the text is 6 px instead of 18 (`TITLE_LEAD`, `BODY_LEAD`, `TITLE_GAP`).
+- **It fits its text.** Floating Text keeps no room for a streaming answer to grow into (text on a surface still keeps two heading lines and four body lines, so it does not move while it streams): its box, and the glass behind it, is the text as it is, re-fitted every frame (`fit` in `src/agent.mjs` glowTexture). The glass fades out half a body line beyond the ink instead of a whole one (`GLASS_FEATHER`), for all text.
+- Embedded Text, Object-centric Dialogue and text about a thing (beside it) are unchanged.
+- Tests: Node 195, Python 86, all pass.
+
+### 10.19 View Stack, Live Vocabulary, Controls Fixes (2026-11-17)
+
+- **View stack (§4.5 rule 6).** UI that is not on a real thing in front of the user stands fixed in the view, centred, above the answer's text and never over it: caption, then Floating Text (the top of its ink, `agent.viewTop`), then each such UI upward (`src/cluster-placement.mjs`: `viewAnchor`, `STACK` = gap 0.03, base -0.9, 0.7 m). Weather's Date Picker and Playback are always on it (their anchor is now `user-view`; the old user-reach cluster, `userReachPlacement` and `createStay`, is removed). A device's controls go on it when the device was out of view at the question's frame (`src/device-cues.mjs`: built around a stand-in box, then placed every frame); they stay there for that answer.
+- **The Vocabulary is the library, live.** Each part on the main page is a 3D scene, not a picture: the library's own part (`src/spatial-ui/cues.mjs`, the answer text of `src/agent.mjs` via `answerTexture`, the dialogue bubble, the view stack, Weather's ambient effect, LabInfo's diorama) in an example room (a lab with a desk, lamp, mug, printer, TV, poster and plant; a kitchen through a door) with example data (`src/vocabulary.mjs`). One WebGL canvas behind the page draws every tile; a tile opened is a larger view to walk around and use: the Slider dims the lamp, Edge Tabs switch the TV, the Icon Button turns the lamp off, the Date Picker and Playback move, Contact Chips pick, the Text Input edits, the poster takes a photo again. A change in the library shows there at once. The main page loads it from `system/editor` (served: `python3 -m http.server` at the root). Removed: the cue pictures (`context/vocabulary/`), `demos/cues-capture.mjs`, `npm run vocabulary` and the editor's `window.modosCues` preview hook.
+- **Corner Brackets on flat things.** Each arm is as long as the thing allows: a poster or a screen keeps full arms across its face and short ones through its depth (they were as short as the thing was thin).
+- **Slider.** Dragging no longer enlarges its label (the label keeps the size the cue was built at), and the user's own change shows at once, without the transition that shows what an answer changed.
+- **Weather's controls are easy to hit.** Each date and the Play button carry a larger invisible pad.
+- **MOD settings apply at draw time.** A part keeps which MOD and slot made it; what that MOD declares and how it is set are read when the part is drawn (`src/current-mods.mjs`, `GET /api/modos/installed`). So a change in a MOD's settings (Weather's sky locked) shows on every answer, old ones and the Gallery's included, with no new answer.
+- **Playback opens at the answer's moment.** A timeseries selector also asks, in the same fill call, which one entry answers the question most directly (where what is asked about happens, or the time it names; `none` when no single entry does): its *focus* (`selectors.mjs`). Within that entry it is the moment of the same summary, else its first, and it counts only when it is among the selected moments. The focus travels with the part (`weather.focus` → `preview.focus`, `scripts/weather.py`), and the Playback (and with it the Date Picker and the ambient effect) opens there, holds it 3 s (`FOCUS_HOLD`), then plays on; with no focus it opens at the first moment. It is a feature of the Playback over any timeseries, not of Weather: the question is generated from the data, never written per MOD. Asked again: "is it gonna rain this weekend?" opens on Thursday 10:00, rain showers; "should I bring my umbrella?" on the morning's snowfall.
+- **Playback's button is the icon alone** (▶ or ⏸ in a round button), no word.
+- **Bridges stop with the server.** A server stopped by a signal now exits through its cleanup, so the agent bridges it started stop too (stale bridges with old code had been answering questions).
+- Tests: Node 197, Python 87, all pass. Weather's examples asked again (`npm run gallery -- weather`).
+
+### 10.20 Controls by Component; Choice; Send (2026-11-18)
+
+- **Choice** replaces Edge Tabs and Contact Chip: one control, a row of capsules for a few short options, a dropdown for more (`choice` in `src/spatial-ui/cues.mjs`). IoTControl's choice inputs and Send's recipient use it.
+- **Removed:** Tether Send, Photo Capture (the attached thing is marked with Corner Brackets or Breathing Box instead), the Adjust / Explore / Interactive rows. The photo card is **AR Photo**.
+- **Delegate is now Send** (`modos/mods/send.json`). Its action part carries the contacts (for the Choice) and whether the attached thing has content (for the mark).
+- **Controls are grouped by component** in the Vocabulary: Slider, Choice, Icon Button, Text Button, Text Input, AR Photo, Date Picker, Playback; when a value is sent is how a MOD uses it.
+- Tests: Node 197, Python 85, all pass.
+
+### 10.21 Several Recipients, Drafts Without Names, AR Photo, Named Arrow (2026-11-18)
+
+- **Several recipients.** Send's recipient selector is `pick-many`: one score per contact, and by rule everyone the request names (first or full name; "send this to Alice and Ryo"). The action carries `to` as a list and `pick: many`; the Choice shows it multi-select ("Alice Chen +1 ▾"), each press adding or removing a person; Send waits while nobody is chosen. A pick-one selector gives a single-select Choice; nothing about this is Send's own.
+- **The draft names nobody.** A value the user can still change in a control is never restated in text: the draft context leaves the recipients out, and the instruction forbids naming, greeting or addressing them in the title or body. It says whether a photo or the thing itself is attached.
+- **"This" while pointing.** The thing picker takes the thing pointed at when the request says this, that or it (it had fallen to "nothing attached" on a borderline score).
+- **AR Photo** is drawn above everything around it, and is taken from the frame as drawn, right after the marks: the Corner Brackets on the poster are in the photo.
+- **Arrow Ahead** names its target at its tip, upright.
+- Tests: Node 198, Python 85, all pass. Send's examples asked again, with a new one for two recipients.
+
+### 10.22 Presses Stay With Controls, Anchored Bubble, Gallery Examples From the Editor (2026-11-18)
+
+- **A press a control takes is its own to the end.** A press on a control (Send's Choice, Text Input, Send; a device's controls; Weather's) rebuilds what is under the pointer, so the click that followed found nothing there and fell through to the editor, which picked the thing behind (the poster under its mark) and replayed the question. The click after a taken press is now always swallowed. Marks take no presses.
+- **An open dropdown lies over what is below it**, drawn in the transparent pass after every opaque part (it had drawn under the draft).
+- **Anchor dialogue bubble** (UI library, Text): on, the Object-centric Dialogue bubble stays just above the thing that speaks, sized once, and turns to the user every frame; off (the default), it moves to where it fits in view, as before.
+- **Gallery examples from the editor.** Clicking a question's dot on the timeline picks it: × deletes it, ★ adds it to the Gallery. Shift-click picks every question from the first picked to this one; ★ adds them as one example, under the first one's MOD. The questions and answers are copied into a new conversation tagged as the example (named after the MOD and the question's first words), the example is added to `demos/gallery-examples.json` (`questions: [{ask_at, question}]` when several), and its still is taken by a hidden replay. `npm run gallery` asks several questions in order in one conversation; the example view replays from the first; the main page lists every question on the card.
+- Tests: Node 198, Python 88, all pass.
+
+### 10.23 WorldInfo's Mark From the Library; Weather Knows the Weekday (2026-11-18)
+
+- **WorldInfo declares its Mark.** An info answer's thing was marked by older code of its own (`src/info-visual.mjs` corners, coloured like text against the frame: black on a bright poster), declared by no MOD. The corners and their colour sampling are removed. WorldInfo's text slot now declares `cornerBrackets when target.has_content`, else `breathingBox` (none when the thing speaks: Object-centric Dialogue); the server says whether the thing has content (the twin's `content` trait), and the editor draws the library's part from the MOD's current declaration. The Text Arrow stays, chosen by the same facts.
+- **The day options say the weekday.** A timeseries' days were offered to the model as bare dates ("Does the question ask about 2026-11-21?"), so "this weekend" picked Wednesday to Saturday. Each day now reads as people say it ("Saturday 2026-11-21, in 3 days"), in the options, the focus and the data the text is written from.
+- **The mock forecast's day words follow its dates.** The feed cache moved the recorded forecast to start today but kept the recording's labels ("Friday, Oct 09" on a Wednesday); a mock fetched on an earlier day was never fetched again. Its labels are now made from its dates (`user_context.relabel`), and a mock is fetched again on a new day.
+- Mock data: the Music-Brain study flyer's box is a thin box on the bulletin board, the flyer's size.
+- Tests: Node 197, Python 88, all pass. Weather's examples asked again; WorldInfo's still taken again.
+
+### 10.24 Tailoring Says What a MOD Is For; Days Come in Stretches; Pipeline Stays (2026-11-18)
+
+- **Tailoring no longer sets where a MOD applies or what it knows.** The MODs tab's Where (places) and Knowledge (extra items) are removed, with their code: the `scope` and `knowledge` customizations, knowledge "added when tailoring" in selection and text, and their tests. Where a MOD applies (global, the referent, a place MOD's places) and what it reads stay its author's.
+- **Description and examples are tailored.** The decision model chooses MODs by them, so the tab edits both (they replace the author's; Reset brings them back).
+- **Days come in stretches.** Of the days scored .5 or more, a stretch apart from the strongest is kept only when it scores within .2 of it (`stretches`, modos/selectors.mjs): "this weekend" no longer brings today along out of habit; "today or Saturday?" keeps both.
+- **The pipeline stays on the latest question** asked by the current moment, after the replay plays on past it (it emptied once the hold ended).
+- **Vocabulary tiles turn when dragged**, in place; a press without moving opens them. The Gallery's question under the pointer is a muted deep cyan.
+- Tests: Node 197, Python 88, all pass. The weekend Weather examples asked again: Saturday and Sunday only.
+
+### 10.25 Not Done Yet (2026-11-17, in priority order)
+
+1. **Placement module (4.5), the rest.** The view stack exists; still missing are the per-thing site allocator, `beside` clusters with occlusion and overlap checks (the Delegate message column can still cover the poster), and one solver shared by all MODs.
 2. **Wayfinding picks the nearest door of the target room** by the user's straight-line distance, not by route length.
 3. **Spec MODs** (Agenda, BookCompanion, StepGuide, LiveCoach, Reminder) are chosen and answer in text only. LiveCoach's `bodyArrow` is not in the library; Reminder has no time trigger.
 4. **Vision Pro (later): every update since the web rebuild.** The cues, text forms, routing, message parts, MOD-declared UI and placement exist only in the web editor (`editor/src`); `visionos/` still renders the earlier parts and settings. Port all of it, ideally against the platform-neutral surface messages of §11 so both renderers read one format.
@@ -929,7 +997,7 @@ Kept as is: MODs choose and fill; declarations choose cues by rule; no model wri
 3. **Cues take data.** Each cue binds its props to paths and updates in place (`set`), instead of being rebuilt: Slider value, Progress Rail done/total, Text Input text, Status Pulse state, Gauge level, Date Picker / Playback cursor, the highlight targets.
 4. **Renderers onto the surface,** one at a time, each checked on its clips: device controls (live device state; the slider writes `/device/<key>` and sends on release), the message column (the draft streams into Text Input with no rebuild), marks and guidance (targets and states), Weather's controls (cursor).
 5. **Progressive rendering in the pipeline.** Emit as soon as each piece is known: after stage 1 and 2 the surface and what needs only the referent or the chosen MOD (the referent's mark); after Fill each MOD's cues and data; the text as it streams. Measure time to first cue against today on the reel's clips.
-6. **Docs and reel.** Update §6 (pipeline), §4.4 (cues are data-bound), the code map in `AGENTS.md`; re-record and compare first-cue times.
+6. **Docs and Gallery.** Update §6 (pipeline), §4.4 (cues are data-bound), the code map in `AGENTS.md`; ask the Gallery's examples again (`npm run gallery`) and compare first-cue times.
 
 Decided: ModOS borrows A2UI's architecture, not its wire format; no compatibility with A2UI is kept.
 

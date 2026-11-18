@@ -47,7 +47,7 @@ export async function runModos({question,memory,context,items,decide,answer,publ
 
   // Stage 2: the MODs. A MOD scoped to the referent (WorldInfo) is taken when a question is about the thing and no place MOD speaks for it.
   const placeMod=placeModFor(mods,referent),ctx={...early,referent};
-  // WorldInfo answers a question about the thing when no other MOD takes that question (e.g. Delegate takes "send this to Alice").
+  // WorldInfo answers a question about the thing when no other MOD takes that question (e.g. Send takes "send this to Alice").
   const untaken=req.questions.filter(q=>(q.about==='referent'||questions.length===1&&referent?.kind==='object')&&!askable.some(m=>q.mods[m.id]>=.5));
   const auto=referent&&!placeMod&&untaken.length?mods.filter(m=>m.scope==='referent'&&eligible(m,ctx)):[];
   const chosen=[...auto.map(m=>({mod:m,score:1,abouts:['referent'],questions:req.questions.map((_,k)=>k)})),

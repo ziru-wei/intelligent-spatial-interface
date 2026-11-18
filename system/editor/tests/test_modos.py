@@ -16,7 +16,7 @@ def space_with_session(tmp):
 class RegistryTest(unittest.TestCase):
     def test_system_mods_are_valid(self):
         mods = modos_registry.all_mods()
-        self.assertEqual({'weather', 'findmy', 'worldinfo', 'wayfinding', 'bookcompanion', 'stepguide', 'objectstatus', 'agenda', 'iotcontrol', 'livecoach', 'reminder', 'delegate'}, set(mods))   # the foundational MODs; LabInfo is the atlas space's own
+        self.assertEqual({'weather', 'findmy', 'worldinfo', 'wayfinding', 'bookcompanion', 'stepguide', 'objectstatus', 'agenda', 'iotcontrol', 'livecoach', 'reminder', 'send'}, set(mods))   # the foundational MODs; LabInfo is the atlas space's own
 
     def test_validation_refuses_broken_mods(self):
         good = modos_registry.all_mods()['weather']
@@ -52,15 +52,17 @@ class RegistryTest(unittest.TestCase):
             self.assertEqual(t['slots'][0]['anchor'].get('order', [None])[0], 'surface:window')  # relative to a hidden slot: its anchor
             self.assertEqual(t['slots'][0]['params']['duration'], {'fixed': '5s'})
             for change, message in [({'variant': 'radio'}, 'no variant'), ({'settings': {'answer': {'duration': 'forever'}}}, 'cannot be'),
-                                    ({'settings': {'sky': {'effect': 'rain'}}}, 'cannot be set by hand'), ({'scope': 'nowhere'}, 'scope'),
+                                    ({'settings': {'sky': {'effect': 'rain'}}}, 'cannot be set by hand'), ({'scope': ['zone:bedroom']}, 'Unknown customization'),
+                                    ({'knowledge': [{'ref': 'info:x'}]}, 'Unknown customization'), ({'description': ''}, 'description'),
                                     ({'text': False}, 'Unknown customization')]:   # text comes with the variant, never switched apart
                 with self.subTest(message), self.assertRaisesRegex(ValueError, message): modos_registry.customize(space, 'weather', change)
             self.assertEqual(modos_registry.all_mods(space)['weather']['variant'], 'text')     # a refused change is not saved
             f = modos_registry.fork(space, 'weather', 'weather-bedroom', 'Weather (bedroom)')
             self.assertEqual((f['from'], f['provider'], f['variant'], f['origin']), ('weather', 'user', 'text', 'fork'))
-            modos_registry.customize(space, 'weather-bedroom', {'variant': 'controls', 'scope': ['zone:bedroom']})
+            modos_registry.customize(space, 'weather-bedroom', {'variant': 'controls', 'description': 'The bedroom sky.', 'examples': ['cold tonight?']})
             self.assertEqual(modos_registry.reset(space, 'weather')['variant'], 'full')
-            self.assertEqual(modos_registry.all_mods(space)['weather-bedroom']['scope'], ['zone:bedroom'])
+            b = modos_registry.all_mods(space)['weather-bedroom']
+            self.assertEqual((b['scope'], b['description'], b['examples']), ('global', 'The bedroom sky.', ['cold tonight?']))   # where and what it knows stay the author's
             with self.assertRaisesRegex(ValueError, 'taken'): modos_registry.fork(space, 'weather', 'weather-bedroom', 'x')
             with self.assertRaisesRegex(ValueError, 'Only a fork'): modos_registry.remove_fork(space, 'weather')
             modos_registry.remove_fork(space, 'weather-bedroom')

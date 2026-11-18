@@ -23,7 +23,10 @@ def _redate(w):
     return json.loads(re.sub(r'\b(\d{4}-\d{2}-\d{2})\b', move, text))
 
 def _mock_weather():
+    import datetime
+    from user_context import relabel
     w = _redate(json.loads((ROOT/'agent'/'context'/'weather.json').read_text())['weather'])
+    relabel(w.get('forecast', []), datetime.date.today())   # its day words follow the moved dates (they were the recording's)
     dates = sorted({e['date'] for e in w.get('forecast', [])})
     span = f'{dates[0]} to {dates[-1]}' if dates else 'no dates'
     return dict(type='timeseries', fetcher='mock', summary=f'Weather forecast by day and period (morning, afternoon, evening) with hourly samples, {span}.', data=w)
@@ -47,6 +50,11 @@ def ensure(space, mods):
         if not path(space, feed).is_file(): fetch(space, feed)
 
 def read(space, feed):
-    """The cached entry, or None when the feed was never fetched."""
+    """The cached entry, or None when the feed was never fetched. A mock fetched on an earlier day is fetched again: it starts today."""
     p = path(space, feed)
-    return json.loads(p.read_text()) if p.is_file() else None
+    if not p.is_file(): return None
+    entry = json.loads(p.read_text())
+    import datetime
+    if entry.get('fetcher') == 'mock' and feed in FETCHERS and datetime.date.fromtimestamp(entry.get('fetched_at') or 0) != datetime.date.today():
+        entry = fetch(space, feed)
+    return entry

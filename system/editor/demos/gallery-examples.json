@@ -1,0 +1,195 @@
+{
+  "note": "The Gallery's examples (scripts/gallery.py). Each is a question asked in the editor in a recording at ask_at, kept as a conversation tagged gallery_example. `npm run gallery -- <names or MODs>` asks them again as a queue and replaces the old ones. setup: MOD customizations while asking (reset afterwards); devices: {entity: power} set before asking.",
+  "space": "atlas",
+  "server": "http://127.0.0.1:8766",
+  "viewport": [
+    1920,
+    1080
+  ],
+  "bridge": {
+    "provider": "gemini",
+    "model": "gemini-3.5-flash-lite",
+    "effort": "minimal"
+  },
+  "examples": [
+    {
+      "name": "labinfo-panorama",
+      "mod": "LabInfo",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "so what do they actually work on in here?"
+    },
+    {
+      "name": "labinfo-wall",
+      "mod": "LabInfo",
+      "recording": "atlas_rec_4",
+      "ask_at": 1.0,
+      "question": "what's this lab about, all these posters…"
+    },
+    {
+      "name": "findmy",
+      "mod": "FindMy",
+      "recording": "atlas_rec_4",
+      "ask_at": 7.0,
+      "question": "wait, where did I put my headphones"
+    },
+    {
+      "name": "weather-lab",
+      "mod": "Weather",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.5,
+      "question": "is it gonna rain this weekend?"
+    },
+    {
+      "name": "weather-corridor",
+      "mod": "Weather",
+      "recording": "atlas_rec_2",
+      "ask_at": 1.0,
+      "question": "hmm, do I need an umbrella tonight?"
+    },
+    {
+      "name": "worldinfo-text",
+      "mod": "WorldInfo",
+      "recording": "atlas_rec_3",
+      "ask_at": 48.6,
+      "question": "what's this study about?"
+    },
+    {
+      "name": "worldinfo-voice",
+      "mod": "WorldInfo",
+      "recording": "atlas_rec_3",
+      "ask_at": 18.1,
+      "question": "hey, can I eat you?"
+    },
+    {
+      "name": "iotcontrol-brighter",
+      "mod": "IoTControl",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "kinda dark here… a bit brighter please",
+      "devices": {
+        "layout:lab-desk-lamp": {
+          "power": "on",
+          "brightness": 40
+        }
+      }
+    },
+    {
+      "name": "objectstatus-printer",
+      "mod": "ObjectStatus",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "anything running low over here?"
+    },
+    {
+      "name": "wayfinding-kitchen",
+      "mod": "Wayfinding",
+      "recording": "atlas_rec_4",
+      "ask_at": 1.0,
+      "question": "how do I get to the kitchen from here"
+    },
+    {
+      "name": "iotcontrol-printer",
+      "mod": "IoTControl",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "how far along is the poster?"
+    },
+    {
+      "name": "iotcontrol-printer-whose",
+      "mod": "IoTControl",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "whose is that printing?"
+    },
+    {
+      "name": "send-poster",
+      "mod": "Send",
+      "recording": "atlas_rec_2",
+      "ask_at": 7.1,
+      "question": "send this to Alice"
+    },
+    {
+      "name": "send-two",
+      "mod": "Send",
+      "recording": "atlas_rec_2",
+      "ask_at": 7.1,
+      "question": "send this to Alice and Ryo"
+    },
+    {
+      "name": "send-describe",
+      "mod": "Send",
+      "recording": "atlas_rec_2",
+      "ask_at": 7.1,
+      "question": "describe this for Alice, like a quick message"
+    },
+    {
+      "name": "send-photo",
+      "mod": "Send",
+      "recording": "atlas_rec_2",
+      "ask_at": 7.1,
+      "question": "take a pic of this, send it to Alice"
+    },
+    {
+      "name": "agenda-afternoon",
+      "mod": "Agenda",
+      "recording": "atlas_rec_4",
+      "ask_at": 2.5,
+      "question": "what's on this afternoon?"
+    },
+    {
+      "name": "bookcompanion-lighthouse",
+      "mod": "BookCompanion",
+      "recording": "atlas_rec_5",
+      "ask_at": 5.0,
+      "question": "wait, what happened in this chapter again?"
+    },
+    {
+      "name": "stepguide-espresso",
+      "mod": "StepGuide",
+      "recording": "atlas_rec_5",
+      "ask_at": 47.0,
+      "question": "how do I even use this… for an espresso?"
+    },
+    {
+      "name": "livecoach-stretch",
+      "mod": "LiveCoach",
+      "recording": "atlas_rec_5",
+      "ask_at": 5.5,
+      "question": "my back's killing me, any stretches?"
+    },
+    {
+      "name": "reminder-espresso",
+      "mod": "Reminder",
+      "recording": "atlas_rec_5",
+      "ask_at": 48.5,
+      "question": "remind me tomorrow morning, refill the water tank"
+    },
+    {
+      "name": "weather-umbrella",
+      "mod": "Weather",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.5,
+      "question": "should I bring my umbrella?"
+    },
+    {
+      "name": "iotcontrol-tv",
+      "mod": "IoTControl",
+      "recording": "atlas_rec_5",
+      "ask_at": 1.0,
+      "question": "put the TV on HDMI 2",
+      "devices": {
+        "layout:lab-central-tv": {
+          "power": "on"
+        }
+      }
+    },
+    {
+      "name": "weather-what-s-the-weather-this",
+      "mod": "Weather",
+      "recording": "atlas_rec_1",
+      "ask_at": 3.77,
+      "question": "what's the weather this weekend? wanna go hiking"
+    }
+  ]
+}

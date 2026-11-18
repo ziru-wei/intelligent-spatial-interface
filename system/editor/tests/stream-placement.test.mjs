@@ -9,7 +9,7 @@ test('streaming preserves surface pose, glyph scale and geometry across partial/
  try{
   let placements=0;const camera=new THREE.PerspectiveCamera();camera.updateMatrixWorld(true);
   const ctx={frames:[{position:[0,0,0],quaternion:[0,0,0,1]}],frameCamera:()=>camera,viewport:()=>({width:600,height:600}),relationAt:()=>{placements++;return null;}};
-  const response={id:1,question_id:1,frame:0,reserve_text:true,title:'Read',weather:{forecast:[{},{}],preview:{component:'weather-timeline'}}};
+  const response={id:1,question_id:1,frame:0,reserve_text:true,text_ui:{fixed:['embeddedText']},title:'Read',weather:{forecast:[{},{}],preview:{component:'weather-timeline'}}};
   const w=await createResponseWidget(response,ctx),d=w.userData,position=w.position.clone(),quaternion=w.quaternion.clone(),geometry=d.text.geometry,glass=d.glass.geometry,pose=d.pose,height=d.height,width=d.width;
   for(const body of ['Pick up ','Pick up your book.','Continue around page 68.']){
    assert.equal(updateResponseWidget(w,{...response,title:'Read tonight',body}),true);
@@ -26,10 +26,19 @@ test('overflow requests a larger placement, then final short text cannot shrink 
  const previous=globalThis.document;globalThis.document={createElement:canvas};
  try{
   const camera=new THREE.PerspectiveCamera();camera.updateMatrixWorld(true);
-  const ctx={frames:[{position:[0,0,0],quaternion:[0,0,0,1]}],frameCamera:()=>camera,viewport:()=>({width:600,height:600})},response={id:1,frame:0,reserve_text:true,title:'Read',body:'Short'};
+  const ctx={frames:[{position:[0,0,0],quaternion:[0,0,0,1]}],frameCamera:()=>camera,viewport:()=>({width:600,height:600})},response={id:1,frame:0,reserve_text:true,text_ui:{fixed:['embeddedText']},title:'Read',body:'Short'};
   const old=await createResponseWidget(response,ctx),overflow={...response,body:'A long word '.repeat(150)};
   assert.equal(updateResponseWidget(old,overflow),false);
   const larger=await createResponseWidget(overflow,ctx,0,0,old),height=larger.userData.height;
   assert.equal(updateResponseWidget(larger,response),true);assert.equal(larger.userData.height,height);
+ }finally{globalThis.document=previous;}
+});
+test('Floating Text fits its text: no room kept for a heading line or body lines that are not there',async()=>{
+ const previous=globalThis.document;globalThis.document={createElement:canvas};
+ try{
+  const camera=new THREE.PerspectiveCamera();camera.updateMatrixWorld(true);
+  const ctx={frames:[{position:[0,0,0],quaternion:[0,0,0,1]}],frameCamera:()=>camera,viewport:()=>({width:600,height:600}),relationAt:()=>null};
+  const w=await createResponseWidget({id:1,question_id:1,frame:0,reserve_text:true,title:'Yes',body:'Rain on Saturday.'},ctx),b=w.userData.text.material.map.image.layoutBudget;
+  assert.equal(w.userData.pose.kind,'view-float');assert.equal(b.fit,true);assert.equal(b.titleLines,1);assert.equal(b.bodyLines,1);
  }finally{globalThis.document=previous;}
 });

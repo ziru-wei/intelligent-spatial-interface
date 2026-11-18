@@ -53,7 +53,7 @@
             "when": "value.type=level & value.io=input & intent=change"
           },
           {
-            "cue": "edgeTabs",
+            "cue": "choice",
             "when": "value.type=choice & intent=change"
           },
           {

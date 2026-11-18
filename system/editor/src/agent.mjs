@@ -49,46 +49,53 @@ function bodyXHeight(ctx,font){ctx.font=`500 46px ${font}`;const m=ctx.measureTe
 // Object-centric Dialogue (r.dialogue: a speech bubble on the thing) wraps at DIALOGUE_COLUMNS and its canvas is only as wide and tall as its text, so the
 // bubble fits the text (no room kept while it streams).
 const DIALOGUE_COLUMNS=640;
+// Line height (of the type size) and the room between the heading and the text: a heading's lines sit closer than the body's.
+const TITLE_LEAD=1.08,BODY_LEAD=1.22,TITLE_GAP=6;
+// How far the glass behind text fades out beyond its ink, in canvas px (half a body line).
+const GLASS_FEATHER=26;
+/** An answer's text as ModOS draws it (a canvas texture; image.box: its ink), for views outside the agent layer (the Vocabulary). */
+export const answerTexture=(r,{dark=false,fit=false,columns=null}={})=>glowTexture(r,dark,fit||columns?{fit,columns}:null);
 function glowTexture(r,dark=false,previousBudget=null){
-  const FONT=fontFor(r),ego=!!r.dialogue,COLS=previousBudget?.columns||(ego?DIALOGUE_COLUMNS:PX),reserve=r.reserve_text&&!ego;let W=COLS;
+  // fit (Floating Text, placed again every frame): the box is the text as it is, with no room kept for a streaming answer to grow into.
+  const FONT=fontFor(r),ego=!!r.dialogue,fit=!!previousBudget?.fit,COLS=previousBudget?.columns||(ego?DIALOGUE_COLUMNS:PX),reserve=r.reserve_text&&!ego&&!fit;let W=COLS;
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),inner=W-2*PAD,lines=[];
-  const add=(text,weight,size,gap,item=false)=>{ctx.font=`${weight} ${size}px ${FONT}`;for(const [i,l] of wrap(ctx,text,inner-(item?48:0)).entries())lines.push({text:l,weight,size,gap:i?6:gap,indent:item,bullet:item&&!i});};
+  const add=(text,weight,size,gap,item=false)=>{ctx.font=`${weight} ${size}px ${FONT}`;for(const [i,l] of wrap(ctx,text,inner-(item?48:0)).entries())lines.push({text:l,weight,size,gap:i?6:gap,indent:item,bullet:item&&!i,lead:weight>=700?TITLE_LEAD:BODY_LEAD});};
   if(r.findmy?.status==='not_found')add('No mapped location found',600,46,0);
   if(r.findmy?.status==='ambiguous')add('Which item do you mean?',600,46,0);
   const {headingSize:hs,showHeading,bodySize}=textBehavior,heading=72*hs;
   // Object-centric Dialogue is the thing talking: no heading, only what it says.
   const titleStart=lines.length;if(r.title&&showHeading&&!ego)add(r.title,700,heading,0);
   const titleCount=lines.length-titleStart,titleLines=reserve&&showHeading?Math.max(2,titleCount,previousBudget?.titleLines||0):titleCount;   // no room kept for a hidden heading
-  for(let i=titleCount;i<titleLines;i++)lines.push({text:'',weight:700,size:heading,gap:i?6:0});
+  for(let i=titleCount;i<titleLines;i++)lines.push({text:'',weight:700,size:heading,gap:i?6:0,lead:TITLE_LEAD});
   // The body, paragraph by paragraph; a markdown heading line ("# …": the heading size, "## …" and deeper: a little smaller) unless
   // headings are hidden.
   const bodyStart=lines.length;
   if(r.body){let first=true;for(const para of String(r.body).split(/\n+/)){const h=/^\s*(#{1,6})\s+(.*)$/.exec(para);
     if(h){if(showHeading&&!ego){add(h[2],700,h[1].length===1?heading:heading*.82,first?18:24);first=false;}continue;}
-    if(para.trim()){add(para,500,46,first?(ego?0:18):14);first=false;}}}
+    if(para.trim()){add(para,500,46,first?(ego?0:TITLE_GAP):14);first=false;}}}
   const bodyCount=lines.length-bodyStart,bodyLines=reserve?Math.max(4,bodyCount,previousBudget?.bodyLines||0):bodyCount;
-  for(let i=bodyCount;i<bodyLines;i++)lines.push({text:'',weight:500,size:46,gap:i?6:18});
+  for(let i=bodyCount;i<bodyLines;i++)lines.push({text:'',weight:500,size:46,gap:i?6:TITLE_GAP,lead:BODY_LEAD});
   for(const item of r.items||[])add(item,500,46,12,true);
   // A bubble whose words are still coming (the objects' UI comes first): "…" in it, so the bubble shows at once. Not ink: never written.
   if(ego&&r.reserve_text&&!lines.some(l=>l.text)){add('…',500,46,0);lines.at(-1).placeholder=true;}
   const footer=0;   // Weather's controls are placed on their own (src/weather-preview.mjs), not as a footer of the answer
   if(ego){let widest=0;for(const l of lines){ctx.font=`${l.weight} ${l.size}px ${FONT}`;widest=Math.max(widest,(l.indent?48:0)+ctx.measureText(l.text).width);}W=Math.max(2*PAD+1,Math.ceil(2*PAD+widest));}
-  canvas.width=W;canvas.height=Math.ceil(PAD*2+lines.reduce((h,l)=>h+l.gap+l.size*1.22,0)+footer);canvas.weatherFooter=footer;
-  canvas.layoutBudget={titleLines,bodyLines,footer,columns:COLS};
+  canvas.width=W;canvas.height=Math.ceil(PAD*2+lines.reduce((h,l)=>h+l.gap+l.size*(l.lead||BODY_LEAD),0)+footer);canvas.weatherFooter=footer;
+  canvas.layoutBudget={titleLines,bodyLines,footer,columns:COLS,fit};
   // The ink's box in canvas pixels (the glass backs exactly this): widest line, first line's top to last line's baseline area.
-  let right=PAD,bottom=PAD;{let y=PAD;for(const l of lines){y+=l.gap;ctx.font=`${l.weight} ${l.size}px ${FONT}`;right=Math.max(right,PAD+(l.indent?48:0)+ctx.measureText(l.text).width);bottom=y+l.size*(ego?1.22:1);y+=l.size*1.22;}}
+  let right=PAD,bottom=PAD;{let y=PAD;for(const l of lines){y+=l.gap;ctx.font=`${l.weight} ${l.size}px ${FONT}`;right=Math.max(right,PAD+(l.indent?48:0)+ctx.measureText(l.text).width);bottom=y+l.size*(ego?1.22:1);y+=l.size*(l.lead||BODY_LEAD);}}
   const box={x0:PAD,x1:footer||reserve?W-PAD:right,y0:PAD,y1:footer||reserve?canvas.height-32:bottom};
   ctx.textBaseline='top';
   // White: the material's colour tints text and glow alike (one glowing colour, picked per answer in legibility.mjs).
   // Dark text: the halo is a faint soft shadow; a full glow would read as a grey haze around the letters.
   const glow=dark?[[10,'rgba(255,255,255,.25)']]:[[28,'rgba(255,255,255,.8)'],[8,'rgba(255,255,255,.9)']],ink=[];
-  {let y=PAD;for(const l of lines){y+=l.gap;if(l.text&&!l.placeholder)ink.push({text:l.text,font:`${l.weight} ${l.size}px ${FONT}`,size:l.size,x:PAD+(l.indent?48:0),y,bullet:l.bullet,bulletX:PAD+8});y+=l.size*1.22;}}
+  {let y=PAD;for(const l of lines){y+=l.gap;if(l.text&&!l.placeholder)ink.push({text:l.text,font:`${l.weight} ${l.size}px ${FONT}`,size:l.size,x:PAD+(l.indent?48:0),y,bullet:l.bullet,bulletX:PAD+8});y+=l.size*(l.lead||BODY_LEAD);}}
   for(const [blur,color] of glow){
     ctx.shadowBlur=blur;ctx.shadowColor=color;ctx.fillStyle='#ffffff';
     for(const l of ink){ctx.font=l.font;if(l.bullet)ctx.fillText('·',l.bulletX,l.y);ctx.fillText(l.text,l.x,l.y);}
   }
   canvas.ink={lines:ink,glow};   // for the writing effect (src/text-writing.mjs)
-  {let y=PAD;for(const l of lines){y+=l.gap;if(l.placeholder){ctx.shadowBlur=0;ctx.font=`${l.weight} ${l.size}px ${FONT}`;ctx.fillStyle='rgba(255,255,255,.75)';ctx.fillText(l.text,PAD,y);}y+=l.size*1.22;}}
+  {let y=PAD;for(const l of lines){y+=l.gap;if(l.placeholder){ctx.shadowBlur=0;ctx.font=`${l.weight} ${l.size}px ${FONT}`;ctx.fillStyle='rgba(255,255,255,.75)';ctx.fillText(l.text,PAD,y);}y+=l.size*(l.lead||BODY_LEAD);}}
   canvas.box=box;
   const xHeights=lines.map(l=>{ctx.font=`${l.weight} ${l.size}px ${FONT}`;const m=ctx.measureText('x');return m.actualBoundingBoxAscent+m.actualBoundingBoxDescent;});
   canvas.textMetrics={scale:bodySize,xHeightRatio:(xHeights.length?Math.min(...xHeights):bodyXHeight(ctx,FONT))/W,box:{x0:box.x0/W,x1:box.x1/W,y0:box.y0/canvas.height,y1:box.y1/canvas.height}};
@@ -148,7 +155,9 @@ const layoutCache=new WeakMap();
 export function textLayouts(r){
   if(r.dialogue||r.reserve_text&&!r.title&&!r.body)return null;
   const key=JSON.stringify([r.title,r.body,r.items,textBehavior,!!r.info?.key]),hit=layoutCache.get(r);if(hit?.key===key)return hit.layouts;
-  const layouts=LAYOUT_COLUMNS.map(columns=>{const m=glowTexture(r,false,{columns});const out={columns,aspect:m.image.height/m.image.width,textMetrics:m.image.textMetrics};m.dispose();return out;});
+  // the widths Floating Text may take are also measured fitted to the text (no reserved room), which is how it is set (`fit`)
+  const measure=budget=>{const m=glowTexture(r,false,budget),out={aspect:m.image.height/m.image.width,textMetrics:m.image.textMetrics};m.dispose();return out;};
+  const layouts=LAYOUT_COLUMNS.map(columns=>({columns,...measure({columns}),...(columns>=1280?{fit:measure({columns,fit:true})}:{})}));
   layoutCache.set(r,{key,layouts});return layouts;
 }
 // `frame`: where the answer is placed, the frame at which it appears (the user may have turned while the agent was thinking).
@@ -162,7 +171,7 @@ export async function createResponseWidget(r,ctx,stack=0,frame=r.frame,previous=
   const anchorState=previous?.userData.anchorState||{};
   const pose=await place({...r,frame,aspect,textMetrics:map.image.textMetrics,layouts:textLayouts(r),previousPose:previous?.userData.pose,anchorState,
     bubbleWidthScale:was?map.image.width/was:1,bubbleRequireInView:!!placeholder},ctx);
-  if(pose.layout&&pose.layout!==map.image.width){map.dispose();map=glowTexture(r,false,{columns:pose.layout});aspect=map.image.height/map.image.width;}
+  if(pose.layout&&pose.layout!==map.image.width||!!pose.viewFixed!==!!map.image.layoutBudget.fit){const columns=pose.layout||map.image.layoutBudget.columns;map.dispose();map=glowTexture(r,false,{columns,fit:!!pose.viewFixed});aspect=map.image.height/map.image.width;}
   ctx.onPlacement?.(r,pose,frame);
   const width=pose.width,height=width*aspect;
   const group=new THREE.Group();group.name=`agent-response-${r.id}`;group.position.copy(pose.position);group.quaternion.copy(pose.quaternion);
@@ -170,8 +179,8 @@ export async function createResponseWidget(r,ctx,stack=0,frame=r.frame,previous=
   const shift=(pose.align==='bottom'?height/2:0)+stack*(r.part?height+.55*width:height*1.15);group.translateY(shift);
   const text=new THREE.Mesh(new THREE.PlaneGeometry(width,height,...SEGMENTS),new THREE.MeshBasicMaterial({map,transparent:true,toneMapped:false,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-8}));
   text.renderOrder=3;group.add(text);
-  // Glass: solid exactly over the ink (no margin), then a soft blurred edge fading out beyond it (about one body line).
-  const box=map.image.box,WX=map.image.width,u=width/WX,H=map.image.height,inner=new THREE.Vector2((box.x1-box.x0)*u,(box.y1-box.y0)*height/H),feather=46*1.1*u;
+  // Glass: solid exactly over the ink (no margin), then a soft blurred edge fading out beyond it (about half a body line).
+  const box=map.image.box,WX=map.image.width,u=width/WX,H=map.image.height,inner=new THREE.Vector2((box.x1-box.x0)*u,(box.y1-box.y0)*height/H),feather=GLASS_FEATHER*u;
   const glass=new THREE.Mesh(new THREE.PlaneGeometry(inner.x+2*feather,inner.y+2*feather,...SEGMENTS),glassMaterial());glass.renderOrder=2;glass.visible=false;
   glass.position.set(((box.x0+box.x1)/2/WX-.5)*width,(.5-(box.y0+box.y1)/2/H)*height,-.002);
   glass.material.uniforms.size.value.set(inner.x+2*feather,inner.y+2*feather);glass.material.uniforms.inner.value.copy(inner);glass.material.uniforms.feather.value=feather;group.add(glass);
@@ -211,8 +220,10 @@ function paintResponseStyle(widget,style){
 }
 function moveResponseWidget(w,pose,stack){
  // A new line length (pose.layout, src/text-surfaces.mjs): the text is set again in it, in its current style.
- if(pose.layout&&pose.layout!==w.userData.text.material.map.image.width){const d=w.userData,old=d.text.material.map;
-   const map=glowTexture(d.response,d.style?.side==='dark',{footer:old.image.layoutBudget?.footer||0,columns:pose.layout});
+ // Floating Text is set to fit its text (no reserved room); text set elsewhere keeps its reserve.
+ const budget=w.userData.text.material.map.image.layoutBudget||{};
+ if(pose.layout&&pose.layout!==w.userData.text.material.map.image.width||!!pose.viewFixed!==!!budget.fit){const d=w.userData,old=d.text.material.map;
+   const map=glowTexture(d.response,d.style?.side==='dark',{footer:budget.footer||0,columns:pose.layout||budget.columns,fit:!!pose.viewFixed});
    d.text.material.map=map;d.text.material.needsUpdate=true;d.aspect=map.image.height/map.image.width;old.dispose();}
  const d=w.userData,width=pose.width,height=width*d.aspect,shift=(pose.align==='bottom'?height/2:0)+stack*(d.response.part?height+.55*width:height*1.15);
  const sameSurface=d.pose?.surfaceId&&d.pose.surfaceId===pose.surfaceId;
@@ -220,7 +231,7 @@ function moveResponseWidget(w,pose,stack){
  w.position.copy(pose.position);w.quaternion.copy(pose.quaternion);w.translateY(shift);
  d.surfaceMotion=sameSurface&&(from.distanceTo(w.position)>.002||fromQ.angleTo(w.quaternion)>.01)?{from,fromQ,to:w.position.clone(),toQ:w.quaternion.clone(),start:performance.now(),duration:220}:null;
  d.text.geometry.dispose();d.text.geometry=new THREE.PlaneGeometry(width,height,...SEGMENTS);delete d.text.userData.flat;
- const map=d.text.material.map,box=map.image.box,WX=map.image.width,u=width/WX,H=map.image.height,inner=new THREE.Vector2((box.x1-box.x0)*u,(box.y1-box.y0)*height/H),feather=46*1.1*u;
+ const map=d.text.material.map,box=map.image.box,WX=map.image.width,u=width/WX,H=map.image.height,inner=new THREE.Vector2((box.x1-box.x0)*u,(box.y1-box.y0)*height/H),feather=GLASS_FEATHER*u;
  d.glass.geometry.dispose();d.glass.geometry=new THREE.PlaneGeometry(inner.x+2*feather,inner.y+2*feather,...SEGMENTS);delete d.glass.userData.flat;
  d.glass.position.set(((box.x0+box.x1)/2/WX-.5)*width,(.5-(box.y0+box.y1)/2/H)*height,-.002);
  const uniforms=d.glass.material.uniforms;uniforms.size.value.set(inner.x+2*feather,inner.y+2*feather);uniforms.inner.value.copy(inner);uniforms.feather.value=feather;
@@ -330,6 +341,8 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         #include <colorspace_fragment>
       }`}));
   caption.visible=waitingDot.visible=false;waitingDot.renderOrder=1;hudScene.add(caption,waitingDot);
+  // The caption's top edge in the view's -1..1 height (null while none shows): Floating Text stands just above it (src/placement.mjs).
+  ctx.captionTop=()=>caption.visible?caption.position.y+caption.scale.y/2:null;
   let captionText='',captionKey='',captionId=null,captionStart=0,captionOwner=null,dismissedCaption=null;
   function clearCaption(){caption.visible=waitingDot.visible=false;captionText='';captionId=null;captionKey='';}
   const url=p=>{const u=new URL(p,location.href);u.searchParams.set('session',sessionPath);if(conversation)u.searchParams.set('conversation',conversation);return u;};
@@ -424,7 +437,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     adapt(frame){
       layer.currentFrame=frame;
       const visible=[...widgets.values()].filter(w=>w.visible),cfg=w=>settingsOf(w.userData.response);
-      const viewport=ctx.viewport?.(),viewKey=viewport?`${viewport.width}:${viewport.height}`:'';
+      const viewport=ctx.viewport?.(),cap=ctx.captionTop?.(),viewKey=(viewport?`${viewport.width}:${viewport.height}`:'')+`:${cap==null?'-':cap.toFixed(3)}`;   // the caption too: Floating Text moves with it
       const todo=visible.filter(w=>w.userData.adaptedFrame!==frame||w.userData.adaptedView!==viewKey||w.userData.adaptedStability!==cfg(w).stability);
       if(!todo.length)return;
       if(adapting)return adapting;
@@ -453,9 +466,11 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
               placementDecision:{hold:false,reason:'unplaced',detail:pose.reason}});continue;}
           if(w.userData.adaptedFrame!=null&&Math.abs(frames[frame].t-frames[w.userData.adaptedFrame].t)>1){w.userData.legibility?.reset();w.userData.compositeInitialized=false;}
           // Search failure is presentation state, never a replacement world anchor.
-          if(!pose.reusedSurface){moveResponseWidget(w,pose,responseSlot(w.userData.response,visible.indexOf(w)));w.userData.compositeInitialized=false;ctx.onPlacement?.(w.userData.response,pose,frame);}
+          // Floating Text follows the camera: moved every frame, logged only when it starts floating.
+          if(pose.viewFixed){const first=!w.userData.pose?.viewFixed;moveResponseWidget(w,pose,0);if(first){w.userData.compositeInitialized=false;ctx.onPlacement?.(w.userData.response,pose,frame);}}
+          else if(!pose.reusedSurface){moveResponseWidget(w,pose,responseSlot(w.userData.response,visible.indexOf(w)));w.userData.compositeInitialized=false;ctx.onPlacement?.(w.userData.response,pose,frame);}
           Object.assign(w.userData,{placementHidden:false,adaptedFrame:frame,adaptedView:viewKey,adaptedStability:stability,
-            placementDecision:{hold:!!pose.reusedSurface,reason:pose.anchorGrace?'transient-loss':pose.reusedSurface?'world-anchor':pose.kind==='view-fallback'?'floating-fallback':pose.kind==='info-float'?'info-float':pose.infoSettled?'info-surface':'new-surface'}});
+            placementDecision:{hold:!!pose.reusedSurface,reason:pose.anchorGrace?'transient-loss':pose.reusedSurface?'world-anchor':pose.kind==='view-float'?'floating':pose.kind==='info-float'?'info-float':pose.infoSettled?'info-surface':'new-surface'}});
         }
       }).catch(e=>console.warn('live placement',e)).finally(()=>{adapting=null;onAnimate?.();});
       return adapting;
@@ -477,7 +492,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         layer.orient(camera);
         if(controls?.userData.responseOffset&&controls.userData.owner){const owner=controls.userData.owner;controls.quaternion.copy(owner.quaternion);controls.position.copy(owner.position).add(controls.userData.responseOffset.clone().applyQuaternion(owner.quaternion));}
       }
-      // An answer with an action card (Delegate) shows its text inside the card (src/action-cues.mjs: the message's Text Input), not as text of its own.
+      // An answer with an action card (Send) shows its text inside the card (src/action-cues.mjs: the message's Text Input), not as text of its own.
       const excluded=[...widgets.values(),...thoughts.values()].filter(w=>w.visible&&(w.userData.response?.action||pass==='fixed'));
       const originalControlsVisible=controls?.visible;
       for(const w of excluded)w.visible=false;
@@ -535,7 +550,9 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     stop(){clearTimeout(timer);},
     orient(camera){
       for(const w of widgets.values()){
-        const d=w.userData;if(!w.visible||d.pose.unreadable||!d.pose.surfaceAnchor)continue;
+        const d=w.userData;
+        // an anchored dialogue bubble (src/placement.mjs) stays upright and turns to the user
+        if(w.visible&&d.pose?.anchored){const y=Math.atan2(camera.position.x-w.position.x,camera.position.z-w.position.z);w.quaternion.setFromAxisAngle(new THREE.Vector3(0,1,0),y);d.pose.quaternion=w.quaternion.clone();continue;}if(!w.visible||d.pose.unreadable||!d.pose.surfaceAnchor)continue;
         d.pose.surfaceNormal||=new THREE.Vector3(0,0,1).applyQuaternion(d.pose.quaternion);
         const b=readableSurfaceBasis(d.pose.surfaceNormal,camera.quaternion,w.position,camera.position,camera),q=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(b.right,b.up,d.pose.surfaceNormal));
         if(d.pose.surface&&w.quaternion.angleTo(q)>1e-6){
@@ -547,6 +564,15 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         w.quaternion.copy(q);d.pose.quaternion=q;
         if(d.surfaceMotion){d.surfaceMotion.fromQ.copy(q);d.surfaceMotion.toQ.copy(q);}
       }
+    },
+    /** The top (the view's -1..1 height) of what stands fixed in view for the latest answer: its Floating Text, else the question's
+     *  caption; null when neither shows. The view stack's UI stands above it (src/cluster-placement.mjs). */
+    viewTop(camera){
+      let top=null;for(const w of widgets.values()){const t=w.userData.text;if(!w.visible||!w.userData.pose?.viewFixed||!t)continue;w.updateMatrixWorld(true);
+        // the top of its ink, not of its texture's margin
+        t.geometry.computeBoundingBox();const b=t.geometry.boundingBox,ink=t.material.map?.image?.textMetrics?.box,y=b.max.y-(ink?ink.y0:0)*(b.max.y-b.min.y);
+        const p=t.localToWorld(new THREE.Vector3((b.min.x+b.max.x)/2,y,0)).project(camera);if(p.z<1)top=Math.max(top??-1,p.y);}
+      return top??ctx.captionTop?.()??null;
     },
     update(t){time=t;apply();},
     // Questions change often while the agent works (new steps): re-apply so the streaming thought updates.
