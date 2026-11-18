@@ -10,19 +10,15 @@
    "poster": "weather/weather-corridor.jpg",
    "chosen": [
     [
-     "findmy",
-     0.51
-    ],
-    [
      "weather",
      0.98
     ]
    ],
    "answer": {
-    "title": "Umbrella Needed Tonight",
-    "body": "Yes, soft snowfall is expected this evening, so you should take your umbrella from shelf 1."
+    "title": "No Umbrella Needed Tonight",
+    "body": "You won't need an umbrella tonight as soft snowfall is forecasted instead of rain."
    },
-   "latency": 1.53,
+   "latency": 1.23,
    "agent_speed": 0.35
   },
   "worldinfo-text": {
@@ -41,9 +37,9 @@
    ],
    "answer": {
     "title": "Music-Brain User Study",
-    "body": "This is a user study where you can scan and sign up in the brain music lab after reading the eligibility requirements."
+    "body": "It is a user study where you can scan and sign up in the brain music lab after reading the requirements."
    },
-   "latency": 1.87,
+   "latency": 2.71,
    "agent_speed": 0.35
   },
   "delegate-poster": {
@@ -75,12 +71,17 @@
    "ask_at": 18.1,
    "video": "worldinfo/worldinfo-voice.mp4",
    "poster": "worldinfo/worldinfo-voice.jpg",
-   "chosen": [],
+   "chosen": [
+    [
+     "worldinfo",
+     1
+    ]
+   ],
    "answer": {
-    "title": "Eat the Candy",
-    "body": "Yes, you can eat the candy because these are grad tea leftovers and people may help themselves."
+    "title": "Yes, you can eat me",
+    "body": "Yes, you can help yourself. I am leftover from this week's grad tea."
    },
-   "latency": 1.42,
+   "latency": 2.76,
    "agent_speed": 0.35
   },
   "labinfo-wall": {
@@ -120,9 +121,9 @@
    ],
    "answer": {
     "title": "Headphones Location",
-    "body": "Your headphones are on the middle shelf of the lab shelf."
+    "body": "Your headphones are on shelf 3."
    },
-   "latency": 1.28,
+   "latency": 1.02,
    "agent_speed": 0.35
   },
   "wayfinding-kitchen": {
@@ -140,10 +141,10 @@
     ]
    ],
    "answer": {
-    "title": "Kitchen Directions",
-    "body": "Exit the lab into the lab corridor, walk north to the central corridor, and the kitchen is on the west side."
+    "title": "Directions to the Kitchen",
+    "body": "Exit the lab, turn right into the lab corridor, go north to the central corridor, and find the kitchen on your left."
    },
-   "latency": 1.58,
+   "latency": 1.05,
    "agent_speed": 0.35
   },
   "agenda-afternoon": {
@@ -204,9 +205,9 @@
    ],
    "answer": {
     "title": "Weekend weather forecast",
-    "body": "No rain is expected this weekend."
+    "body": "No rain is expected this weekend. Saturday brings drifting mist, clear skies, and soft snowfall, while Sunday features drifting mist and soft snowfall."
    },
-   "latency": 1.42,
+   "latency": 1.24,
    "agent_speed": 0.35
   },
   "iotcontrol-brighter": {
@@ -224,10 +225,10 @@
     ]
    ],
    "answer": {
-    "title": "Desk Lamp Brightness",
-    "body": "I increased your desk lamp brightness to 60 %."
+    "title": "Desk Lamp Brightness Increased",
+    "body": "I have increased the desk lamp brightness to 60 percent."
    },
-   "latency": 1.57,
+   "latency": 1.04,
    "agent_speed": 0.35
   },
   "objectstatus-printer": {
@@ -241,14 +242,14 @@
    "chosen": [
     [
      "objectstatus",
-     0.97
+     0.98
     ]
    ],
    "answer": {
     "title": "Printer Status",
-    "body": "No, the lab printer is currently in use printing a poster for Ana with about 4 minutes remaining."
+    "body": "No, the printer is in use printing a 12-page poster for Ana and has about 4 minutes left."
    },
-   "latency": 1.85,
+   "latency": 1.15,
    "agent_speed": 0.35
   },
   "iotcontrol-printer": {
@@ -266,10 +267,10 @@
     ]
    ],
    "answer": {
-    "title": "Print Job Status",
+    "title": "Print job status",
     "body": "Your print job has about 2 minutes left."
    },
-   "latency": 1.41,
+   "latency": 1.07,
    "agent_speed": 0.35
   },
   "bookcompanion-lighthouse": {
@@ -283,14 +284,14 @@
    "chosen": [
     [
      "bookcompanion",
-     0.96
+     0.92
     ]
    ],
    "answer": {
     "title": "Current Reading",
-    "body": "I cannot find what you are reading because context is unavailable."
+    "body": "No information about the part you are reading is currently available."
    },
-   "latency": 1.24,
+   "latency": 0.97,
    "agent_speed": 0.35
   },
   "stepguide-espresso": {
@@ -371,14 +372,14 @@
     ],
     [
      "weather",
-     0.97
+     0.96
     ]
    ],
    "answer": {
-    "title": "Umbrella recommendation",
+    "title": "Umbrella Check",
     "body": "Yes, bring your umbrella because soft snowfall is expected this evening."
    },
-   "latency": 1.52,
+   "latency": 1.08,
    "agent_speed": 0.35
   },
   "iotcontrol-tv": {
@@ -396,10 +397,10 @@
     ]
    ],
    "answer": {
-    "title": "TV set to HDMI 2",
-    "body": "The TV input is now set to HDMI 2."
+    "title": "TV Input Switched",
+    "body": "The TV is now set to HDMI 2."
    },
-   "latency": 1.27,
+   "latency": 0.99,
    "agent_speed": 0.35
   },
   "delegate-describe": {
@@ -445,5 +446,5 @@
    "agent_speed": 0.35
   }
  },
- "recorded": "2026-11-17T21:12:08.420Z"
+ "recorded": "2026-11-18T01:29:03.866Z"
 }

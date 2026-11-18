@@ -367,7 +367,7 @@ Digital twin 里的实体：`place`（区域）、`object`（家具、物品、�
 
 The components of §4.3 sit on a slab beside the thing and read as a flat panel. Spatial cues take the shape of what they are about instead: its box, its footprint, its edge, a doorway or the floor. Bright cyan (`#3ff0ff`); text is flat and always faces the user. Prototypes: `src/spatial-ui/cues.mjs`; screenshots: `recordings/cues/` and the reel dashboard.
 
-Each cue is defined by when it is used and what it does, in five groups:
+Each cue is defined by when it is used and what it does, in seven groups. The two groups of controls differ in what a change does: **Adjust** cues change the thing itself, and the change is sent to it once the user makes it (a press, or letting go of a drag); **Explore** cues move through information the answer shows (another day, another hour), and nothing is sent, only what is shown changes.
 
 | Group | Cue | When to use it, to do what | Example |
 |---|---|---|---|
@@ -378,16 +378,17 @@ Each cue is defined by when it is used and what it does, in five groups:
 |  | Doorway Glow | When the target room is elsewhere but its door is in view, to show where to go in. | Wayfinding to a room |
 | Direction | Arrow Ahead | When the target is nearby but out of view, to show which way to turn. | FindMy, Wayfinding |
 |  | Floor Path | When reaching the target means walking through other spaces, to lead the user along the route. | Wayfinding along a corridor |
+| Link | Text Arrow | When text stands apart from the thing it is about (Floating or Embedded Text beside a poster or a bowl), to point from the text to that thing: a bright cyan polyline, a shaft and an open head, flat and turned to the user. It does not lead anywhere; Arrow Ahead and Floor Path are for going somewhere. | WorldInfo beside a poster |
 | Display | Gauge | When the user asks how much of something there is now (a level with a range: brightness, toner, battery), to show the amount at a glance. | “How bright is the lamp?” |
 |  | Progress Rail | When a task is running toward an end, to show how far along it is and how long is left. | Printer job, laundry cycle |
 |  | Pinned Tags | When the user needs several separate readings of one thing, to show each next to the part it is about. | Printer toner and paper |
 |  | Status Pulse | When something about a thing needs attention, to flag it in the state’s color and say why. | ObjectStatus “paper low” |
 |  | Card Stack | When things wait in line for a device, to show what is next and how many are waiting. | Print queue |
-| Control | Slider | When the user wants to change a level, to let them set it by dragging along the thing’s edge. | “Make the light brighter” |
-|  | Date Picker | When data is dated and the user can move between days, to pick a day: the month once above, each day a capsule with its weekday and date. | Weather days, Agenda |
-|  | Playback | When data runs through time, to play it and scrub to a moment: a Play/Pause button, a rail with a stop per entry, and the current time riding on the thumb. | Weather hours |
+| Adjust | Slider | When the user wants to change a level, to let them set it by dragging along the thing’s edge; the bar follows the drag and the new level is sent when they let go. | “Make the light brighter” |
 |  | Edge Tabs | When the user wants to switch between a few options, to pick one directly on the thing. | “Switch the TV to HDMI 2” |
 |  | Icon Button | When the user wants to switch something on or off or trigger a command, to do it in one press: a preset icon with its word (Send, Confirm, Cancel, Turn on/off, Pause…). | Power, cancel a print job, Send |
+| Explore | Date Picker | When data is dated and the user can move between days, to pick a day: the month once above, each day a capsule with its weekday and date. | Weather days, Agenda |
+|  | Playback | When data runs through time, to play it and scrub to a moment: a Play/Pause button, a rail with a stop per entry, and the current time riding on the thumb. | Weather hours |
 | Act | Tether Send | When the system passes something to someone for the user, to show what goes to whom before it is sent. | “Send the poster to Alice” |
 
 **Message (library).** A MOD that reaches people composes a message from four library parts. These are not specific to Delegate; a reminder for someone or a reply uses the same ones:
@@ -413,7 +414,7 @@ Situated-text slots declare `fixed: [floatingText]` with `embeddedText` `instead
 
 **Choosing a cue: the MOD declares it.** Each MOD says, on each of its slots, which spatial UI it draws (`ui`, §5.1). At runtime nothing is chosen from the whole library; only the few parts the MOD allows are considered, and by rules:
 - `fixed`: always drawn when the slot is shown.
-- `flexible`: each drawn when its `when` holds. `when` is a rule over facts computed without a model — the target (`target.has_content`, `target.out_of_view`, `target.other_room`, `target.door_in_view`, `user.in_target`), the data (`data.days`, `data.steps_per_day`, `value.type`, `state.level`), the request (`intent` read / change, `question.about`) and the button presets (`preset.found`). A flexible part may stand `instead_of` a fixed one (FindMy draws Corner Brackets instead of the box when the thing has content to read).
+- `flexible`: each drawn when its `when` holds. `when` is a rule over facts computed without a model — the target (`target.has_content` (the thing's `content` trait), `target.other_room`, `target.door_in_view`, `user.in_target`), the data (`data.days`, `data.steps_per_day`, `value.type`, `state.level`), the request (`intent` read / change, `question.about`) and the button presets (`preset.found`). A flexible part may stand `instead_of` a fixed one (FindMy draws Corner Brackets instead of the box when the thing has content to read).
 - Anything the MOD does not list is never drawn by it.
 
 The decision model keeps choosing MODs and filling slots (which thing, which device, which action); it does not choose the UI. It is asked about the UI only when a `when` depends on the intent and the intent is unclear, and then only among the MOD's own options. Once a part is drawn in a conversation it stays for follow-ups while its `when` still holds, so the UI does not flicker.
@@ -521,7 +522,7 @@ Primitive representation 是固定的 block；**用户扩展的是 MOD**。新�
     {"id": "diorama", "use": "scene-asset", "data": "asset", "anchor": {"kind": "place", "of": "zone:lab-2f"}},
     {"id": "answer",  "use": "situated-text", "anchor": {"kind": "relative", "to": "diorama", "side": "beside"}}
   ],
-  "variants": {"diorama": {"slots": ["diorama", "answer"], "text": "answer"}, "text": {"slots": ["answer"], "text": "answer"}, "voice": null},
+  "variants": {"diorama": {"slots": ["diorama", "answer"], "text": "answer"}, "text": {"slots": ["answer"], "text": "answer"}},
   "default_variant": "diorama", "provider": "space-owner"
 }
 ```
@@ -544,7 +545,7 @@ Primitive representation 是固定的 block；**用户扩展的是 MOD**。新�
 | | controls | | gauge / slider / edgeTabs / iconButton / textButton / progressRail / cardStack / pinnedTags / statusPulse，按 value type 和 intent |
 | Delegate | card | contactChip，textInput，iconButton:send | tetherSend（attachment.kind=thing\|photo），photoCapture（attachment.kind=photo） |
 | WorldInfo | answer | | cornerBrackets（target.has_content） |
-| | voice | | dialogue + asset:ego-motion（target.pointed & request.second_person） |
+| | voice | | dialogue + asset:ego-motion（target.pointed & request.second_person；WorldInfo 只有这一种表现方式，没有 voice variant；动作固定为 library 的一种） |
 | LabInfo | diorama | asset:diorama | floorArea（question.about=here） |
 | Agenda（spec） | timeline | floatingText（列表） | datePicker（data.days>1） |
 | BookCompanion（spec） | answer | cornerBrackets | |
@@ -604,8 +605,8 @@ Primitive representation 是固定的 block；**用户扩展的是 MOD**。新�
 | --- | --- | --- |
 | 每个 mod 的 Text response 开 / 关 | **MOD authoring**：MOD 有没有 `text` slot | 文字由 Situated Text 呈现，它本身就是一个 primitive representation；选中的 MOD 都没有文字 slot 时，回应就没有文字（已实现）。没有任何 MOD 时，文字就是整个回应 |
 | Weather 的 Lock location | **MOD authoring**：Ambient Effect slot 的锚点参数（第一次放下后固定） | 是这个 slot 的行为 |
-| FindMy 的 Remove on hand approach、距离 | **MOD authoring**：Highlight 的 `dismiss` 参数（手靠近时消失） | 同上 |
-| Object mod 的 Remove on hand touch | **MOD authoring**：Ego Object 的 `dismiss` 参数 | 同上 |
+| FindMy 的 Remove on hand approach、距离 | **Removed (2026-11-17)**: an overfit, MOD-specific feature; no dismissal by hands | 同上 |
+| Object mod 的 Remove on hand touch | **Removed (2026-11-17)**: an overfit, MOD-specific feature; no dismissal by hands | 同上 |
 | Hide after 5 s | **MOD authoring**：slot 的显示时长（默认不自动消失） | 同上 |
 | Weather mod / FindMy mod 开关 | **安装**：MOD 装没装 | 已由 `installed.json` 取代 |
 | When no surface fits、Placement stability、写字速度、字号、occlusion | **Primitive representation 的默认值**（渲染器参数），作者统一定 | 是渲染方式，不是某个 MOD 的选择 |
@@ -808,14 +809,71 @@ Jev 每次决定约 80–220 ms。给 Gemini 的天气数据改成只给时段�
 - **文字形式：** Object-centric Dialogue 只在指着一个东西并用第二人称问它时出现（compose 里按规则判断，例："Can I eat you?"）。
 - **主题：** 亮 cyan；可点的都是胶囊形；青蓝底上的字不加阴影；去掉了不来自数据或决定的文字（"waiting for you" 等）。
 
-### 10.9 Not Done Yet (2026-11-17, in priority order)
+### 10.9 Routing, Text Forms, Weather Placement, Recording Queue (2026-11-17)
 
-1. **Floor Path routing.** Floor Path is a straight line (from 0.6 m ahead of the user, at most 4 m, toward the target), so it can cross walls or leave the view. The kitchen clip shows no direction cue because of this. It needs a route over the twin: rooms (`semantic.rooms` polygons) connected by doors (layout boxes of category door), user → door → … → target door.
-2. **Placement module (4.5).** A per-thing site allocator and a cluster solver: in view, not covering a content-bearing target, no overlap with cues, embedded parts or other clusters. Today the Delegate message column can cover the poster it sends, and each cue's site is written in the cue itself.
-3. **Embedded vs Floating Text from the declaration.** The declarations say `embeddedText when surface.score>=0.5`, but answer text is still placed by the older text-surface logic (`src/text-surfaces.mjs`, `src/agent.mjs`) without reading them.
-4. **"Can I eat you?" chose no MOD** in the latest WorldInfo-voice recording, so it answered as floating text, not as Object-centric Dialogue. Check the `about` of the request and WorldInfo's automatic choice in `modos/pipeline.mjs` stage 2.
-5. **Weather controls are small** in the answer's footer (`src/weather-preview.mjs` scales them to the footer).
-6. **Spec MODs** (Agenda, BookCompanion, StepGuide, LiveCoach, Reminder) are chosen and answer in text only. LiveCoach's `bodyArrow` is not in the library; Reminder has no time trigger.
-7. **Vision Pro.** The cues, text forms and message parts exist only in the web editor (`editor/src`); `visionos/` still renders the earlier parts.
-8. **Feeds and tailoring.** Weather and the rest use mock data (no real fetchers or refresh). The MODs tab can switch variants, settings, forks and knowledge, but there is no test loop yet; the Agent panel's old per-mod response settings should move into MOD settings.
-9. **Small data issues.** In the Lab example retrieval also picks an unrelated poster; in the atlas mock items the brush's container is not in the layout, so FindMy cannot find it.
+- **Floor Path follows a route** (`src/floor-route.mjs`). A* over a 0.25 m grid of the room polygons (`semantic.rooms`). A step may not cross a wall (`semantic.walls`, the base of each outline) except inside a door's opening (`semantic.openings`, Door or a walk-through Opening at least 1.8 m tall); corridors that meet without a wall connect directly. The grid path is pulled tight, and chevrons are laid every 0.45 m along it (up to 14 m), each on its own room's floor height. When the twin has no route there is no path, never a line through walls. On atlas, lab → kitchen goes out of the lab door and down the corridors in about 5 ms.
+- **"Can I eat you?" chose no MOD** because grounding scored the candy 0.4 (its prompt only knew "this"), so there was no referent and WorldInfo, which is scoped to the referent, was skipped, although the request's `about` chose the thing. Fixed in `modos/grounding.mjs`: the prompt now covers questions put to the thing in the second person, and a rule (`addressedReferent`) takes the looked-at thing as the referent when the question says "you", `about` chose it, and "you" is not the assistant ("can you turn on…").
+- **Embedded vs Floating Text is read from the declaration.** The host MOD's text slot `ui` travels with the text part (`text_ui`, `modos/compose.mjs`, stored by `scripts/agent_store.py`). `src/placement.mjs` computes `surface.score` for the best surface spot (clean background × level on screen × not above the eye, 0 to 1; 0.5 needs a clutter cost of 2 or less) and lets `modos/ui-rules.mjs` decide. Floating Text stands in front of the user, upright, and stays while in view; text on a surface stays while it scores 0.4 or more there, so the form does not flicker at 0.5. Info answers use the same rule in place of `INFO_SETTLE`.
+- **Weather controls are a generic UI cluster** (`src/cluster-placement.mjs`, the `user-reach` anchor of §4.5), no longer a footer inside the answer panel. The candidate spots are tried in order: whole cluster in view, not over the answer text, 0.55 to 0.75 m away, low in the view. The cluster is upright and turned to the user, sized to about 23° of view, placed once per answer (and once more when the answer text gets its spot, to stay clear of it) and locked in the world, and placed again only after 1.5 s out of view. The answer reserves no footer now.
+- **Status Pulse says the state, not the name.** The printer's pulse read "printer" because the cue was given the target's label. The state now comes from the status data (`state`, else the summary's first phrase after the name: "Lab printer: in use, printing…" → "In use"; `stateText` in `modos/selectors.mjs`) and travels as `highlight.states`; with no state the pulse is the dot alone.
+- **Controls are Adjust or Explore** (§4.4). Adjust cues change the thing and send the change once the user makes it: a press sends at once; the Slider follows a drag on the bar and sends when the user lets go (`src/device-cues.mjs`). Explore cues (Date Picker, Playback) only change what the answer shows. The reel's cue gallery has both groups.
+- **Two arrows, both in the library.** Arrow Ahead (and Floor Path) lead the user somewhere; the new **Text Arrow** (`textArrow` in `src/spatial-ui/cues.mjs`) links text to the thing it is about. It replaces the hand-made info-answer arrow (an SVG overlay with adaptive colours and a blurred halo, `src/app.mjs`) with a bright cyan polyline in the cues' glow style, laid out by `arrowBetween` and drawn in the room. MODs declare it on their text slot (`textArrow when text.apart`: WorldInfo, BookCompanion); `text.apart` holds when the text and the thing do not overlap on screen and there is room for an arrow.
+- **Recording is one queue.** `npm run record -- <clips or MODs>` (e.g. `npm run record -- weather wayfinding`) asks again and records into the reel (`context/recordings`, manifest included); a failed clip is reported at the end while the rest are still recorded. `npm run record:cues` captures the cue gallery.
+- Tests: Node 251, Python 87, all pass (new: `tests/floor-route.test.mjs`, the second-person grounding case).
+
+### 10.10 Editor Aligned with the Design (2026-11-17)
+
+The editor's side panel had grown from the earlier per-mod system. It now follows the pipeline and the library:
+
+| Tab | What it holds | Was |
+| --- | --- | --- |
+| Agent | Local setup, sessions, Replay (Resume on first response) | also global "Responses" and per-mod overrides |
+| Input | Info selection (Jev judgement or score only), hands perception: what a request starts from (stage 1) | in Agent |
+| MODs | Each MOD's install switch, representation, settings, places, knowledge, examples | (unchanged) |
+| UI library | Text: Size, Writing, Placement (Stability), Reset text | "Behavior" |
+
+- **MOD choices are MOD settings only.** The per-mod overrides (Text response, Hide after 5 s, Remove effect on hand approach or touch, Lock location) and the Weather / FindMy / Object switches are gone. The renderers read each part's `mod.settings` (`src/ui-settings.mjs` `modSetting`): FindMy's container `dismiss: hand-approach`, a speaking object's `dismiss: hand-touch`, Weather's sky `lock`, and the text slot's `duration: 5s` (carried with the text part as `text_mod`). Whether a MOD answers in words is its variant's text slot.
+- **No pinned or fallback text.** "When no surface fits" and "Fixed text response" are removed with the code behind them (`viewFixedPose`, the fixed pass). Every answer follows a text form: the host MOD's declaration, or the library default for an answer no MOD hosts (`DEFAULT_TEXT_UI`: Embedded Text at `surface.score ≥ 0.5`, else Floating Text). A declaration with Embedded Text only waits for a surface. The info answer's own settle rule (`INFO_SETTLE`) is replaced by the same declaration.
+- **Removed code:** `src/response-settings.mjs` (and its tests), the DOM weather preview (`createWeatherPreview`), the arrow halo. Settings saved by the earlier panel carry over once (stability, resume, the two distances).
+- Tests: Node 242, Python 87, all pass.
+
+### 10.11 One Space Tab; One Scan for Atlas (2026-11-17)
+
+- **Scene and Twin are one Space tab.** They listed the same things twice: the Scene tab's Layout boxes and Scene objects are the source of the Twin's Fixtures and Objects (`scripts/modos_twin.py` derives `layout:` and `comp:` entities from `scan/semantic.json` and `composition.json`). The Space tab now has, from the top: the space, **Recording** (its scan, its recordings and alignment, the objects placed in it), then **Entities**, one tree (Layout, Fixtures, Objects; by place, nested by what each is inside). The selected entity shows one panel: **Geometry** (the layout editor's edit mode and tools, Frame, a furniture's 3D model), **Semantics** (kind, category, traits, place, inside, a device's inputs and outputs) and **Knowledge** (attached items and the info editor; a place's info is its zone's). An entity without geometry (an item known by name) says so.
+- The tree keeps the earlier outline's look and controls (`src/layout-outline.mjs`: compact rows with a kind icon in one bounded box, Places / Types grouping, collapse, hide and lock for what has geometry, delete, model swap and rename in edit mode, double-click to frame), now over the twin's entities, including those without geometry; the selected entity's panel opens right under its row, full width and compact: Geometry tools on top (only for what has geometry), then Semantics or Knowledge (a seg control). The row names it, so the panel does not. Every edit is saved as it is made (no Save button). Place, Inside and Category are not shown for what has geometry: place and nesting come from the scan and the layout (the tree shows them), and Category was only an input to a word match. **`content` is now a trait** ("With content", a switch in Semantics): derived by default from the name and scan category (`modos_twin.CONTENT`), set or cleared by hand, and read by `target.has_content` (`modos_parts.has_content`, Corner Brackets instead of a box). Only an entity known by name (a registered belonging) is put inside a container by hand. The attached info is edited in Knowledge and not listed twice. The Twin tab is gone. Picking in the 3D view and in the tree stay in step.
+- **Atlas keeps one scan**, `atlas-reassembled` (the repaired second floor, validation passed; the layout and the recordings are registered to it). The original scan and the first repair were deleted from the space and from `private/atlas/scans` (about 860 MB).
+- Tests: Node 242, Python 87, all pass.
+
+### 10.12 Space and UI Library Panes; Explanations Behind "?" (2026-11-17)
+
+- **Space tab: two panes.** A seg control under the space picker: **Scene** (its scan and recordings with their alignment) and **Entities** (the entity tree and the objects placed in this recording). The separate Recording heading is gone.
+- **UI library: two panes,** Text and Cues, with clearer names (Text size, Headings, Write out, Stroke by stroke, Stability with "Moves freely / Stays put", Turn with the thing with "Never / Up to 90°", Hand approach and Hand touch with "Closer / Farther") and one "Reset text" at the bottom of Text (it resets all text settings, not only the lettering).
+- **Explanations are behind a "?",** shown in the editor's tooltip on hover or focus (`.help[data-tip]`, `src/app.mjs`); pressing it inside a switch's label does not toggle the switch. No paragraph of explanation is shown by default.
+- **Data:** the posters the scan had filed as a cabinet or shelves (music-brain user study, vision_sean, the three lab philosophy posters) are marked With content; their kind is still the scan's (furniture, container).
+
+### 10.13 Overfit Features Removed (2026-11-17)
+
+The rebuild exists so that computation generalizes. Small, concrete features made for one MOD or one scene in the earlier system are removed in the feature and in the code, not only in the UI:
+
+- **Dismissal by hands.** The `dismiss` setting of Highlight and Ego Object (`hand-approach`, `hand-touch`), the hand approach and touch distances, `src/findmy-approach.mjs` and Ego's `setRemoved`, with their tests. A cue stays while its answer is shown.
+- **Answer text switch.** The `text` customization (`text_off`) is gone from the registry, the catalog and the MODs tab: whether a MOD shows text is its variant's text slot, as authored. `customize` now refuses keys it does not know instead of dropping them.
+- **Info-answer knobs.** "Turn with the thing" (`floatParallel`) and "Smallest on a surface" (`infoMinShrink`) are fixed constants in `src/placement.mjs`; Text Arrow's thickness is the cue's own (no `arrowWidth`).
+- **Stability is the library's only.** It no longer moves Weather's sky (the sky follows its MOD's `lock` setting).
+- The UI library tab is now Text only (Size, Writing, Placement · Stability). The Vision Pro path (`src/vision-panel.mjs`, `scripts/vision.py`, the visionOS app) still carries the old settings until it is ported.
+- Tests: Node 239, Python 88, all pass.
+
+### 10.14 WorldInfo Speaks by Rule Only; No UI Left to the Model (2026-11-17)
+
+- **The voice variant is gone.** Object-centric Dialogue came only when WorldInfo was switched to its "The thing speaks" variant, so the rule (`target.pointed & request.second_person`) mattered only after a manual switch. WorldInfo now has one representation: the answer slot (Floating / Embedded Text, Text Arrow) and the voice slot (dialogue + ego motion). The rule alone decides: pointed at and asked as "you", the thing answers in the first person (`compose.mjs` hostOf); otherwise the text slot shows the answer.
+- **No open parameters for the model.** The "chosen per answer" mechanism (an author leaving an enum open, Fill asking Jev, `selectors.mjs` slotParam) is removed, with the enums that used it: Ego Object's `effect` and `tone`, and Highlight's unused `tone`. A speaking thing's motion is the library's one (bounce). Slot params a person can set are `setting`s only (duration, lock). `effective` refuses a variant on a MOD that has none.
+- The legacy pipeline (`scripts/jev-pipeline.mjs`, `--pipeline legacy`) still has its own object mod that picks a motion and colour; `src/ego.mjs` keeps grow and color for it.
+- Tests: Node 239, Python 88, all pass.
+
+### 10.15 Not Done Yet (2026-11-17, in priority order)
+
+1. **Placement module (4.5), the rest.** The user-reach cluster exists; still missing are the per-thing site allocator, `beside` clusters with occlusion and overlap checks (the Delegate message column can still cover the poster), and one solver shared by all MODs.
+2. **Wayfinding picks the nearest door of the target room** by the user's straight-line distance, not by route length.
+3. **Spec MODs** (Agenda, BookCompanion, StepGuide, LiveCoach, Reminder) are chosen and answer in text only. LiveCoach's `bodyArrow` is not in the library; Reminder has no time trigger.
+4. **Vision Pro.** The cues, text forms, routing and message parts exist only in the web editor (`editor/src`); `visionos/` still renders the earlier parts.
+5. **Feeds and tailoring.** Weather and the rest use mock data (no real fetchers or refresh). The MODs tab can switch variants, settings, forks and knowledge, but there is no test loop yet; the Agent panel's old per-mod response settings should move into MOD settings.
+6. **Small data issues.** In the Lab example retrieval also picks an unrelated poster; in the atlas mock items the brush's container is not in the layout, so FindMy cannot find it.
