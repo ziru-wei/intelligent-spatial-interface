@@ -391,7 +391,7 @@ Each cue is defined by when it is used and what it does, in seven groups. The tw
 |  | Playback | When data runs through time, to play it and scrub to a moment: a Play/Pause button, a rail with a stop per entry, and the current time riding on the thumb. | Weather hours |
 | Act | Tether Send | When the system passes something to someone for the user, to show what goes to whom before it is sent. | “Send the poster to Alice” |
 
-**Interactive (library; a group of Controls, beside Adjust and Explore).** A MOD that reaches people composes the exchange from four library parts. These are not specific to Delegate; a reminder for someone or a reply uses the same ones:
+**Interactive (library; a row of Controls, beside Adjust and Explore; Controls is a group of cues beside Mark, Guidance and Visualization).** A MOD that reaches people composes the exchange from four library parts. These are not specific to Delegate; a reminder for someone or a reply uses the same ones:
 
 | Part | When to use it, to do what |
 |---|---|
