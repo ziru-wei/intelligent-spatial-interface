@@ -6,7 +6,7 @@
 <style>
 /* The project's main page: Demo (ModOS itself, live: the editor served by system/editor), Gallery (the recordings) and Document
    (Spatial vocabulary; Memory, Walkthrough… to come). Neutral greys only (cyan belongs to the spatial UI, not to this page). Helvetica
-   light; bold only where the text matters most. Document: one sideways row per group; Gallery: a masonry of MODs. */
+   light; bold only where the text matters most. Document: centred, one row per group; Gallery: a masonry of MODs. */
 :root{--bg:#0b0c0e;--card:#15171a;--card-hi:#1c1f23;--line:rgba(255,255,255,.08);--fg:#f1f2f4;--muted:#9ea3ab;--faint:#6c717a;
   --pill:rgba(30,32,36,.88);--on:#f1f2f4;--on-ink:#0b0c0e;--font:"Helvetica Neue",Helvetica,Arial,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
@@ -17,25 +17,20 @@ main{padding:28px 0 140px}
 main.full{padding:14px 0 0}
 .pad{padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
 /* category tabs (Document) */
-.tabs{position:sticky;top:0;z-index:5;display:flex;gap:28px;padding-top:14px;padding-bottom:14px;margin-bottom:8px;background:linear-gradient(var(--bg) 70%,rgba(11,12,14,0))}
+.tabs{position:sticky;top:0;z-index:5;display:flex;justify-content:center;gap:28px;padding-top:14px;padding-bottom:14px;margin-bottom:8px;background:linear-gradient(var(--bg) 70%,rgba(11,12,14,0))}
 .tabs button{font:300 28px/1.1 var(--font);color:var(--faint);background:none;border:0;padding:0;cursor:pointer;letter-spacing:-.01em}
 .tabs button:hover{color:var(--muted)}
 .tabs button[aria-selected="true"]{color:var(--fg);font-weight:700}
-.lead{margin:0 0 28px;color:var(--muted);max-width:60ch}
-/* a row: its name, what it is for, how many; then cards side by side */
-.row{margin:0 0 34px}
-.row-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
-.row-head h2{font:700 17px/1.2 var(--font);margin:0;white-space:nowrap}
-.row-head p{margin:0;color:var(--muted);font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row-head .n{color:var(--faint);font-size:13px}
-.row-head .arrows{margin-left:auto;display:flex;gap:6px;flex:none}
-.arrows button{width:34px;height:34px;border-radius:50%;border:0;background:var(--card-hi);color:var(--fg);font:400 22px/1 var(--font);padding:0 0 3px;cursor:pointer}
-.arrows button:hover:not(:disabled){background:#272a2f}
-.arrows button:disabled{opacity:.3;cursor:default}
-.strip{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 24px;padding-bottom:6px;scrollbar-width:none;overscroll-behavior-x:contain}
+.lead{margin:0 auto 34px;color:var(--muted);max-width:60ch}
+/* Document: everything centred; a row is its name and what it is for, then its parts side by side (sideways when they do not fit) */
+#document{text-align:center}
+.row{margin:0 0 44px}
+.row-head{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:16px}
+.row-head h2{font:700 17px/1.2 var(--font);margin:0}
+.row-head p{margin:0;color:var(--muted);font-size:14px}
+.strip{display:flex;justify-content:safe center;gap:28px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding:0 24px;padding-bottom:6px;scrollbar-width:none;overscroll-behavior-x:contain}
 .strip::-webkit-scrollbar{display:none}
-.strip>*{scroll-snap-align:start;flex:0 0 auto}
-.strip::after{content:"";flex:0 0 10px}
+.strip>*{scroll-snap-align:center;flex:0 0 auto}
 /* Gallery: a masonry of MODs. A MOD is its icon and name, a thin line down its left joining it to its clips; a clip is its question
    above the camera view (the recording's left 3/4: the pipeline beside it is not shown here). */
 .masonry{columns:3 340px;column-gap:28px}
@@ -57,11 +52,11 @@ main.full{padding:14px 0 0}
 }
 .dlg-cam{aspect-ratio:4/3;max-height:88vh;margin:0 auto;border-radius:14px}
 /* cards */
-.part{width:min(300px,78vw);background:var(--card);border-radius:14px;overflow:hidden;margin:0}
+.part{width:min(220px,70vw);margin:0}
 .part img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000;cursor:zoom-in}
-.part figcaption{padding:12px 14px 15px}
-.part b{display:block;font-size:16px;margin-bottom:5px}
-.part p{margin:0 0 8px;color:var(--muted);font-size:13.5px;line-height:1.45}
+.part figcaption{padding:10px 2px 0}
+.part b{display:block;font-size:15px;margin-bottom:3px}
+.part p{margin:0 0 4px;color:var(--muted);font-size:13px;line-height:1.4}
 .part i{font-style:normal;color:var(--faint);font-size:12.5px}
 .clip{width:100%;display:block;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .clip span{display:block;padding:10px 14px 12px;color:var(--muted);font-size:13px}
@@ -80,7 +75,7 @@ dialog video,dialog img{display:block;width:100%;border-radius:14px;background:#
 .close{position:absolute;top:12px;right:12px;font:300 13px var(--font);color:var(--fg);background:rgba(20,22,26,.85);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}
 #demo iframe{display:block;width:100%;height:calc(100vh - 96px);border:0;border-radius:14px;background:#000}
 #demo p{color:var(--muted)}
-@media (max-width:600px){.row-head p{display:none}.row-head .arrows{display:none}}
+
 #demo code{font:400 14px ui-monospace,Menlo,monospace;color:var(--fg)}
 @media (max-width:600px){.tabs{gap:18px}.tabs button{font-size:22px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
@@ -102,20 +97,12 @@ dialog video,dialog img{display:block;width:100%;border-radius:14px;background:#
 const REC='context/recordings/';   // the recordings and their manifest (system/editor/demos/record.mjs writes them)
 const MODS=["Weather", "FindMy", "WorldInfo", "LabInfo", "IoTControl", "ObjectStatus", "Wayfinding", "Delegate", "Agenda", "BookCompanion", "StepGuide", "LiveCoach", "Reminder"];
 // Spatial vocabulary (context/docs/modos-system-design.md 4.4): category → row → part
-const CATS=[{"id": "cues", "name": "Cues", "def": "Drawn on the room itself: a thing’s own geometry, the floor, a doorway.", "rows": [{"name": "Mark", "def": "which thing or place", "items": [{"img": "breathingBox", "name": "Breathing Box", "use": "When the user is looking for a thing or must notice it, to draw the eye to the thing itself.", "eg": "FindMy found item; ObjectStatus attention"}, {"img": "cornerBrackets", "name": "Corner Brackets", "use": "When the thing carries content the user needs to read (a document, book, poster, screen), to mark it without covering that content.", "eg": "WorldInfo on a poster"}, {"img": "footprintRing", "name": "Footprint Ring", "use": "When the user is operating or asking about one thing and its controls or info appear beside it, to show which thing they belong to.", "eg": "IoTControl on the lamp"}, {"img": "floorArea", "name": "Floor Area", "use": "When the target is a room or area in view, to show its extent; a place has no box, so only its floor lights up.", "eg": "LabInfo “this area”"}, {"img": "doorwayGlow", "name": "Doorway Glow", "use": "When the target room is elsewhere but its door is in view, to show where to go in.", "eg": "Wayfinding to a room"}]}, {"name": "Direction", "def": "lead there, or point text at its thing", "items": [{"img": "arrowAhead", "name": "Arrow Ahead", "use": "When the target is nearby but out of view, to show which way to turn.", "eg": "FindMy, Wayfinding"}, {"img": "floorPath", "name": "Floor Path", "use": "When reaching the target means walking through other spaces, to lead the user along the route.", "eg": "Wayfinding along a corridor"}, {"img": "textArrow", "name": "Text Arrow", "use": "When text stands apart from the thing it is about, to point from the text to that thing. It does not lead anywhere; Arrow Ahead and Floor Path do.", "eg": "WorldInfo beside a poster"}]}, {"name": "Display", "def": "read only", "items": [{"img": "haloDial", "name": "Gauge", "use": "When the user asks how much of something there is now (a level with a range: brightness, toner, battery), to show the amount at a glance.", "eg": "“How bright is the lamp?”"}, {"img": "progressRail", "name": "Progress Rail", "use": "When a task is running toward an end, to show how far along it is and how long is left.", "eg": "Printer job, laundry cycle"}, {"img": "pinnedTags", "name": "Pinned Tags", "use": "When the user needs several separate readings of one thing, to show each next to the part it is about.", "eg": "Printer toner and paper"}, {"img": "statusPulse", "name": "Status Pulse", "use": "When something about a thing needs attention, to flag it in the state’s color and say why.", "eg": "ObjectStatus “paper low”"}, {"img": "cardStack", "name": "Card Stack", "use": "When things wait in line for a device, to show what is next and how many are waiting.", "eg": "Print queue"}]}]}, {"id": "controls", "name": "Controls", "def": "What the user acts on.", "rows": [{"name": "Adjust", "def": "change the thing; the change is sent", "items": [{"img": "edgeBar", "name": "Slider", "use": "When the user wants to change a level, to let them set it by dragging along the thing’s edge; the new level is sent when they let go.", "eg": "“Make the light brighter”"}, {"img": "edgeTabs", "name": "Edge Tabs", "use": "When the user wants to switch between a few options, to pick one directly on the thing.", "eg": "“Switch the TV to HDMI 2”"}, {"img": "iconButton", "name": "Icon Button", "use": "When the user wants to switch something on or off or trigger a command, to do it in one press: a preset icon with its word (Send, Confirm, Cancel, Turn on/off, Pause…).", "eg": "Power, cancel a print job, Send"}, {"img": "textButton", "name": "Text Button", "use": "When no preset button fits the action, the system writes a text-only button that says what the press does.", "eg": "“Clean print head”"}]}, {"name": "Explore", "def": "move through information; nothing is sent", "items": [{"img": "datePicker", "name": "Date Picker", "use": "When data is dated and the user can move between days, to pick a day: the month once above, each day a capsule with its weekday and date.", "eg": "Weather days, Agenda"}, {"img": "playback", "name": "Playback", "use": "When data runs through time, to play it and scrub to a moment: a Play/Pause button, a rail with a stop per entry, and the current time riding on the thumb.", "eg": "Weather hours"}]}, {"name": "Interactive", "def": "reach a person: who, what is said, what goes with it", "items": [{"img": "contactChip", "name": "Contact Chip", "use": "When an action reaches a person, to show who it goes to (initials and name); with several candidates, each is a chip to pick.", "eg": "Delegate “…to Alice”"}, {"img": "textInput", "name": "Text Input", "use": "When the user may change what will be said, to show the drafted text in a field they can tap and edit (keyboard or dictation).", "eg": "Delegate “describe this and draft a message”"}, {"img": "tetherSend", "name": "Tether Send", "use": "When the system passes something to someone for the user, to show what goes to whom before it is sent.", "eg": "“Send the poster to Alice”"}, {"img": "photoCapture", "name": "Photo Capture", "use": "When what is sent is a photo of the thing, to frame the thing and flash, then show the photo as a card with the message.", "eg": "Delegate “take a photo of this and send it”"}]}]}, {"id": "text", "name": "Text", "def": "How the answer’s words appear.", "rows": [{"name": "Text forms", "def": "one per answer, chosen by rule", "items": [{"img": "embeddedText", "name": "Embedded Text", "use": "When a surface at the anchor scores well for writing on, to write the text onto it, handwritten.", "eg": "Weather on the desk"}, {"img": "floatingText", "name": "Floating Text", "use": "When no surface scores well enough, to show the text beside its anchor, facing the user.", "eg": "an answer beside the lamp"}, {"img": "dialogue", "name": "Object-centric Dialogue", "use": "Only when a thing is clearly pointed at and asked in the second person (“Can I eat you?”), to let it answer in its own voice.", "eg": "WorldInfo voice"}]}]}, {"id": "assets", "name": "Assets", "def": "What a MOD brings of its own; everything else comes from the shared library.", "rows": [{"name": "", "def": "made for one MOD, placed by it", "items": [{"img": "ambientEffect", "name": "Ambient Asset", "use": "When the data is about the surroundings (weather), to make it part of the room: sky, rain or fog on a window or surface. A MOD’s own, not shared.", "eg": "Weather"}, {"img": "asset", "name": "Scene Asset", "use": "When an author has made something to show (a model, an animation), to place it where it belongs in the space. A MOD’s own, not shared.", "eg": "LabInfo diorama"}]}]}];
+const CATS=[{"id": "cues", "name": "Cues", "def": "Drawn on the room itself.", "rows": [{"name": "Mark", "def": "which thing or place", "items": [{"img": "breathingBox", "name": "Breathing Box", "use": "Draws the eye to a thing.", "eg": "FindMy"}, {"img": "cornerBrackets", "name": "Corner Brackets", "use": "Marks a thing without covering its content.", "eg": "WorldInfo"}, {"img": "footprintRing", "name": "Footprint Ring", "use": "Shows which thing is being operated.", "eg": "IoTControl"}, {"img": "floorArea", "name": "Floor Area", "use": "Shows a room or area; a place has no box.", "eg": "LabInfo"}, {"img": "doorwayGlow", "name": "Doorway Glow", "use": "Shows where to enter another room.", "eg": "Wayfinding"}]}, {"name": "Direction", "def": "lead there, or link text", "items": [{"img": "arrowAhead", "name": "Arrow Ahead", "use": "Turns you toward a target in this room.", "eg": "FindMy"}, {"img": "floorPath", "name": "Floor Path", "use": "Leads along a route to another room.", "eg": "Wayfinding"}, {"img": "textArrow", "name": "Text Arrow", "use": "Links text to the thing it is about.", "eg": "WorldInfo"}]}, {"name": "Display", "def": "read only", "items": [{"img": "haloDial", "name": "Gauge", "use": "How much: a level with a range.", "eg": "IoTControl"}, {"img": "progressRail", "name": "Progress Rail", "use": "A task’s progress and time left.", "eg": "IoTControl"}, {"img": "pinnedTags", "name": "Pinned Tags", "use": "Several readings of one thing.", "eg": "IoTControl"}, {"img": "statusPulse", "name": "Status Pulse", "use": "A state, and why.", "eg": "ObjectStatus"}, {"img": "cardStack", "name": "Card Stack", "use": "What waits in line.", "eg": "IoTControl"}]}]}, {"id": "controls", "name": "Controls", "def": "What the user acts on.", "rows": [{"name": "Adjust", "def": "changes the thing; sent", "items": [{"img": "edgeBar", "name": "Slider", "use": "Sets a level; sent on release.", "eg": "IoTControl"}, {"img": "edgeTabs", "name": "Edge Tabs", "use": "Picks one of a few options.", "eg": "IoTControl"}, {"img": "iconButton", "name": "Icon Button", "use": "Switches or triggers in one press.", "eg": "IoTControl"}, {"img": "textButton", "name": "Text Button", "use": "A command no preset fits.", "eg": "IoTControl"}]}, {"name": "Explore", "def": "moves through information", "items": [{"img": "datePicker", "name": "Date Picker", "use": "Moves between days.", "eg": "Weather"}, {"img": "playback", "name": "Playback", "use": "Plays through time, or scrubs.", "eg": "Weather"}]}, {"name": "Interactive", "def": "reaches a person", "items": [{"img": "contactChip", "name": "Contact Chip", "use": "Who it goes to.", "eg": "Delegate"}, {"img": "textInput", "name": "Text Input", "use": "What is said; tap to edit.", "eg": "Delegate"}, {"img": "tetherSend", "name": "Tether Send", "use": "What goes, and to whom.", "eg": "Delegate"}, {"img": "photoCapture", "name": "Photo Capture", "use": "A photo of the thing, sent along.", "eg": "Delegate"}]}]}, {"id": "text", "name": "Text", "def": "How the words appear.", "rows": [{"name": "Text forms", "def": "one per answer, by rule", "items": [{"img": "embeddedText", "name": "Embedded Text", "use": "Written on a surface that reads well.", "eg": "Weather"}, {"img": "floatingText", "name": "Floating Text", "use": "Beside its anchor when no surface fits.", "eg": "IoTControl"}, {"img": "dialogue", "name": "Object-centric Dialogue", "use": "The thing answers, when asked as “you”.", "eg": "WorldInfo"}]}]}, {"id": "assets", "name": "Assets", "def": "A MOD’s own; not shared.", "rows": [{"name": "", "def": "", "items": [{"img": "ambientEffect", "name": "Ambient Asset", "use": "The data as part of the room: sky, rain, fog.", "eg": "Weather"}, {"img": "asset", "name": "Scene Asset", "use": "A prepared model or animation, in place.", "eg": "LabInfo"}]}]}];
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $=id=>document.getElementById(id);
-// One row: a header (name, what it is for, how many, arrows) and a strip of cards that scrolls sideways.
-const row=(name,def,cards)=>`<section class="row"><div class="row-head pad">${name?`<h2>${esc(name)}</h2>`:''}${def?`<p>${esc(def)}</p>`:''}<span class="n">${cards.length}</span>
-  <span class="arrows"><button type="button" data-step="-1" aria-label="Scroll ${esc(name)} back">‹</button><button type="button" data-step="1" aria-label="Scroll ${esc(name)} on">›</button></span></div>
-  <div class="strip pad">${cards.join('')}</div></section>`;
-function wireRows(root){
-  for(const r of root.querySelectorAll('.row')){const strip=r.querySelector('.strip'),[back,on]=r.querySelectorAll('[data-step]');
-    const sync=()=>{back.disabled=strip.scrollLeft<4;on.disabled=strip.scrollLeft+strip.clientWidth>=strip.scrollWidth-4;};
-    for(const b of [back,on])b.onclick=()=>{const card=strip.firstElementChild;strip.scrollBy({left:+b.dataset.step*((card?.offsetWidth||300)+14)*Math.max(1,Math.floor(strip.clientWidth/((card?.offsetWidth||300)+14))),behavior:'smooth'});};
-    strip.addEventListener('scroll',sync,{passive:true});addEventListener('resize',sync);sync();}
-  for(const i of root.querySelectorAll('[data-zoom]'))i.onclick=()=>{$('zoom').querySelector('img').src=i.src;$('zoom').showModal();};
-}
+// One row: its name and what it is for, then its parts side by side.
+const row=(name,def,cards)=>`<section class="row"><div class="row-head pad">${name?`<h2>${esc(name)}</h2>`:''}${def?`<p>${esc(def)}</p>`:''}</div><div class="strip pad">${cards.join('')}</div></section>`;
+function wireRows(root){for(const i of root.querySelectorAll('[data-zoom]'))i.onclick=()=>{$('zoom').querySelector('img').src=i.src;$('zoom').showModal();};}
 // The Document's parts. A new one (Memory, Walkthrough…) is an entry here: its id, its name, and what it renders.
 let cat=CATS[0].id;
 const DOCS=[
