@@ -27,7 +27,12 @@ main{padding:16px 0 120px}
 .row{margin:0 0 22px}
 .group{margin:0 0 40px}
 .group-head{display:flex;flex-direction:column;align-items:center;margin-bottom:14px}
-.group-head h2{font:700 24px/1.15 var(--font);margin:0;letter-spacing:-.01em}
+.group-head h2{font:700 24px/1.15 var(--font);margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.group-head h2 svg{width:22px;height:22px;flex:none}
+/* the rows inside a group (Controls: Adjust, Explore, Interactive): their names in a thin capsule */
+.row-head h3{display:inline-block;border:1px solid var(--rule);border-radius:999px;padding:4px 14px;margin-bottom:4px}
+/* Text and Assets have few parts: show them larger */
+.cat-text .part,.cat-assets .part{width:min(360px,82vw)}
 .group-head p{margin:2px 0 0;color:var(--muted);font-size:14px}
 .row-head{display:flex;flex-direction:column;align-items:center;gap:0;margin-bottom:10px}
 .row-head h3{font:700 15px/1.2 var(--font);margin:0}
@@ -117,8 +122,10 @@ const $=id=>document.getElementById(id);
 const part=i=>`<figure class="part"><img src="${REC}cues/${esc(i.img)}.jpg" alt="${esc(i.name)} in the room" loading="lazy" data-zoom><figcaption><b>${esc(i.name)}</b><p>${esc(i.use)}</p></figcaption></figure>`;
 // A group of a category (Mark, Guidance, Visualization, Controls…): a large heading, then its parts, or its own rows (Controls: Adjust,
 // Explore, Interactive) under smaller headings.
-const group=g=>g.rows?`<section class="group"><div class="group-head pad"><h2>${esc(g.name)}</h2>${g.def?`<p>${esc(g.def)}</p>`:''}</div>${g.rows.map(r=>row(r.name,r.def,r.items.map(part))).join('')}</section>`
-  :g.name?`<section class="group"><div class="group-head pad"><h2>${esc(g.name)}</h2>${g.def?`<p>${esc(g.def)}</p>`:''}</div><div class="strip pad">${g.items.map(part).join('')}</div></section>`
+const GROUP_ICON={Mark:'scan',Guidance:'navigation',Visualization:'gauge',Controls:'sliders-horizontal'};
+const gh=g=>`<h2>${GROUP_ICON[g.name]?`<i data-lucide="${GROUP_ICON[g.name]}" aria-hidden="true"></i>`:''}${esc(g.name)}</h2>`;
+const group=g=>g.rows?`<section class="group"><div class="group-head pad">${gh(g)}${g.def?`<p>${esc(g.def)}</p>`:''}</div>${g.rows.map(r=>row(r.name,r.def,r.items.map(part))).join('')}</section>`
+  :g.name?`<section class="group"><div class="group-head pad">${gh(g)}${g.def?`<p>${esc(g.def)}</p>`:''}</div><div class="strip pad">${g.items.map(part).join('')}</div></section>`
   :row('',g.def,g.items.map(part));
 // One row: its name and what it is for, then its parts side by side.
 const row=(name,def,cards)=>`<section class="row"><div class="row-head pad">${name?`<h3>${esc(name)}</h3>`:''}${def?`<p>${esc(def)}</p>`:''}</div><div class="strip pad">${cards.join('')}</div></section>`;
@@ -126,7 +133,7 @@ function wireRows(root){for(const i of root.querySelectorAll('[data-zoom]'))i.on
 // Sections with tabs at their top (Vocabulary: its categories; About: Memory, Decisions…): a tab is an id, a name and what it renders.
 const tabsBar=(sec,list,on)=>`<nav class="tabs pad" role="tablist" aria-label="${sec}">${list.map(x=>`<button type="button" role="tab" data-sub="${x.id}" aria-selected="${x.id===on}">${esc(x.name)}</button>`).join('')}</nav>`;
 const SUBS={
-  vocabulary:CATS.map(c=>({id:c.id,name:c.name,render:()=>`<p class="lead pad">${esc(c.def)}</p>${c.rows.map(group).join('')}`})),
+  vocabulary:CATS.map(c=>({id:c.id,name:c.name,render:()=>`<div class="cat-${c.id}"><p class="lead pad">${esc(c.def)}</p>${c.rows.map(group).join('')}</div>`})),
   // About: to be written (left empty on purpose)
   about:[{id:'memory',name:'Memory',render:()=>''},{id:'decisions',name:'Decisions',render:()=>''},{id:'walkthrough',name:'Walkthrough',render:()=>''}],
 };
@@ -138,7 +145,7 @@ function render(){
   for(const b of $('nav').children)b.setAttribute('aria-pressed',String(b.dataset.tab===tab));
   for(const t of TABS)$(t).hidden=tab!==t;document.body.classList.toggle('dark',tab==='demo');if(tab==='demo')showDemo();
   if(SUBS[tab]){const el=$(tab),cur=SUBS[tab].find(x=>x.id===sub[tab]);el.innerHTML=tabsBar(tab,SUBS[tab],cur.id)+cur.render();
-    for(const b of el.querySelectorAll('[data-sub]'))b.onclick=()=>go(tab,b.dataset.sub);wireRows(el);}
+    for(const b of el.querySelectorAll('[data-sub]'))b.onclick=()=>go(tab,b.dataset.sub);wireRows(el);try{window.lucide?.createIcons({attrs:{'stroke-width':1.75}});}catch{}}
 }
 for(const b of $('nav').children)b.onclick=()=>go(b.dataset.tab);
 addEventListener('hashchange',()=>{route();scrollTo(0,0);});
