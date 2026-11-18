@@ -38,7 +38,7 @@ def entries():
             if tag['name'] in out and out[tag['name']]['created'] > c['created']: continue
             still = GALLERY/f"{tag['name']}.jpg"
             out[tag['name']] = dict(name=tag['name'], mod=tag.get('mod', ''), question=asked[0]['text'], answer=_text(c, q),
-                questions=[x['text'] for x in asked], first_question_id=asked[0]['id'], first_t=asked[0]['t'],
+                questions=[x['text'] for x in asked], first_question_id=asked[0]['id'], first_t=min([asked[0]['t']]+[r['t'] for r in asked[0].get('revisions', [])[:1]]),   # typed: where typing began
                 session='./'+str(scenario.relative_to(spaces.SPACES.parent)/'session.json'), conversation=c['id'], question_id=q['id'],
                 frame=q['frame'], t=q['t'], latency=q.get('latency'), created=c['created'],
                 still=still.name if still.is_file() else None, still_at=round(still.stat().st_mtime) if still.is_file() else None)
@@ -88,6 +88,8 @@ def _mod_of(c, q, space):
         if f.is_file(): return json.loads(f.read_text()).get('name') or mid
     return mid
 
+TYPED = 'Answer while typing'   # the Gallery's category of examples typed in that mode (design doc 12)
+
 def _slug(text, n=28):
     """Lowercase words joined by dashes, as many whole words as fit in n letters."""
     out = ''
@@ -110,7 +112,9 @@ def add(session_dir, cid, ids):
     if any(q.get('status') != 'answered' for q in qs): raise ValueError('Every question must be answered.')
     space, recording = session_dir.parents[1].name, session_dir.name
     spec = json.loads(SPEC.read_text())
-    mod = _mod_of(c, qs[0], space)
+    # a question typed in Answer while typing (its revisions kept) is an example of that mode: its own category, typed again on re-asking
+    typed = any(q.get('revisions') for q in qs)
+    mod = TYPED if typed else _mod_of(c, qs[0], space)
     taken = {e['name'] for e in spec['examples']} | {e['name'] for e in entries()}
     base = f"{_slug(mod, 16)}-{_slug(qs[0]['text'])}"; name = base; n = 2
     while name in taken: name = f'{base}-{n}'; n += 1
@@ -120,8 +124,15 @@ def add(session_dir, cid, ids):
     copy = store.import_conversation(session_dir, data)
     copy['gallery_example'] = tag; store._write(session_dir, copy)
     entry = dict(name=name, mod=mod, recording=recording)
-    if len(qs) == 1: entry.update(ask_at=round(qs[0]['t'], 2), question=qs[0]['text'])
-    else: entry['questions'] = [dict(ask_at=round(q['t'], 2), question=q['text']) for q in qs]
+    def asked(q):
+        one = dict(ask_at=round(q['t'], 2), question=q['text'])
+        if q.get('revisions'):   # typed: each revision's text at its moment in the recording and in the typing (pause: the user stopped)
+            revs = [r for r in q['revisions'] if not r.get('final')]
+            one.update(ask_at=round(revs[0]['t'], 2) if revs else one['ask_at'],
+                       typed=[dict(at=round(r['at'], 2), t=round(r['t'], 2), text=r['text'], **({'pause': True} if r.get('pause') else {})) for r in revs])
+        return one
+    if len(qs) == 1: entry.update(asked(qs[0]))
+    else: entry['questions'] = [asked(q) for q in qs]
     spec['examples'].append(entry)
     SPEC.write_text(json.dumps(spec, indent=2, ensure_ascii=False)+'\n')
     rebuild()

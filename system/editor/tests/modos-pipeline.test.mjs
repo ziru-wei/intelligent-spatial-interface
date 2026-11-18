@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {runModos,eligible,partsFor,textHost} from '../modos/pipeline.mjs';
+import {runModos,eligible,partsFor,textHost,liveChoice,partKey} from '../modos/pipeline.mjs';
 import {createDecisionModule} from '../modos/decision.mjs';
 
 // The MODs as the pipeline reads them: resolved by the registry (variant, settings), optionally with a customization.
@@ -164,6 +164,8 @@ test('the request: split into its questions by rules (no model)', async()=>{
   assert.deepEqual(splitRequest('Will it rain tonight? Should I close this?'),['Will it rain tonight?','Should I close this?']);
   assert.deepEqual(splitRequest('Where are my headphones?'),['Where are my headphones?']);
   assert.deepEqual(splitRequest('Can I eat this?'),['Can I eat this?']);
+  assert.deepEqual(splitRequest('should i bring my umbrella?where is it'),['should i bring my umbrella?','where is it']);   // no space needed after ?
+  assert.deepEqual(splitRequest('Is it 3.5 degrees?'),['Is it 3.5 degrees?']);
 });
 
 test('context info: each MOD asks for what it needs along the twin; nothing else in the space is considered', async()=>{
@@ -202,15 +204,20 @@ test('status: the state in a few words from the data, never the thing\'s name', 
   assert.equal(stateText({summary:'No name and state here'}),'');
 });
 
-test('send: recipients are picked many (the selector kind), and the draft names nobody (they can still change in the Choice)', async()=>{
+test('send: recipients are picked many (the selector kind); its message is written apart from the answer, names nobody, has no heading', async()=>{
   const send=mod('send'),people=[{id:'alice',name:'Alice Chen',role:'PhD student',email:'alice@example.edu'},{id:'ryo',name:'Ryo Suzuki',role:'advisor',email:'ryo@example.edu'},
     {id:'ana',name:'Ana Ruiz',role:'PhD student',email:'ana@example.edu'}];
   BODIES['user:contacts']={id:'user:contacts',type:'text',data:people};ITEMS.push({id:'user:contacts',about:['user:me'],type:'text',summary:'The user\'s contacts.'});
   try{
     const r=await run('send a note to Alice and Ryo',{yes:['reaches other people','Alice','Ryo','nothing attached'],mods:[send]});
     const a=r.ui.find(p=>p.action)?.action;
-    assert.deepEqual(a,{kind:'send',to:['alice','ryo'],pick:'many',capture:'none'});
-    const draft=r.contexts.find(c=>c.draft)?.draft;assert.ok(draft&&!('to' in draft),'the draft context names no recipient');
+    assert.deepEqual(a,{kind:'send',to:['alice','ryo'],pick:'many',capture:'none',draft:{body:'B'}});   // its message, its own
+    const ctx=r.contexts.find(c=>c.request);assert.ok(ctx&&!JSON.stringify(ctx).includes('Ryo Suzuki'),'the message context names no recipient');
+    assert.equal(r.text.length,0);                                                                       // Send alone: no answer text
+    // with something else asked too, the answer is the other MOD's, and the message is still written apart
+    const w=await run('what is the weather this weekend? send it to Alice',{yes:['reaches other people','Alice','nothing attached','weather','2026-10-10','08:00'],mods:[send,mod('weather')]});
+    assert.ok(w.ui.find(p=>p.action)?.action.draft.body);assert.ok(w.text.length>0);
+    assert.ok(w.contexts.some(c=>c.request?.length===2),'the message sees what was asked to send');
   }finally{delete BODIES['user:contacts'];ITEMS.pop();}
 });
 
@@ -221,4 +228,39 @@ test('days: a stray stretch beside the strongest one is dropped; two days asked 
   assert.deepEqual([...stretches(D,i=>[.9,.1,.1,.88,.2][i])],['2026-11-18','2026-11-21']);
   assert.deepEqual([...stretches(D,i=>[.8,.7,.1,.1,.1][i])],['2026-11-18','2026-11-19']);
   assert.deepEqual([...stretches(D,()=>.1)],[]);
+});
+
+test('live: a MOD shows once its need is clear (twice at .5, or once at .85) and stays until it falls under .35; Enter uses .5', ()=>{
+  assert.deepEqual([...liveChoice({w:.6})],[]);                                             // once at .6: not yet
+  assert.deepEqual([...liveChoice({w:.6},{previous:{w:.55}})],['w']);                       // twice: clear
+  assert.deepEqual([...liveChoice({w:.9})],['w']);                                          // sure at once
+  assert.deepEqual([...liveChoice({w:.4},{shown:new Set(['w'])})],['w']);                   // shown: kept above .35
+  assert.deepEqual([...liveChoice({w:.3},{shown:new Set(['w'])})],[]);                      // clearly gone
+  assert.deepEqual([...liveChoice({w:.4},{shown:new Set(['w']),final:true})],[]);           // Enter: the plain rule
+  assert.equal(partKey({part:'ui',highlight:{},mod:{id:'objectstatus'}}),'highlight:objectstatus');
+  assert.equal(partKey({part:'text'}),'text:');
+});
+
+test('live: revisions reconcile what shows: parts replaced only when changed, text once the intent and its facts are clear, a MOD gone is withdrawn', async()=>{
+  const live={state:{},final:false,pause:false,stale:()=>false,retracted:[]};live.retract=async keys=>live.retracted.push(...keys);
+  const revise=async(text,yes,{pause=false,final=false}={})=>{
+    const published=[];Object.assign(live,{pause,final});
+    const memory=async()=>({time:{date:'2026-10-09'},conversation:{recent_turns:[],referents:[]},selection:null,location:null,mods:MODS,entities:ENTITIES,items:ITEMS});
+    await runModos({question:{id:1,text},memory,items:async ids=>ids.map(id=>BODIES[id]),decide:createDecisionModule(engine(yes)).decide,
+      answer:async()=>({title:'T',body:'B',anchor:{object:'x',relation:'on'},referenced_item_ids:[]}),publish:async p=>published.push(p),live,trace:(t,x)=>{if(process.env.DBG&&/view_live|view_mods|modos_text|error/.test(t))console.log(t,x);}});
+    return {ui:published.filter(p=>p.part==='ui'),text:published.filter(p=>p.part==='text')};
+  };
+  const W=['weather','2026-10-10','08:00'];
+  let r=await revise('Where are my',['belongings','FindMy']);
+  assert.equal(r.ui[0].findmy.status,'not_found');assert.equal(r.text.length,0);                 // a fact missing (which item): no text
+  r=await revise('Where are my',['belongings','FindMy'],{pause:true});
+  assert.equal(r.text.length,0);                                                                 // not even on a pause
+  r=await revise('What is the weather this',W);
+  assert.equal(r.ui.length,1);assert.equal(r.ui[0].upsert,true);assert.ok(r.text.length>0);     // another intent, clear and known: its text
+  r=await revise('What is the weather this',W,{pause:true});
+  assert.equal(r.ui.length,0);assert.equal(r.text.length,0);                                    // the same words: nothing redone
+  r=await revise('What is the weather this',W,{final:true});
+  assert.equal(r.ui.length,0);assert.equal(r.text.length,0);                                    // Enter on the same words: nothing redone
+  r=await revise('Where did I put',[]);
+  assert.deepEqual(live.retracted.slice(-2),['text:','weather:weather']);                       // its need gone: text and parts withdrawn
 });

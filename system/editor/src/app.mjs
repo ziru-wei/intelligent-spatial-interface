@@ -44,6 +44,8 @@ import {createDeviceCues} from './device-cues.mjs';
 import {createActionCues} from './action-cues.mjs';
 import * as cues from './spatial-ui/cues.mjs';
 import {renderPipeline,whereAt} from './pipeline-view.mjs';
+import {createBreaks} from './live-input.mjs';
+import {createSpeech} from './speech-input.mjs';
 import {questionCaption} from './question-caption.mjs';
 import {buildTextTargets,calibrate,applyOffsets} from './layout-surfaces.mjs';
 import {createRelationTracker,viewOf} from './spatial-relations.mjs';
@@ -52,6 +54,9 @@ const $=id=>document.getElementById(id),params=new URLSearchParams(location.sear
 const EXAMPLE=params.get('example')||null,askedHere=new Set(),stillsSent=new Set();
 // ?still=1 (demos/gallery.mjs --stills): only take the example's still again from its replay; nothing is asked, no model runs.
 const STILL_ONLY=!!EXAMPLE&&params.get('still')==='1';let replayStill=null;
+// The Gallery's example view plays its example only (no asking, no deleting or adding questions; its dots replay); ask=1 gives it the
+// ask box for demos/gallery.mjs, which asks the examples again through it.
+const EXAMPLE_ASK=!!EXAMPLE&&params.get('ask')==='1';if(EXAMPLE_ASK)document.body.classList.add('asking');
 if(EXAMPLE)document.body.classList.add('present','example');
 const sessionURL=new URL(params.get('session')||'./spaces/demo/scenarios/demo/session.json',location.href);
 const spaceURL=new URL('../../space.json',sessionURL);
@@ -456,7 +461,7 @@ function playIcon(on){$('play').innerHTML=on?PAUSE:PLAY;$('play').setAttribute('
 // ?agentSpeed=0.4: a replay shows the agent's work in slow motion (demo recordings); the video, the answer's parts and the pipeline
 // view stay in step.
 const AGENT_SPEED=Math.min(1,Math.max(.05,Number(params.get('agentSpeed'))||1));
-const SPEEDS=[1,.5,.25];let speed=1,playT=0,lastNow=0,hold=null,held=new Set(),replayFrom=null;
+const SPEEDS=[1,.5,.25];let speed=.5,playT=0,lastNow=0,hold=null,held=new Set(),replayFrom=null;
 function pause(){playing=false;playbackGeneration++;preparingFrames.clear();endHold();playIcon(false);showSpeed();}
 $('play').onclick=async()=>{if(playing){pause();return;}playing=true;playT=Number($('timeline').value);if(playT>=session.frames.at(-1).t){playT=0;try{await at(0);}catch(e){pause();fail(e);return;}if(!playing)return;}
   // Questions at or before the start are not held again, except the one a replay starts from.
@@ -465,7 +470,7 @@ $('play').onclick=async()=>{if(playing){pause();return;}playing=true;playT=Numbe
   held=new Set((agent?.questions||[]).filter(q=>q.t<=playT+.002&&q.id!==replayFrom).map(q=>q.id));replayFrom=null;
   lastNow=performance.now();playIcon(true);tick();};
 function showSpeed(){$('speed').textContent=formatSpeed(hold?0:speed);$('speed').classList.toggle('slowed',!!hold);}
-$('speed').onclick=()=>{speed=SPEEDS[(SPEEDS.indexOf(speed)+1)%SPEEDS.length];showSpeed();};
+$('speed').onclick=()=>{speed=SPEEDS[(SPEEDS.indexOf(speed)+1)%SPEEDS.length];showSpeed();};showSpeed();
 function startHold(q,{resume=true,live=false}={}){
   playbackGeneration++;preparingFrames.clear();
   playT=q.t;
@@ -524,18 +529,23 @@ function saveFloor(){const f=twin.floorSettings();try{localStorage.setItem('spat
 function showFloor(){const f=twin.floorSettings();$('floor-view').value=String(f.visibleLevel);$('floor-view').title=twin.mode==='follow'?'Camera follow shows all floors. Choose 1F or 2F to inspect it in Orbit.':'Show only the selected floor';$('floor-split-wrap').hidden=!f.visibleLevel;$('floor-split').value=f.split.toFixed(2);$('floor-split').min=(f.min+.01).toFixed(2);$('floor-split').max=(f.max-.01).toFixed(2);}
 $('floor-view').onchange=()=>{showCut(twin.setFloor({level:Number($('floor-view').value),inspect:true}));saveFloor();};
 $('floor-split').onchange=()=>{const split=Number($('floor-split').value);if(Number.isFinite(split)){showCut(twin.setFloor({split}));saveFloor();}};
-// Full screen of the recorded camera: its column alone, centred; the video as tall as fits above its timeline and ask box (Esc leaves).
+// Full window of the recorded camera (not the computer's full screen): its column alone over the page, centred; the video as tall as fits
+// above its timeline and ask box; the digital twin, the side panel and the log are not shown (Esc leaves).
 const cameraCol=$('camera-col');
-function fitCameraFull(){const full=document.fullscreenElement===cameraCol,stage=$('stage');
+function fitCameraFull(){const full=document.body.classList.contains('camera-full'),stage=$('stage');
   if(!full){cameraCol.style.removeProperty('--camera-w');cameraCol.style.removeProperty('--camera-h');return;}
   const cs=getComputedStyle(cameraCol),padY=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom),padX=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight);
-  let others=0;for(const el of cameraCol.children)if(el!==stage&&el.offsetParent!==null){const m=getComputedStyle(el);others+=el.offsetHeight+parseFloat(m.marginTop)+parseFloat(m.marginBottom);}
-  const aspect=stage.width/stage.height||16/9;let h=Math.max(120,innerHeight-padY-others-2),w=h*aspect;
+  // what stands above and below the video in the column (overlays laid over it, positioned absolutely, take no room)
+  let others=0;for(const el of cameraCol.children){const m=getComputedStyle(el);if(el===stage||el.offsetParent===null||m.position==='absolute'||m.position==='fixed')continue;others+=el.getBoundingClientRect().height+parseFloat(m.marginTop)+parseFloat(m.marginBottom);}
+  const aspect=stage.width/stage.height||16/9;let h=Math.max(120,innerHeight-padY-others-8*3),w=h*aspect;
   if(w>innerWidth-padX){w=innerWidth-padX;h=w/aspect;}
   cameraCol.style.setProperty('--camera-w',w+'px');cameraCol.style.setProperty('--camera-h',h+'px');update();}
-$('camera-full').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else (cameraCol.requestFullscreen||cameraCol.webkitRequestFullscreen).call(cameraCol)?.catch?.(fail);};
-document.addEventListener('fullscreenchange',()=>{$('camera-full').setAttribute('aria-pressed',document.fullscreenElement===cameraCol);fitCameraFull();requestAnimationFrame(fitCameraFull);});
-addEventListener('resize',()=>{if(document.fullscreenElement===cameraCol)fitCameraFull();});
+function setCameraFull(on){document.body.classList.toggle('camera-full',on);
+  // the main page that frames the editor (its Demo) hides its own bottom switch meanwhile
+  if(parent!==window)parent.postMessage({type:'modos-camera-full',on},'*');$('camera-full').setAttribute('aria-pressed',String(on));fitCameraFull();requestAnimationFrame(()=>{fitCameraFull();dispatchEvent(new Event('resize'));});}
+$('camera-full').onclick=()=>setCameraFull(!document.body.classList.contains('camera-full'));
+addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('camera-full')&&!e.target.closest?.('input,textarea'))setCameraFull(false);});
+addEventListener('resize',()=>{if(document.body.classList.contains('camera-full'))fitCameraFull();});
 $('timeline').oninput=()=>{pause();at(Number($('timeline').value)).catch(fail);};
 // Components: what is placed in this recording besides the scan. Persistent objects (digital twins of the scene's furniture, scope
 // 'scene', in every recording) are listed in the Layout outline under their zone and moved there in Layout Edit mode. Obj library objects
@@ -1224,7 +1234,9 @@ async function showConversations(select){
   for(const c of list.slice().reverse())$('conv').add(new Option(`${c.name}${c.questions?` · ${c.questions}`:''}`,c.id));
   const id=list.some(c=>c.id===select)?select:list.at(-1)?.id;$('conv').value=id;return id;
 }
-async function openConversation(id){if(agent.conversation!==id){pause();replayFrom=null;}store.set(convKey,id);$('conv').value=id;await agent.setConversation(id);agent.report(userState());update();}
+async function openConversation(id){if(agent.conversation!==id){pause();replayFrom=null;}store.set(convKey,id);$('conv').value=id;await agent.setConversation(id);agent.report(userState());update();
+  // a draft no one has typed into for a minute was left (the page reloaded while typing): dropped, as clearing the box would
+  if(!EXAMPLE)for(const q of agent.questions)if(q.status==='drafting'&&q.id!==liveDraft.id&&Date.now()/1000-(q.created+(q.revisions?.at(-1)?.at||0))>60)agent.cancelDraft(q.id).catch(()=>{});}
 // A Gallery example (?example=<name>&conversation=<id>; scripts/gallery.py): only the recorded camera with the answer, the player, the
 // ask box and the pipeline, as the recordings looked, but live. It opens on the example's question (its first, when several were asked
 // one after another), replayed from where it was asked;
@@ -1260,7 +1272,7 @@ if(EXAMPLE)setInterval(exampleStill,500);   // also when the page is in the back
 $('ask-delete').onclick=()=>{const q=agent&&[...agent.questions].reverse()[0];if(q)agent.deleteQuestion(q.id).catch(fail);};
 async function startAgent(){
   if(here[0])await loadCurrentMods(here[0]);   // parts are drawn with their MODs' current declarations and settings
-  if(EXAMPLE&&!STILL_ONLY)agentApi('/api/agent/bridge',{}).catch(e=>console.warn('bridge',e));   // an example can be asked again: its scene's bridge runs
+  if(EXAMPLE_ASK)agentApi('/api/agent/bridge',{}).catch(e=>console.warn('bridge',e));   // asked again by demos/gallery.mjs: its scene's bridge runs
   let command;try{const setup=await agentApi('/api/agent/command');command=setup.command;$('agent-command').textContent=command;$('agent-config-path').textContent=setup.config_path;$('editor-restart-command').textContent=setup.restart_command;$('gemini-setup-command').textContent=setup.gemini_setup_command||'';$('gemini-setup-copy').onclick=()=>navigator.clipboard.writeText(setup.gemini_setup_command||'');}catch{return;}
   agent=createAgentLayer({scene,getStyleRevision:()=>weatherScene.playback.state.entry?.id,getSettings:forResponse,frames:session.frames,sessionPath:sessionURL.pathname,intrinsics:session.intrinsics,frameCamera,viewport:answerView,
     visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,relationAt,entityBox,sceneBoxes,infoTarget,onPlacement:logPlacement,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
@@ -1301,17 +1313,19 @@ function showAgentStatus({connected:c,questions,responses}){
   $('ask-input').placeholder=c?'Ask the assistant at this moment…':'Copy the agent command (Agent panel) and run it in a terminal to connect';
   const q=questions.at(-1);
   if(!hold)setAskStatus(q?.status==='queued'?'Waiting for the agent…':q?.status==='running'&&q.parts?.text?.status==='streaming'?'Writing answer…':'');showTrace();
-  const key=JSON.stringify(questions.map(q=>[q.id,q.status,q.t])),duration=session.frames.at(-1).t||1;if(key===markersKey)return;markersKey=key;
+  const key=JSON.stringify(questions.map(q=>[q.id,q.status,q.t,spanOf(q)[0]])),duration=session.frames.at(-1).t||1;if(key===markersKey)return;markersKey=key;
   const byQuestion=new Map();for(const r of responses)if(r.part!=='ui'||!byQuestion.has(r.question_id))byQuestion.set(r.question_id,r);$('markers').innerHTML='';
   for(const q of questions){
-    const m=document.createElement('button'),r=byQuestion.get(q.id);m.className='marker';m.type='button';m.dataset.status=q.status;m.style.left=`${q.t/duration*100}%`;
+    // a question typed while the video played is a line, from where typing began to where it was asked
+    const m=document.createElement('button'),r=byQuestion.get(q.id),[t0,t1]=spanOf(q);m.className='marker'+(t1-t0>.05?' span':'');m.type='button';m.dataset.status=q.status;
+    m.style.left=`${t0/duration*100}%`;if(t1-t0>.05)m.style.width=`${(t1-t0)/duration*100}%`;
     m.setAttribute('aria-label',`Question at ${q.t.toFixed(2)} s: ${q.text}`);
     m.onmouseenter=e=>{const tip=$('tooltip'),b=m.getBoundingClientRect();tip.textContent=`${q.text}${r?` → ${r.title}`:q.status==='failed'?' (no response)':' …'} · ${q.t.toFixed(2)} s`;tip.hidden=false;tip.style.left=b.left+'px';tip.style.top=b.bottom+8+'px';};
     m.onmouseleave=()=>$('tooltip').hidden=true;
     // Replay lands where the answer appeared (after the agent's latency for live questions). Picked, it shows what can be done with
     // it; shift-click picks the questions from the one picked first to this one (one after another).
     m.dataset.id=q.id;
-    m.onclick=e=>{e.stopPropagation();const order=questions.map(x=>x.id);
+    m.onclick=e=>{e.stopPropagation();if(EXAMPLE&&!EXAMPLE_ASK){replayQuestion(q);return;}const order=questions.map(x=>x.id);
       if(e.shiftKey&&picked.from!=null&&order.includes(picked.from)){const a=order.indexOf(picked.from),b=order.indexOf(q.id);picked.ids=order.slice(Math.min(a,b),Math.max(a,b)+1);}
       else{picked={from:q.id,ids:[q.id],added:null};replayQuestion(q);}
       picked.added=null;showPicked(questions);};
@@ -1319,6 +1333,8 @@ function showAgentStatus({connected:c,questions,responses}){
   }
   picked.ids=picked.ids.filter(id=>questions.some(q=>q.id===id));showPicked(questions);
 }
+// Where a question sits on the timeline: [start, end] in seconds; a typed one from its first revision to its moment.
+const spanOf=q=>[Math.min(q.t,q.revisions?.[0]?.t??q.t),q.t];
 // The picked questions (src/app.mjs markers): one shows × (delete it and its answer) and ★ (add it to the Gallery); several in a row
 // show ★ alone (they become one example, under the first one's MOD: scripts/gallery.py add). Escape or a click elsewhere (the
 // user's, not the replay's own Play) lets go.
@@ -1328,8 +1344,8 @@ function showPicked(questions=agent?.questions||[]){
   const root=$('markers'),duration=session.frames.at(-1).t||1;root.querySelector('.marker-actions')?.remove();root.querySelector('.marker-range')?.remove();
   for(const m of root.querySelectorAll('.marker'))m.setAttribute('aria-pressed',String(picked.ids.includes(Number(m.dataset.id))));
   const qs=picked.ids.map(id=>questions.find(q=>q.id===id)).filter(Boolean);if(!qs.length)return;
-  const x0=qs[0].t/duration*100,x1=qs.at(-1).t/duration*100;
-  if(qs.length>1)root.append(Object.assign(document.createElement('div'),{className:'marker-range',style:`left:${x0}%;width:${x1-x0}%`}));
+  const x0=spanOf(qs[0])[0]/duration*100,x1=spanOf(qs.at(-1))[1]/duration*100;
+  if(qs.length>1||x1-x0>.01)root.append(Object.assign(document.createElement('div'),{className:'marker-range',style:`left:${x0}%;width:${x1-x0}%`}));
   const box=Object.assign(document.createElement('div'),{className:'marker-actions'});box.style.left=`${(x0+x1)/2}%`;root.append(box);
   const button=(html,label,run)=>{const b=Object.assign(document.createElement('button'),{type:'button',innerHTML:html,title:label});b.setAttribute('aria-label',label);b.onclick=e=>{e.stopPropagation();run(b);};box.append(b);return b;};
   if(qs.length===1)button('<svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg>','Delete this question and its answer',()=>{$('tooltip').hidden=true;picked={from:null,ids:[],added:null};agent.deleteQuestion(qs[0].id).catch(fail);});
@@ -1352,18 +1368,51 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&picked.ids.length&&
 // The agent's work on the focused question (live while it answers, stored for replay): faint text under the question box, or (Pipeline)
 // the ModOS stages lit as the system reaches them. ?present=1 shows only the recorded camera and the pipeline (for recording demos).
 // The handle between the recorded camera and the 3D scene: drag (or arrow keys) to set how the width is split; remembered.
-{const views=$('views'),handle=$('views-splitter'),KEY='spatial-take:views-split';
+{const views=$('views'),handle=$('views-splitter'),KEY='spatial-take:views-split-2';   // -2: the twin narrower by default (.62 to the camera)
   const set=f=>{f=Math.min(.8,Math.max(.2,f));views.style.setProperty('--split-l',`${f}fr`);views.style.setProperty('--split-r',`${1-f}fr`);handle.setAttribute('aria-valuenow',String(Math.round(f*100)));dispatchEvent(new Event('resize'));return f;};
-  let split=.5;try{split=+localStorage.getItem(KEY)||.5;}catch{}set(split);
+  let split=.62;try{split=+localStorage.getItem(KEY)||.62;}catch{}set(split);
   const save=()=>{try{localStorage.setItem(KEY,String(split));}catch{}};
   handle.addEventListener('pointerdown',e=>{handle.setPointerCapture(e.pointerId);handle.classList.add('dragging');e.preventDefault();});
   handle.addEventListener('pointermove',e=>{if(!handle.hasPointerCapture(e.pointerId))return;const r=views.getBoundingClientRect();split=set((e.clientX-r.left)/r.width);});
   const end=e=>{if(handle.hasPointerCapture?.(e.pointerId))handle.releasePointerCapture(e.pointerId);handle.classList.remove('dragging');save();};
   handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);
   handle.addEventListener('keydown',e=>{const d=e.key==='ArrowLeft'?-.02:e.key==='ArrowRight'?.02:0;if(!d)return;e.preventDefault();split=set(split+d);save();});
-  handle.addEventListener('dblclick',()=>{split=set(.5);save();});}
+  handle.addEventListener('dblclick',()=>{split=set(.62);save();});}
 let traceKey='';let traceMode=params.get('present')?'pipeline':(()=>{try{return localStorage.getItem('spatial-take:trace-mode')||'pipeline';}catch{return 'pipeline';}})();
 if(params.get('present'))document.body.classList.add('present');
+// The agent log (Log | Pipeline): under the digital twin by default, or under the recorded camera; its grip drags it from one to the
+// other (the column under the pointer is outlined), Enter or Space on the grip swaps it; remembered. The presentation and example views
+// keep it under the camera, where their layout puts the pipeline.
+{const log=$('agent-log'),grip=$('agent-log-grip'),KEY='spatial-take:agent-log',fixed=document.body.classList.contains('present');
+  const col=k=>$(k==='twin'?'twin-col':'camera-col'),put=k=>{if(k==='twin')col('twin').append(log);else $('ask-status').after(log);};
+  const remember=k=>{put(k);try{localStorage.setItem(KEY,k);}catch{}dispatchEvent(new Event('resize'));};
+  let where='twin';try{where=localStorage.getItem(KEY)||'twin';}catch{}if(!fixed)put(where);
+  let drag=null;const over=e=>['twin','camera'].find(k=>{const r=col(k).getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right;})||null;
+  const mark=k=>{for(const c of ['twin','camera'])col(c).classList.toggle('log-drop',c===k);};
+  grip.addEventListener('pointerdown',e=>{if(fixed||e.button)return;grip.setPointerCapture(e.pointerId);drag={to:null};document.body.classList.add('log-dragging');log.classList.add('lifted');e.preventDefault();});
+  grip.addEventListener('pointermove',e=>{if(!drag)return;const k=over(e);if(k!==drag.to){drag.to=k;mark(k);}});
+  const end=()=>{if(!drag)return;const k=drag.to;drag=null;mark(null);document.body.classList.remove('log-dragging');log.classList.remove('lifted');if(k)remember(k);};
+  grip.addEventListener('pointerup',end);grip.addEventListener('pointercancel',end);
+  grip.addEventListener('keydown',e=>{if(fixed||(e.key!=='Enter'&&e.key!==' '))return;e.preventDefault();remember(log.parentElement===col('twin')?'camera':'twin');});}
+// The line above the agent log sizes what is above it in its column, dragged up or down (double-click: back to its own size),
+// remembered per column: the digital twin's height, or the recorded camera's size at its own aspect.
+{const line=$('log-divider'),log=$('agent-log'),KEY='spatial-take:above-log:';
+  const inTwin=()=>log.parentElement?.id==='twin-col',above=()=>$(inTwin()?'twin':'stage');
+  function size(h){const el=above();
+    if(h==null){el.style.removeProperty('height');el.style.removeProperty('aspect-ratio');el.style.removeProperty('width');el.style.removeProperty('margin');}
+    else if(inTwin()){el.style.aspectRatio='auto';el.style.height=h+'px';}
+    else{const aspect=el.width/el.height||4/3,w=Math.min(el.parentElement.clientWidth,h*aspect);el.style.width=w+'px';el.style.height=w/aspect+'px';el.style.margin='0 auto';}
+    dispatchEvent(new Event('resize'));}
+  const saved=()=>{try{const v=+localStorage.getItem(KEY+(inTwin()?'twin':'camera'));return v>0?v:null;}catch{return null;}};
+  const apply=()=>{for(const id of ['twin','stage']){const el=$(id);el.style.removeProperty('height');el.style.removeProperty('aspect-ratio');el.style.removeProperty('width');el.style.removeProperty('margin');}size(saved());};
+  if(!document.body.classList.contains('present')){apply();new MutationObserver(apply).observe($('twin-col'),{childList:true});}
+  let drag=null;
+  line.addEventListener('pointerdown',e=>{if(e.button)return;line.setPointerCapture(e.pointerId);drag={y:e.clientY,h:above().getBoundingClientRect().height};line.classList.add('dragging');e.preventDefault();});
+  line.addEventListener('pointermove',e=>{if(!drag)return;size(Math.max(140,Math.min(innerHeight*.85,drag.h+e.clientY-drag.y)));});
+  const end=()=>{if(!drag)return;drag=null;line.classList.remove('dragging');try{localStorage.setItem(KEY+(inTwin()?'twin':'camera'),String(Math.round(above().getBoundingClientRect().height)));}catch{}};
+  line.addEventListener('pointerup',end);line.addEventListener('pointercancel',end);
+  line.addEventListener('dblclick',()=>{try{localStorage.removeItem(KEY+(inTwin()?'twin':'camera'));}catch{}size(null);});
+  line.addEventListener('keydown',e=>{const d=e.key==='ArrowUp'?-20:e.key==='ArrowDown'?20:0;if(!d)return;e.preventDefault();const h=Math.max(140,above().getBoundingClientRect().height+d);size(h);try{localStorage.setItem(KEY+(inTwin()?'twin':'camera'),String(Math.round(h)));}catch{}});}
 if(params.get('pipeline')==='bottom')document.body.classList.add('pipeline-bottom');   // the Pipeline view's layout (src/pipeline-view.css)
 for(const b of document.querySelectorAll('[data-trace]')){b.setAttribute('aria-pressed',b.dataset.trace===traceMode);
   b.onclick=()=>{traceMode=b.dataset.trace;try{localStorage.setItem('spatial-take:trace-mode',traceMode);}catch{}for(const x of document.querySelectorAll('[data-trace]'))x.setAttribute('aria-pressed',x===b);traceKey='';showTrace();};}
@@ -1401,9 +1450,48 @@ const READ_S=READING.read_s;let askStatus='';
 function setAskStatus(text){if(text!==askStatus){askStatus=text;$('ask-status').textContent=text;}}
 $('ask').onsubmit=async e=>{e.preventDefault();const text=$('ask-input').value.trim();if(!text||!agent||!connected)return;
   const wasPlaying=playing;
-  try{const sel=computeSelection()?.selected||null;
-    const q=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},{selection:sel,selection_mode:selectionMode});$('ask-input').value='';if(EXAMPLE)askedHere.add(q.id);startHold(q,{resume:wasPlaying,live:true});
+  try{const sel=computeSelection()?.selected||null;let q;
+    if(liveDraft.id!=null||liveDraft.chain){await liveDraft.chain;q=liveDraft.id!=null?await agent.askDraft(liveDraft.id,text,{read_s:READ_S}):null;}   // the draft, asked as typed
+    q||=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},{selection:sel,selection_mode:selectionMode});
+    endDraft();$('ask-input').value='';askReady();if(EXAMPLE)askedHere.add(q.id);startHold(q,{resume:wasPlaying,live:true});
   }catch(err){$('ask-status').textContent='Error: '+err.message;}};
+// Answer while typing (the button beside the box; design doc 12): each revision the break detector sends (a finished word, a pause in
+// the user's own rhythm: src/live-input.mjs) is a revision of one draft question, answered as it comes; Enter asks it, clearing the box
+// drops it. The video stays where it is while typing.
+let liveMode=pref('ask-live','off')==='on';const liveDraft={id:null,chain:null};
+// a revision of the draft: typed (src/live-input.mjs) or spoken (below)
+function revise(text,pause){if(!agent||!connected)return;const sel=computeSelection()?.selected||null;
+  liveDraft.chain=(liveDraft.chain||Promise.resolve()).then(()=>agent.draft(liveDraft.id,index,session.frames[index].t,text,pause,{selection:sel,selection_mode:selectionMode}))
+    .then(q=>{liveDraft.id=q.id;}).catch(err=>{$('ask-status').textContent='Error: '+err.message;});}
+const breaks=createBreaks({onRevision:revise});
+// Speech to text (the microphone in the ask box; src/speech-input.mjs, Doubao through scripts/asr-relay.mjs): the text fills the box as it
+// is recognised. With Answer while typing on, the spoken words are revisions like typed ones: the text whenever it has grown (at most
+// every SPEECH_GAP ms), a pause each time a sentence becomes final (the speaker stopped), and pressed again it stops and asks it.
+// Without that mode the microphone only writes into the box: nothing is sent until the user asks (Enter or the Ask button).
+const SPEECH_GAP=300;let spoken={text:'',at:0,definite:0};
+const speech=createSpeech({
+  onText({text,utterances}){$('ask-input').value=text;askReady();if(!liveMode||!text.trim())return;
+    const definite=utterances.filter(u=>u.definite).length,now=performance.now(),paused=definite>spoken.definite;
+    if(text!==spoken.text&&(paused||now-spoken.at>=SPEECH_GAP)){spoken={text,at:now,definite};revise(text.trim(),paused);}},
+  onError(m){$('ask-status').textContent='Speech: '+m;}});
+function showMic(on){$('ask-mic').setAttribute('aria-pressed',String(on));$('ask-mic').title=on?(liveMode?'Stop and ask':'Stop: the words stay in the box'):'Speak the question';}
+$('ask-mic').onclick=async()=>{
+  if(speech.active){showMic(false);const text=(await speech.stop()).trim();$('ask-input').value=text;askReady();if(text&&liveMode)$('ask').requestSubmit();else $('ask-input').focus();return;}
+  try{spoken={text:'',at:0,definite:0};$('ask-status').textContent='';showMic(true);await speech.start();}
+  catch(e){showMic(false);await speech.stop().catch(()=>{});$('ask-status').textContent='Speech: '+e.message;}};
+function endDraft(){breaks.reset();liveDraft.id=null;liveDraft.chain=null;}
+async function dropDraft(){const id=(await liveDraft.chain?.catch(()=>{}),liveDraft.id);endDraft();if(id!=null)agent?.cancelDraft(id).catch(fail);}
+function showLive(){$('ask-live').setAttribute('aria-pressed',String(liveMode));document.body.classList.toggle('live-on',liveMode);fitHalo();}
+// the halo stands behind the recorded camera, its size and place (src/../index.html #live-halo)
+function fitHalo(){const h=$('live-halo'),st=$('stage'),c=$('camera-col').getBoundingClientRect(),r=st.getBoundingClientRect();
+  Object.assign(h.style,{left:`${r.left-c.left}px`,top:`${r.top-c.top}px`,width:`${r.width}px`,height:`${r.height}px`});}
+new ResizeObserver(fitHalo).observe($('stage'));addEventListener('resize',fitHalo);showLive();
+const askReady=()=>$('ask-send').classList.toggle('ready',!!$('ask-input').value.trim());$('ask-input').addEventListener('input',askReady);
+// leaving the mode with a question typed asks it (kept, as Enter would); with the box empty there is nothing to keep
+$('ask-live').onclick=()=>{liveMode=!liveMode;keep('ask-live',liveMode?'on':'off');showLive();
+  if(!liveMode){if((liveDraft.id!=null||liveDraft.chain)&&$('ask-input').value.trim())$('ask').requestSubmit();else dropDraft();}
+  else if($('ask-input').value.trim())breaks.feed($('ask-input').value);$('ask-input').focus();};
+$('ask-input').addEventListener('input',()=>{if(!liveMode)return;const v=$('ask-input').value;if(!v.trim()){dropDraft();return;}breaks.feed(v);});
 function fail(e){$('status').textContent='Error: '+e.message;console.error(e);}
 async function sessionLoadError(status){
   if(status!==404)return Error(`Could not load recording (HTTP ${status}). Try reloading the page.`);
@@ -1441,7 +1529,8 @@ if(space?.scan?.semantic&&toSpace){try{layoutURL=new URL(space.scan.semantic,spa
 try{const floor=JSON.parse(localStorage.getItem('spatial-take:floors:'+spaceURL.pathname)||'null');if(floor)showCut(twin.restoreFloor(floor));showFloor();}catch{}
 if(!(session.depth&&session.frames.every(f=>f.depth)))$('depth-occlude').checked=false;
 else{$('depth-occlude').disabled=false;}
-await setFrame(0);
+// ?t=<seconds>: open at that moment (the main page's Try the Demo opens a Gallery example's question there)
+{const T=Number(params.get('t'));await setFrame(Number.isFinite(T)&&T>0?Math.max(0,session.frames.findIndex(f=>f.t>=T-.001)):0);}
 // Components: the scenario's saved composition, else the calibration cube (in front of the camera; at the demo's usual spot without a scene).
 // The scene's own components (digital twins of its objects: spaces/<scene>/composition.json) and this recording's.
 await components.loadLibrary(here[0]);

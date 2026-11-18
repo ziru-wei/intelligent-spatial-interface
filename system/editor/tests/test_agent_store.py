@@ -60,3 +60,30 @@ class ResponsePartsTest(unittest.TestCase):
             store.add_response(d,dict(question_id=q['id'],part='ui',weather={'forecast_ids':[entry]}))
             final=store.finish(d,q['id'],'UI ready; language response failed.')
             self.assertEqual(final['status'],'answered');self.assertIn('ui',final['parts'])
+
+class DraftTest(unittest.TestCase):
+    def test_a_draft_is_answered_revision_by_revision_its_parts_replaced_in_place_then_asked(self):
+        import weather
+        with tempfile.TemporaryDirectory() as tmp, store.lock:
+            d=Path(tmp);c=store.create(d);entry=weather.context(d,['weather'])['weather']['forecast'][0]['id']
+            q=store.draft(d,c['id'],None,0,1.5,'weather this')
+            self.assertEqual((q['status'],q['rev']),('drafting',1))
+            taken=store.take_next(d);self.assertEqual((taken['id'],taken['taken_rev']),(q['id'],1));self.assertIsNone(store.take_next(d))   # once per revision
+            ui=lambda rev:dict(question_id=q['id'],part='ui',upsert=True,rev=rev,mod={'id':'weather'},weather={'forecast_ids':[entry]})
+            a=store.add_response(d,ui(1))
+            store.draft(d,c['id'],q['id'],0,1.5,'weather this weekend',pause=True)
+            store.add_response(d,ui(1))                                                                          # typed on: rev 1 still finishes
+            store.draft(d,c['id'],q['id'],0,1.5,'weather this weekend',pause=True)
+            self.assertEqual(store.take_next(d)['taken_rev'],3)                                                  # the newest text next, rev 2 skipped
+            with self.assertRaises(store.Stale):store.add_response(d,ui(1))                                     # now rev 1 is late
+            self.assertEqual(store.revision(d,q['id']),dict(rev=3,status='drafting'))
+            b=store.add_response(d,ui(3))
+            parts=[r for r in store.read(d,c['id'])['responses'] if r['question_id']==q['id']]
+            self.assertEqual(len(parts),1);self.assertNotEqual(a['id'],b['id']);self.assertEqual(b['key'],'weather:weather')   # replaced, not added
+            self.assertEqual(store.retract(d,q['id'],['weather:weather'],rev=3),dict(removed=1))
+            with self.assertRaises(store.Stale):store.retract(d,q['id'],['x'],rev=1)
+            asked=store.finalize(d,c['id'],q['id'],'weather this weekend?',{'read_s':3})
+            self.assertEqual((asked['status'],asked['rev'],asked['text']),('queued',4,'weather this weekend?'))
+            self.assertEqual([(r['rev'],r.get('pause',False),r.get('final',False)) for r in asked['revisions']],[(1,False,False),(2,True,False),(3,True,False),(4,False,True)])
+            run=store.take_next(d);self.assertEqual((run['status'],run['taken_rev'],run['trace']),('running',4,[]))
+            with self.assertRaisesRegex(ValueError,'already asked'):store.draft(d,c['id'],q['id'],0,1.5,'x')

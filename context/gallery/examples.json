@@ -97,20 +97,21 @@
    "mod": "IoTControl",
    "question": "how far along is the poster?",
    "answer": {
-    "title": "Ana's Poster is 7 Pages In",
-    "body": "Ana's CHI poster is currently at 7 of 12 pages printed."
+    "title": "Clear Skies And 17 Degrees",
+    "body": "It is currently 17 degrees Celsius with sun and passing clouds."
    },
    "questions": [
-    "how far along is the poster?"
+    "how far along is the poster?",
+    "What's the weather like?"
    ],
    "first_question_id": 113,
    "first_t": 0.983766083008959,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
    "conversation": "20261117-221005-1794978605924080000",
-   "question_id": 113,
-   "frame": 59,
-   "t": 0.983766083008959,
-   "latency": 1.39,
+   "question_id": 143,
+   "frame": 0,
+   "t": 0.0,
+   "latency": 1.76,
    "created": 1794978605.924128,
    "still": "iotcontrol-printer.jpg",
    "still_at": 1794980800
@@ -279,25 +280,25 @@
   {
    "name": "send-describe",
    "mod": "Send",
-   "question": "describe this for Alice, like a quick message",
+   "question": "what's this?",
    "answer": {
     "title": "Anastasia's Talk Poster",
-    "body": "Here is a photo of Anastasia's talk poster detailing her research in human-robot interaction and human-centered AI."
+    "body": "It is a poster for Anastasia Kouvaras Ostrowski, an Assistant Professor at Purdue University focusing on Human-Robot Interaction and Human-Centered AI."
    },
    "questions": [
-    "describe this for Alice, like a quick message"
+    "what's this?"
    ],
-   "first_question_id": 54,
-   "first_t": 7.087795999992522,
+   "first_question_id": 57,
+   "first_t": 6.870992999989539,
    "session": "./spaces/atlas/scenarios/atlas_rec_2/session.json",
    "conversation": "20261118-005021-1794988221066449000",
-   "question_id": 54,
-   "frame": 425,
-   "t": 7.087795999992522,
-   "latency": 2.77,
+   "question_id": 57,
+   "frame": 412,
+   "t": 6.870992999989539,
+   "latency": 2.98,
    "created": 1794988221.0664709,
    "still": "send-describe.jpg",
-   "still_at": 1794988235
+   "still_at": 1795022610
   },
   {
    "name": "send-photo",
@@ -553,5 +554,5 @@
    "still_at": 1794980683
   }
  ],
- "updated": 1795018530
+ "updated": 1795027870
 }

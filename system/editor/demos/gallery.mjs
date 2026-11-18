@@ -28,8 +28,9 @@ if(unknown.length){console.error(`No example or MOD named: ${unknown.join(', ')}
 const [W,H]=spec.viewport||[1920,1080];
 const session=c=>`./spaces/${spec.space}/scenarios/${c.recording}/session.json`;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-// an example's questions: one (ask_at, question), or several asked one after another (questions: [{ask_at, question}])
-const questionsOf=c=>c.questions||[{ask_at:c.ask_at,question:c.question}];
+// an example's questions: one (ask_at, question), or several asked one after another (questions: [{ask_at, question}]); typed: its
+// revisions in Answer while typing ({at, t, text, pause}), typed again as they came
+const questionsOf=c=>c.questions||[{ask_at:c.ask_at,question:c.question,typed:c.typed}];
 
 function chromePath(){
   if(process.env.CHROME)return process.env.CHROME;
@@ -68,14 +69,30 @@ async function ask(browser,c){
   const ctx=await browser.newContext({viewport:{width:W,height:H},deviceScaleFactor:1});
   try{
     const page=await ctx.newPage();page.on('pageerror',e=>console.log('  page error:',e.message));
-    await page.goto(`${spec.server}/?${new URLSearchParams({session:s,conversation:conv.id,example:c.name})}`);
+    await page.goto(`${spec.server}/?${new URLSearchParams({session:s,conversation:conv.id,example:c.name,ask:'1'})}`);   // ask=1: the example view's ask box, for this tool
     await page.waitForFunction(()=>!document.getElementById('ask-input').disabled,null,{timeout:60000});await page.waitForTimeout(1500);
     await page.evaluate(()=>{for(const id of ['fovea-zone','show-selection','video-twins','video-objects']){const x=document.getElementById(id);if(x?.checked){x.checked=false;x.dispatchEvent(new Event('change'));}}});
     // its questions in order, each once the one before is answered; the still is the last one's (the editor sends one per answer)
     const qs=questionsOf(c);let askedAt=0;
-    for(const [i,{ask_at,question}] of qs.entries()){
-      await page.evaluate(t=>{const s=document.getElementById('timeline');s.value=t;s.dispatchEvent(new Event('input'));},ask_at);await page.waitForTimeout(1500);
-      askedAt=Date.now()/1000;await page.fill('#ask-input',question);await page.press('#ask-input','Enter');
+    const seek=t=>page.evaluate(t=>{const s=document.getElementById('timeline');s.value=t;s.dispatchEvent(new Event('input'));},t);
+    for(const [i,{ask_at,question,typed}] of qs.entries()){
+      await seek(ask_at);await page.waitForTimeout(1500);
+      askedAt=Date.now()/1000;
+      if(typed){
+        // typed in Answer while typing: the mode on, each revision's words typed over the time they took, at their moment in the recording
+        await page.evaluate(()=>{const b=document.getElementById('ask-live');if(b.getAttribute('aria-pressed')!=='true')b.click();});
+        let prev={at:0,t:ask_at},text='';
+        for(const r of typed){
+          if(Math.abs(r.t-prev.t)>.05)await seek(r.t);
+          const add=r.text.startsWith(text)?r.text.slice(text.length):null,ms=Math.max(0,(r.at-prev.at)*1000);
+          if(add==null){await page.fill('#ask-input',r.text);await page.waitForTimeout(ms);}
+          else await page.type('#ask-input',add,{delay:Math.max(30,ms/Math.max(1,add.length))});
+          if(r.pause)await page.waitForTimeout(1300);   // a pause the user made: long enough for any rhythm
+          text=r.text;prev=r;
+        }
+        if(question!==text)await page.fill('#ask-input',question);
+        await page.press('#ask-input','Enter');
+      }else{await page.fill('#ask-input',question);await page.press('#ask-input','Enter');}
       const last=i===qs.length-1;
       // answered (and, for the last, its still sent by the editor: the example then shows in the gallery with this conversation)
       for(const until=Date.now()+90000;;){

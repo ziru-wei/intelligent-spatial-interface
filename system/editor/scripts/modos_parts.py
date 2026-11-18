@@ -85,9 +85,10 @@ def resolve_highlight(d, value, frame=0):
                         has_content=has_content(e, b), **({'state': states[i]} if states.get(i) else {})))
     return dict(version=1, targets=out, guidance=value.get('guidance') is True, label=value.get('label') is True)
 
-def apply_action(space, entity, key, op='set', value=None):
+def apply_action(space, entity, key, op='set', value=None, preview=False):
     """Change one of a device's Inputs (mock protocol: the stored device changes). op: set (toggle, level, choice), up / down (a level,
-    one step), next (a choice), command (a command input's value: start, pause, resume, cancel). Returns the device after it."""
+    one step), next (a choice), command (a command input's value: start, pause, resume, cancel). Returns the device after it.
+    preview: what the device would become, with nothing changed (a question still being typed shows it; Enter does it)."""
     e = modos_twin.entities(space).get(entity)
     if not e or not e.get('device'): raise ValueError('Not a connected device.')
     dev = json.loads(json.dumps(e['device'])); ins, outs = dev.setdefault('inputs', {}), dev.setdefault('outputs', {})
@@ -119,10 +120,10 @@ def apply_action(space, entity, key, op='set', value=None):
         elif value in ('pause', 'resume') and task: task['paused'] = value == 'pause'
         inp['last'] = value
     else: raise ValueError(f'{key} cannot be changed.')
-    modos_twin.update(space, entity, {'device': dev})
+    if not preview: modos_twin.update(space, entity, {'device': dev})
     return dev
 
-def resolve_control(d, value):
+def resolve_control(d, value, preview=False):
     """{device, action?: {key, op, value}} → the device's box, its Inputs and Outputs before and after the action, and which input changed."""
     if not isinstance(value, dict) or set(value)-{'device', 'action', 'panel'}: raise ValueError('Bad control.')
     entity = value.get('device'); action = value.get('action')
@@ -132,12 +133,12 @@ def resolve_control(d, value):
     before = (modos_twin.entities(space).get(entity) or {}).get('device')
     if not before: raise ValueError('Not a connected device.')
     if action is not None and not (isinstance(action, dict) and isinstance(action.get('key'), str)): raise ValueError('Bad device action.')
-    dev = apply_action(space, entity, action['key'], action.get('op', 'set'), action.get('value')) if action else before
+    dev = apply_action(space, entity, action['key'], action.get('op', 'set'), action.get('value'), preview) if action else before
     b = boxes[entity]; name = modos_twin.entities(space).get(entity, {}).get('name') or b['label']
     return dict(version=2, device=dict(id=entity, label=name, center=b['center'], size=b['size'], yaw=b['yaw'], **{'class': dev.get('class')}),
                 before=dict(inputs=before.get('inputs', {}), outputs=before.get('outputs', {})),
                 inputs=dev.get('inputs', {}), outputs=dev.get('outputs', {}), changed=(action or {}).get('key'), op=(action or {}).get('op'),
-                panel=value.get('panel') is not False)
+                panel=value.get('panel') is not False, **({'preview': True} if preview and action else {}))
 
 # Send's action card: a pending action, run only when the user presses its confirm button (POST /api/modos/actions).
 def _contacts(space):
@@ -146,7 +147,9 @@ def _contacts(space):
     return {p['id']: p for i in items if i.get('id') == 'user:contacts' for p in i.get('data', [])}
 
 def resolve_action(d, value):
-    if not isinstance(value, dict) or set(value)-{'kind', 'to', 'pick', 'attachment', 'capture'} or value.get('kind') != 'send': raise ValueError('Bad action.')
+    if not isinstance(value, dict) or set(value)-{'kind', 'to', 'pick', 'attachment', 'capture', 'draft'} or value.get('kind') != 'send': raise ValueError('Bad action.')
+    draft = value.get('draft')   # the message, written apart from the answer (modos/text.mjs writeDraft): {body}
+    if draft is not None and not (isinstance(draft, dict) and isinstance(draft.get('body'), str) and len(draft['body']) <= 2000): raise ValueError('Bad draft.')
     capture = value.get('capture') or ('thing' if value.get('attachment') else 'none')
     if capture not in ('thing', 'photo', 'none'): raise ValueError('Bad capture.')
     # who it goes to: one person or several (pick: 'one' | 'many', the MOD's selector kind; the Choice is single or multi-select)
@@ -154,7 +157,7 @@ def resolve_action(d, value):
     people = [book.get(i) for i in ids[:12]]
     if not people or not all(people): raise ValueError('Unknown contact.')
     out = dict(version=1, kind='send', to=[dict(id=p['id'], name=p['name'], email=p['email']) for p in people], pick='many' if value.get('pick') == 'many' else 'one',
-               status='draft', capture=capture)
+               status='draft', capture=capture, **({'draft': dict(body=draft['body'].strip())} if draft else {}))
     # who else it could go to: the Choice of recipients (the chosen one first)
     out['contacts'] = [dict(id=p['id'], name=p['name']) for p in _contacts(space).values() if p.get('email')][:12]
     if value.get('attachment'):

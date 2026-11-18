@@ -67,7 +67,6 @@ const textUi=(mod,slot)=>slot?.use==='situated-text'?{...(slot.ui?{text_ui:slot.
  *  weather view) the text is placed relative to; everything else uses slot 0. */
 function hostOf(mod,referent,said={}){
   const slot=mod.slots.find(s=>s.id===mod.text);
-  if(slot?.use==='action-card')return {extra:{},slot:0,mod:mod.id,draft:true};   // the text is the draft inside the card
   // Object-centric Dialogue: when the text slot declares it and its rule holds (the thing pointed at, asked as "you") and the thing can
   // speak, it says the answer in the first person in a bubble on it; otherwise the slot's other text forms show the answer.
   const speaker=referent?.entity&&SPEAKERS.test(referent.entity)?referent.entity:null;
@@ -80,9 +79,11 @@ function hostOf(mod,referent,said={}){
 /** Which chosen MOD carries the answer text: the referent's first, then the highest scored one with a text slot. */
 export function textHost(chosen,referent,placeMod=null,question=''){
   const said=requestFacts(question,referent);
-  // A MOD that acts for the user (its text slot is an action card) carries the text: the text is its draft.
-  const acting=chosen.find(c=>c.mod.slots.find(s=>s.id===c.mod.text)?.use==='action-card');
-  if(acting)return hostOf(acting.mod,referent,said);
+  // A MOD that acts for the user (its text slot is an action card: Send) carries its own message (text.mjs writeDraft), not the answer:
+  // the other MODs host the answer to what else is asked; alone, there is no answer text.
+  const acts=c=>c.mod.slots.find(s=>s.id===c.mod.text)?.use==='action-card';
+  if(chosen.some(acts)&&chosen.every(acts))return {none:true};
+  chosen=chosen.filter(c=>!acts(c));
   if(referent){
     // The referent's MOD: a place MOD that speaks for the place, else the referent-scoped MOD chosen for it (WorldInfo).
     const own=placeMod||chosen.find(c=>c.mod.scope==='referent')?.mod||null;

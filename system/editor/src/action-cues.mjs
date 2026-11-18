@@ -78,7 +78,7 @@ export function createActionCues(){
   }
   return {
     get active(){return !!a;},confirm,
-    /** r: the answer with an action part and its draft (title, body); camera: where its question was asked; spaceName: the space. */
+    /** r: the answer with an action part (its message: action.draft.body); camera: where its question was asked; spaceName: the space. */
     setResponse(r,camera,spaceName){
       const k=r?.action?`${r.id}@${r.created}`:null;
       if(k!==key){key=k;a=r?.action||null;edited=null;status='draft';editing=false;space=spaceName;builtFor='';photo=null;photoDue=false;pickOpen=false;
@@ -89,7 +89,8 @@ export function createActionCues(){
         const f=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);f.y=0;f.normalize();const p=eye.clone().addScaledVector(f,.8);
         front={center:p.toArray(),size:[.01,.01,.01],yaw:0};
         photoDue=parts.includes('arPhoto')&&!!a.attachment?.center;}   // taken at the first draw, from the frame with its mark
-      if(a){draft={title:r.title||'',body:r.body||''};const b=JSON.stringify([draft.title,draft.body]);if(b!==builtFor){builtFor=b;build();}}
+      // the message is the action's own (modos/text.mjs writeDraft), no heading; the question's text answer, if any, stands apart
+      if(a){draft={title:'',body:a.draft?.body||''};const b=JSON.stringify([draft.title,draft.body]);if(b!==builtFor){builtFor=b;build();}}
     },
     render(renderer,camera,now=performance.now()){
       if(!a)return;for(const p of drawn)p.update(now,camera);

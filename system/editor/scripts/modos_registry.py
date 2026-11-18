@@ -45,7 +45,7 @@ CUES = {'breathingBox', 'cornerBrackets', 'footprintRing', 'floorArea', 'doorway
 TEXT_FORMS = {'floatingText', 'embeddedText', 'dialogue'}
 UI_OWN = ('ambient:', 'asset:')
 WHEN_FACTS = {'target.has_content', 'target.out_of_view', 'target.other_room', 'target.door_in_view', 'user.in_target', 'data.days',
-              'data.steps_per_day', 'value.type', 'value.io', 'intent', 'preset.found', 'state.level', 'question.about', 'surface.score', 'target.pointed', 'request.second_person', 'attachment.kind', 'text.apart'}
+              'data.steps_per_day', 'value.type', 'value.io', 'intent', 'preset.found', 'state.level', 'question.about', 'surface.score', 'target.pointed', 'request.second_person', 'attachment.kind', 'text.apart', 'path.in_view'}
 
 def _check_ui(mid, sid, ui):
     def part(p):

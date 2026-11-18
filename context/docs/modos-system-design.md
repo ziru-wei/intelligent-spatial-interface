@@ -1002,3 +1002,60 @@ Kept as is: MODs choose and fill; declarations choose cues by rule; no model wri
 Decided: ModOS borrows A2UI's architecture, not its wire format; no compatibility with A2UI is kept.
 
 Open: the transport. Today the editor polls: it asks the server for the conversation again every 120 ms while a question runs (every 1 s otherwise), receives the whole conversation each time, and works out what changed. A stream (Server-Sent Events, or a WebSocket) would let the server push each message the moment the pipeline produces it, so each piece appears without waiting for the next poll, and only the new message travels. Polling is good enough to start; switch if the first-cue times show the wait.
+
+## 12 Answer While Typing (branch `modos-live-input`, 2026-11-18)
+
+A mode, switched by the button beside the ask box: the space answers while the question is still being typed, and keeps the answer in step with it. What shows grows as the question does, changes when it is said more exactly, and is corrected when it turns out to mean something else.
+
+### 12.1 When to Ask Again: Breaks (no model)
+
+`src/live-input.mjs`. A revision of the question goes out when a word is finished (a space after it) and when the user pauses, a pause being longer than their own rhythm: 2.5 times the median gap between their last 20 keystrokes, kept within 180 to 1200 ms. Neither punctuation nor a model decides it. Whether the intent is clear is not decided here but by the decision model's own scores (12.3).
+
+### 12.2 Drafts in the Store
+
+The first revision makes a question with status `drafting`; each later one replaces its text, frame and what the user looks at, and is kept in `revisions` (time, text, whether it was a pause) so the typing can be replayed. Enter asks the draft (`queued`, answered once more in full); clearing the box deletes it. The bridge takes the latest revision not yet taken; its trace starts again, so the pipeline view shows the latest one.
+
+A part of a draft carries the revision it was made for. The revision being answered finishes even when the user has typed on, and the bridge then takes the newest text, skipping the ones between: dropping work for every newer revision starved a fast typist (at 110 ms a letter nothing showed until they stopped). Only a part for a revision older than the one taken since is refused (409); the bridge stops when the draft is asked or dropped. A draft's part is identified by its kind and its MOD (`part_key`: `highlight:objectstatus`), replaced in place when it changes and withdrawn (`/api/agent/responses/retract`) when it goes. Response ids are never given twice. A device's asked change is only previewed while typing (`resolve_control(preview)`: what the device would become, nothing done); Enter does it.
+
+### 12.3 The Pipeline Reconciles
+
+`runModos({live})` runs the same stages on each revision, with the state of the last one (kept by the bridge per question):
+
+- **A MOD shows once its need is clear**: scored .5 or more in two revisions in a row, or .85 in one. Once shown, it stays while it scores .35 or more, so a word half typed does not make it blink. On a pause and on Enter the plain rule (.5) decides: the user's words are then what they mean.
+- **The request is scored as unfinished** while typing: its last part may stop mid-sentence and is judged by the need its words show so far. Questions split at "?" and "!" with or without a space after ("umbrella?where is it").
+- **Parts are sent only when they change**, by key, and the ones a MOD no longer has, or of a MOD no longer chosen, are withdrawn. Fills are cached by the MOD, the words, the referent and what it reads.
+- **The text is written on a pause**, once per wording and set of MODs, and again on Enter if either changed. A text written for other MODs is withdrawn at once. A clarifying question ("which one?") waits for Enter.
+
+### 12.4 Guidance Must Be Seen
+
+Found on the ACEM recording: FindMy chose the umbrella (shelf 1, in the lab) and drew its Floor Path, but the user faced a door and none of the path was in view, so nothing showed. The cue host now knows whether any of the path is in view (`path.in_view`); FindMy and Wayfinding declare Arrow Ahead when the target is in another room and the path is not in view, pointing a couple of metres along the way and named for the target. Once the path comes into view the arrow goes: Arrow Ahead and Floor Path are still never seen together.
+
+### 12.5 Measured: `demos/live-replay.mjs`
+
+Types a question again into a recording through the server and its bridge (a draft typed earlier at its own times, or text at a typing rate) and logs, per revision, the MODs' scores and each part as it shows, changes and goes. On PRL_2:
+
+- "where are my headphones": "where" Wayfinding .53 (once: not shown), "where are my" FindMy .61, "headphones" FindMy .96, shown with the headphones found.
+- "where is my umbrella, is it gonna rain tonight": FindMy shows when "umbrella" is typed, Weather when "rain" is; both stay; the text comes on the pause.
+- "where is the umbrella, i mean the kitchen": Wayfinding is added on the correction (.94), but FindMy stays at .5 (the model still reads the umbrella as asked).
+
+### 12.6 Text, Headings, Lines on the Timeline (2026-11-18)
+
+- **No text with a fact missing.** While typing, the text is written only once the intent is clear and every chosen MOD that shows something has a part with what it needs (FindMy with no item yet, `{status: not_found}`, is not); it is written when the intent first becomes clear or changes (another MOD, another question) and on a pause; a text whose intent changed is withdrawn at once.
+- **The heading answers the latest question**: with "what's the weather this weekend? should I bring my umbrella?", Yes, No or Not sure (`isYesNo` on the last question).
+- **Leaving the mode asks the question typed** (its icon, as Enter); the box empty, nothing is kept.
+- **A typed question is a line on the timeline**, from where typing began (its first revision) to where it was asked; a draft's moment moves with its latest revision. Picked like a dot: × deletes it, ★ adds it to the Gallery's category Answer while typing with its revisions, typed again by `npm run gallery`.
+- **The Gallery plays.** Its example view has no ask box and its dots only replay; Try the Demo opens the Demo on the example's recording at its moment. Playback runs at 0.5× by default.
+
+### 12.8 Speech to Text (2026-11-18)
+
+- **The microphone** in the ask box asks by voice. Its audio streams to Doubao's streaming recognition (Volcano Engine, `wss://openspeech.bytedance.com/api/v3/sauc/bigmodel`) through a relay, `scripts/asr-relay.mjs`: a browser cannot set the keys a WebSocket needs, and the keys stay out of the browser. The relay is Node with no dependencies (its own WebSocket and zlib), on 127.0.0.1 only, started by the editor's server when first needed and stopped with it; it reads `doubaoAsr` from `agent-config.local.json`.
+- **The protocol** (`scripts/doubao-asr.mjs`): a v1 4-byte header, gzip payloads, a full client request (16 kHz mono 16-bit PCM, `bigmodel`, punctuation and inverse text normalization, sentences with `definite`, 800 ms of silence ending one), then audio packets of 200 ms, the last one flagged.
+- **In the editor** (`src/speech-input.mjs`): the browser resamples the microphone to 16 kHz in an AudioWorklet and posts the packets; the text comes back as server-sent events and fills the box as it grows. The microphone and Answer while typing combine: the microphone alone only writes into the box, and nothing is sent until the user asks; Answer while typing alone answers what is typed; both answer what is said, as it is said: a revision whenever the text grows (at most every 300 ms), a pause each time a sentence becomes final, and the question asked when the microphone is pressed again.
+
+### 12.7 Not Done Yet
+
+- Replays show the final answer, not how it grew: replaying `revisions` with their parts (the surface log of §11) is next.
+- Measure on the Gallery's clips: time from the first keystroke to the first correct part, against Enter; corrections per question; decision calls per question.
+- Cues still rebuild when their part is replaced (a part's facts, such as what its question is about, change as it is typed); in-place updates come with §11 step 3.
+- Speech: the same path takes an ASR's partial results (words with times) in place of keystrokes.
+

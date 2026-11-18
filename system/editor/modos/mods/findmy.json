@@ -59,6 +59,10 @@
             "when": "target.out_of_view & !target.other_room"
           },
           {
+            "cue": "arrowAhead",
+            "when": "target.other_room & !path.in_view"
+          },
+          {
             "cue": "floorPath",
             "when": "target.other_room"
           }

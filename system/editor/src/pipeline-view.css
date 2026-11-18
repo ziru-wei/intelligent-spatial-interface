@@ -56,8 +56,10 @@ body.pipeline-bottom .pv-opts li:nth-child(n+7){display:none}
 body.present{overflow:hidden}
 body.present #camera-col{position:fixed;inset:0;z-index:100;background:#0b0c0e;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:24px;padding:0 24px 0 0;box-sizing:border-box;align-items:center}
 body.present #camera-col>*{display:none!important}
+/* the agent log block only carries the pipeline here: its own box steps aside (its head and the log stay hidden) */
+body.present #camera-col>#agent-log{display:contents!important}body.present #agent-log>:not(#pipeline){display:none!important}
 body.present #camera-col>#stage{display:block!important;grid-column:1;grid-row:1;height:100vh!important;width:auto!important;border-radius:0}
-body.present #camera-col>#pipeline{display:block!important;grid-column:2;grid-row:1;align-self:start;margin:56px 0 0}
+body.present #camera-col #pipeline{display:block!important;grid-column:2;grid-row:1;align-self:start;margin:56px 0 0}
 body.present #camera-col>#where:not([hidden]){display:grid!important;font-size:14px}
 body.present #camera-col>#info-arrows:not([hidden]){display:block!important}
 body.present .pv{font-size:14px}body.present .pv-note{font-size:12px}
@@ -66,7 +68,7 @@ body.present .pv-opts li{font-size:12.5px;grid-template-columns:minmax(0,1fr) 70
 body.present .pv-chip{font-size:13px}body.present .pv-mod{font-size:14px}body.present .pv-sel{font-size:12.5px}
 body.present.pipeline-bottom #camera-col{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;row-gap:14px;padding:22px;justify-items:center}
 body.present.pipeline-bottom #camera-col>#stage{grid-column:1;grid-row:1;height:100%!important;max-height:610px;border-radius:14px}
-body.present.pipeline-bottom #camera-col>#pipeline{grid-column:1;grid-row:2;width:100%;align-self:end}
+body.present.pipeline-bottom #camera-col #pipeline{grid-column:1;grid-row:2;width:100%;align-self:end}
 
 .pv-opts li.skip{color:#4f5257}.pv-opts li.skip .pv-v{font-size:.85em;white-space:nowrap}
 
@@ -78,13 +80,14 @@ body.present .pv-qs li{font-size:13px}body.present .pv-from{font-size:12px}
 
 .pv-opts li.alt{color:#b9bcc2}.pv-opts li.alt em{font-style:normal;color:#7d8088;font-size:.9em;margin-left:4px}.pv-opts li.alt .pv-bar i{background:#8b8e95}
 
-/* A Gallery example (?example=, src/app.mjs exampleOpened): the presentation view, with the player and the ask box under the camera so
-   it can be replayed and asked again; Delete removes the latest question. */
+/* A Gallery example (?example=, src/app.mjs exampleOpened): the presentation view, with the player under the camera, to play it; the ask
+   box (and Delete) only for demos/gallery.mjs (ask=1, body.asking). */
 #ask-delete{display:none}
 body.example #camera-col{grid-template-rows:minmax(0,1fr) auto auto;align-items:stretch;row-gap:8px;padding:0 24px 12px 0}
 body.example #camera-col>#stage{grid-row:1;height:min(calc(100vh - 104px),calc(64vw * .75))!important;align-self:center}
 body.example #camera-col>.player{display:flex!important;grid-column:1;grid-row:2;align-items:center;gap:8px;padding:0 14px}
-body.example #camera-col>#ask{display:flex!important;grid-column:1;grid-row:3;gap:6px;margin:0 14px}
-body.example #camera-col>#ask #ask-input{flex:1}
-body.example #ask-delete{display:inline-flex;align-items:center;padding:0 12px}
-body.example #camera-col>#pipeline{grid-row:1 / span 3}
+body.example.asking #camera-col>#ask{display:flex!important;grid-column:1;grid-row:3;gap:6px;margin:0 14px}
+body.example.asking #camera-col>#ask #ask-input{flex:1}
+body.example.asking #ask-delete{display:inline-flex;align-items:center;padding:0 12px}
+body.example #camera-col #pipeline{grid-row:1 / span 3}
+body.example:not(.asking) #camera-col>#ask{display:none!important}

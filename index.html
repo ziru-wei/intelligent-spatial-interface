@@ -8,7 +8,7 @@
    (Spatial vocabulary; Memory, Walkthrough… to come). Light; neutral greys only (cyan belongs to the spatial UI, not to this page). Helvetica
    light; bold only where the text matters most. Document: centred, one row per group; Gallery: a masonry of MODs. */
 :root{--q-hover:#24707a;--bg:#fbfbfa;--card:#f0f0ee;--card-hi:#e7e7e4;--line:rgba(0,0,0,.08);--fg:#16171a;--muted:#5f636a;--faint:#9a9ea5;--rule:rgba(0,0,0,.16);
-  --pill:rgba(255,255,255,.97);--on:#16171a;--on-ink:#fbfbfa;--font:"Helvetica Neue",Helvetica,Arial,sans-serif;color-scheme:light}
+  --pill:rgba(255,255,255,.72);--on:#16171a;--on-ink:#fbfbfa;--font:"Helvetica Neue",Helvetica,Arial,sans-serif;color-scheme:light}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:300 15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
 b,strong{font-weight:700}
@@ -91,10 +91,10 @@ dialog img{display:block;width:100%;border-radius:14px;background:#000}
 #example{max-width:none;width:94vw;height:90vh}
 #example iframe{display:block;width:100%;height:100%;border:0;border-radius:14px;background:#0b0c0e}
 #example p{color:#ddd;font:300 15px/1.5 var(--font);padding:24px}
-.close{position:absolute;top:12px;right:12px;font:300 13px var(--font);color:#f1f2f4;background:rgba(20,22,26,.8);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}
+.close{position:absolute;top:12px;right:12px;font:300 13px var(--font);color:#f1f2f4;background:rgba(20,22,26,.8);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}.close.try{right:84px}
 /* Demo is ModOS itself, the whole window, in its own dark */
 body.dark{background:#111111}
-body.dark .switch{background:rgba(28,30,34,.97);box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.08)}
+body.demo-full .switch{display:none}body.dark .switch{background:rgba(28,30,34,.72);box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.08)}
 body.dark .switch button{color:#9ea3ab}
 body.dark .switch button:hover{color:#f1f2f4}
 body.dark .switch button[aria-pressed="true"]{background:#f1f2f4;color:#111111}
@@ -116,7 +116,7 @@ body.dark .switch button[aria-pressed="true"]{background:#f1f2f4;color:#111111}
 <div class="bar">
   <nav class="switch" id="nav" aria-label="Section"><button type="button" data-tab="demo" aria-pressed="true">Demo</button><button type="button" data-tab="gallery" aria-pressed="false">Gallery</button><button type="button" data-tab="vocabulary" aria-pressed="false">Vocabulary</button><button type="button" data-tab="about" aria-pressed="false">About</button></nav>
 </div>
-<dialog id="example" aria-label="Example"><button class="close" type="button" data-close>Close</button></dialog>
+<dialog id="example" aria-label="Example"><button class="close try" type="button" id="try-demo">Try the Demo</button><button class="close" type="button" data-close>Close</button></dialog>
 <dialog id="part" aria-label="Part"><div class="view"></div><figcaption></figcaption><button class="close" type="button" data-close>Close</button></dialog>
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 <!-- the Vocabulary is the system's own spatial UI library, live (system/editor/src/vocabulary.mjs): served with this page (python3 -m http.server) -->
@@ -128,7 +128,7 @@ window.VOCAB={view:createVocabulary(),open:openVocabulary,parts:VOCABULARY};disp
 <script src="context/gallery/examples.js"></script>
 <script>
 const GAL='context/gallery/';   // the Gallery's examples and their stills (system/editor/scripts/gallery.py writes them)
-const MODS=["Weather", "FindMy", "WorldInfo", "LabInfo", "IoTControl", "ObjectStatus", "Wayfinding", "Send", "Agenda", "BookCompanion", "StepGuide", "LiveCoach", "Reminder"];
+const MODS=["Answer while typing", "Weather", "FindMy", "WorldInfo", "LabInfo", "IoTControl", "ObjectStatus", "Wayfinding", "Send", "Agenda", "BookCompanion", "StepGuide", "LiveCoach", "Reminder"];
 // Spatial vocabulary (context/docs/modos-system-design.md 4.4): category → row → part
 const CATS=[{"id": "cues", "name": "Cues", "def": "Drawn on the room itself.", "rows": [{"name": "Mark", "def": "highlighting a physical entity", "items": [{"img": "breathingBox", "name": "Breathing Box", "use": "Draws the eye to a thing.", "eg": "FindMy"}, {"img": "cornerBrackets", "name": "Corner Brackets", "use": "Marks a thing without covering its content.", "eg": "WorldInfo"}, {"img": "footprintRing", "name": "Footprint Ring", "use": "Shows which thing is being operated.", "eg": "IoTControl"}, {"img": "floorArea", "name": "Floor Area", "use": "Shows a room or area; a place has no box.", "eg": "LabInfo"}, {"img": "doorwayGlow", "name": "Doorway Glow", "use": "Shows where to enter another room.", "eg": "Wayfinding"}]}, {"name": "Guidance", "def": "leading to somewhere", "items": [{"img": "arrowAhead", "name": "Arrow Ahead", "use": "Turns you toward a target in this room.", "eg": "FindMy"}, {"img": "floorPath", "name": "Floor Path", "use": "Leads along a route to another room.", "eg": "Wayfinding"}, {"img": "textArrow", "name": "Text Arrow", "use": "Links text to the thing it is about.", "eg": "WorldInfo"}]}, {"name": "Visualization", "def": "visualizing information", "items": [{"img": "haloDial", "name": "Gauge", "use": "How much: a level with a range.", "eg": "IoTControl"}, {"img": "progressRail", "name": "Progress Rail", "use": "A task’s progress and time left.", "eg": "IoTControl"}, {"img": "pinnedTags", "name": "Pinned Tags", "use": "Several readings of one thing.", "eg": "IoTControl"}, {"img": "statusPulse", "name": "Status Pulse", "use": "A state, and why.", "eg": "ObjectStatus"}, {"img": "cardStack", "name": "Card Stack", "use": "What waits in line.", "eg": "IoTControl"}]}, {"name": "Controls", "def": "what the user acts on: sent on change, on Send, or never", "items": [{"img": "edgeBar", "name": "Slider", "use": "Sets a level; sent on release."}, {"img": "choice", "name": "Choice", "use": "Picks one option: a few in a row, more in a dropdown."}, {"img": "iconButton", "name": "Icon Button", "use": "Does one thing in one press."}, {"img": "textButton", "name": "Text Button", "use": "A command no preset fits."}, {"img": "textInput", "name": "Text Input", "use": "Text to edit before it is sent."}, {"img": "arPhoto", "name": "AR Photo", "use": "The photo about to be sent."}, {"img": "datePicker", "name": "Date Picker", "use": "Moves between days; nothing sent."}, {"img": "playback", "name": "Playback", "use": "Plays through time; nothing sent."}]}]}, {"id": "text", "name": "Text", "def": "How the words appear.", "rows": [{"name": "", "def": "one per answer, by rule", "items": [{"img": "embeddedText", "name": "Embedded Text", "use": "Written on a surface that reads well.", "eg": "Weather"}, {"img": "floatingText", "name": "Floating Text", "use": "Beside its anchor when no surface fits.", "eg": "IoTControl"}, {"img": "dialogue", "name": "Object-centric Dialogue", "use": "The thing answers, when asked as “you”.", "eg": "WorldInfo"}]}]}, {"id": "assets", "name": "Assets", "def": "A MOD’s own; not shared.", "rows": [{"name": "", "def": "", "items": [{"img": "ambientEffect", "name": "Ambient Asset", "use": "The data as part of the room: sky, rain, fog.", "eg": "Weather"}, {"img": "asset", "name": "Scene Asset", "use": "A prepared model or animation, in place.", "eg": "LabInfo"}]}]}];
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -176,17 +176,21 @@ for(const b of $('nav').children)b.onclick=()=>go(b.dataset.tab);
 addEventListener('hashchange',()=>{route();scrollTo(0,0);});
 // Demo: ModOS itself, live (the editor and its API, system/editor: npm start), on the lab recording
 const SYSTEM='http://127.0.0.1:8766/',SESSION='./spaces/atlas/scenarios/atlas_rec_5/session.json';
-let demoShown=false;
-async function showDemo(){
-  if(demoShown)return;demoShown=true;
-  try{await fetch(SYSTEM,{mode:'no-cors',cache:'no-store'});$('demo').innerHTML=`<iframe src="${SYSTEM}?session=${encodeURIComponent(SESSION)}" title="ModOS" allow="autoplay; fullscreen"></iframe>`;}
+// the Demo's camera in its full window: the page's bottom switch steps aside meanwhile (a message from the editor, src/app.mjs)
+addEventListener('message',e=>{if(e.origin===new URL(SYSTEM).origin&&e.data?.type==='modos-camera-full')document.body.classList.toggle('demo-full',!!e.data.on);});
+let demoShown=false,demoAt=null;
+// at: {session, t} to open the Demo on (Try the Demo from a Gallery example: its recording, at its question's moment)
+async function showDemo(at=null){
+  if(at){demoAt=at;demoShown=false;}if(demoShown)return;demoShown=true;
+  const q=new URLSearchParams({session:demoAt?.session||SESSION,...(demoAt?.t!=null?{t:String(demoAt.t)}:{})});
+  try{await fetch(SYSTEM,{mode:'no-cors',cache:'no-store'});$('demo').innerHTML=`<iframe src="${SYSTEM}?${q}" title="ModOS" allow="autoplay; fullscreen; microphone"></iframe>`;}
   catch{demoShown=false;$('demo').innerHTML=`<p>ModOS is not running. Start it with <code>cd system/editor && npm start</code>, then open Demo again.</p>`;}
 }
 // Gallery: a masonry of MODs (Lucide icon, name, how many; a line on the left to their examples). An example is a question asked in
 // ModOS (system/editor/scripts/gallery.py): its question (or questions, asked one after another) above a still of the camera view at its answer. Opened, ModOS shows it live in
-// its example view (the camera, the player, the ask box and the pipeline): replayed from where it was asked, and it can be asked again,
-// or deleted and asked anew; the Gallery follows (demos/gallery.mjs re-asks them all as a queue).
-const ICON={Weather:'cloud-sun',FindMy:'search',WorldInfo:'info',LabInfo:'flask-conical',IoTControl:'lightbulb',ObjectStatus:'activity',
+// its example view (the camera, the player and the pipeline), played only; Try the Demo opens the Demo on its recording at that moment.
+// demos/gallery.mjs asks them all again as a queue.
+const ICON={'Answer while typing':'zap',Weather:'cloud-sun',FindMy:'search',WorldInfo:'info',LabInfo:'flask-conical',IoTControl:'lightbulb',ObjectStatus:'activity',
   Wayfinding:'signpost',Send:'send',Agenda:'calendar',BookCompanion:'book-open',StepGuide:'list-ordered',LiveCoach:'person-standing',Reminder:'bell'};
 let examples=[];
 function renderExamples(){
@@ -200,8 +204,10 @@ function renderExamples(){
 async function openExample(c){
   const d=$('example');for(const x of d.querySelectorAll('iframe,p'))x.remove();
   try{await fetch(SYSTEM,{mode:'no-cors',cache:'no-store'});
-    d.insertAdjacentHTML('afterbegin',`<iframe src="${SYSTEM}?${new URLSearchParams({session:c.session,conversation:c.conversation,example:c.name})}" title="${esc(c.question)}" allow="autoplay; fullscreen"></iframe>`);}
+    d.insertAdjacentHTML('afterbegin',`<iframe src="${SYSTEM}?${new URLSearchParams({session:c.session,conversation:c.conversation,example:c.name})}" title="${esc(c.question)}" allow="autoplay; fullscreen; microphone"></iframe>`);}
   catch{d.insertAdjacentHTML('afterbegin','<p>ModOS is not running. Start it with <code>cd system/editor && npm start</code>, then open the example again.</p>');}
+  // Try the Demo: ModOS itself on this example's recording, at the moment its (first) question was asked
+  $('try-demo').onclick=()=>{d.close();showDemo({session:c.session,t:Math.max(0,(c.first_t??c.t??0)-.5)});location.hash='demo';};
   d.showModal();
 }
 // After an example was asked again or deleted there, read the examples anew (the editor's server rewrote them).

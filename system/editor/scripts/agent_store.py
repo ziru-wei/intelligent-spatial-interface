@@ -120,6 +120,38 @@ def ask(d, cid, frame, t, text, live=None, selection=None, pose=None, location=N
     if location: q['location'] = location   # the zone the user is in and one they face (scripts/location.py)
     c['questions'].append(q); _write(d, c); lock.notify_all(); return dict(q, conversation=cid)
 
+def draft(d, cid, qid, frame, t, text, pause=False, selection=None, pose=None, location=None):
+    """Answer while typing (modos-system-design.md 12): the question as typed so far. The first revision makes a question with status
+    `drafting`; each later one replaces its text, frame and what the user looks at, and is kept in `revisions` (when, the text, whether
+    the user paused) so a replay can type it again. The bridge answers the newest revision each time it is free."""
+    c = read(d, cid); now = time.time(); text = str(text or '')[:500]
+    q = next((x for x in c['questions'] if str(x['id']) == str(qid)), None) if qid is not None else None
+    if qid is not None and not q: raise ValueError('Unknown question.')
+    if q is None:
+        q = dict(id=_next_qid(d), text=text, frame=frame, t=t, status='drafting', created=now, rev=0, revisions=[])
+        c['questions'].append(q)
+    elif q['status'] != 'drafting': raise ValueError('That question was already asked.')
+    q['rev'] += 1; q.update(text=text, frame=frame, t=t)   # the question's moment is its latest revision's; typing began at revisions[0]
+    for k, v in (('selection', selection), ('pose', pose), ('location', location)):
+        if v: q[k] = v
+        else: q.pop(k, None)
+    if len(q['revisions']) < 200: q['revisions'].append(dict(rev=q['rev'], text=text, at=round(now-q['created'], 3), t=t, frame=frame, pause=bool(pause)))
+    _write(d, c); lock.notify_all(); return dict(q, conversation=cid)
+
+def finalize(d, cid, qid, text, live=None):
+    """Enter on a draft: the question is asked as typed, and answered once more in full (its parts reconciled, its text written)."""
+    c = read(d, cid); q = next((x for x in c['questions'] if str(x['id']) == str(qid)), None)
+    if not q or q['status'] != 'drafting': raise ValueError('No draft to ask.')
+    q['rev'] += 1; q.update(text=str(text or q['text'])[:500], status='queued', asked=time.time())
+    q['revisions'].append(dict(rev=q['rev'], text=q['text'], at=round(time.time()-q['created'], 3), t=q['t'], frame=q['frame'], final=True))
+    if isinstance(live, dict): q['live'] = dict(read_s=float(live.get('read_s', 5)))
+    _write(d, c); lock.notify_all(); return dict(q, conversation=cid)
+
+def revision(d, qid):
+    """What the bridge checks while it works on a draft: the latest revision and the status (a newer revision makes its work stale)."""
+    c, q = _find_question(d, qid)
+    return dict(rev=q.get('rev', 0), status=q['status']) if q else dict(rev=-1, status='gone')
+
 def take_next(d):
     """Oldest queued question in any of the scene's conversations, marked running; None if there is none.
     A question still running well past the bridge's 4-minute turn limit was interrupted (bridge stopped mid-answer). Several bridges
@@ -128,9 +160,15 @@ def take_next(d):
         stuck = [q for q in c['questions'] if q['status'] == 'running' and time.time()-q.get('started', 0) > STUCK_S]
         for q in stuck: q.update(status='failed', message='Interrupted: the agent stopped before answering.')
         if stuck: _write(d, c)
+    drafts = [(q['created'], c, q) for c in _all(d) for q in c['questions'] if q['status'] == 'drafting' and q.get('rev', 0) > q.get('taken_rev', 0)]
+    if drafts:
+        _, c, q = min(drafts, key=lambda x: x[0]); q.update(taken_rev=q['rev'], trace=[], started=q.get('started') or time.time()); _write(d, c)
+        return dict(q, conversation=c['id'])
     queued = [(q['created'], c, q) for c in _all(d) for q in c['questions'] if q['status'] == 'queued']
     if not queued: return None
-    _, c, q = min(queued, key=lambda x: x[0]); q.update(status='running', started=time.time()); _write(d, c)
+    _, c, q = min(queued, key=lambda x: x[0]); q.update(status='running', started=time.time())
+    if q.get('revisions'): q.update(taken_rev=q['rev'], trace=[])   # a draft asked: answered again, from its parts so far
+    _write(d, c)
     return dict(q, conversation=c['id'])
 
 def set_info(d, qid, info_key, interaction_id=None, source=None):
@@ -231,6 +269,7 @@ def add_response(d, body):
     if body.get('question_id') is not None and not q: raise ValueError('Unknown question.')
     part = body.get('part')
     if part not in (None, 'ui', 'text', 'animation'): raise ValueError('Unknown response part.')
+    if q and body.get('rev') is not None and body['rev'] < q.get('taken_rev', 0): raise Stale('A newer revision of the question is being answered.')
     if part and not q: raise ValueError('Response parts need a question_id.')
     if body.get('stream') is not None:
         if part != 'text' or any(body.get(k) is not None for k in UI_KINDS): raise ValueError('Only text parts can stream.')
@@ -238,7 +277,11 @@ def add_response(d, body):
     # One part of each kind per question; a ui part is one per MOD (ModOS composes several MODs into one response).
     mod_of = lambda r: next((k for k in UI_KINDS if r.get(k) is not None), None)
     same = lambda r: r.get('part') == part and r.get('question_id') == q['id'] and (part != 'ui' or mod_of(r) == mod_of(body))
-    if part and any(same(r) for r in c['responses']):
+    if part and body.get('upsert'):
+        # A draft's part (answer while typing): one per kind and MOD, replaced in place as the question changes; rebuilt below
+        key = part_key(body); old = next((r for r in c['responses'] if r.get('question_id') == q['id'] and part_key(r) == key), None)
+        if old: c['retired_id'] = max(c.get('retired_id', 0), old['id']); c['responses'].remove(old)   # ids are never given twice
+    elif part and any(same(r) for r in c['responses']):
         return next(r for r in c['responses'] if same(r))
     if part == 'ui' and (body.get('title') or body.get('body') or body.get('items')): raise ValueError('UI part cannot contain language text.')
     if part == 'text' and any(body.get(k) is not None for k in UI_KINDS): raise ValueError('Text part cannot contain mod UI.')
@@ -247,7 +290,7 @@ def add_response(d, body):
         # Asked in the terminal: the conversation and frame the editor shows.
         at = editor_state.get(str(d)) or {}
         convs = _all(d); c = next((x for x in convs if x['id'] == at.get('conversation')), None) or (max(convs, key=lambda x: x['created']) if convs else create(d))
-    r = dict(id=max((r['id'] for r in c['responses']), default=0)+1, created=time.time(), frame=at.get('frame', 0), t=at.get('t', 0),
+    r = dict(id=max([r['id'] for r in c['responses']]+[c.get('retired_id', 0)])+1, created=time.time(), frame=at.get('frame', 0), t=at.get('t', 0),
         question=q['text'] if q else str(body.get('question') or ''), question_id=q['id'] if q else None, title=str(body.get('title') or ''),
         body=str(body.get('body') or ''), items=[str(i) for i in body.get('items') or []][:12], anchor=body.get('anchor') or None)
     if body.get('reserve_text') is True: r['reserve_text'] = True
@@ -277,7 +320,7 @@ def add_response(d, body):
         r['action'] = modos_parts.resolve_action(d, body['action'])
     if body.get('control') is not None:
         if not (Path(d).parent.parent/'modos').is_dir(): raise ValueError('Control parts need ModOS.')
-        r['control'] = modos_parts.resolve_control(d, body['control'])
+        r['control'] = modos_parts.resolve_control(d, body['control'], preview=q is not None and q['status'] == 'drafting')   # typed, not asked: nothing done yet
     if body.get('findmy') is not None:
         r['findmy'] = findmy.resolve(d,body['findmy'])
     if body.get('weather') is not None:
@@ -293,6 +336,7 @@ def add_response(d, body):
         q.setdefault('parts', {}).setdefault(part, dict(response=r['id'], latency=r['latency']))
         # ModOS: several MODs can each add a ui part; their own arrival times are kept apart from the per-kind `parts`.
         if part == 'ui' and mod_of(r): q.setdefault('mod_parts', {})[mod_of(r)] = dict(response=r['id'], latency=r['latency'])
+    if part and body.get('upsert'): r['key'] = part_key(body)
     c['responses'].append(r)
     # Real seconds from the agent starting on the question to its answer being shown.
     if q:
@@ -339,7 +383,7 @@ def _add_stream(d, c, q, body):
         if stream['seq'] <= previous['seq']: return r  # retries/out-of-order deliveries cannot roll text back
         if previous['status'] != 'streaming': raise ValueError('Text stream already ended.')
         if len(previous['updates']) >= 256: raise ValueError('Too many text stream updates.')
-    if q['status'] != 'running': raise ValueError('Question is no longer running.')
+    if q['status'] not in ('running', 'drafting'): raise ValueError('Question is no longer running.')
     title, text = body.get('title', ''), body.get('body', '')
     if not isinstance(title, str) or not isinstance(text, str) or len(title) > 512 or len(text) > 4096 or body.get('items'):
         raise ValueError('Bad streaming text.')
@@ -349,7 +393,7 @@ def _add_stream(d, c, q, body):
     refs = conversation_context.validate_references(d, body.get('referenced_item_ids', [])) if stream['status'] == 'complete' else []
     now = time.time(); at = max(0, round(now-q.get('started', now), 3))
     if not r:
-        r = dict(id=max((r['id'] for r in c['responses']), default=0)+1, created=now, frame=q['frame'], t=q['t'],
+        r = dict(id=max([r['id'] for r in c['responses']]+[c.get('retired_id', 0)])+1, created=now, frame=q['frame'], t=q['t'],
                  question=q['text'], question_id=q['id'], part='text', layout_slot=1 if body.get('layout_slot') == 1 else 0,
                  latency=at, stream=dict(updates=[]))
         c['responses'].append(r)
@@ -364,6 +408,27 @@ def _add_stream(d, c, q, body):
     r['stream']['updates'].append(dict(seq=stream['seq'], status=stream['status'], at=at, created=now, title=title, body=text, anchor=anchor, referenced_entities=refs))
     q.update(response=r['id'], latency=at)
     _write(d, c); lock.notify_all(); return r
+
+class Stale(ValueError):
+    """A part for a revision older than the one the bridge took since (the server answers 409; the bridge stops that work). The
+    revision being answered finishes even when the user has typed on: the bridge then takes the newest text, skipping the ones between,
+    so a fast typist still sees the answer grow."""
+
+def part_key(r):
+    """A part's identity on its question's surface: its kind and its MOD (a highlight of ObjectStatus and one of Wayfinding are two)."""
+    kind = r.get('part') if r.get('part') != 'ui' else next((k for k in UI_KINDS if r.get(k) is not None), 'ui')
+    m = r.get('mod'); return f"{kind}:{(m.get('id') if isinstance(m, dict) else m) or ''}"
+
+def retract(d, qid, keys, rev=None):
+    """Parts withdrawn from a draft's surface (a MOD no longer needed, text to be written again): by part_key."""
+    c, q = _find_question(d, qid)
+    if not q: raise ValueError('Unknown question.')
+    if rev is not None and rev < q.get('taken_rev', 0): raise Stale('A newer revision of the question is being answered.')
+    keys = set(keys or []); gone = [r for r in c['responses'] if r.get('question_id') == q['id'] and part_key(r) in keys]
+    for r in gone: c['retired_id'] = max(c.get('retired_id', 0), r['id']); c['responses'].remove(r)
+    if any(r.get('part') == 'text' for r in gone): q.get('parts', {}).pop('text', None)
+    if gone: _write(d, c); lock.notify_all()
+    return dict(removed=len(gone))
 
 def status(d, cid):
     c = read(d, cid); busy = running_question(d)[1] is not None

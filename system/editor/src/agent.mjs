@@ -306,7 +306,7 @@ export function stepsAt(q,h=Infinity){return h<0?[]:(q.trace||[]).filter(st=>st.
 // Trace focus may inspect history; an explicit hold must never fall back to an older question.
 export function focusQuestion(questions,t,heldId=null){
   if(heldId!=null)return questions.find(q=>q.id===heldId)||null;
-  return questions.find(q=>q.status==='running')||[...questions].reverse().find(q=>Math.abs(t-q.t)<.06)||null;
+  return questions.find(q=>q.status==='running'||q.status==='drafting')||[...questions].reverse().find(q=>Math.abs(t-q.t)<.06)||null;
 }
 // Caption of the user's question, drawn in screen space at the bottom of the video (not anchored in the room).
 function captionTexture(text,shown=text){
@@ -492,8 +492,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
         layer.orient(camera);
         if(controls?.userData.responseOffset&&controls.userData.owner){const owner=controls.userData.owner;controls.quaternion.copy(owner.quaternion);controls.position.copy(owner.position).add(controls.userData.responseOffset.clone().applyQuaternion(owner.quaternion));}
       }
-      // An answer with an action card (Send) shows its text inside the card (src/action-cues.mjs: the message's Text Input), not as text of its own.
-      const excluded=[...widgets.values(),...thoughts.values()].filter(w=>w.visible&&(w.userData.response?.action||pass==='fixed'));
+      const excluded=[...widgets.values(),...thoughts.values()].filter(w=>w.visible&&pass==='fixed');
       const originalControlsVisible=controls?.visible;
       for(const w of excluded)w.visible=false;
       if(controls?.userData.owner&&excluded.includes(controls.userData.owner))controls.visible=false;
@@ -546,7 +545,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     focus(){return focusQuestion(questions,time,hold?.id||layer.delivery?.id);},
     setConversation(id){if(id===conversation)return;conversation=id;generation++;hold=null;questions=[];lastQuestionsKey='';captionOwner=dismissedCaption=null;clearCaption();removeAll();onChange?.([]);onAnimate?.();return layer.sync();},
     sync:()=>syncing??=sync().finally(()=>{syncing=null;}),
-    start(interval=1000){const loop=()=>layer.sync().catch(()=>{}).finally(()=>{timer=setTimeout(loop,questions.some(q=>q.status==='running'||q.status==='queued')?120:interval);});loop();},
+    start(interval=1000){const loop=()=>layer.sync().catch(()=>{}).finally(()=>{timer=setTimeout(loop,questions.some(q=>q.status==='running'||q.status==='queued'||q.status==='drafting')?120:interval);});loop();},
     stop(){clearTimeout(timer);},
     orient(camera){
       for(const w of widgets.values()){
@@ -616,6 +615,11 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     // extra: {selection, selection_mode}: the thing carrying info the user selects at that frame (src/user-selection.mjs).
     ask:(frame,t,text,live,extra={})=>post('/api/agent/questions',{frame,t,text,live,...extra}).then(async q=>{await layer.sync().catch(()=>{});return q;}),
     deleteQuestion:id=>post('/api/agent/questions/delete',{id}).then(()=>layer.sync()),
+    // Answer while typing (src/live-input.mjs; design doc 12): a draft's revision (the first one makes the question), asking it on
+    // Enter, and dropping it when the box is cleared.
+    draft:(id,frame,t,text,pause,extra={})=>post('/api/agent/drafts',{id,frame,t,text,pause,...extra}).then(q=>{layer.sync().catch(()=>{});return q;}),
+    askDraft:(id,text,live)=>post('/api/agent/drafts/ask',{id,text,live}).then(async q=>{await layer.sync().catch(()=>{});return q;}),
+    cancelDraft:id=>post('/api/agent/drafts/cancel',{id}).then(()=>layer.sync()),
     // The frame the editor shows is the simulated user's state for terminal questions; send it at most every 200 ms.
     report(state){pending=state;if(!reportTimer)reportTimer=setTimeout(()=>{reportTimer=null;post('/api/agent/state',pending).catch(()=>{});},200);}};
   return layer;

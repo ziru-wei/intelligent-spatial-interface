@@ -29,12 +29,19 @@ export function createCueHost({getRooms=()=>[],getLayout=()=>null}={}){
   const roomAt=p=>getRooms().find(r=>{const ring=ringOf(r),f=r.floorY??0;return ring&&p.y>=f-.3&&p.y<f+3.5&&inside([p.x,p.z],ring);})||null;
   const roomById=id=>getRooms().find(r=>'zone:'+r.id===id||r.id===id)||null;
 
+  // the floor path from where the user stands to the target: its dots ([x, z, floor y, yaw]), kept while the user stays within half a metre
+  let pathKey=null,pathDots=null;
+  function pathOf(eye,t0){const k=`${Math.round(eye.x*2)},${Math.round(eye.z*2)}:${t0.center.join()}`;if(k!==pathKey){pathKey=k;
+    const route=routerOf()?.route([eye.x,eye.z],[t0.center[0],t0.center[2]]);pathDots=route?along(route,{spacing:.45,skip:.6,max:14}):null;}return pathDots;}
+  // guidance is seen or it does not guide: whether any of the path is in view (else Arrow Ahead leads to where it goes: path.in_view)
+  const dotInView=(p,camera)=>{const v=new THREE.Vector3(p[0],p[2]??0,p[1]).project(camera);return v.z<1&&Math.abs(v.x)<1&&Math.abs(v.y)<1;};
   function viewFacts(camera){
     const t=h.targets[0],c=new THREE.Vector3(...t.center),v=c.clone().project(camera),m=inView?1.02:.85;   // hysteresis at the edge
     inView=v.z<1&&Math.abs(v.x)<m&&Math.abs(v.y)<m;
     const here=roomAt(camera.position),zone=t.of||(roomAt(c)?'zone:'+roomAt(c).id:null),hereId=here?'zone:'+here.id:null;
     return {...facts,'target.out_of_view':!inView,'target.has_content':!!t.has_content,'state.level':LEVEL[t.tone]||'ok',
-      'target.other_room':!!(zone&&hereId&&zone!==hereId),'user.in_target':!!(t.of&&hereId===t.of),'target.door_in_view':!!(t.of&&inView)};
+      'target.other_room':!!(zone&&hereId&&zone!==hereId),'user.in_target':!!(t.of&&hereId===t.of),'target.door_in_view':!!(t.of&&inView),
+      'path.in_view':!!pathOf(camera.position,t)?.some(p=>dotInView(p,camera))};
   }
   function build(camera,list){
     scene.clear();scene.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));drawn=[];sign=null;
@@ -44,11 +51,13 @@ export function createCueHost({getRooms=()=>[],getLayout=()=>null}={}){
       else if(name==='statusPulse')for(const t of h.targets)add(cues.statusPulse(t,{level:LEVEL[t.tone]==='ok'?'ok':LEVEL[t.tone],message:t.state||''}));   // the state from the data ("In use"), never the thing's name
       else if(name==='floorArea'){const r=roomById(t0.of)||roomAt(new THREE.Vector3(...t0.center)),ring=ringOf(r);if(ring)add(cues.floorArea({ring,floorY:r.floorY??0}));}
       else if(name==='doorwayGlow')add(cues.doorwayGlow(t0,t0.label,eye));
-      else if(name==='arrowAhead')add(cues.arrowAhead(t0,camera,{name:t0.label}));
+      else if(name==='arrowAhead'){
+        // to the target; in another room, to where the way there goes (a couple of metres along the path), named for the target
+        const dots=list.includes('floorPath')?pathOf(eye,t0):null,ahead=dots?.find(p=>Math.hypot(p[0]-eye.x,p[1]-eye.z)>2)||dots?.at(-1);
+        add(cues.arrowAhead(ahead?{center:[ahead[0],eye.y-.3,ahead[1]],size:[.1,.1,.1],yaw:0}:t0,camera,{name:t0.label}));}
       else if(name==='floorPath'){
         // the route from where the user stands to the target (a room's door, or the thing); no route in the twin: no path (never through walls)
-        const route=routerOf()?.route([eye.x,eye.z],[t0.center[0],t0.center[2]]);
-        if(route)add(cues.floorPath(along(route,{spacing:.45,skip:.6,max:14})));
+        const dots=pathOf(eye,t0);if(dots)add(cues.floorPath(dots));
       }
       else if(name==='text:sign'&&!list.includes('doorwayGlow')){
         sign=label(t0.label,{size:.06,weight:700});sign.geometry.translate(-sign.userData.width/2,0,0);sign.position.set(t0.center[0],t0.center[1]+t0.size[1]/2+.12,t0.center[2]);scene.add(sign);}

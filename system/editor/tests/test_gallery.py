@@ -59,3 +59,22 @@ class GalleryTest(unittest.TestCase):
                   self.assertEqual(e['questions'], ['send this to Ana', 'and what about Ryo?'])
                   self.assertEqual(gallery.add(d, c['id'], [ids[2]])['example']['ask_at'], 9)
             finally: spaces.SPACES, gallery.GALLERY, gallery.SPEC = old
+
+    def test_a_question_typed_in_answer_while_typing_goes_to_its_own_category_with_its_revisions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); old = spaces.SPACES, gallery.GALLERY, gallery.SPEC
+            spaces.SPACES = root/'spaces'; gallery.GALLERY = root/'gallery'; gallery.SPEC = root/'spec.json'
+            gallery.SPEC.write_text(json.dumps(dict(space='lab', examples=[])))
+            try:
+              with store.lock:
+                  d = spaces.SPACES/'lab'/'scenarios'/'rec'; d.mkdir(parents=True); (d/'session.json').write_text('{}')
+                  c = store.create(d, 'Mine')
+                  q = store.draft(d, c['id'], None, 10, 1.0, 'is it')
+                  store.draft(d, c['id'], q['id'], 30, 3.0, 'is it gonna rain', pause=True)
+                  store.finalize(d, c['id'], q['id'], 'is it gonna rain?')
+                  c = store.read(d, c['id']); c['questions'][0]['status'] = 'answered'; store._write(d, c)
+                  e = gallery.add(d, c['id'], [q['id']])['example']
+                  self.assertEqual((e['mod'], e['ask_at'], e['question']), (gallery.TYPED, 1.0, 'is it gonna rain?'))
+                  self.assertEqual([(r['t'], r['text'], r.get('pause', False)) for r in e['typed']], [(1.0, 'is it', False), (3.0, 'is it gonna rain', True)])
+                  self.assertEqual(next(x for x in gallery.entries() if x['name'] == e['name'])['first_t'], 1.0)   # where typing began
+            finally: spaces.SPACES, gallery.GALLERY, gallery.SPEC = old

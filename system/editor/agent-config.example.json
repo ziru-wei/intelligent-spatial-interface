@@ -4,5 +4,11 @@
   "jevModel": "jev-latest",
   "answerProvider": "gemini",
   "answerModel": "gemini-3.5-flash-lite",
-  "answerEffort": "minimal"
+  "answerEffort": "minimal",
+  "doubaoAsr": {
+    "apiKey": "",
+    "appKey": "",
+    "accessKey": "",
+    "resourceId": "volc.bigasr.sauc.duration"
+  }
 }

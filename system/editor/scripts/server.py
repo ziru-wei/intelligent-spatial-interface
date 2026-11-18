@@ -33,6 +33,8 @@ POST /api/agent/conversations/rename|import         {session,conversation,name} 
 GET  /api/gallery                                    the Gallery's examples (scripts/gallery.py), written to context/gallery as well
 POST /api/gallery/still {session,conversation,image}  a still of an example's answer; POST /api/gallery/replace {name,keep}: drop older examples of that name
 POST /api/gallery/add {session,conversation,ids}      a new example from answered questions (one, or several in a row)
+POST /api/asr/relay                                 speech to text: starts scripts/asr-relay.mjs (Doubao) if needed; {url}
+POST /api/agent/drafts {session,conversation,id?,frame,t,text,pause?,selection?}   answer while typing: a draft's revision (…/drafts/ask {id,text}, …/drafts/cancel {id}); GET /api/agent/questions/rev?id=; POST /api/agent/responses/retract {question_id,keys,rev}
 POST /api/agent/questions {session,conversation,frame,t,text,live?,selection?,selection_mode?}   ask at a frame (live = asked during playback); POST /api/agent/questions/delete
 GET  /api/agent/status?session=&conversation=       bridge connected + the conversation's questions and responses
 GET  /api/agent/questions/next?session=            bridge long-poll (≤25 s); POST /api/agent/questions/trace {session,id,step}, …/done {session,id,message,duration}
@@ -98,8 +100,25 @@ def start_bridge(session, host):
     bridges[key] = subprocess.Popen(shlex.split(agent_command(session, host)), cwd=ROOT, stdout=log, stderr=log, start_new_session=True)
     return dict(started=True, running=True)
 def stop_bridges():
-    for p in bridges.values():
+    for p in [*bridges.values(), *asr.values()]:
         if p.poll() is None: p.terminate()
+
+# Speech to text for the ask box (scripts/asr-relay.mjs, design doc 12.8): one relay to Doubao's streaming recognition, on 127.0.0.1,
+# started when the editor first needs it; its keys are read by the relay from agent-config.local.json (doubaoAsr), never sent here.
+asr = {}
+ASR_PORT = 8767
+def start_asr():
+    cfg = ROOT/'agent-config.local.json'
+    try: keys = json.loads(cfg.read_text()).get('doubaoAsr') if cfg.is_file() else None
+    except (OSError, ValueError): keys = None
+    if not isinstance(keys, dict) or not (keys.get('apiKey') or (keys.get('appKey') and keys.get('accessKey'))):
+        raise ValueError('Speech to text needs doubaoAsr keys in agent-config.local.json (apiKey, or appKey and accessKey, and resourceId).')
+    url = f'http://127.0.0.1:{ASR_PORT}'
+    if 'relay' in asr and asr['relay'].poll() is None: return dict(url=url, started=False)
+    log = open(ROOT/'asr-relay.log', 'ab')
+    asr['relay'] = subprocess.Popen([shutil.which('node') or 'node', str(ROOT/'scripts'/'asr-relay.mjs'), '--port', str(ASR_PORT), '--config', str(cfg)], cwd=ROOT, stdout=log, stderr=log, start_new_session=True)
+    time.sleep(.4)   # listening before the editor's first request
+    return dict(url=url, started=True)
 
 def frame_pose(d, frame):
     f = json.loads((d/'session.json').read_text())['frames'][frame]; x, y, z, w = f['quaternion']
@@ -144,7 +163,7 @@ def live_pose(value):
     return dict(position=[float(v) for v in value['position']], quaternion=[float(v) for v in value['quaternion']],
                 forward=[-(2*(x*z+y*w)), -(2*(y*z-x*w)), -(1-2*(x*x+y*y))])
 
-def ask(body):
+def ask(body, drafting=False):
     d = session_dir(body.get('session')); text = str(body.get('text') or '').strip()
     if not text: raise ValueError('Empty question.')
     sm = json.loads((d/'session.json').read_text()); frames = len(sm['frames']); frame = int(body.get('frame', 0))
@@ -156,7 +175,9 @@ def ask(body):
     selection = info_context.selection(space, sem, body.get('selection'), body.get('selection_mode', 'jev'), session=d) if body.get('selection') else None
     # A recording asked about in the editor: where the recorded camera stands and looks (a headset sends its own).
     where = location.check(d, body.get('location')) if body.get('location') is not None or sm.get('live') else location.from_camera(d, sm, frame)
-    with store.lock: return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), selection, pose, where)
+    with store.lock:
+        if drafting: return store.draft(d, body.get('conversation'), body.get('id'), frame, float(body.get('t', 0)), text, bool(body.get('pause')), selection, pose, where)
+        return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), selection, pose, where)
 
 def agent_get(path, session, q):
     if path == '/api/agent/questions/next': return next_question(session)
@@ -164,6 +185,7 @@ def agent_get(path, session, q):
     with store.lock:
         store._prepare(d)
         if path == '/api/agent/conversations': return store.listing(d)
+        if path == '/api/agent/questions/rev': return store.revision(d, q.get('id', [''])[0])
         if path == '/api/agent/conversations/export': return store.read(d, cid)
         if path == '/api/agent/status': return store.status(d, cid)
     if path == '/api/agent/info':
@@ -175,6 +197,7 @@ def agent_get(path, session, q):
 
 def agent_post(path, body):
     if path == '/api/agent/questions': return ask(body)
+    if path == '/api/agent/drafts': return ask(body, drafting=True)
     d = session_dir(body.get('session')); cid = body.get('conversation')
     with store.lock:
         store._prepare(d)
@@ -189,6 +212,10 @@ def agent_post(path, body):
         if path == '/api/agent/questions/info': return store.set_info(d, body.get('id'), body.get('key'), body.get('interaction_id'), body.get('source'))
         if path == '/api/agent/questions/done': store.bridge_seen[str(d)] = time.time(); return store.finish(d, body.get('id'), body.get('message'), body.get('duration'))
         if path == '/api/agent/responses': return store.add_response(d, body)
+        # Answer while typing (store.draft): Enter asks the draft as typed; clearing the box drops it; the bridge withdraws parts
+        if path == '/api/agent/drafts/ask': return store.finalize(d, cid, body.get('id'), body.get('text'), body.get('live'))
+        if path == '/api/agent/drafts/cancel': return store.delete_question(d, cid, body.get('id'))
+        if path == '/api/agent/responses/retract': return store.retract(d, body.get('question_id'), body.get('keys'), body.get('rev'))
     raise KeyError(path)
 
 class Server(ThreadingHTTPServer):
@@ -362,11 +389,15 @@ class Handler(SimpleHTTPRequestHandler):
             body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
             try: return self.reply(200, dict(installed=modos_registry.install(spaces.space_dir(body.get('space')), body.get('mod'))))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if path == '/api/asr/relay':
+            try: return self.reply(200, start_asr())
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if path == '/api/agent/bridge':
             try: return self.reply(200, start_bridge(json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}').get('session'), self.headers.get('Host', '127.0.0.1:8766')))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if path.startswith('/api/agent/'):
             try: return self.reply(200, agent_post(path, json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')))
+            except store.Stale as e: return self.reply(409, dict(error=str(e), stale=True))
             except KeyError: return self.reply(404, dict(error='Not found'))
             except (ValueError, OSError, TypeError) as e: return self.reply(400, dict(error=str(e)))
         # With keep-alive, the body must always be read, or it would be parsed as the next request.

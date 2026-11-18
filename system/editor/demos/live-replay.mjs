@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+// Answer while typing, measured (design doc 12): types a question into a recording again, revision by revision, through the editor
+// server and its bridge, and reports when each part shows and goes. A tool around the editor, not part of ModOS.
+//   node demos/live-replay.mjs atlas_rec_1 --text "where is my umbrella"     typed at RATE ms a letter, revisions as the editor sends them
+//   node demos/live-replay.mjs atlas_rec_1 --from <conversation>:<question>  a draft typed earlier, its revisions at their own times
+//   --at <s>  the recording's moment (default: the source question's, else 1 s); --enter  ask it at the end; --keep  keep the conversation
+// Needs the editor server (npm start) and agent-config.local.json (the server starts the scene's bridge).
+import {createBreaks} from '../src/live-input.mjs';
+
+const args=process.argv.slice(2),flag=k=>{const i=args.indexOf(k);return i<0?null:args.splice(i,2)[1];},has=k=>{const i=args.indexOf(k);if(i<0)return false;args.splice(i,1);return true;};
+const server=flag('--server')||'http://127.0.0.1:8766',text=flag('--text'),from=flag('--from'),atFlag=flag('--at'),enter=has('--enter'),keepIt=has('--keep');
+const RATE=Number(flag('--rate')||110);
+const recording=args[0];if(!recording||(!text&&!from)){console.error('usage: live-replay.mjs <recording> (--text "…" | --from conv:qid) [--at s] [--enter] [--keep]');process.exit(1);}
+const session=`./spaces/atlas/scenarios/${recording}/session.json`,sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function api(p,body){
+  const u=new URL(p,server);if(!body)u.searchParams.set('session',session);
+  const r=await fetch(u,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session,...body})}:{});
+  const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;
+}
+const sm=await (await fetch(new URL(session.slice(1),server))).json();
+const frameAt=t=>{let i=0;for(let k=0;k<sm.frames.length;k++)if(sm.frames[k].t<=t)i=k;return i;};
+
+// what to type: revisions {at (s), text, pause}
+let revisions,at=Number(atFlag??1);
+if(from){const [cid,qid]=from.split(':');const c=await api(`/api/agent/conversations/export?conversation=${cid}`);const q=c.questions.find(x=>String(x.id)===qid);
+  if(!q?.revisions)throw Error('That question was not typed live.');revisions=q.revisions.filter(r=>!r.final);if(atFlag==null)at=q.t;}
+await api('/api/agent/bridge',{});
+const conv=await api('/api/agent/conversations',{name:'Live replay'});
+const t0=Date.now(),log=[],now=()=>((Date.now()-t0)/1000).toFixed(2);
+let id=null,chain=Promise.resolve(),done=false;
+const send=(txt,pause)=>{log.push([now(),`${pause?'⏸':'·'} "${txt}"`]);chain=chain.then(()=>api('/api/agent/drafts',{conversation:conv.id,id,frame:frameAt(at),t:at,text:txt,pause})).then(q=>{id=q.id;});};
+
+// watch the question's parts: shown (+) and withdrawn (−)
+const watch=(async()=>{let seen=new Map(),lastScores=null;
+  while(!done){await sleep(100);if(id==null)continue;
+    const s=await api(`/api/agent/status?conversation=${conv.id}`).catch(()=>null);if(!s)continue;
+    const mine=s.responses.filter(r=>r.question_id===id),cur=new Map(mine.map(r=>[r.key||r.part,r]));
+    // the MOD scores of each revision the bridge answered (its trace: view_mods), those of .2 or more
+    const step=s.questions.find(x=>x.id===id)?.trace?.find(x=>x.tool==='view_mods');
+    if(step&&step.text!==lastScores){lastScores=step.text;const v=JSON.parse(step.text);log.push([now(),`  scores ${v.options.filter(([,x])=>x==='auto'||x>=.2).map(([n,x])=>`${n} ${x}`).join(', ')||'none ≥ .2'}`]);}
+    for(const [k,r] of cur){const was=seen.get(k);if(!was)log.push([now(),`+ ${k}${r.findmy?` ${r.findmy.status}${r.findmy.label?' '+r.findmy.label:''}`:r.weather?` ${r.weather.forecast?.map(e=>e.date).filter((x,i,a)=>a.indexOf(x)===i).join(',')}`:r.highlight?` ${r.highlight.targets?.map(t=>t.label).join(',')}`:r.title?` "${r.title}"`:''}`]);
+      else if(was.id!==r.id)log.push([now(),`~ ${k}${r.findmy?` ${r.findmy.status} ${r.findmy.label||''}`:r.weather?` ${r.weather.forecast?.map(e=>e.date).filter((x,i,a)=>a.indexOf(x)===i).join(',')}`:r.title?` "${r.title}"`:''}`]);}
+    for(const k of seen.keys())if(!cur.has(k))log.push([now(),`− ${k}`]);
+    seen=cur;}})();
+
+if(revisions){for(const r of revisions){await sleep(Math.max(0,r.at*1000-(Date.now()-t0)));send(r.text,!!r.pause);}}
+else{const breaks=createBreaks({onRevision:send});for(let i=1;i<=text.length;i++){breaks.feed(text.slice(0,i));await sleep(RATE);}}
+await sleep(6000);await chain;
+if(enter){log.push([now(),'⏎ asked']);await api('/api/agent/drafts/ask',{conversation:conv.id,id,text:revisions?revisions.at(-1).text:text});await sleep(8000);}
+done=true;await watch;
+for(const [t,e] of log)console.log(`${t.padStart(6)} s  ${e}`);
+if(!keepIt)await api('/api/agent/conversations/delete',{conversation:conv.id}).catch(()=>{});
