@@ -1320,7 +1320,18 @@ function showAgentStatus({connected:c,questions,responses}){
 }
 // The agent's work on the focused question (live while it answers, stored for replay): faint text under the question box, or (Pipeline)
 // the ModOS stages lit as the system reaches them. ?present=1 shows only the recorded camera and the pipeline (for recording demos).
-let traceKey='';let traceMode=params.get('present')?'pipeline':(()=>{try{return localStorage.getItem('spatial-take:trace-mode')||'log';}catch{return 'log';}})();
+// The handle between the recorded camera and the 3D scene: drag (or arrow keys) to set how the width is split; remembered.
+{const views=$('views'),handle=$('views-splitter'),KEY='spatial-take:views-split';
+  const set=f=>{f=Math.min(.8,Math.max(.2,f));views.style.setProperty('--split-l',`${f}fr`);views.style.setProperty('--split-r',`${1-f}fr`);handle.setAttribute('aria-valuenow',String(Math.round(f*100)));dispatchEvent(new Event('resize'));return f;};
+  let split=.5;try{split=+localStorage.getItem(KEY)||.5;}catch{}set(split);
+  const save=()=>{try{localStorage.setItem(KEY,String(split));}catch{}};
+  handle.addEventListener('pointerdown',e=>{handle.setPointerCapture(e.pointerId);handle.classList.add('dragging');e.preventDefault();});
+  handle.addEventListener('pointermove',e=>{if(!handle.hasPointerCapture(e.pointerId))return;const r=views.getBoundingClientRect();split=set((e.clientX-r.left)/r.width);});
+  const end=e=>{if(handle.hasPointerCapture?.(e.pointerId))handle.releasePointerCapture(e.pointerId);handle.classList.remove('dragging');save();};
+  handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);
+  handle.addEventListener('keydown',e=>{const d=e.key==='ArrowLeft'?-.02:e.key==='ArrowRight'?.02:0;if(!d)return;e.preventDefault();split=set(split+d);save();});
+  handle.addEventListener('dblclick',()=>{split=set(.5);save();});}
+let traceKey='';let traceMode=params.get('present')?'pipeline':(()=>{try{return localStorage.getItem('spatial-take:trace-mode')||'pipeline';}catch{return 'pipeline';}})();
 if(params.get('present'))document.body.classList.add('present');
 if(params.get('pipeline')==='bottom')document.body.classList.add('pipeline-bottom');   // the Pipeline view's layout (src/pipeline-view.css)
 for(const b of document.querySelectorAll('[data-trace]')){b.setAttribute('aria-pressed',b.dataset.trace===traceMode);

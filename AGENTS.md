@@ -114,14 +114,14 @@ MODs live in `editor/modos/mods/*.json` (12 foundational: 7 built, 5 spec). They
   - Docs: sections numbered x / x.x, English titles, no horizontal rules, no em dashes in prose.
   - The user writes in Chinese and English; replies to the user mix Chinese and English (Chinese sentences, English technical terms).
 - **Generalize, never overfit.** No small feature made for one MOD or one scene (hand dismissal, per-MOD text switches, per-answer-type knobs). A feature that is not used is removed in the code, the data format and the tests, not only hidden in the UI.
-- **Editor UI.** Explanations sit behind a hoverable "?" (`.help[data-tip]`), never as exposed paragraphs. Names say what a control does. Related views are seg controls (Space: Scene | Entities; an entity: Semantics | Knowledge).
+- **Editor UI.** The agent log opens in Pipeline view. A handle between the recorded camera and the 3D scene sets their widths. The side panel is not a floating card: a thin line parts it from the views, and its tabs stick to its top with no frame. Explanations sit behind a hoverable "?" (`.help[data-tip]`), never as exposed paragraphs. Names say what a control does. Related views are seg controls (Space: Scene | Entities; an entity: Semantics | Knowledge).
 - **Editor follows the design.** MOD choices live only in MOD settings (MODs tab); the UI library tab adjusts only shared text and cue parameters; Input holds info selection and hands. No per-mod overrides, no pinned or fallback text.
 - **Object-centric Dialogue has no heading**: the bubble shows only what the thing says.
 - **The main page** (`index.html`):
   - Three sections, **Demo** (ModOS itself, the interactive system), **Gallery** (the recordings) and **Document** (Spatial vocabulary now; Memory, Walkthrough and others are added as entries of `DOCS`), switched by a fixed floating capsule control at the bottom; a Document with several parts gets a second capsule row for them.
   - No page header or explanation. Helvetica light, bold only for what matters most (names, the answer time, the active switch). No horizontal lines. Neutral greys only: no cyan in the page's own UI (cyan is the spatial UI's, seen in the recordings).
-  - Gallery is grouped by MOD, with no built/spec split. A card shows only "Answered in <time>"; the opened player shows only the video.
-  - The vocabulary has four categories as tabs at the top: **Cues** (Mark, Direction, Display), **Controls** (Adjust, Explore, Interactive), **Text** (the text forms) and **Assets** (Ambient Asset, Scene Asset: a MOD's own, not shared). Groups are laid out like a kanban board: one column per group (per MOD in Gallery), side by side, its cards stacked vertically.
+  - Gallery is a masonry (waterfall) of MOD blocks, each a MOD's clips stacked, with no built/spec split. A card is only the frame (no time, no text); the opened player shows only the video.
+  - The vocabulary has four categories as tabs at the top: **Cues** (Mark, Direction, Display), **Controls** (Adjust, Explore, Interactive), **Text** (the text forms) and **Assets** (Ambient Asset, Scene Asset: a MOD's own, not shared). In Document each group is one row of cards that scrolls sideways.
 - **Ask before** committing, pushing, or deleting anything the user made. Show results as screenshots or recordings, and ask the user to choose before large visual changes.
 
 ## What to do next
