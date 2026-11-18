@@ -931,4 +931,6 @@ Kept as is: MODs choose and fill; declarations choose cues by rule; no model wri
 5. **Progressive rendering in the pipeline.** Emit as soon as each piece is known: after stage 1 and 2 the surface and what needs only the referent or the chosen MOD (the referent's mark); after Fill each MOD's cues and data; the text as it streams. Measure time to first cue against today on the reel's clips.
 6. **Docs and reel.** Update §6 (pipeline), §4.4 (cues are data-bound), the code map in `AGENTS.md`; re-record and compare first-cue times.
 
-Open: the transport (today the editor polls; a stream such as SSE fits A2UI's model better), and whether to keep the envelope byte-compatible with A2UI so an A2UI renderer (or an A2UI-style baseline that lets a model build the tree from the same catalog) can read ModOS surfaces.
+Decided: ModOS borrows A2UI's architecture, not its wire format; no compatibility with A2UI is kept.
+
+Open: the transport. Today the editor polls: it asks the server for the conversation again every 120 ms while a question runs (every 1 s otherwise), receives the whole conversation each time, and works out what changed. A stream (Server-Sent Events, or a WebSocket) would let the server push each message the moment the pipeline produces it, so each piece appears without waiting for the next poll, and only the new message travels. Polling is good enough to start; switch if the first-cue times show the wait.
