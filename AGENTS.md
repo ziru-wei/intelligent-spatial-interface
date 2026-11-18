@@ -6,7 +6,7 @@ This folder holds one research project, **ModOS: Exploring On-Demand Spatial Int
 modos/               one git repo (origin github.com/ziru-wei/intelligent-spatial-interface, branch modos)
   AGENTS.md          this guide
   README.md          the short version for people
-  index.html         the project's main page: Demo (ModOS live), Gallery (the recordings), Document (Spatial vocabulary; Memory, Walkthrough… to come)
+  index.html         the project's main page: Demo (ModOS live), Gallery (the recordings), Vocabulary, About (Memory, Decisions, Walkthrough: to be written)
   system/            the prototype
     editor/          the web editor and ModOS pipeline (everything below is under here)
     visionos/        the Vision Pro app (not yet updated to the spatial UI library)
@@ -118,11 +118,11 @@ MODs live in `editor/modos/mods/*.json` (12 foundational: 7 built, 5 spec). They
 - **Editor follows the design.** MOD choices live only in MOD settings (MODs tab); the UI library tab adjusts only shared text and cue parameters; Input holds info selection and hands. No per-mod overrides, no pinned or fallback text.
 - **Object-centric Dialogue has no heading**: the bubble shows only what the thing says.
 - **The main page** (`index.html`):
-  - Three sections, **Demo** (ModOS itself, the interactive system), **Gallery** (the recordings) and **Document** (Spatial vocabulary now; Memory, Walkthrough and others are added as entries of `DOCS`), switched by a fixed floating capsule control at the bottom; a Document with several parts gets a second capsule row for them.
-  - No page header or explanation. Helvetica light, bold only for what matters most (names, the answer time, the active switch). No horizontal lines. Light theme (Gallery, Document and the bottom switch; Demo shows the editor as it is). Neutral greys only: no cyan in the page's own UI (cyan is the spatial UI's, seen in the recordings).
-  - Gallery is a masonry (waterfall) of MOD blocks, with no built/spec split. A MOD block is a Lucide icon and its name, with a thin line down its left joining it to its clips. A clip is its question (light) above the camera view only: the recording's left 3/4, never the pipeline beside it. No time.
+  - Four sections, **Demo** (ModOS itself: the editor filling the whole window, dark, not a framed embed), **Gallery** (the recordings), **Vocabulary** and **About** (Memory, Decisions, Walkthrough: tabs left empty until written; a new one is an entry of `SUBS.about`), switched by a fixed, nearly opaque floating capsule control at the bottom. Vocabulary and About have tabs at their top; the active tab is bold with a thin underline.
+  - No page header or explanation. Helvetica light, bold only for what matters most (names, the answer time, the active switch). No horizontal lines. Light theme for Gallery, Vocabulary, About and the bottom switch; Demo is dark. Neutral greys only: no cyan in the page's own UI (cyan is the spatial UI's, seen in the recordings).
+  - Gallery is a masonry (waterfall) of MOD blocks, with no built/spec split. A MOD block is a Lucide icon and its name, with a thin line down its left joining it to its clips. A clip is its question (light, in quotes) above the camera view only: the recording's left 3/4, never the pipeline beside it. No time.
   - Quiet until looked at: every MOD block is dim, the one under the pointer brighter, and the clip under the pointer fully opaque and playing (muted). Opened, a clip shows only its video.
-  - The vocabulary has four categories as tabs at the top: **Cues** (Mark, Direction, Display), **Controls** (Adjust, Explore, Interactive), **Text** (the text forms) and **Assets** (Ambient Asset, Scene Asset: a MOD's own, not shared). Document is centred: each group is one row of parts side by side (sideways scroll only when they do not fit). Parts are flat: no frame, no card fill, image then name, one short line, the example MOD. Keep the text terse.
+  - The vocabulary has four categories as tabs at the top: **Cues** (Mark, Direction, Display), **Controls** (Adjust, Explore, Interactive), **Text** (the text forms) and **Assets** (Ambient Asset, Scene Asset: a MOD's own, not shared). Vocabulary and About are centred: each group is one row of parts side by side (sideways scroll only when they do not fit). Parts are flat: no frame, no card fill, image then name, one short line, the example MOD. Keep the text terse.
 - **Ask before** committing, pushing, or deleting anything the user made. Show results as screenshots or recordings, and ask the user to choose before large visual changes.
 
 ## What to do next

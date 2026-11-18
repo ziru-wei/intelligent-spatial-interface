@@ -4,7 +4,7 @@ Research project: **ModOS: Exploring On-Demand Spatial Interfaces in Mixed Reali
 
 | Folder | What |
 | --- | --- |
-| `index.html` | The main page: Demo (ModOS live, needs `npm start` in `system/editor`), Gallery (recordings of every MOD), Document (Spatial vocabulary, …) |
+| `index.html` | The main page: Demo (ModOS live, needs `npm start` in `system/editor`), Gallery (recordings of every MOD), Vocabulary, About |
 | `system/` | The prototype: web editor, ModOS pipeline, Vision Pro app |
 | `context/` | Design doc, study plans, paper draft, recordings (videos not tracked) |
 
