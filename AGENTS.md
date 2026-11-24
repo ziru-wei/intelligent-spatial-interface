@@ -3,7 +3,7 @@
 This folder holds one research project, **ModOS: Exploring On-Demand Spatial Interfaces in Mixed Reality** (UIST '27). An AI agent's answer in mixed reality becomes a spatial interface. The interface is composed at runtime from **MODs**: reusable units of knowledge and representation that people add to their environment ahead of time. Read this file first, then the design doc.
 
 ```
-modos/               one git repo (origin github.com/ziru-wei/intelligent-spatial-interface, branch modos)
+modos/               one git repo (origin github.com/ziru-wei/intelligent-spatial-interface, public; branch modos-live-input, see Git)
   AGENTS.md          this guide
   README.md          the short version for people
   index.html         the project's main page: Demo (ModOS live), Gallery (the recordings), Vocabulary, About (Memory, Decisions, Walkthrough: to be written)
@@ -39,6 +39,22 @@ npm start                                  # editor + API on http://127.0.0.1:87
 
   Back these up before experimenting.
 - **Restart the server after editing Python.** `scripts/server.py` keeps `modos_registry.py`, `agent_store.py` and the other modules loaded. A stale registry rejects new MOD declarations, so questions fail with messages like "unknown UI floatingText".
+
+## Git
+
+- **Branch.** `modos-live-input` (Answer while typing and everything since), on origin under the same name; `modos` is the line before it.
+- **Ask before** committing or pushing. Commits are split by who made the change:
+  1. the code and docs;
+  2. the Gallery's outputs (`context/gallery/`: stills, `examples.js`, `examples.json`; `system/editor/demos/gallery-examples.json`);
+  3. the scene data (`system/editor/spaces/`).
+- **Scene data in git** (`system/.gitignore`). In: everything in `spaces/`, including depth maps, conversations, decision records, voice recordings and placement logs. Out:
+  - the 3D models (`*.glb`);
+  - the camera frames of recordings the Gallery does not use (only atlas_rec_1 to atlas_rec_5 keep `frames/`; a recording newly used by the Gallery gets its own `!…/frames/` line);
+  - `.hand-cache/`, logs, and `editor/private/`.
+- **What adds scene data.** Opening the editor or asking questions writes to the space (conversations, `agent/placement-log/`): commit it with the scene data, not with code.
+- **The repo is public.** Whatever is pushed, scene data included, is public. `agent-config.local.json` is never committed.
+- **Push.** Code and Gallery commits go over HTTPS. A large commit (scene data, hundreds of MB) times out over HTTPS (HTTP 408), so push it over SSH:
+  `git push git@github.com:ziru-wei/intelligent-spatial-interface.git modos-live-input`
 
 ## Test
 
