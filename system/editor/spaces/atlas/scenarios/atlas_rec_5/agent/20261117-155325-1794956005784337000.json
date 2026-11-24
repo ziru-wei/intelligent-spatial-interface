@@ -1,0 +1,56 @@
+{
+  "id": "20261117-155325-1794956005784337000",
+  "name": "2026-11-17 15:53:25",
+  "created": 1794956005.7843788,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 74,
+      "text": "Should I bring my umbrella?",
+      "frame": 89,
+      "t": 1.4839859580097254,
+      "status": "failed",
+      "created": 1794956008.845624,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794956008.8624508,
+      "trace": [
+        {
+          "kind": "error",
+          "tool": "pipeline_error",
+          "text": "MOD bookcompanion: slot answer draws unknown UI textArrow.",
+          "at": 29
+        }
+      ],
+      "message": "MOD bookcompanion: slot answer draws unknown UI textArrow.",
+      "finished": 1794956008.910721,
+      "duration": 0.0,
+      "label": "q-1117-37"
+    }
+  ],
+  "responses": []
+}

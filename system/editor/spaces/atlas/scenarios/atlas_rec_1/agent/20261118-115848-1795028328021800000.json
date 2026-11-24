@@ -1,0 +1,1380 @@
+{
+  "id": "20261118-115848-1795028328021800000",
+  "name": "Live replay",
+  "created": 1795028328.0218298,
+  "questions": [
+    {
+      "id": 13,
+      "text": "what's the weather like this weekend? should i bring my umbrella if i wanna go hiking? send the weather to Alice",
+      "frame": 179,
+      "t": 3.0,
+      "status": "answered",
+      "created": 1795028328.698693,
+      "rev": 22,
+      "revisions": [
+        {
+          "rev": 1,
+          "text": "what's",
+          "at": 0.0,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 2,
+          "text": "what's the",
+          "at": 0.445,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 3,
+          "text": "what's the weather",
+          "at": 1.332,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 4,
+          "text": "what's the weather like",
+          "at": 1.893,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 5,
+          "text": "what's the weather like this",
+          "at": 2.444,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 6,
+          "text": "what's the weather like this weekend?",
+          "at": 3.443,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 7,
+          "text": "what's the weather like this weekend? should",
+          "at": 4.222,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 8,
+          "text": "what's the weather like this weekend? should i",
+          "at": 4.443,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 9,
+          "text": "what's the weather like this weekend? should i bring",
+          "at": 5.11,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 10,
+          "text": "what's the weather like this weekend? should i bring my",
+          "at": 5.438,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 11,
+          "text": "what's the weather like this weekend? should i bring my umbrella",
+          "at": 6.439,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 12,
+          "text": "what's the weather like this weekend? should i bring my umbrella if",
+          "at": 6.767,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 13,
+          "text": "what's the weather like this weekend? should i bring my umbrella if i",
+          "at": 6.992,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 14,
+          "text": "what's the weather like this weekend? should i bring my umbrella if i wanna",
+          "at": 7.666,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 15,
+          "text": "what's the weather like this weekend? should i bring my umbrella if i wanna go",
+          "at": 7.994,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 16,
+          "text": "what's the weather like this weekend? should i bring my umbrella if i wanna go hiking?",
+          "at": 8.877,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 17,
+          "text": "what's the weather like this weekend? should i bring my umbrella if i wanna go hiking? send",
+          "at": 9.432,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 18,
+          "text": "what's the weather like this weekend? should i bring my umbrella if i wanna go hiking? send the",
+          "at": 9.896,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 19,
+          "text": "what's the weather like this weekend? should i bring my umbrella if i wanna go hiking? send the weather",
+          "at": 10.76,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 20,
+          "text": "what's the weather like this weekend? should i bring my umbrella if i wanna go hiking? send the weather to",
+          "at": 11.1,
+          "t": 3.0,
+          "frame": 179,
+          "pause": false
+        },
+        {
+          "rev": 21,
+          "text": "what's the weather like this weekend? should i bring my umbrella if i wanna go hiking? send the weather to Alice",
+          "at": 11.927,
+          "t": 3.0,
+          "frame": 179,
+          "pause": true
+        },
+        {
+          "rev": 22,
+          "text": "what's the weather like this weekend? should i bring my umbrella if i wanna go hiking? send the weather to Alice",
+          "at": 17.754,
+          "t": 3.0,
+          "frame": 179,
+          "final": true
+        }
+      ],
+      "location": {
+        "in": "central-hall-2f"
+      },
+      "taken_rev": 22,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Central corridor · 2F\"],\"looking\":null,\"mods\":[\"Agenda\",\"BookCompanion\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"Send\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 20
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 25
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":294,\"answers\":{\"request__about_0\":{\"type\":\"choice\",\"choice\":\"world\",\"confidence\":1,\"probabilities\":{\"here\":0,\"user\":0,\"world\":1,\"other\":0}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.08},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_send__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.98},\"request__about_1\":{\"type\":\"choice\",\"choice\":\"world\",\"confidence\":0.55,\"probabilities\":{\"here\":0,\"user\":0.34,\"world\":0.66,\"other\":0}},\"request__mod_agenda__q1\":{\"type\":\"noul\",\"noul\":0.05},\"request__mod_bookcompanion__q1\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_findmy__q1\":{\"type\":\"noul\",\"noul\":0.58},\"request__mod_iotcontrol__q1\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_livecoach__q1\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q1\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_reminder__q1\":{\"type\":\"noul\",\"noul\":0.11},\"request__mod_send__q1\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_stepguide__q1\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_wayfinding__q1\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_weather__q1\":{\"type\":\"noul\",\"noul\":0.98},\"request__about_2\":{\"type\":\"choice\",\"choice\":\"other\",\"confidence\":0.68,\"probabilities\":{\"here\":0.04,\"user\":0.02,\"world\":0.18,\"other\":0.76}},\"request__mod_agenda__q2\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_bookcompanion__q2\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q2\":{\"type\":\"noul\",\"noul\":0.06},\"request__mod_iotcontrol__q2\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_livecoach__q2\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q2\":{\"type\":\"nou",
+          "at": 313
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":294}",
+          "at": 320
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"what's the weather like this weekend?\",\"about\":\"world\"},{\"text\":\"should i bring my umbrella if i wanna go hiking?\",\"about\":\"world\"},{\"text\":\"send the weather to Alice\",\"about\":\"other\"}]}",
+          "at": 324
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":null,\"score\":null,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"what's the weather like this weekend?\",\"about\":\"outside data\"},{\"text\":\"should i bring my umbrella if i wanna go hiking?\",\"about\":\"outside data\"},{\"text\":\"send the weather to Alice\",\"about\":\"something else\"}]}",
+          "at": 328
+        },
+        {
+          "kind": "tool",
+          "tool": "view_live",
+          "text": "{\"final\":true,\"pause\":false,\"shown\":[\"findmy\",\"send\",\"weather\"]}",
+          "at": 332
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"findmy\",0.58],[\"send\",0.98],[\"weather\",0.98]]",
+          "at": 336
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.05],[\"BookCompanion\",0.02],[\"FindMy\",0.58],[\"IoTControl\",0.03],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.04],[\"Reminder\",0.11],[\"Send\",0.98],[\"StepGuide\",0.05],[\"Wayfinding\",0.02],[\"Weather\",0.98]],\"skipped\":[\"WorldInfo\",\"LabInfo\"],\"chosen\":[\"FindMy\",\"Send\",\"Weather\"]}",
+          "at": 341
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"FindMy\",\"from\":[\"user:me\"],\"items\":[\"belongings\"]},{\"mod\":\"Send\",\"from\":[\"Central corridor · 2F and the things in it\",\"user:me\"],\"items\":[\"contacts\",\"directory:2f\"]},{\"mod\":\"Weather\",\"from\":[\"feed:weather\"],\"items\":[\"weather forecast\"]}]",
+          "at": 347
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"Send\",\"use\":\"action-card\",\"voice\":null}",
+          "at": 352
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"FindMy\",\"parts\":[{\"slot\":\"container\",\"use\":\"highlight\",\"kind\":\"findmy\"}]}",
+          "at": 356
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"Send\",\"parts\":[{\"slot\":\"card\",\"use\":\"action-card\",\"kind\":\"action\"}]}",
+          "at": 360
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"Weather\",\"parts\":[{\"slot\":\"sky\",\"use\":\"ambient-effect\",\"kind\":\"weather\"}]}",
+          "at": 363
+        }
+      ],
+      "started": 1795028346.457864,
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 1.87
+        },
+        "text": {
+          "response": 11,
+          "latency": 13.812,
+          "status": "complete"
+        }
+      },
+      "mod_parts": {
+        "weather": {
+          "response": 8,
+          "latency": 10.57
+        },
+        "findmy": {
+          "response": 5,
+          "latency": 6.87
+        },
+        "action": {
+          "response": 10,
+          "latency": 12.61
+        }
+      },
+      "response": 11,
+      "latency": 0.37,
+      "asked": 1795028346.452205,
+      "message": "Text kept from the pause.",
+      "finished": 1795028346.831109,
+      "duration": 0.4,
+      "label": "q-1118-3"
+    }
+  ],
+  "responses": [
+    {
+      "id": 5,
+      "created": 1795028335.568188,
+      "frame": 179,
+      "t": 3.0,
+      "question": "what's the weather like this weekend? should i bring my umbrella if",
+      "question_id": 13,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "findmy",
+        "variant": "guide",
+        "slot": "container",
+        "settings": {},
+        "ui": {
+          "container": {
+            "use": "highlight",
+            "ui": {
+              "fixed": [
+                "breathingBox"
+              ],
+              "flexible": [
+                {
+                  "cue": "cornerBrackets",
+                  "when": "target.has_content",
+                  "instead_of": "breathingBox"
+                }
+              ]
+            }
+          },
+          "direction": {
+            "use": "guidance",
+            "ui": {
+              "fixed": [],
+              "flexible": [
+                {
+                  "cue": "arrowAhead",
+                  "when": "target.out_of_view & !target.other_room"
+                },
+                {
+                  "cue": "arrowAhead",
+                  "when": "target.other_room & !path.in_view"
+                },
+                {
+                  "cue": "floorPath",
+                  "when": "target.other_room"
+                }
+              ]
+            }
+          }
+        },
+        "facts": {
+          "target.pointed": false,
+          "request.second_person": false,
+          "question.about": "world"
+        }
+      },
+      "findmy": {
+        "version": 1,
+        "mod": "findmy",
+        "status": "found",
+        "item_id": "umbrella",
+        "label": "Umbrella",
+        "target": {
+          "id": "lab-shelf-1",
+          "label": "shelf 1",
+          "center": [
+            3.95,
+            6.69,
+            14.46
+          ],
+          "size": [
+            0.94,
+            2.28,
+            0.53
+          ],
+          "yaw": 90.0
+        },
+        "visual": "box-highlight",
+        "guidance": "when-out-of-view",
+        "occlusion": "hands-only"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "umbrella",
+          "label": "Umbrella",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 6.87,
+      "key": "findmy:findmy"
+    },
+    {
+      "id": 8,
+      "created": 1795028339.272362,
+      "frame": 179,
+      "t": 3.0,
+      "question": "what's the weather like this weekend? should i bring my umbrella if i wanna go hiking? send the",
+      "question_id": 13,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "weather",
+        "variant": "full",
+        "slot": "sky",
+        "settings": {
+          "lock": "lock"
+        },
+        "ui": {
+          "sky": {
+            "use": "ambient-effect",
+            "ui": {
+              "fixed": [
+                "ambient:weather"
+              ],
+              "flexible": []
+            }
+          },
+          "controls": {
+            "use": "data-widget",
+            "ui": {
+              "fixed": [],
+              "flexible": [
+                {
+                  "cue": "datePicker",
+                  "when": "data.days>1"
+                },
+                {
+                  "cue": "playback",
+                  "when": "data.steps_per_day>1"
+                }
+              ]
+            }
+          }
+        },
+        "facts": {
+          "target.pointed": false,
+          "request.second_person": false,
+          "question.about": "world",
+          "data.days": 2,
+          "data.steps_per_day": 9
+        }
+      },
+      "weather": {
+        "version": 2,
+        "mod": "weather",
+        "mock": true,
+        "forecast": [
+          {
+            "id": "2026-11-21-morning",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "morning",
+            "time": "08:00",
+            "label": "Saturday, Nov 21 · morning",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 12.9,
+            "night": false,
+            "intensity": 0.46,
+            "wind_kph": 24,
+            "samples": [
+              {
+                "id": "2026-11-21-morning-08",
+                "date": "2026-11-21",
+                "day_offset": 3,
+                "day_label": "Saturday, Nov 21",
+                "period": "morning",
+                "time": "08:00",
+                "label": "2026-11-21 08:00",
+                "condition": "fog",
+                "summary": "Drifting mist",
+                "temp_c": 11.7,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 24,
+                "parent_id": "2026-11-21-morning",
+                "local_time": "08:00"
+              },
+              {
+                "id": "2026-11-21-morning-10",
+                "date": "2026-11-21",
+                "day_offset": 3,
+                "day_label": "Saturday, Nov 21",
+                "period": "morning",
+                "time": "10:00",
+                "label": "2026-11-21 10:00",
+                "condition": "rain",
+                "summary": "Rain showers",
+                "temp_c": 12.9,
+                "night": false,
+                "intensity": 0.62,
+                "wind_kph": 24,
+                "parent_id": "2026-11-21-morning",
+                "local_time": "10:00"
+              },
+              {
+                "id": "2026-11-21-morning-11",
+                "date": "2026-11-21",
+                "day_offset": 3,
+                "day_label": "Saturday, Nov 21",
+                "period": "morning",
+                "time": "11:00",
+                "label": "2026-11-21 11:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 14.1,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 24,
+                "parent_id": "2026-11-21-morning",
+                "local_time": "11:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-11-21-afternoon",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "afternoon",
+            "time": "14:00",
+            "label": "Saturday, Nov 21 · afternoon",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 20.9,
+            "night": false,
+            "intensity": 0.55,
+            "wind_kph": 4,
+            "samples": [
+              {
+                "id": "2026-11-21-afternoon-12",
+                "date": "2026-11-21",
+                "day_offset": 3,
+                "day_label": "Saturday, Nov 21",
+                "period": "afternoon",
+                "time": "12:00",
+                "label": "2026-11-21 12:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 19.7,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 4,
+                "parent_id": "2026-11-21-afternoon",
+                "local_time": "12:00"
+              },
+              {
+                "id": "2026-11-21-afternoon-15",
+                "date": "2026-11-21",
+                "day_offset": 3,
+                "day_label": "Saturday, Nov 21",
+                "period": "afternoon",
+                "time": "15:00",
+                "label": "2026-11-21 15:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 20.9,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 4,
+                "parent_id": "2026-11-21-afternoon",
+                "local_time": "15:00"
+              },
+              {
+                "id": "2026-11-21-afternoon-17",
+                "date": "2026-11-21",
+                "day_offset": 3,
+                "day_label": "Saturday, Nov 21",
+                "period": "afternoon",
+                "time": "17:00",
+                "label": "2026-11-21 17:00",
+                "condition": "clear",
+                "summary": "Clear skies",
+                "temp_c": 22.1,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 4,
+                "parent_id": "2026-11-21-afternoon",
+                "local_time": "17:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-11-21-evening",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "evening",
+            "time": "21:00",
+            "label": "Saturday, Nov 21 · evening",
+            "condition": "storm",
+            "summary": "Thunder showers",
+            "temp_c": 10.9,
+            "night": true,
+            "intensity": 0.64,
+            "wind_kph": 9,
+            "samples": [
+              {
+                "id": "2026-11-21-evening-18",
+                "date": "2026-11-21",
+                "day_offset": 3,
+                "day_label": "Saturday, Nov 21",
+                "period": "evening",
+                "time": "18:00",
+                "label": "2026-11-21 18:00",
+                "condition": "clear",
+                "summary": "Clear skies",
+                "temp_c": 9.7,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 9,
+                "parent_id": "2026-11-21-evening",
+                "local_time": "18:00"
+              },
+              {
+                "id": "2026-11-21-evening-21",
+                "date": "2026-11-21",
+                "day_offset": 3,
+                "day_label": "Saturday, Nov 21",
+                "period": "evening",
+                "time": "21:00",
+                "label": "2026-11-21 21:00",
+                "condition": "storm",
+                "summary": "Thunder showers",
+                "temp_c": 10.9,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 9,
+                "parent_id": "2026-11-21-evening",
+                "local_time": "21:00"
+              },
+              {
+                "id": "2026-11-21-evening-23",
+                "date": "2026-11-21",
+                "day_offset": 3,
+                "day_label": "Saturday, Nov 21",
+                "period": "evening",
+                "time": "23:00",
+                "label": "2026-11-21 23:00",
+                "condition": "snow",
+                "summary": "Soft snowfall",
+                "temp_c": 12.1,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 9,
+                "parent_id": "2026-11-21-evening",
+                "local_time": "23:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-11-22-morning",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "morning",
+            "time": "08:00",
+            "label": "Sunday, Nov 22 · morning",
+            "condition": "cloudy",
+            "summary": "Overcast skies",
+            "temp_c": 9.0,
+            "night": false,
+            "intensity": 0.73,
+            "wind_kph": 6,
+            "samples": [
+              {
+                "id": "2026-11-22-morning-08",
+                "date": "2026-11-22",
+                "day_offset": 4,
+                "day_label": "Sunday, Nov 22",
+                "period": "morning",
+                "time": "08:00",
+                "label": "2026-11-22 08:00",
+                "condition": "rain",
+                "summary": "Rain showers",
+                "temp_c": 7.8,
+                "night": false,
+                "intensity": 0.62,
+                "wind_kph": 6,
+                "parent_id": "2026-11-22-morning",
+                "local_time": "08:00"
+              },
+              {
+                "id": "2026-11-22-morning-10",
+                "date": "2026-11-22",
+                "day_offset": 4,
+                "day_label": "Sunday, Nov 22",
+                "period": "morning",
+                "time": "10:00",
+                "label": "2026-11-22 10:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 9.0,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 6,
+                "parent_id": "2026-11-22-morning",
+                "local_time": "10:00"
+              },
+              {
+                "id": "2026-11-22-morning-11",
+                "date": "2026-11-22",
+                "day_offset": 4,
+                "day_label": "Sunday, Nov 22",
+                "period": "morning",
+                "time": "11:00",
+                "label": "2026-11-22 11:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 10.2,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 6,
+                "parent_id": "2026-11-22-morning",
+                "local_time": "11:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-11-22-afternoon",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "afternoon",
+            "time": "14:00",
+            "label": "Sunday, Nov 22 · afternoon",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 17.0,
+            "night": false,
+            "intensity": 0.82,
+            "wind_kph": 11,
+            "samples": [
+              {
+                "id": "2026-11-22-afternoon-12",
+                "date": "2026-11-22",
+                "day_offset": 4,
+                "day_label": "Sunday, Nov 22",
+                "period": "afternoon",
+                "time": "12:00",
+                "label": "2026-11-22 12:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 15.8,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 11,
+                "parent_id": "2026-11-22-afternoon",
+                "local_time": "12:00"
+              },
+              {
+                "id": "2026-11-22-afternoon-15",
+                "date": "2026-11-22",
+                "day_offset": 4,
+                "day_label": "Sunday, Nov 22",
+                "period": "afternoon",
+                "time": "15:00",
+                "label": "2026-11-22 15:00",
+                "condition": "clear",
+                "summary": "Clear skies",
+                "temp_c": 17.0,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 11,
+                "parent_id": "2026-11-22-afternoon",
+                "local_time": "15:00"
+              },
+              {
+                "id": "2026-11-22-afternoon-17",
+                "date": "2026-11-22",
+                "day_offset": 4,
+                "day_label": "Sunday, Nov 22",
+                "period": "afternoon",
+                "time": "17:00",
+                "label": "2026-11-22 17:00",
+                "condition": "storm",
+                "summary": "Thunder showers",
+                "temp_c": 18.2,
+                "night": false,
+                "intensity": 0.62,
+                "wind_kph": 11,
+                "parent_id": "2026-11-22-afternoon",
+                "local_time": "17:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-11-22-evening",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "evening",
+            "time": "21:00",
+            "label": "Sunday, Nov 22 · evening",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": 7.0,
+            "night": true,
+            "intensity": 0.28,
+            "wind_kph": 16,
+            "samples": [
+              {
+                "id": "2026-11-22-evening-18",
+                "date": "2026-11-22",
+                "day_offset": 4,
+                "day_label": "Sunday, Nov 22",
+                "period": "evening",
+                "time": "18:00",
+                "label": "2026-11-22 18:00",
+                "condition": "snow",
+                "summary": "Soft snowfall",
+                "temp_c": 5.8,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 16,
+                "parent_id": "2026-11-22-evening",
+                "local_time": "18:00"
+              },
+              {
+                "id": "2026-11-22-evening-21",
+                "date": "2026-11-22",
+                "day_offset": 4,
+                "day_label": "Sunday, Nov 22",
+                "period": "evening",
+                "time": "21:00",
+                "label": "2026-11-22 21:00",
+                "condition": "fog",
+                "summary": "Drifting mist",
+                "temp_c": 7.0,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 16,
+                "parent_id": "2026-11-22-evening",
+                "local_time": "21:00"
+              },
+              {
+                "id": "2026-11-22-evening-23",
+                "date": "2026-11-22",
+                "day_offset": 4,
+                "day_label": "Sunday, Nov 22",
+                "period": "evening",
+                "time": "23:00",
+                "label": "2026-11-22 23:00",
+                "condition": "rain",
+                "summary": "Rain showers",
+                "temp_c": 8.2,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 16,
+                "parent_id": "2026-11-22-evening",
+                "local_time": "23:00"
+              }
+            ]
+          }
+        ],
+        "timeline": [
+          {
+            "id": "2026-11-21-morning-08",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "morning",
+            "time": "08:00",
+            "label": "2026-11-21 08:00",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": 11.7,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 24,
+            "parent_id": "2026-11-21-morning",
+            "local_time": "08:00"
+          },
+          {
+            "id": "2026-11-21-morning-10",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "morning",
+            "time": "10:00",
+            "label": "2026-11-21 10:00",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 12.9,
+            "night": false,
+            "intensity": 0.62,
+            "wind_kph": 24,
+            "parent_id": "2026-11-21-morning",
+            "local_time": "10:00"
+          },
+          {
+            "id": "2026-11-21-morning-11",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "morning",
+            "time": "11:00",
+            "label": "2026-11-21 11:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 14.1,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 24,
+            "parent_id": "2026-11-21-morning",
+            "local_time": "11:00"
+          },
+          {
+            "id": "2026-11-21-afternoon-12",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "afternoon",
+            "time": "12:00",
+            "label": "2026-11-21 12:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 19.7,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 4,
+            "parent_id": "2026-11-21-afternoon",
+            "local_time": "12:00"
+          },
+          {
+            "id": "2026-11-21-afternoon-15",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "afternoon",
+            "time": "15:00",
+            "label": "2026-11-21 15:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 20.9,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 4,
+            "parent_id": "2026-11-21-afternoon",
+            "local_time": "15:00"
+          },
+          {
+            "id": "2026-11-21-afternoon-17",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "afternoon",
+            "time": "17:00",
+            "label": "2026-11-21 17:00",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 22.1,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 4,
+            "parent_id": "2026-11-21-afternoon",
+            "local_time": "17:00"
+          },
+          {
+            "id": "2026-11-21-evening-18",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "evening",
+            "time": "18:00",
+            "label": "2026-11-21 18:00",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 9.7,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 9,
+            "parent_id": "2026-11-21-evening",
+            "local_time": "18:00"
+          },
+          {
+            "id": "2026-11-21-evening-21",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "evening",
+            "time": "21:00",
+            "label": "2026-11-21 21:00",
+            "condition": "storm",
+            "summary": "Thunder showers",
+            "temp_c": 10.9,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 9,
+            "parent_id": "2026-11-21-evening",
+            "local_time": "21:00"
+          },
+          {
+            "id": "2026-11-21-evening-23",
+            "date": "2026-11-21",
+            "day_offset": 3,
+            "day_label": "Saturday, Nov 21",
+            "period": "evening",
+            "time": "23:00",
+            "label": "2026-11-21 23:00",
+            "condition": "snow",
+            "summary": "Soft snowfall",
+            "temp_c": 12.1,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 9,
+            "parent_id": "2026-11-21-evening",
+            "local_time": "23:00"
+          },
+          {
+            "id": "2026-11-22-morning-08",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "morning",
+            "time": "08:00",
+            "label": "2026-11-22 08:00",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 7.8,
+            "night": false,
+            "intensity": 0.62,
+            "wind_kph": 6,
+            "parent_id": "2026-11-22-morning",
+            "local_time": "08:00"
+          },
+          {
+            "id": "2026-11-22-morning-10",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "morning",
+            "time": "10:00",
+            "label": "2026-11-22 10:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 9.0,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 6,
+            "parent_id": "2026-11-22-morning",
+            "local_time": "10:00"
+          },
+          {
+            "id": "2026-11-22-morning-11",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "morning",
+            "time": "11:00",
+            "label": "2026-11-22 11:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 10.2,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 6,
+            "parent_id": "2026-11-22-morning",
+            "local_time": "11:00"
+          },
+          {
+            "id": "2026-11-22-afternoon-12",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "afternoon",
+            "time": "12:00",
+            "label": "2026-11-22 12:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 15.8,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 11,
+            "parent_id": "2026-11-22-afternoon",
+            "local_time": "12:00"
+          },
+          {
+            "id": "2026-11-22-afternoon-15",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "afternoon",
+            "time": "15:00",
+            "label": "2026-11-22 15:00",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 17.0,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 11,
+            "parent_id": "2026-11-22-afternoon",
+            "local_time": "15:00"
+          },
+          {
+            "id": "2026-11-22-afternoon-17",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "afternoon",
+            "time": "17:00",
+            "label": "2026-11-22 17:00",
+            "condition": "storm",
+            "summary": "Thunder showers",
+            "temp_c": 18.2,
+            "night": false,
+            "intensity": 0.62,
+            "wind_kph": 11,
+            "parent_id": "2026-11-22-afternoon",
+            "local_time": "17:00"
+          },
+          {
+            "id": "2026-11-22-evening-18",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "evening",
+            "time": "18:00",
+            "label": "2026-11-22 18:00",
+            "condition": "snow",
+            "summary": "Soft snowfall",
+            "temp_c": 5.8,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 16,
+            "parent_id": "2026-11-22-evening",
+            "local_time": "18:00"
+          },
+          {
+            "id": "2026-11-22-evening-21",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "evening",
+            "time": "21:00",
+            "label": "2026-11-22 21:00",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": 7.0,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 16,
+            "parent_id": "2026-11-22-evening",
+            "local_time": "21:00"
+          },
+          {
+            "id": "2026-11-22-evening-23",
+            "date": "2026-11-22",
+            "day_offset": 4,
+            "day_label": "Sunday, Nov 22",
+            "period": "evening",
+            "time": "23:00",
+            "label": "2026-11-22 23:00",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 8.2,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 16,
+            "parent_id": "2026-11-22-evening",
+            "local_time": "23:00"
+          }
+        ],
+        "preview": {
+          "component": "weather-day-buttons",
+          "autoplay": true,
+          "seconds_per_period": 8,
+          "dates": [
+            "2026-11-21",
+            "2026-11-22"
+          ]
+        },
+        "presentation": {
+          "anchor": "user-view",
+          "background": "composited-scene",
+          "tracking": "recording-timeline",
+          "style": "adaptive"
+        }
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 10.57,
+      "key": "weather:weather"
+    },
+    {
+      "id": 10,
+      "created": 1795028341.310718,
+      "frame": 179,
+      "t": 3.0,
+      "question": "what's the weather like this weekend? should i bring my umbrella if i wanna go hiking? send the weather to Alice",
+      "question_id": 13,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "send",
+        "variant": "confirm",
+        "slot": "card",
+        "settings": {},
+        "ui": {
+          "card": {
+            "use": "action-card",
+            "ui": {
+              "fixed": [
+                "choice",
+                "textInput",
+                "iconButton:send"
+              ],
+              "flexible": [
+                {
+                  "cue": "cornerBrackets",
+                  "when": "attachment.kind=thing|photo & target.has_content"
+                },
+                {
+                  "cue": "breathingBox",
+                  "when": "attachment.kind=thing|photo & !target.has_content"
+                },
+                {
+                  "cue": "arPhoto",
+                  "when": "attachment.kind=photo"
+                }
+              ]
+            }
+          }
+        },
+        "facts": {
+          "target.pointed": false,
+          "request.second_person": false,
+          "question.about": "other",
+          "attachment.kind": "none"
+        }
+      },
+      "action": {
+        "version": 1,
+        "kind": "send",
+        "to": [
+          {
+            "id": "alice",
+            "name": "Alice Chen",
+            "email": "alice.chen@example.edu"
+          }
+        ],
+        "pick": "many",
+        "status": "draft",
+        "capture": "none",
+        "contacts": [
+          {
+            "id": "alice",
+            "name": "Alice Chen"
+          },
+          {
+            "id": "ryo",
+            "name": "Ryo Suzuki"
+          },
+          {
+            "id": "ana",
+            "name": "Ana Ruiz"
+          },
+          {
+            "id": "prl-list",
+            "name": "PRL lab list"
+          }
+        ]
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 12.61,
+      "key": "action:send"
+    },
+    {
+      "id": 11,
+      "created": 1795028342.514507,
+      "frame": 179,
+      "t": 3.0,
+      "question": "what's the weather like this weekend? should i bring my umbrella if i wanna go hiking? send the weather to Alice",
+      "question_id": 13,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 13.812,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 13.812,
+            "created": 1795028342.514507,
+            "title": "Weekend ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 13.929,
+            "created": 1795028342.6316428,
+            "title": "Weekend weather forecast",
+            "body": "This weekend features overcast skies and clear weather, with some drifting mist and soft snowfall in the evenings.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 13.995,
+            "created": 1795028342.6979961,
+            "title": "Weekend weather forecast",
+            "body": "This weekend features overcast skies and clear weather, with some drifting mist and soft snowfall in the evenings.",
+            "anchor": {
+              "object": "shelf 1",
+              "relation": "on"
+            },
+            "referenced_entities": [
+              {
+                "item_id": "umbrella",
+                "label": "Umbrella",
+                "context_groups": [
+                  "storage"
+                ]
+              }
+            ]
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Weekend weather forecast",
+      "body": "This weekend features overcast skies and clear weather, with some drifting mist and soft snowfall in the evenings.",
+      "items": [],
+      "anchor": {
+        "object": "shelf 1",
+        "relation": "on"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "umbrella",
+          "label": "Umbrella",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "reserve_text": true
+    }
+  ],
+  "retired_id": 9
+}

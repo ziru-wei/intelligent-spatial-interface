@@ -1,0 +1,298 @@
+{
+  "id": "20261117-220554-1794978354710278000",
+  "name": "Gallery · labinfo-wall",
+  "created": 1794978354.710297,
+  "questions": [
+    {
+      "id": 33,
+      "text": "what's this lab about, all these posters…",
+      "frame": 59,
+      "t": 0.9837447080062702,
+      "status": "answered",
+      "created": 1794978360.6466188,
+      "live": {
+        "read_s": 5.0
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_0",
+        "key": "vision_sean",
+        "score": 0.75,
+        "cues": {
+          "gaze": 1.0,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794978360.660059,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 27
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"vision_sean\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 41
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 45
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":287,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"labResearchWork\",\"confidence\":0.62,\"probabilities\":{\"labResearchWork\":0.75,\"labResearchLife\":0.1,\"none\":0.15}}},\"usage\":{\"input_tokens\":675,\"output_tokens\":53}}",
+          "at": 312
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":288}",
+          "at": 322
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"labResearchWork\"}}}",
+          "at": 328
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0.75],[\"labResearchLife\",0.1],[\"none\",0.15]],\"chosen\":\"labResearchWork\"}]}",
+          "at": 339
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":300,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.39},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"here\",\"confidence\":0.89,\"probabilities\":{\"referent\":0.08,\"here\":0.91,\"user\":0,\"world\":0,\"other\":0.01}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.07},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.05},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.05},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.93}},\"usage\":{\"input_tokens\":1717,\"output_tokens\":367}}",
+          "at": 364
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":300}",
+          "at": 377
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"what's this lab about, all these posters…\",\"about\":\"here\"}]}",
+          "at": 381
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"vision_sean\",\"score\":0.39,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"what's this lab about, all these posters…\",\"about\":\"Lab · 2F\"}]}",
+          "at": 385
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"labinfo\",0.93]]",
+          "at": 388
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.04],[\"BookCompanion\",0.02],[\"Delegate\",0.03],[\"FindMy\",0.03],[\"IoTControl\",0.03],[\"LiveCoach\",0.02],[\"ObjectStatus\",0.07],[\"Reminder\",0.02],[\"StepGuide\",0.05],[\"Wayfinding\",0.05],[\"Weather\",0.01],[\"LabInfo\",0.93]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"LabInfo\"]}",
+          "at": 391
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"LabInfo\",\"from\":[\"Lab · 2F\"],\"items\":[\"Programmable Reality Lab\",\"PRL research theme\",\"PRL philosophy\",\"directory:2f\"]}]",
+          "at": 395
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"LabInfo\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 399
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"LabInfo\",\"parts\":[{\"slot\":\"diorama\",\"use\":\"scene-asset\",\"kind\":\"animation\"}]}",
+          "at": 402
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Animation ready",
+          "at": 406
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 409
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab Research",
+          "at": 1150
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":908,\"first_text_ms\":778,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1756,\"total_input_tokens\":1675,\"total_output_tokens\":81,\"total_thought_tokens\":0}}",
+          "at": 1276
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1285
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 1,
+          "latency": 0.35
+        },
+        "text": {
+          "response": 2,
+          "latency": 1.152,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 1.3,
+      "message": "Programmable Reality Lab Research",
+      "finished": 1794978361.9640708,
+      "duration": 1.3
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794978361.0136452,
+      "frame": 59,
+      "t": 0.9837447080062702,
+      "question": "what's this lab about, all these posters…",
+      "question_id": 33,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "labinfo",
+        "variant": "diorama",
+        "slot": "diorama",
+        "settings": {},
+        "ui": {
+          "diorama": {
+            "use": "scene-asset",
+            "ui": {
+              "fixed": [
+                "asset:diorama"
+              ],
+              "flexible": [
+                {
+                  "cue": "floorArea",
+                  "when": "question.about=here"
+                }
+              ]
+            }
+          }
+        },
+        "facts": {
+          "target.pointed": false,
+          "request.second_person": false,
+          "question.about": "here"
+        }
+      },
+      "animation": {
+        "id": "labResearchWork",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.35
+    },
+    {
+      "id": 2,
+      "created": 1794978361.81192,
+      "frame": 59,
+      "t": 0.9837447080062702,
+      "question": "what's this lab about, all these posters…",
+      "question_id": 33,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.152,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.152,
+            "created": 1794978361.81192,
+            "title": "Programmable Reality Lab Research",
+            "body": "This lab focuses on making the living environment dynamic and interactive ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.283,
+            "created": 1794978361.942991,
+            "title": "Programmable Reality Lab Research",
+            "body": "This lab focuses on making the living environment dynamic and interactive through AR, VR, robotics, and shape-changing interfaces.",
+            "anchor": {
+              "object": "posters",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab Research",
+      "body": "This lab focuses on making the living environment dynamic and interactive through AR, VR, robotics, and shape-changing interfaces.",
+      "items": [],
+      "anchor": {
+        "object": "posters",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "text_ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      },
+      "text_mod": {
+        "id": "labinfo",
+        "settings": {
+          "duration": "stay"
+        }
+      }
+    }
+  ],
+  "gallery_example": {
+    "name": "labinfo-wall",
+    "mod": "LabInfo"
+  }
+}

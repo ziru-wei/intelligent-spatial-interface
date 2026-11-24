@@ -1,0 +1,172 @@
+{
+  "id": "20261015-163930-1792103970503550000",
+  "name": "Vision Pro",
+  "created": 1792103970.503593,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 6,
+      "text": "What's Sean's vision?",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792103970.552398,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "findmy": true,
+        "default": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_0",
+        "key": "vision_sean",
+        "score": 0.629,
+        "cues": {
+          "gaze": 0.85,
+          "point": 0.875,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          5.981733322143555,
+          6.942187309265137,
+          15.409822463989258
+        ],
+        "quaternion": [
+          -0.05503842607140541,
+          0.9938379526138306,
+          0.0496208593249321,
+          -0.08242911100387573
+        ],
+        "forward": [
+          0.16930446582684983,
+          -0.08955664941262187,
+          0.9814862088001362
+        ]
+      },
+      "started": 1792103970.555416,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:lab-shelf-3_0\",\"key\":\"vision_sean\",\"score\":0.629,\"cues\":{\"gaze\":0.85,\"point\":0.875,\"touch\":0},\"mode\":\"score\"}",
+          "at": 5
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"vision_sean\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 8
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"vision_sean\",\"value\":\"text\"}",
+          "at": 9
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 11
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Sean's Research Philosophy",
+          "at": 1339
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1688,\"first_text_ms\":1325,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":610,\"total_input_tokens\":540,\"total_output_tokens\":70,\"total_thought_tokens\":0}}",
+          "at": 1696
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1704
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.337,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.71,
+      "info": {
+        "key": "vision_sean",
+        "source": "selection",
+        "interaction_id": "v1_ChdJbGJSYXAtU01kdWNfdU1QaGFMcm9BMBIXSWxiUmFwLVNNZHVjX3VNUGhhTHJvQTA"
+      },
+      "message": "Sean's Research Philosophy",
+      "finished": 1792103972.2682428,
+      "duration": 1.7
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792103971.892761,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's Sean's vision?",
+      "question_id": 6,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.337,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.337,
+            "created": 1792103971.892761,
+            "title": "Sean's Research Philosophy",
+            "body": "Sean's vision is that self-efficacy matters in ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.704,
+            "created": 1792103972.259163,
+            "title": "Sean's Research Philosophy",
+            "body": "Sean's vision is that self-efficacy matters in research philosophy.",
+            "anchor": {
+              "object": "vision",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Sean's Research Philosophy",
+      "body": "Sean's vision is that self-efficacy matters in research philosophy.",
+      "items": [],
+      "anchor": {
+        "object": "vision",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "vision_sean",
+        "box_id": "layout:lab-shelf-3_0"
+      }
+    }
+  ]
+}

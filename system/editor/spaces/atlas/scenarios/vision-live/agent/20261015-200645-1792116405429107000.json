@@ -1,0 +1,3213 @@
+{
+  "id": "20261015-200645-1792116405429107000",
+  "name": "Vision Pro",
+  "created": 1792116405.4292219,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 19,
+      "text": "Where am I",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792116445.133682,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "findmy": true,
+        "default": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          14.365514755249023,
+          7.102936744689941,
+          17.60476303100586
+        ],
+        "quaternion": [
+          -0.0702386423945427,
+          0.3420216143131256,
+          -0.00998450443148613,
+          0.9370101690292358
+        ],
+        "forward": [
+          -0.6423580573508876,
+          -0.12479881171744212,
+          -0.7561754969144302
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792116445.146802,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 9
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 25
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 28
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":188,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.11},\"storage\":{\"type\":\"noul\",\"noul\":0.56},\"user_events\":{\"type\":\"noul\",\"noul\":0.25},\"personal\":{\"type\":\"noul\",\"noul\":0.42},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.98,\"probabilities\":{\"standalone\":0.99,\"unresolved\":0.01}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.39}},\"usage\":{\"input_tokens\":1108,\"output_tokens\":120}}",
+          "at": 196
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":0.39,\"follow_up\":null}",
+          "at": 213
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 222
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "storage",
+          "at": 227
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":189,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.97,\"probabilities\":{\"LabDiorama\":0.01,\"RealityDiorama\":0.01,\"none\":0.98}}},\"usage\":{\"input_tokens\":1035,\"output_tokens\":45}}",
+          "at": 231
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":0.98}",
+          "at": 235
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 239
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 242
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":110,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.92,\"probabilities\":{\"none\":0.96,\"findmy\":0.04}}},\"usage\":{\"input_tokens\":2894,\"output_tokens\":32}}",
+          "at": 330
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "You are in the lab",
+          "at": 1095
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":936,\"first_text_ms\":857,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":2228,\"total_input_tokens\":2157,\"total_output_tokens\":71,\"total_thought_tokens\":0}}",
+          "at": 1158
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1170
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.094,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.18,
+      "message": "You are in the lab",
+      "finished": 1792116446.326524,
+      "duration": 1.2
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 20,
+      "text": "OK so can you tell me more about what the slap is working on",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792116465.532109,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "findmy": true,
+        "weather": true,
+        "default": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          14.300163269042969,
+          7.0775251388549805,
+          15.897059440612793
+        ],
+        "quaternion": [
+          -0.05113848298788071,
+          0.7851689457893372,
+          -0.002355129225179553,
+          0.6171621084213257
+        ],
+        "forward": [
+          -0.969393919572226,
+          -0.05942311930267333,
+          0.23821083574848156
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792116465.5447922,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 11
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 15
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":129,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.06},\"storage\":{\"type\":\"noul\",\"noul\":0.3},\"user_events\":{\"type\":\"noul\",\"noul\":0.15},\"personal\":{\"type\":\"noul\",\"noul\":0.31},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"unresolved\",\"confidence\":0.1,\"probabilities\":{\"standalone\":0.45,\"unresolved\":0.55}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.39}},\"usage\":{\"input_tokens\":1198,\"output_tokens\":122}}",
+          "at": 136
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":0.39,\"follow_up\":null}",
+          "at": 152
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"unresolved\"}",
+          "at": 165
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":138,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"RealityDiorama\",\"confidence\":0.89,\"probabilities\":{\"LabDiorama\":0.01,\"RealityDiorama\":0.93,\"none\":0.06}}},\"usage\":{\"input_tokens\":1125,\"output_tokens\":49}}",
+          "at": 169
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"RealityDiorama\",\"probability\":0.93}",
+          "at": 173
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Which item do you mean?",
+          "at": 176
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 179
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 2,
+          "latency": 0.16
+        },
+        "animation": {
+          "response": 3,
+          "latency": 0.16
+        }
+      },
+      "response": 3,
+      "latency": 0.19,
+      "message": "Which item do you mean?",
+      "finished": 1792116465.730506,
+      "duration": 0.2
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 21,
+      "text": "Can you tell me more about what this lap is working on I mean lab",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792116502.352818,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          14.434654235839844,
+          7.076541423797607,
+          15.965109825134277
+        ],
+        "quaternion": [
+          -0.053528793156147,
+          0.8156617879867554,
+          0.020791713148355484,
+          0.5756719708442688
+        ],
+        "forward": [
+          -0.9368813474404307,
+          -0.09554806355001944,
+          0.33633896815700837
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792116502.3642392,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 10
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 14
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":126,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"RealityDiorama\",\"confidence\":0.91,\"probabilities\":{\"LabDiorama\":0,\"RealityDiorama\":0.94,\"none\":0.06}}},\"usage\":{\"input_tokens\":1210,\"output_tokens\":49}}",
+          "at": 133
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"RealityDiorama\",\"probability\":0.94}",
+          "at": 158
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":136,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.04},\"storage\":{\"type\":\"noul\",\"noul\":0.52},\"user_events\":{\"type\":\"noul\",\"noul\":0.17},\"personal\":{\"type\":\"noul\",\"noul\":0.36},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"unresolved\",\"confidence\":0.74,\"probabilities\":{\"standalone\":0.13,\"unresolved\":0.87}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.66}},\"usage\":{\"input_tokens\":1283,\"output_tokens\":122}}",
+          "at": 173
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"Programmable Reality Lab\",\"source\":\"selection\",\"continue\":false,\"selected\":0.66,\"follow_up\":null}",
+          "at": 177
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 180
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"Programmable Reality Lab\",\"value\":\"text\"}",
+          "at": 183
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 187
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab Work",
+          "at": 1427
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1547,\"first_text_ms\":1240,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":830,\"total_input_tokens\":745,\"total_output_tokens\":85,\"total_thought_tokens\":0}}",
+          "at": 1717
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1735
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 4,
+          "latency": 0.17
+        },
+        "text": {
+          "response": 5,
+          "latency": 1.425,
+          "status": "complete"
+        }
+      },
+      "response": 5,
+      "latency": 1.75,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "source": "selection",
+        "interaction_id": "v1_ChdGb2ZSYXBMaExvT1VfdU1QeW9pUXFBMBIXRm9mUmFwTGhMb09VX3VNUHlvaVFxQTA"
+      },
+      "message": "Programmable Reality Lab Work",
+      "finished": 1792116504.114204,
+      "duration": 1.7
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 22,
+      "text": "What's the weather this weekend",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792116530.790497,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "findmy": true,
+        "default": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          14.111334800720215,
+          7.060654163360596,
+          16.42481231689453
+        ],
+        "quaternion": [
+          -0.0939057320356369,
+          0.7472943663597107,
+          0.036223359405994415,
+          0.6568262577056885
+        ],
+        "forward": [
+          -0.9748819619575653,
+          -0.17749852592960647,
+          0.1345343130042207
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792116530.803233,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 6
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 10
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 13
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":122,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.98},\"storage\":{\"type\":\"noul\",\"noul\":0.03},\"user_events\":{\"type\":\"noul\",\"noul\":0.11},\"personal\":{\"type\":\"noul\",\"noul\":0.07},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":1,\"probabilities\":{\"standalone\":1,\"unresolved\":0}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.06},\"info_followup\":{\"type\":\"noul\",\"noul\":0.04}},\"usage\":{\"input_tokens\":1471,\"output_tokens\":140}}",
+          "at": 127
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":0.06,\"follow_up\":0.04}",
+          "at": 145
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 162
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "weather",
+          "at": 166
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":123,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"LabDiorama\":0,\"RealityDiorama\":0,\"none\":1}}},\"usage\":{\"input_tokens\":1311,\"output_tokens\":45}}",
+          "at": 170
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":1}",
+          "at": 173
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 176
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 179
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":139,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"weather\",\"confidence\":0.66,\"probabilities\":{\"none\":0.17,\"weather\":0.83}}},\"usage\":{\"input_tokens\":10539,\"output_tokens\":31}}",
+          "at": 299
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec",
+          "text": "Started",
+          "at": 317
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec",
+          "text": "{\"elapsed_ms\":286,\"answers\":{\"date_0\":{\"type\":\"noul\",\"noul\":0.05},\"date_1\":{\"type\":\"noul\",\"noul\":0.05},\"date_2\":{\"type\":\"noul\",\"noul\":0.06},\"date_3\":{\"type\":\"noul\",\"noul\":0.07},\"date_4\":{\"type\":\"noul\",\"noul\":0.06},\"date_5\":{\"type\":\"noul\",\"noul\":0.06},\"date_6\":{\"type\":\"noul\",\"noul\":0.09},\"date_7\":{\"type\":\"noul\",\"noul\":0.12},\"date_8\":{\"type\":\"noul\",\"noul\":0.2},\"date_9\":{\"type\":\"noul\",\"noul\":0.47},\"date_10\":{\"type\":\"noul\",\"noul\":0.6},\"date_11\":{\"type\":\"noul\",\"noul\":0.12},\"date_12\":{\"type\":\"noul\",\"n",
+          "at": 587
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "Mod UI ready",
+          "at": 623
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "This Weekend's Weather Forecast",
+          "at": 1243
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1175,\"first_text_ms\":1065,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":21817,\"total_input_tokens\":21735,\"total_output_tokens\":82,\"total_thought_tokens\":0}}",
+          "at": 1335
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1362
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 6,
+          "latency": 0.61
+        },
+        "text": {
+          "response": 7,
+          "latency": 1.24,
+          "status": "complete"
+        }
+      },
+      "response": 7,
+      "latency": 1.38,
+      "message": "This Weekend's Weather Forecast",
+      "finished": 1792116532.181037,
+      "duration": 1.4
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 23,
+      "text": "What should I read today",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792116566.218702,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          14.489538192749023,
+          7.066740036010742,
+          17.219078063964844
+        ],
+        "quaternion": [
+          -0.1332015097141266,
+          -0.43164247274398804,
+          -0.09906164556741714,
+          0.8866391777992249
+        ],
+        "forward": [
+          0.7390319327852164,
+          -0.32172178140271424,
+          -0.591884267066666
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792116566.233481,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 13
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 16
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":132,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.98,\"probabilities\":{\"LabDiorama\":0,\"RealityDiorama\":0.01,\"none\":0.99}}},\"usage\":{\"input_tokens\":1324,\"output_tokens\":45}}",
+          "at": 139
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":0.99}",
+          "at": 157
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":183,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.15},\"storage\":{\"type\":\"noul\",\"noul\":0.16},\"user_events\":{\"type\":\"noul\",\"noul\":0.34},\"personal\":{\"type\":\"noul\",\"noul\":0.94},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.98,\"probabilities\":{\"standalone\":0.99,\"unresolved\":0.01}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.09}},\"usage\":{\"input_tokens\":1397,\"output_tokens\":120}}",
+          "at": 189
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":0.09,\"follow_up\":null}",
+          "at": 195
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 201
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "personal",
+          "at": 205
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 209
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 212
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":101,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"none\":1}}},\"usage\":{\"input_tokens\":2213,\"output_tokens\":24}}",
+          "at": 299
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "To the Lighthouse",
+          "at": 1212
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1160,\"first_text_ms\":996,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1875,\"total_input_tokens\":1789,\"total_output_tokens\":86,\"total_thought_tokens\":0}}",
+          "at": 1359
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1376
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 8,
+          "latency": 1.209,
+          "status": "complete"
+        }
+      },
+      "response": 8,
+      "latency": 1.38,
+      "message": "To the Lighthouse",
+      "finished": 1792116567.617089,
+      "duration": 1.4
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 24,
+      "text": "OK but where is it",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792116576.9764638,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "findmy": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          14.514839172363281,
+          7.071894645690918,
+          17.258249282836914
+        ],
+        "quaternion": [
+          -0.08233602344989777,
+          -0.5683969855308533,
+          -0.10746495425701141,
+          0.811539888381958
+        ],
+        "forward": [
+          0.9048571784012052,
+          -0.25580344666048127,
+          -0.3402912921637937
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792116576.991709,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 6
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 11
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 15
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":126,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.08},\"storage\":{\"type\":\"noul\",\"noul\":0.81},\"user_events\":{\"type\":\"noul\",\"noul\":0.1},\"personal\":{\"type\":\"noul\",\"noul\":0.7},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"ref_0\",\"confidence\":0.94,\"probabilities\":{\"standalone\":0,\"unresolved\":0.04,\"ref_0\":0.96}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.23}},\"usage\":{\"input_tokens\":1553,\"output_tokens\":130}}",
+          "at": 131
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":0.23,\"follow_up\":null}",
+          "at": 149
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"resolved\",\"referent\":{\"item_id\":\"to-the-lighthouse\",\"label\":\"To the Lighthouse\",\"context_groups\":[\"personal\",\"storage\"],\"question_id\":23}}",
+          "at": 161
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "storage, personal",
+          "at": 167
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":127,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.95,\"probabilities\":{\"LabDiorama\":0.02,\"RealityDiorama\":0.01,\"none\":0.97}}},\"usage\":{\"input_tokens\":1420,\"output_tokens\":45}}",
+          "at": 171
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":0.97}",
+          "at": 176
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 183
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 187
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":140,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"findmy\",\"confidence\":0.86,\"probabilities\":{\"none\":0.07,\"findmy\":0.93}}},\"usage\":{\"input_tokens\":3847,\"output_tokens\":33}}",
+          "at": 297
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec_findmy",
+          "text": "Started",
+          "at": 305
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec_findmy",
+          "text": "{\"elapsed_ms\":101,\"answers\":{\"target\":{\"type\":\"choice\",\"choice\":\"item_0\",\"confidence\":1,\"probabilities\":{\"not_found\":0,\"ambiguous\":0,\"item_0\":1}}},\"usage\":{\"input_tokens\":1252,\"output_tokens\":45}}",
+          "at": 398
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "Mod UI ready",
+          "at": 425
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Book Location",
+          "at": 976
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":892,\"first_text_ms\":795,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":2895,\"total_input_tokens\":2813,\"total_output_tokens\":82,\"total_thought_tokens\":0}}",
+          "at": 1049
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1060
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 9,
+          "latency": 0.41
+        },
+        "text": {
+          "response": 10,
+          "latency": 0.97,
+          "status": "complete"
+        }
+      },
+      "response": 10,
+      "latency": 1.07,
+      "message": "Book Location",
+      "finished": 1792116578.061249,
+      "duration": 1.1
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 25,
+      "text": "What's the life look like in the slab this lab",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792116656.222663,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          11.034408569335938,
+          7.021024703979492,
+          15.817398071289062
+        ],
+        "quaternion": [
+          0.08121778815984726,
+          0.8622913956642151,
+          0.21923305094242096,
+          -0.44921502470970154
+        ],
+        "forward": [
+          0.7390972542423697,
+          -0.45105404837591445,
+          0.5002855603002354
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792116656.235956,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 4
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 10
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 15
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":115,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.16},\"storage\":{\"type\":\"noul\",\"noul\":0.81},\"user_events\":{\"type\":\"noul\",\"noul\":0.19},\"personal\":{\"type\":\"noul\",\"noul\":0.55},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.67,\"probabilities\":{\"standalone\":0.78,\"unresolved\":0.04,\"ref_0\":0.18}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.61}},\"usage\":{\"input_tokens\":1572,\"output_tokens\":129}}",
+          "at": 119
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"Programmable Reality Lab\",\"source\":\"selection\",\"continue\":false,\"selected\":0.61,\"follow_up\":null}",
+          "at": 133
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"Programmable Reality Lab\",\"value\":\"text\"}",
+          "at": 141
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 146
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":152,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"LabDiorama\",\"confidence\":0.94,\"probabilities\":{\"LabDiorama\":0.96,\"RealityDiorama\":0.01,\"none\":0.03}}},\"usage\":{\"input_tokens\":1439,\"output_tokens\":48}}",
+          "at": 156
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"LabDiorama\",\"probability\":0.96}",
+          "at": 174
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 181
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab",
+          "at": 1476
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1811,\"first_text_ms\":1321,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":974,\"total_input_tokens\":889,\"total_output_tokens\":85,\"total_thought_tokens\":0}}",
+          "at": 1947
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1974
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 11,
+          "latency": 0.18
+        },
+        "text": {
+          "response": 12,
+          "latency": 1.472,
+          "status": "complete"
+        }
+      },
+      "response": 12,
+      "latency": 1.99,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "source": "selection",
+        "interaction_id": "v1_ChdzSWZSYW82S0pveV9fdU1QaWR1LW9BcxIXc0lmUmFvNktKb3lfX3VNUGlkdS1vQXM"
+      },
+      "message": "Programmable Reality Lab",
+      "finished": 1792116658.22719,
+      "duration": 2.0
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 26,
+      "text": "Can you tell me more about the student in this lab's life look like",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792116782.832211,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "findmy": true,
+        "weather": true,
+        "default": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_1",
+        "key": "lab philosophy",
+        "score": 0.652,
+        "cues": {
+          "gaze": 0.933,
+          "point": 0.107,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          7.090092658996582,
+          7.0544962882995605,
+          15.706542015075684
+        ],
+        "quaternion": [
+          -0.03458815813064575,
+          0.9955090284347534,
+          0.04152153432369232,
+          0.0777256041765213
+        ],
+        "forward": [
+          -0.15188077460651606,
+          -0.08804689556351342,
+          0.9844691327559545
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792116782.846269,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:lab-shelf-3_1\",\"key\":\"lab philosophy\",\"score\":0.652,\"cues\":{\"gaze\":0.933,\"point\":0.107,\"touch\":0},\"mode\":\"score\"}",
+          "at": 5
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"lab philosophy\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 13
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 18
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"lab philosophy\",\"value\":\"text\"}",
+          "at": 22
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 27
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":117,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"LabDiorama\",\"confidence\":0.91,\"probabilities\":{\"LabDiorama\":0.9400000000000001,\"RealityDiorama\":0,\"none\":0.06}}},\"usage\":{\"input_tokens\":1454,\"output_tokens\":48}}",
+          "at": 122
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"LabDiorama\",\"probability\":0.9400000000000001}",
+          "at": 141
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 147
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab Students",
+          "at": 1330
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1665,\"first_text_ms\":1299,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":941,\"total_input_tokens\":854,\"total_output_tokens\":87,\"total_thought_tokens\":0}}",
+          "at": 1674
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1701
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 13,
+          "latency": 0.13
+        },
+        "text": {
+          "response": 14,
+          "latency": 1.325,
+          "status": "complete"
+        }
+      },
+      "response": 14,
+      "latency": 1.72,
+      "info": {
+        "key": "lab philosophy",
+        "source": "selection",
+        "interaction_id": "v1_ChdMNGpSYXZfdUEtalNqTWNQeWNXNndBWRIXTDRqUmF2X3VBLWpTak1jUHljVzZ3QVk"
+      },
+      "message": "Programmable Reality Lab Students",
+      "finished": 1792116784.567817,
+      "duration": 1.7
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 27,
+      "text": "Can you tell me more about this lab work",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792117093.9508538,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "findmy": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          2.5317091941833496,
+          7.067152500152588,
+          14.543089866638184
+        ],
+        "quaternion": [
+          0.059880707412958145,
+          0.9362542629241943,
+          0.015013879165053368,
+          -0.345856636762619
+        ],
+        "forward": [
+          0.6458214176484213,
+          -0.06953389688824418,
+          0.7603154879280054
+        ]
+      },
+      "location": {
+        "in": "lab-hall-2f",
+        "facing": {
+          "zone": "lab-2f",
+          "via": "pointing"
+        }
+      },
+      "started": 1792117093.964858,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 15
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 20
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":158,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.04},\"storage\":{\"type\":\"noul\",\"noul\":0.3},\"user_events\":{\"type\":\"noul\",\"noul\":0.15},\"personal\":{\"type\":\"noul\",\"noul\":0.27},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.79,\"probabilities\":{\"standalone\":0.86,\"unresolved\":0.11,\"ref_0\":0.03}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.67},\"info_followup\":{\"type\":\"noul\",\"noul\":0.2}},\"usage\":{\"input_tokens\":1642,\"output_tokens\":149}}",
+          "at": 165
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"Programmable Reality Lab\",\"source\":\"selection\",\"continue\":false,\"selected\":0.67,\"follow_up\":0.2}",
+          "at": 192
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"Programmable Reality Lab\",\"value\":\"text\"}",
+          "at": 207
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 214
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":181,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"RealityDiorama\",\"confidence\":0.22,\"probabilities\":{\"LabDiorama\":0.2,\"RealityDiorama\":0.48,\"none\":0.32}}},\"usage\":{\"input_tokens\":1506,\"output_tokens\":49}}",
+          "at": 220
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"facing\",\"id\":\"RealityDiorama\",\"probability\":0.48}",
+          "at": 226
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 231
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab",
+          "at": 1599
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1764,\"first_text_ms\":1396,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":974,\"total_input_tokens\":891,\"total_output_tokens\":83,\"total_thought_tokens\":0}}",
+          "at": 1944
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1978
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 15,
+          "latency": 0.2
+        },
+        "text": {
+          "response": 16,
+          "latency": 1.596,
+          "status": "complete"
+        }
+      },
+      "response": 16,
+      "latency": 2.0,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "source": "selection",
+        "interaction_id": "v1_Chdab25SYXZleUdPUGRqTWNQcGZ1N3dBURIXWm9uUmF2ZXlHT1Bkak1jUHBmdTd3QVE"
+      },
+      "message": "Programmable Reality Lab",
+      "finished": 1792117095.964092,
+      "duration": 2.0
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 28,
+      "text": "Can I eat this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792117333.404331,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "findmy": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "comp:v1",
+        "key": "candy",
+        "score": 0.642,
+        "cues": {
+          "gaze": 0.856,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          0.4019451141357422,
+          7.041979789733887,
+          9.581649780273438
+        ],
+        "quaternion": [
+          -0.19257454574108124,
+          -0.40932974219322205,
+          -0.07553965598344803,
+          0.8886270523071289
+        ],
+        "forward": [
+          0.6983889345806997,
+          -0.4040951576807017,
+          -0.5907284129772932
+        ]
+      },
+      "location": {
+        "in": "kitchen-2f"
+      },
+      "started": 1792117333.416567,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"comp:v1\",\"key\":\"candy\",\"score\":0.642,\"cues\":{\"gaze\":0.856,\"point\":0,\"touch\":0},\"mode\":\"score\"}",
+          "at": 5
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"candy\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 12
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"candy\",\"value\":\"text\"}",
+          "at": 20
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 26
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Grad Tea ",
+          "at": 1300
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1590,\"first_text_ms\":1265,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":844,\"total_input_tokens\":763,\"total_output_tokens\":81,\"total_thought_tokens\":0}}",
+          "at": 1606
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1637
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 17,
+          "latency": 1.296,
+          "status": "complete"
+        }
+      },
+      "response": 17,
+      "latency": 1.66,
+      "info": {
+        "key": "candy",
+        "source": "selection",
+        "interaction_id": "v1_ChdWWXJSYXZxdkotdTJzT0lQcHRqUC1BSRIXVllyUmF2cXZKLXUyc09JUHB0alAtQUk"
+      },
+      "message": "Grad Tea Leftover Candy",
+      "finished": 1792117335.075329,
+      "duration": 1.7
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 29,
+      "text": "What's this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792117352.007811,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "findmy": true,
+        "default": true
+      },
+      "selection": {
+        "box_id": "layout:kitchen-upper-fridge_0",
+        "key": "music-brain user study",
+        "score": 0.735,
+        "cues": {
+          "gaze": 0.981,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          -0.04733850806951523,
+          7.096258640289307,
+          7.440008640289307
+        ],
+        "quaternion": [
+          0.14559784531593323,
+          -0.010970504954457283,
+          -0.015664229169487953,
+          0.9891589879989624
+        ],
+        "forward": [
+          0.02626450318840201,
+          0.2876951456476527,
+          -0.9573618309208036
+        ]
+      },
+      "location": {
+        "in": "kitchen-2f"
+      },
+      "started": 1792117352.020244,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:kitchen-upper-fridge_0\",\"key\":\"music-brain user study\",\"score\":0.735,\"cues\":{\"gaze\":0.981,\"point\":0,\"touch\":0},\"mode\":\"score\"}",
+          "at": 4
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"music-brain user study\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 12
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"music-brain user study\",\"value\":\"text\"}",
+          "at": 16
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 20
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Music Brain User Study",
+          "at": 1467
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1859,\"first_text_ms\":1442,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":848,\"total_input_tokens\":767,\"total_output_tokens\":81,\"total_thought_tokens\":0}}",
+          "at": 1869
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1894
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 18,
+          "latency": 1.462,
+          "status": "complete"
+        }
+      },
+      "response": 18,
+      "latency": 1.91,
+      "info": {
+        "key": "music-brain user study",
+        "source": "selection",
+        "interaction_id": "v1_ChdhSXJSYXF6TERiUExfdU1Qa0tUb21RMBIXYUlyUmFxekxEYlBMX3VNUGtLVG9tUTA"
+      },
+      "message": "Music Brain User Study",
+      "finished": 1792117353.92744,
+      "duration": 1.9
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 30,
+      "text": "What's this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792117362.7692149,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "layout:kitchen-upper-fridge_0",
+        "key": "music-brain user study",
+        "score": 0.781,
+        "cues": {
+          "gaze": 0.961,
+          "point": 0.253,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          -0.020084381103515625,
+          7.089394569396973,
+          8.259382247924805
+        ],
+        "quaternion": [
+          0.0447445809841156,
+          0.04532400518655777,
+          0.009005526080727577,
+          0.9979291558265686
+        ],
+        "forward": [
+          -0.09126618945104858,
+          0.08848751083700288,
+          -0.9918873140528096
+        ]
+      },
+      "location": {
+        "in": "kitchen-2f"
+      },
+      "started": 1792117362.7847009,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:kitchen-upper-fridge_0\",\"key\":\"music-brain user study\",\"score\":0.781,\"cues\":{\"gaze\":0.961,\"point\":0.253,\"touch\":0},\"mode\":\"score\"}",
+          "at": 5
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"music-brain user study\",\"source\":\"selection\",\"continue\":true,\"selected\":null,\"follow_up\":null}",
+          "at": 11
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 15
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Music Brain User Study",
+          "at": 1305
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1634,\"first_text_ms\":1271,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":810,\"total_input_tokens\":729,\"total_output_tokens\":81,\"total_thought_tokens\":0},\"continued\":true}",
+          "at": 1639
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1673
+        },
+        {
+          "kind": "tool",
+          "tool": "info_reuse",
+          "text": "Continued interaction v1_ChdhSXJSYXF6TERiUExfdU1Qa0tUb21RMBIXYUlyUmFxekxEYlBMX3VNUGtLVG9tUTA",
+          "at": 1686
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 19,
+          "latency": 1.299,
+          "status": "complete"
+        }
+      },
+      "response": 19,
+      "latency": 1.7,
+      "info": {
+        "key": "music-brain user study",
+        "source": "selection",
+        "interaction_id": "v1_ChdhSXJSYXF6TERiUExfdU1Qa0tUb21RMBIXYzRyUmFybWVBcnlkX3VNUDN1X19nQUU"
+      },
+      "message": "Music Brain User Study",
+      "finished": 1792117364.4849868,
+      "duration": 1.7
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 31,
+      "text": "What's Sean's vision?",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792117399.726069,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "findmy": true,
+        "default": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          8.265069007873535,
+          6.7021918296813965,
+          14.58057975769043
+        ],
+        "quaternion": [
+          -0.2535078227519989,
+          -0.07695756107568741,
+          0.016161063686013222,
+          0.9641318321228027
+        ],
+        "forward": [
+          0.1565883808480052,
+          -0.486342491123366,
+          -0.8596226351936459
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792117399.7448199,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 4
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 8
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 13
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":138,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.04},\"storage\":{\"type\":\"noul\",\"noul\":0.13},\"user_events\":{\"type\":\"noul\",\"noul\":0.11},\"personal\":{\"type\":\"noul\",\"noul\":0.24},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.94,\"probabilities\":{\"standalone\":0.97,\"unresolved\":0.03}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.11},\"info_followup\":{\"type\":\"noul\",\"noul\":0.06}},\"usage\":{\"input_tokens\":1459,\"output_tokens\":140}}",
+          "at": 142
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":0.11,\"follow_up\":0.06}",
+          "at": 158
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 173
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "No groups needed",
+          "at": 177
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":149,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"RealityDiorama\",\"confidence\":0.88,\"probabilities\":{\"LabDiorama\":0,\"RealityDiorama\":0.92,\"none\":0.08}}},\"usage\":{\"input_tokens\":1300,\"output_tokens\":49}}",
+          "at": 182
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"RealityDiorama\",\"probability\":0.92}",
+          "at": 188
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 193
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 197
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 202
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":94,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"none\":1}}},\"usage\":{\"input_tokens\":1769,\"output_tokens\":24}}",
+          "at": 259
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Sean's Lab Vision",
+          "at": 1017
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":961,\"first_text_ms\":819,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1535,\"total_input_tokens\":1462,\"total_output_tokens\":73,\"total_thought_tokens\":0}}",
+          "at": 1127
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1160
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 20,
+          "latency": 0.17
+        },
+        "text": {
+          "response": 21,
+          "latency": 1.005,
+          "status": "complete"
+        }
+      },
+      "response": 21,
+      "latency": 1.17,
+      "message": "Sean's Lab Vision",
+      "finished": 1792117400.916424,
+      "duration": 1.2
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792116446.2408051,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Where am I",
+      "question_id": 19,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.094,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.094,
+            "created": 1792116446.2408051,
+            "title": "You are in the lab",
+            "body": "You are in the Programmable Reality Lab on the second floor.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.167,
+            "created": 1792116446.313971,
+            "title": "You are in the lab",
+            "body": "You are in the Programmable Reality Lab on the second floor.",
+            "anchor": {
+              "object": "white desk",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "You are in the lab",
+      "body": "You are in the Programmable Reality Lab on the second floor.",
+      "items": [],
+      "anchor": {
+        "object": "white desk",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    },
+    {
+      "id": 2,
+      "created": 1792116465.703778,
+      "frame": 0,
+      "t": 0.0,
+      "question": "OK so can you tell me more about what the slap is working on",
+      "question_id": 20,
+      "title": "Which item do you mean?",
+      "body": "Please name the item you mean.",
+      "items": [],
+      "anchor": {
+        "object": "user-view",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 0.16
+    },
+    {
+      "id": 3,
+      "created": 1792116465.708029,
+      "frame": 0,
+      "t": 0.0,
+      "question": "OK so can you tell me more about what the slap is working on",
+      "question_id": 20,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "RealityDiorama",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.16
+    },
+    {
+      "id": 4,
+      "created": 1792116502.530884,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about what this lap is working on I mean lab",
+      "question_id": 21,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "RealityDiorama",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.17
+    },
+    {
+      "id": 5,
+      "created": 1792116503.7897012,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about what this lap is working on I mean lab",
+      "question_id": 21,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.425,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.425,
+            "created": 1792116503.7897012,
+            "title": "Programmable Reality Lab Work",
+            "body": "Led by Prof. Ryo Suzuki, the Programmable Reality Lab at the ATLAS ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.533,
+            "created": 1792116503.897297,
+            "title": "Programmable Reality Lab Work",
+            "body": "Led by Prof. Ryo Suzuki, the Programmable Reality Lab at the ATLAS Institute of CU Boulder focuses on reality programming with five students.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.727,
+            "created": 1792116504.091582,
+            "title": "Programmable Reality Lab Work",
+            "body": "Led by Prof. Ryo Suzuki, the Programmable Reality Lab at the ATLAS Institute of CU Boulder focuses on reality programming with five students.",
+            "anchor": {
+              "object": "lab",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab Work",
+      "body": "Led by Prof. Ryo Suzuki, the Programmable Reality Lab at the ATLAS Institute of CU Boulder focuses on reality programming with five students.",
+      "items": [],
+      "anchor": {
+        "object": "lab",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "box_id": "zone:lab-2f"
+      }
+    },
+    {
+      "id": 6,
+      "created": 1792116531.416224,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's the weather this weekend",
+      "question_id": 22,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "weather": {
+        "version": 2,
+        "mod": "weather",
+        "mock": true,
+        "forecast": [
+          {
+            "id": "2026-10-17-morning",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "morning",
+            "time": "08:00",
+            "label": "Oct 17 · morning",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 9.0,
+            "night": false,
+            "intensity": 0.28,
+            "wind_kph": 3,
+            "samples": [
+              {
+                "id": "2026-10-17-morning-08",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "morning",
+                "time": "08:00",
+                "label": "2026-10-17 08:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 7.8,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 3,
+                "parent_id": "2026-10-17-morning",
+                "local_time": "08:00"
+              },
+              {
+                "id": "2026-10-17-morning-10",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "morning",
+                "time": "10:00",
+                "label": "2026-10-17 10:00",
+                "condition": "clear",
+                "summary": "Clear skies",
+                "temp_c": 9.0,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 3,
+                "parent_id": "2026-10-17-morning",
+                "local_time": "10:00"
+              },
+              {
+                "id": "2026-10-17-morning-11",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "morning",
+                "time": "11:00",
+                "label": "2026-10-17 11:00",
+                "condition": "storm",
+                "summary": "Thunder showers",
+                "temp_c": 10.2,
+                "night": false,
+                "intensity": 0.62,
+                "wind_kph": 3,
+                "parent_id": "2026-10-17-morning",
+                "local_time": "11:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-10-17-afternoon",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "afternoon",
+            "time": "14:00",
+            "label": "Oct 17 · afternoon",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 17.0,
+            "night": false,
+            "intensity": 0.37,
+            "wind_kph": 8,
+            "samples": [
+              {
+                "id": "2026-10-17-afternoon-12",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "afternoon",
+                "time": "12:00",
+                "label": "2026-10-17 12:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 15.8,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 8,
+                "parent_id": "2026-10-17-afternoon",
+                "local_time": "12:00"
+              },
+              {
+                "id": "2026-10-17-afternoon-15",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "afternoon",
+                "time": "15:00",
+                "label": "2026-10-17 15:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 17.0,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 8,
+                "parent_id": "2026-10-17-afternoon",
+                "local_time": "15:00"
+              },
+              {
+                "id": "2026-10-17-afternoon-17",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "afternoon",
+                "time": "17:00",
+                "label": "2026-10-17 17:00",
+                "condition": "clear",
+                "summary": "Clear skies",
+                "temp_c": 18.2,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 8,
+                "parent_id": "2026-10-17-afternoon",
+                "local_time": "17:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-10-17-evening",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "evening",
+            "time": "21:00",
+            "label": "Oct 17 · evening",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 7.0,
+            "night": true,
+            "intensity": 0.46,
+            "wind_kph": 13,
+            "samples": [
+              {
+                "id": "2026-10-17-evening-18",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "evening",
+                "time": "18:00",
+                "label": "2026-10-17 18:00",
+                "condition": "fog",
+                "summary": "Drifting mist",
+                "temp_c": 5.8,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 13,
+                "parent_id": "2026-10-17-evening",
+                "local_time": "18:00"
+              },
+              {
+                "id": "2026-10-17-evening-21",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "evening",
+                "time": "21:00",
+                "label": "2026-10-17 21:00",
+                "condition": "rain",
+                "summary": "Rain showers",
+                "temp_c": 7.0,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 13,
+                "parent_id": "2026-10-17-evening",
+                "local_time": "21:00"
+              },
+              {
+                "id": "2026-10-17-evening-23",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "evening",
+                "time": "23:00",
+                "label": "2026-10-17 23:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 8.2,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 13,
+                "parent_id": "2026-10-17-evening",
+                "local_time": "23:00"
+              }
+            ]
+          }
+        ],
+        "timeline": [
+          {
+            "id": "2026-10-17-morning-08",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "morning",
+            "time": "08:00",
+            "label": "2026-10-17 08:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 7.8,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 3,
+            "parent_id": "2026-10-17-morning",
+            "local_time": "08:00"
+          },
+          {
+            "id": "2026-10-17-morning-10",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "morning",
+            "time": "10:00",
+            "label": "2026-10-17 10:00",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 9.0,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 3,
+            "parent_id": "2026-10-17-morning",
+            "local_time": "10:00"
+          },
+          {
+            "id": "2026-10-17-morning-11",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "morning",
+            "time": "11:00",
+            "label": "2026-10-17 11:00",
+            "condition": "storm",
+            "summary": "Thunder showers",
+            "temp_c": 10.2,
+            "night": false,
+            "intensity": 0.62,
+            "wind_kph": 3,
+            "parent_id": "2026-10-17-morning",
+            "local_time": "11:00"
+          },
+          {
+            "id": "2026-10-17-afternoon-12",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "afternoon",
+            "time": "12:00",
+            "label": "2026-10-17 12:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 15.8,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 8,
+            "parent_id": "2026-10-17-afternoon",
+            "local_time": "12:00"
+          },
+          {
+            "id": "2026-10-17-afternoon-15",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "afternoon",
+            "time": "15:00",
+            "label": "2026-10-17 15:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 17.0,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 8,
+            "parent_id": "2026-10-17-afternoon",
+            "local_time": "15:00"
+          },
+          {
+            "id": "2026-10-17-afternoon-17",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "afternoon",
+            "time": "17:00",
+            "label": "2026-10-17 17:00",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 18.2,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 8,
+            "parent_id": "2026-10-17-afternoon",
+            "local_time": "17:00"
+          },
+          {
+            "id": "2026-10-17-evening-18",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "evening",
+            "time": "18:00",
+            "label": "2026-10-17 18:00",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": 5.8,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 13,
+            "parent_id": "2026-10-17-evening",
+            "local_time": "18:00"
+          },
+          {
+            "id": "2026-10-17-evening-21",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "evening",
+            "time": "21:00",
+            "label": "2026-10-17 21:00",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 7.0,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 13,
+            "parent_id": "2026-10-17-evening",
+            "local_time": "21:00"
+          },
+          {
+            "id": "2026-10-17-evening-23",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "evening",
+            "time": "23:00",
+            "label": "2026-10-17 23:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 8.2,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 13,
+            "parent_id": "2026-10-17-evening",
+            "local_time": "23:00"
+          }
+        ],
+        "preview": {
+          "component": "weather-timeline",
+          "autoplay": true,
+          "seconds_per_period": 8,
+          "dates": [
+            "2026-10-17"
+          ]
+        },
+        "presentation": {
+          "anchor": "user-view",
+          "background": "composited-scene",
+          "tracking": "recording-timeline",
+          "style": "adaptive"
+        }
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.61
+    },
+    {
+      "id": 7,
+      "created": 1792116532.043584,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's the weather this weekend",
+      "question_id": 22,
+      "part": "text",
+      "layout_slot": 1,
+      "latency": 1.24,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.24,
+            "created": 1792116532.043584,
+            "title": "This Weekend's Weather Forecast",
+            "body": "Expect soft snowfall on Saturday morning, clear skies in the afternoon, ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.354,
+            "created": 1792116532.1568902,
+            "title": "This Weekend's Weather Forecast",
+            "body": "Expect soft snowfall on Saturday morning, clear skies in the afternoon, rain showers at night, and clear skies on Sunday.",
+            "anchor": {
+              "object": "desk",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "This Weekend's Weather Forecast",
+      "body": "Expect soft snowfall on Saturday morning, clear skies in the afternoon, rain showers at night, and clear skies on Sunday.",
+      "items": [],
+      "anchor": {
+        "object": "desk",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    },
+    {
+      "id": 8,
+      "created": 1792116567.4420722,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What should I read today",
+      "question_id": 23,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.209,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.209,
+            "created": 1792116567.4420722,
+            "title": "To the Lighthouse",
+            "body": "You should read To the Lighthouse by Virginia Woolf. You are currently on page ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.344,
+            "created": 1792116567.5770571,
+            "title": "To the Lighthouse",
+            "body": "You should read To the Lighthouse by Virginia Woolf. You are currently on page 68.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.376,
+            "created": 1792116567.609301,
+            "title": "To the Lighthouse",
+            "body": "You should read To the Lighthouse by Virginia Woolf. You are currently on page 68.",
+            "anchor": {
+              "object": "sofa",
+              "relation": "on"
+            },
+            "referenced_entities": [
+              {
+                "item_id": "to-the-lighthouse",
+                "label": "To the Lighthouse",
+                "context_groups": [
+                  "personal",
+                  "storage"
+                ]
+              }
+            ]
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "To the Lighthouse",
+      "body": "You should read To the Lighthouse by Virginia Woolf. You are currently on page 68.",
+      "items": [],
+      "anchor": {
+        "object": "sofa",
+        "relation": "on"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "to-the-lighthouse",
+          "label": "To the Lighthouse",
+          "context_groups": [
+            "personal",
+            "storage"
+          ]
+        }
+      ],
+      "reserve_text": true
+    },
+    {
+      "id": 9,
+      "created": 1792116577.405003,
+      "frame": 0,
+      "t": 0.0,
+      "question": "OK but where is it",
+      "question_id": 24,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "findmy": {
+        "version": 1,
+        "mod": "findmy",
+        "status": "found",
+        "item_id": "to-the-lighthouse",
+        "label": "To the Lighthouse by Virginia Woolf",
+        "target": {
+          "id": "lab-sofa",
+          "label": "sofa",
+          "center": [
+            15.615,
+            6.122,
+            17.435
+          ],
+          "size": [
+            1.67,
+            1.04,
+            2.57
+          ],
+          "yaw": 0.0
+        },
+        "visual": "box-highlight",
+        "guidance": "when-out-of-view",
+        "occlusion": "hands-only"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "to-the-lighthouse",
+          "label": "To the Lighthouse",
+          "context_groups": [
+            "personal",
+            "storage"
+          ]
+        }
+      ],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.41
+    },
+    {
+      "id": 10,
+      "created": 1792116577.962156,
+      "frame": 0,
+      "t": 0.0,
+      "question": "OK but where is it",
+      "question_id": 24,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 0.97,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 0.97,
+            "created": 1792116577.962156,
+            "title": "Book Location",
+            "body": "Your current book, To the Lighthouse, is on the sofa in the lab.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.061,
+            "created": 1792116578.052814,
+            "title": "Book Location",
+            "body": "Your current book, To the Lighthouse, is on the sofa in the lab.",
+            "anchor": {
+              "object": "sofa",
+              "relation": "on"
+            },
+            "referenced_entities": [
+              {
+                "item_id": "to-the-lighthouse",
+                "label": "To the Lighthouse",
+                "context_groups": [
+                  "personal",
+                  "storage"
+                ]
+              }
+            ]
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Book Location",
+      "body": "Your current book, To the Lighthouse, is on the sofa in the lab.",
+      "items": [],
+      "anchor": {
+        "object": "sofa",
+        "relation": "on"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "to-the-lighthouse",
+          "label": "To the Lighthouse",
+          "context_groups": [
+            "personal",
+            "storage"
+          ]
+        }
+      ],
+      "reserve_text": true
+    },
+    {
+      "id": 11,
+      "created": 1792116656.414588,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's the life look like in the slab this lab",
+      "question_id": 25,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "LabDiorama",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.18
+    },
+    {
+      "id": 12,
+      "created": 1792116657.707476,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's the life look like in the slab this lab",
+      "question_id": 25,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.472,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.472,
+            "created": 1792116657.707476,
+            "title": "Programmable Reality Lab",
+            "body": "The Programmable Reality Lab belongs to the ATLAS Institute at the University of Colorado Boulder, ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.573,
+            "created": 1792116657.809282,
+            "title": "Programmable Reality Lab",
+            "body": "The Programmable Reality Lab belongs to the ATLAS Institute at the University of Colorado Boulder, led by Prof. Ryo Suzuki.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.972,
+            "created": 1792116658.207649,
+            "title": "Programmable Reality Lab",
+            "body": "The Programmable Reality Lab belongs to the ATLAS Institute at the University of Colorado Boulder, led by Prof. Ryo Suzuki.",
+            "anchor": {
+              "object": "Programmable Reality Lab",
+              "relation": "in-front"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab",
+      "body": "The Programmable Reality Lab belongs to the ATLAS Institute at the University of Colorado Boulder, led by Prof. Ryo Suzuki.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "box_id": "zone:lab-2f"
+      }
+    },
+    {
+      "id": 13,
+      "created": 1792116782.9801579,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about the student in this lab's life look like",
+      "question_id": 26,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "LabDiorama",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.13
+    },
+    {
+      "id": 14,
+      "created": 1792116784.1712809,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about the student in this lab's life look like",
+      "question_id": 26,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.325,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.325,
+            "created": 1792116784.1712809,
+            "title": "Programmable Reality Lab Students",
+            "body": "The lab's five students are Hye-Young Jo, Keiichi ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.7,
+            "created": 1792116784.545988,
+            "title": "Programmable Reality Lab Students",
+            "body": "The lab's five students are Hye-Young Jo, Keiichi Ihara, Ada Yi Zhao, Sean Xiaoan Liu, and Ziru Wei.",
+            "anchor": {
+              "object": "lab",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab Students",
+      "body": "The lab's five students are Hye-Young Jo, Keiichi Ihara, Ada Yi Zhao, Sean Xiaoan Liu, and Ziru Wei.",
+      "items": [],
+      "anchor": {
+        "object": "lab",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "lab philosophy",
+        "box_id": "layout:lab-shelf-3_1"
+      }
+    },
+    {
+      "id": 15,
+      "created": 1792117094.164872,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about this lab work",
+      "question_id": 27,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "RealityDiorama",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.2
+    },
+    {
+      "id": 16,
+      "created": 1792117095.5603871,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about this lab work",
+      "question_id": 27,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.596,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.596,
+            "created": 1792117095.5603871,
+            "title": "Programmable Reality Lab",
+            "body": "The Programmable Reality Lab (PRL) belongs to the ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.978,
+            "created": 1792117095.9428391,
+            "title": "Programmable Reality Lab",
+            "body": "The Programmable Reality Lab (PRL) belongs to the ATLAS Institute at CU Boulder and is led by Prof. Ryo Suzuki.",
+            "anchor": {
+              "object": "lab",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab",
+      "body": "The Programmable Reality Lab (PRL) belongs to the ATLAS Institute at CU Boulder and is led by Prof. Ryo Suzuki.",
+      "items": [],
+      "anchor": {
+        "object": "lab",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "box_id": "zone:lab-2f"
+      }
+    },
+    {
+      "id": 17,
+      "created": 1792117334.7124102,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can I eat this",
+      "question_id": 28,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.296,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.296,
+            "created": 1792117334.7124102,
+            "title": "Grad Tea ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.41,
+            "created": 1792117334.8265421,
+            "title": "Grad Tea Leftover Candy",
+            "body": "Yes, you can eat these candies. They are this week's grad tea leftovers and people are told to help themselves.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.624,
+            "created": 1792117335.040808,
+            "title": "Grad Tea Leftover Candy",
+            "body": "Yes, you can eat these candies. They are this week's grad tea leftovers and people are told to help themselves.",
+            "anchor": {
+              "object": "candy",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Grad Tea Leftover Candy",
+      "body": "Yes, you can eat these candies. They are this week's grad tea leftovers and people are told to help themselves.",
+      "items": [],
+      "anchor": {
+        "object": "candy",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "candy",
+        "box_id": "comp:v1"
+      }
+    },
+    {
+      "id": 18,
+      "created": 1792117353.4820101,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's this",
+      "question_id": 29,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.462,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.462,
+            "created": 1792117353.4820101,
+            "title": "Music Brain User Study",
+            "body": "This is a user study where you can scan and sign up ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.891,
+            "created": 1792117353.911477,
+            "title": "Music Brain User Study",
+            "body": "This is a user study where you can scan and sign up in the brain music lab after reading eligibility requirements.",
+            "anchor": {
+              "object": "music-brain user study",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Music Brain User Study",
+      "body": "This is a user study where you can scan and sign up in the brain music lab after reading eligibility requirements.",
+      "items": [],
+      "anchor": {
+        "object": "music-brain user study",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "music-brain user study",
+        "box_id": "layout:kitchen-upper-fridge_0"
+      }
+    },
+    {
+      "id": 19,
+      "created": 1792117364.0833862,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's this",
+      "question_id": 30,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.299,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.299,
+            "created": 1792117364.0833862,
+            "title": "Music Brain User Study",
+            "body": "This is a user study where you can scan and sign up in the brain music lab ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.399,
+            "created": 1792117364.183427,
+            "title": "Music Brain User Study",
+            "body": "This is a user study where you can scan and sign up in the brain music lab after reading eligibility requirements.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.657,
+            "created": 1792117364.4418051,
+            "title": "Music Brain User Study",
+            "body": "This is a user study where you can scan and sign up in the brain music lab after reading eligibility requirements.",
+            "anchor": {
+              "object": "music-brain user study",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Music Brain User Study",
+      "body": "This is a user study where you can scan and sign up in the brain music lab after reading eligibility requirements.",
+      "items": [],
+      "anchor": {
+        "object": "music-brain user study",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "music-brain user study",
+        "box_id": "layout:kitchen-upper-fridge_0"
+      }
+    },
+    {
+      "id": 20,
+      "created": 1792117399.9163451,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's Sean's vision?",
+      "question_id": 31,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "RealityDiorama",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.17
+    },
+    {
+      "id": 21,
+      "created": 1792117400.749981,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's Sean's vision?",
+      "question_id": 31,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.005,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.005,
+            "created": 1792117400.749981,
+            "title": "Sean's Lab Vision",
+            "body": "Sean's vision is interactive spatial computing and programmable reality.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.157,
+            "created": 1792117400.902293,
+            "title": "Sean's Lab Vision",
+            "body": "Sean's vision is interactive spatial computing and programmable reality.",
+            "anchor": {
+              "object": "Programmable Reality Lab",
+              "relation": "in-front"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Sean's Lab Vision",
+      "body": "Sean's vision is interactive spatial computing and programmable reality.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

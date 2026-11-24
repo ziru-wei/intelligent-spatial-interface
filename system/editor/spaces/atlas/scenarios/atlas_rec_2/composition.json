@@ -1,0 +1,49 @@
+{
+ "version": 2,
+ "revision": 1,
+ "components": [
+  {
+   "id": "c1",
+   "component": "candy",
+   "position": [
+    1.047,
+    6.294,
+    8.97
+   ],
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "yaw": 0,
+   "scale": [
+    0.086,
+    0.1119,
+    0.1445
+   ],
+   "initial": {
+    "position": [
+     1.047,
+     6.294,
+     8.97
+    ],
+    "rotation": [
+     0,
+     0,
+     0
+    ],
+    "scale": [
+     0.086,
+     0.1119,
+     0.1445
+    ]
+   },
+   "name": "candy",
+   "visible": true,
+   "mount": "floor",
+   "params": {},
+   "scope": "recording",
+   "category": "opportunistic"
+  }
+ ]
+}

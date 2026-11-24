@@ -1,0 +1,598 @@
+{
+  "id": "20261012-164741-1791845261591278000",
+  "name": "Vision Pro",
+  "created": 1791845261.5913012,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": false,
+      "ego_mod": false,
+      "id": 1,
+      "text": "What’s the weather today",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1791845396.810561,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true
+      },
+      "pose": {
+        "position": [
+          8.496628761291504,
+          6.699437618255615,
+          15.100268363952637
+        ],
+        "quaternion": [
+          -0.05511816591024399,
+          0.6868712902069092,
+          0.018025124445557594,
+          0.7244616746902466
+        ],
+        "forward": [
+          -0.9932368268004095,
+          -0.10462387853050092,
+          -0.050339636952373534
+        ]
+      },
+      "started": 1791845396.8149629,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 15
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":298,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.99},\"storage\":{\"type\":\"noul\",\"noul\":0.02},\"user_events\":{\"type\":\"noul\",\"noul\":0.03},\"personal\":{\"type\":\"noul\",\"noul\":0.04},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":1,\"probabilities\":{\"standalone\":1,\"unresolved\":0}}},\"usage\":{\"input_tokens\":1017,\"output_tokens\":102}}",
+          "at": 310
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 319
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "weather",
+          "at": 331
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 333
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 334
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":252,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"weather\",\"confidence\":0.4,\"probabilities\":{\"none\":0.3,\"weather\":0.7}}},\"usage\":{\"input_tokens\":9851,\"output_tokens\":31}}",
+          "at": 579
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec",
+          "text": "Started",
+          "at": 590
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec",
+          "text": "{\"elapsed_ms\":478,\"answers\":{\"date_0\":{\"type\":\"noul\",\"noul\":0.03},\"date_1\":{\"type\":\"noul\",\"noul\":0.02},\"date_2\":{\"type\":\"noul\",\"noul\":0.02},\"date_3\":{\"type\":\"noul\",\"noul\":0.02},\"date_4\":{\"type\":\"noul\",\"noul\":0.03},\"date_5\":{\"type\":\"noul\",\"noul\":0.95},\"date_6\":{\"type\":\"noul\",\"noul\":0.03},\"date_7\":{\"type\":\"noul\",\"noul\":0.02},\"date_8\":{\"type\":\"noul\",\"noul\":0.02},\"date_9\":{\"type\":\"noul\",\"noul\":0.02},\"date_10\":{\"type\":\"noul\",\"noul\":0.02},\"date_11\":{\"type\":\"noul\",\"noul\":0.02},\"date_12\":{\"type\":\"noul\",",
+          "at": 1058
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "Mod UI ready",
+          "at": 1075
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Today's Weather Forecast",
+          "at": 1807
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1638,\"first_text_ms\":1470,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":21341,\"total_input_tokens\":21214,\"total_output_tokens\":127,\"total_thought_tokens\":0}}",
+          "at": 1966
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1977
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 1.07
+        },
+        "text": {
+          "response": 2,
+          "latency": 1.806,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 1.99,
+      "message": "Today's Weather Forecast",
+      "finished": 1791845398.800555,
+      "duration": 2.0
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1791845397.879978,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What’s the weather today",
+      "question_id": 1,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "weather": {
+        "version": 2,
+        "mod": "weather",
+        "mock": true,
+        "forecast": [
+          {
+            "id": "2026-10-12-morning",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "morning",
+            "time": "08:00",
+            "label": "Oct 12 · morning",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 10.3,
+            "night": false,
+            "intensity": 0.37,
+            "wind_kph": 13,
+            "samples": [
+              {
+                "id": "2026-10-12-morning-08",
+                "date": "2026-10-12",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "morning",
+                "time": "08:00",
+                "label": "2026-10-12 08:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 9.1,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 13,
+                "parent_id": "2026-10-12-morning",
+                "local_time": "08:00"
+              },
+              {
+                "id": "2026-10-12-morning-10",
+                "date": "2026-10-12",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "morning",
+                "time": "10:00",
+                "label": "2026-10-12 10:00",
+                "condition": "clear",
+                "summary": "Clear skies",
+                "temp_c": 10.3,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 13,
+                "parent_id": "2026-10-12-morning",
+                "local_time": "10:00"
+              },
+              {
+                "id": "2026-10-12-morning-11",
+                "date": "2026-10-12",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "morning",
+                "time": "11:00",
+                "label": "2026-10-12 11:00",
+                "condition": "storm",
+                "summary": "Thunder showers",
+                "temp_c": 11.5,
+                "night": false,
+                "intensity": 0.62,
+                "wind_kph": 13,
+                "parent_id": "2026-10-12-morning",
+                "local_time": "11:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-10-12-afternoon",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "afternoon",
+            "time": "14:00",
+            "label": "Oct 12 · afternoon",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 18.3,
+            "night": false,
+            "intensity": 0.46,
+            "wind_kph": 18,
+            "samples": [
+              {
+                "id": "2026-10-12-afternoon-12",
+                "date": "2026-10-12",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "afternoon",
+                "time": "12:00",
+                "label": "2026-10-12 12:00",
+                "condition": "fog",
+                "summary": "Drifting mist",
+                "temp_c": 17.1,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 18,
+                "parent_id": "2026-10-12-afternoon",
+                "local_time": "12:00"
+              },
+              {
+                "id": "2026-10-12-afternoon-15",
+                "date": "2026-10-12",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "afternoon",
+                "time": "15:00",
+                "label": "2026-10-12 15:00",
+                "condition": "rain",
+                "summary": "Rain showers",
+                "temp_c": 18.3,
+                "night": false,
+                "intensity": 0.62,
+                "wind_kph": 18,
+                "parent_id": "2026-10-12-afternoon",
+                "local_time": "15:00"
+              },
+              {
+                "id": "2026-10-12-afternoon-17",
+                "date": "2026-10-12",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "afternoon",
+                "time": "17:00",
+                "label": "2026-10-12 17:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 19.5,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 18,
+                "parent_id": "2026-10-12-afternoon",
+                "local_time": "17:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-10-12-evening",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "21:00",
+            "label": "Oct 12 · evening",
+            "condition": "snow",
+            "summary": "Soft snowfall",
+            "temp_c": -1.7,
+            "night": true,
+            "intensity": 0.55,
+            "wind_kph": 23,
+            "samples": [
+              {
+                "id": "2026-10-12-evening-18",
+                "date": "2026-10-12",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "evening",
+                "time": "18:00",
+                "label": "2026-10-12 18:00",
+                "condition": "storm",
+                "summary": "Thunder showers",
+                "temp_c": -2.9,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 23,
+                "parent_id": "2026-10-12-evening",
+                "local_time": "18:00"
+              },
+              {
+                "id": "2026-10-12-evening-21",
+                "date": "2026-10-12",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "evening",
+                "time": "21:00",
+                "label": "2026-10-12 21:00",
+                "condition": "snow",
+                "summary": "Soft snowfall",
+                "temp_c": -1.7,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 23,
+                "parent_id": "2026-10-12-evening",
+                "local_time": "21:00"
+              },
+              {
+                "id": "2026-10-12-evening-23",
+                "date": "2026-10-12",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "evening",
+                "time": "23:00",
+                "label": "2026-10-12 23:00",
+                "condition": "fog",
+                "summary": "Drifting mist",
+                "temp_c": -0.5,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 23,
+                "parent_id": "2026-10-12-evening",
+                "local_time": "23:00"
+              }
+            ]
+          }
+        ],
+        "timeline": [
+          {
+            "id": "2026-10-12-morning-08",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "morning",
+            "time": "08:00",
+            "label": "2026-10-12 08:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 9.1,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 13,
+            "parent_id": "2026-10-12-morning",
+            "local_time": "08:00"
+          },
+          {
+            "id": "2026-10-12-morning-10",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "morning",
+            "time": "10:00",
+            "label": "2026-10-12 10:00",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 10.3,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 13,
+            "parent_id": "2026-10-12-morning",
+            "local_time": "10:00"
+          },
+          {
+            "id": "2026-10-12-morning-11",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "morning",
+            "time": "11:00",
+            "label": "2026-10-12 11:00",
+            "condition": "storm",
+            "summary": "Thunder showers",
+            "temp_c": 11.5,
+            "night": false,
+            "intensity": 0.62,
+            "wind_kph": 13,
+            "parent_id": "2026-10-12-morning",
+            "local_time": "11:00"
+          },
+          {
+            "id": "2026-10-12-afternoon-12",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "afternoon",
+            "time": "12:00",
+            "label": "2026-10-12 12:00",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": 17.1,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 18,
+            "parent_id": "2026-10-12-afternoon",
+            "local_time": "12:00"
+          },
+          {
+            "id": "2026-10-12-afternoon-15",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "afternoon",
+            "time": "15:00",
+            "label": "2026-10-12 15:00",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 18.3,
+            "night": false,
+            "intensity": 0.62,
+            "wind_kph": 18,
+            "parent_id": "2026-10-12-afternoon",
+            "local_time": "15:00"
+          },
+          {
+            "id": "2026-10-12-afternoon-17",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "afternoon",
+            "time": "17:00",
+            "label": "2026-10-12 17:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 19.5,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 18,
+            "parent_id": "2026-10-12-afternoon",
+            "local_time": "17:00"
+          },
+          {
+            "id": "2026-10-12-evening-18",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "18:00",
+            "label": "2026-10-12 18:00",
+            "condition": "storm",
+            "summary": "Thunder showers",
+            "temp_c": -2.9,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 23,
+            "parent_id": "2026-10-12-evening",
+            "local_time": "18:00"
+          },
+          {
+            "id": "2026-10-12-evening-21",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "21:00",
+            "label": "2026-10-12 21:00",
+            "condition": "snow",
+            "summary": "Soft snowfall",
+            "temp_c": -1.7,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 23,
+            "parent_id": "2026-10-12-evening",
+            "local_time": "21:00"
+          },
+          {
+            "id": "2026-10-12-evening-23",
+            "date": "2026-10-12",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "23:00",
+            "label": "2026-10-12 23:00",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": -0.5,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 23,
+            "parent_id": "2026-10-12-evening",
+            "local_time": "23:00"
+          }
+        ],
+        "preview": {
+          "component": "weather-timeline",
+          "autoplay": true,
+          "seconds_per_period": 8,
+          "dates": [
+            "2026-10-12"
+          ]
+        },
+        "presentation": {
+          "anchor": "user-view",
+          "background": "composited-scene",
+          "tracking": "recording-timeline",
+          "style": "adaptive"
+        }
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 1.07
+    },
+    {
+      "id": 2,
+      "created": 1791845398.620588,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What’s the weather today",
+      "question_id": 1,
+      "part": "text",
+      "layout_slot": 1,
+      "latency": 1.806,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.806,
+            "created": 1791845398.620588,
+            "title": "Today's Weather Forecast",
+            "body": "Today starts with clear skies, becomes rainy in the afternoon, and ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.91,
+            "created": 1791845398.725067,
+            "title": "Today's Weather Forecast",
+            "body": "Today starts with clear skies, becomes rainy in the afternoon, and brings soft snowfall by evening.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.974,
+            "created": 1791845398.788789,
+            "title": "Today's Weather Forecast",
+            "body": "Today starts with clear skies, becomes rainy in the afternoon, and brings soft snowfall by evening.",
+            "anchor": {
+              "object": "desk",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Today's Weather Forecast",
+      "body": "Today starts with clear skies, becomes rainy in the afternoon, and brings soft snowfall by evening.",
+      "items": [],
+      "anchor": {
+        "object": "desk",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

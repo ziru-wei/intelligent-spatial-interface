@@ -1,0 +1,15 @@
+{
+ "overrides": {
+  "weather": {
+   "settings": {
+    "sky": {
+     "lock": "lock"
+    },
+    "answer": {
+     "duration": "stay"
+    }
+   }
+  }
+ },
+ "forks": []
+}

@@ -1,0 +1,46 @@
+{
+  "id": "20261117-151259-1794953579116291000",
+  "name": "2026-11-17 15:12:59",
+  "created": 1794953579.1163352,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 64,
+      "text": "Will it rain this weekend?",
+      "frame": 89,
+      "t": 1.4839859580097254,
+      "status": "failed",
+      "created": 1794953582.429769,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794953582.459109,
+      "message": "Interrupted: the agent stopped before answering.",
+      "label": "q-1117-27"
+    }
+  ],
+  "responses": []
+}

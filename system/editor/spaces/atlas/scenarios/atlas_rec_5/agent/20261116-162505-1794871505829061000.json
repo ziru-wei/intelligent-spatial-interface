@@ -1,0 +1,233 @@
+{
+  "id": "20261116-162505-1794871505829061000",
+  "name": "2026-11-16 16:25:05",
+  "created": 1794871505.829087,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 33,
+      "text": "How do I make an espresso with this?",
+      "frame": 2818,
+      "t": 46.98711283299781,
+      "status": "answered",
+      "created": 1794871508.890558,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794871508.8982,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 26
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 31
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 34
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":133,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.98,\"probabilities\":{\"labResearchWork\":0,\"labResearchLife\":0.01,\"none\":0.99}}},\"usage\":{\"input_tokens\":674,\"output_tokens\":48}}",
+          "at": 158
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":133}",
+          "at": 162
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 166
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0],[\"labResearchLife\",0.01],[\"none\",0.99]],\"chosen\":\"none\"}]}",
+          "at": 170
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":174,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.05},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"here\",\"confidence\":0.22,\"probabilities\":{\"referent\":0.24,\"here\":0.38,\"user\":0.01,\"world\":0,\"other\":0.37}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.06},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.43},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.15},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.9},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.06}},\"usage\":{\"input_tokens\":1680,\"output_tokens\":367}}",
+          "at": 200
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":175}",
+          "at": 211
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"How do I make an espresso with this?\",\"about\":\"here\"}]}",
+          "at": 219
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.05,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"How do I make an espresso with this?\",\"about\":\"Lab · 2F\"}]}",
+          "at": 223
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"stepguide\",0.9]]",
+          "at": 230
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.01],[\"BookCompanion\",0.02],[\"Delegate\",0.02],[\"FindMy\",0.06],[\"IoTControl\",0.43],[\"LiveCoach\",0.02],[\"ObjectStatus\",0.15],[\"Reminder\",0.02],[\"StepGuide\",0.9],[\"Wayfinding\",0.03],[\"Weather\",0.01],[\"LabInfo\",0.06]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"StepGuide\"]}",
+          "at": 234
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"StepGuide\",\"from\":[\"Lab · 2F and the things in it\"],\"items\":[\"steps:espresso\"]}]",
+          "at": 238
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"StepGuide\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 241
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 244
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Making ",
+          "at": 1030
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":962,\"first_text_ms\":807,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":722,\"total_input_tokens\":631,\"total_output_tokens\":91,\"total_thought_tokens\":0}}",
+          "at": 1179
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1188
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.03,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.2,
+      "message": "Making an espresso",
+      "finished": 1794871510.0947,
+      "duration": 1.2,
+      "label": "q-1116-33"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794871509.92842,
+      "frame": 2818,
+      "t": 46.98711283299781,
+      "question": "How do I make an espresso with this?",
+      "question_id": 33,
+      "part": "text",
+      "layout_slot": 1,
+      "latency": 1.03,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.03,
+            "created": 1794871509.92842,
+            "title": "Making ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.145,
+            "created": 1794871510.043604,
+            "title": "Making an espresso",
+            "body": "Fill the water tank to the MAX line, grind 18 g of beans, tamp firmly, lock the portafilter in, and press the double-cup button.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.184,
+            "created": 1794871510.082546,
+            "title": "Making an espresso",
+            "body": "Fill the water tank to the MAX line, grind 18 g of beans, tamp firmly, lock the portafilter in, and press the double-cup button.",
+            "anchor": {
+              "object": "espresso machine",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Making an espresso",
+      "body": "Fill the water tank to the MAX line, grind 18 g of beans, tamp firmly, lock the portafilter in, and press the double-cup button.",
+      "items": [],
+      "anchor": {
+        "object": "espresso machine",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

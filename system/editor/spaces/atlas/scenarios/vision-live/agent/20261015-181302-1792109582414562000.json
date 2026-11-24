@@ -1,0 +1,1548 @@
+{
+  "id": "20261015-181302-1792109582414562000",
+  "name": "Vision Pro",
+  "created": 1792109582.414666,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 10,
+      "text": "Can I eat this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792109961.9407659,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "default": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "comp:v1",
+        "key": "candy",
+        "score": 0.934,
+        "cues": {
+          "gaze": 0.973,
+          "point": 0.888,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          0.43158388137817383,
+          7.018588542938232,
+          9.82118034362793
+        ],
+        "quaternion": [
+          -0.27813565731048584,
+          -0.3026840388774872,
+          -0.10998480767011642,
+          0.904945433139801
+        ],
+        "forward": [
+          0.48664368378199363,
+          -0.5699764773544307,
+          -0.6620458574825516
+        ]
+      },
+      "started": 1792109961.947545,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"comp:v1\",\"key\":\"candy\",\"score\":0.934,\"cues\":{\"gaze\":0.973,\"point\":0.888,\"touch\":0},\"mode\":\"score\"}",
+          "at": 10
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"candy\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 15
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"candy\",\"value\":\"text\"}",
+          "at": 18
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 20
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Eat the Candies",
+          "at": 1817
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":2312,\"first_text_ms\":1791,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":621,\"total_input_tokens\":541,\"total_output_tokens\":80,\"total_thought_tokens\":0}}",
+          "at": 2329
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2348
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.815,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 2.36,
+      "info": {
+        "key": "candy",
+        "source": "selection",
+        "interaction_id": "v1_ChdpbTNSYXZ6TExJcVYzOUlQaHNiaGdBRRIXaW0zUmF2ekxMSXFWMzlJUGhzYmhnQUU"
+      },
+      "message": "Eat the Candies",
+      "finished": 1792109964.3105721,
+      "duration": 2.4
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 11,
+      "text": "What's this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792110014.687325,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "findmy": true,
+        "default": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "layout:kitchen-upper-fridge_0",
+        "key": "music-brain user study",
+        "score": 0.707,
+        "cues": {
+          "gaze": 0.943,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          -0.0030946731567382812,
+          7.1016130447387695,
+          7.425642013549805
+        ],
+        "quaternion": [
+          0.19049690663814545,
+          0.048873692750930786,
+          -0.010354596190154552,
+          0.9804157614707947
+        ],
+        "forward": [
+          -0.09188804030116379,
+          0.37454447426445164,
+          -0.9226445814363706
+        ]
+      },
+      "started": 1792110014.694484,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:kitchen-upper-fridge_0\",\"key\":\"music-brain user study\",\"score\":0.707,\"cues\":{\"gaze\":0.943,\"point\":0,\"touch\":0},\"mode\":\"score\"}",
+          "at": 4
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"music-brain user study\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 11
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"music-brain user study\",\"value\":\"text\"}",
+          "at": 15
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 17
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Music Brain ",
+          "at": 1199
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1567,\"first_text_ms\":1183,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":696,\"total_input_tokens\":614,\"total_output_tokens\":82,\"total_thought_tokens\":0}}",
+          "at": 1576
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1596
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 2,
+          "latency": 1.199,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 1.61,
+      "info": {
+        "key": "music-brain user study",
+        "source": "selection",
+        "interaction_id": "v1_Chd2bTNSYXNEYU42SEUzOUlQOVAyYmtRZxIXdm0zUmFzRGFONkhFMzlJUDlQMmJrUWc"
+      },
+      "message": "Music Brain User Study",
+      "finished": 1792110016.3031008,
+      "duration": 1.6
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 12,
+      "text": "What's the weather this weekend",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792110052.078896,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "findmy": true,
+        "default": true
+      },
+      "pose": {
+        "position": [
+          2.306117534637451,
+          7.087728023529053,
+          13.294189453125
+        ],
+        "quaternion": [
+          0.06739091128110886,
+          -0.35173824429512024,
+          0.005518683232367039,
+          0.9336531162261963
+        ],
+        "forward": [
+          0.6560591975799382,
+          0.12972173254780822,
+          -0.7434773451537761
+        ]
+      },
+      "started": 1792110052.089098,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 5
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":265,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.98},\"storage\":{\"type\":\"noul\",\"noul\":0.03},\"user_events\":{\"type\":\"noul\",\"noul\":0.08},\"personal\":{\"type\":\"noul\",\"noul\":0.06},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":1,\"probabilities\":{\"standalone\":1,\"unresolved\":0}},\"info_followup\":{\"type\":\"noul\",\"noul\":0.05}},\"usage\":{\"input_tokens\":1279,\"output_tokens\":123}}",
+          "at": 271
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":null,\"follow_up\":0.05}",
+          "at": 290
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 307
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "weather",
+          "at": 310
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 313
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 316
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":153,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"weather\",\"confidence\":0.76,\"probabilities\":{\"none\":0.12,\"weather\":0.88}}},\"usage\":{\"input_tokens\":10113,\"output_tokens\":31}}",
+          "at": 458
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec",
+          "text": "Started",
+          "at": 473
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec",
+          "text": "{\"elapsed_ms\":336,\"answers\":{\"date_0\":{\"type\":\"noul\",\"noul\":0.04},\"date_1\":{\"type\":\"noul\",\"noul\":0.05},\"date_2\":{\"type\":\"noul\",\"noul\":0.05},\"date_3\":{\"type\":\"noul\",\"noul\":0.06},\"date_4\":{\"type\":\"noul\",\"noul\":0.05},\"date_5\":{\"type\":\"noul\",\"noul\":0.07},\"date_6\":{\"type\":\"noul\",\"noul\":0.11},\"date_7\":{\"type\":\"noul\",\"noul\":0.24},\"date_8\":{\"type\":\"noul\",\"noul\":0.23},\"date_9\":{\"type\":\"noul\",\"noul\":0.64},\"date_10\":{\"type\":\"noul\",\"noul\":0.68},\"date_11\":{\"type\":\"noul\",\"noul\":0.11},\"date_12\":{\"type\":\"noul\",",
+          "at": 798
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "Mod UI ready",
+          "at": 821
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Weekend Weather Forecast",
+          "at": 1336
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1137,\"first_text_ms\":1012,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":21478,\"total_input_tokens\":21407,\"total_output_tokens\":71,\"total_thought_tokens\":0}}",
+          "at": 1445
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1462
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 3,
+          "latency": 0.82
+        },
+        "text": {
+          "response": 4,
+          "latency": 1.333,
+          "status": "complete"
+        }
+      },
+      "response": 4,
+      "latency": 1.47,
+      "message": "Weekend Weather Forecast",
+      "finished": 1792110053.557971,
+      "duration": 1.5
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 13,
+      "text": "Where is my headphone",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792110131.7117188,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "findmy": true,
+        "default": true
+      },
+      "pose": {
+        "position": [
+          2.6017355918884277,
+          7.07000732421875,
+          6.161579132080078
+        ],
+        "quaternion": [
+          -0.04658016189932823,
+          0.9967267513275146,
+          -0.03609371930360794,
+          -0.05534743890166283
+        ],
+        "forward": [
+          0.10697004336408306,
+          0.07710733649912996,
+          0.9912678565889377
+        ]
+      },
+      "started": 1792110131.723499,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 4
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":127,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.03},\"storage\":{\"type\":\"noul\",\"noul\":0.96},\"user_events\":{\"type\":\"noul\",\"noul\":0.09},\"personal\":{\"type\":\"noul\",\"noul\":0.27},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.96,\"probabilities\":{\"standalone\":0.98,\"unresolved\":0.02}}},\"usage\":{\"input_tokens\":1278,\"output_tokens\":102}}",
+          "at": 131
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 146
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "storage",
+          "at": 158
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 161
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 163
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":213,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"findmy\",\"confidence\":1,\"probabilities\":{\"none\":0,\"findmy\":1}}},\"usage\":{\"input_tokens\":2832,\"output_tokens\":33}}",
+          "at": 365
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec_findmy",
+          "text": "Started",
+          "at": 382
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec_findmy",
+          "text": "{\"elapsed_ms\":314,\"answers\":{\"target\":{\"type\":\"choice\",\"choice\":\"item_0\",\"confidence\":1,\"probabilities\":{\"not_found\":0,\"ambiguous\":0,\"item_0\":1}}},\"usage\":{\"input_tokens\":1061,\"output_tokens\":45}}",
+          "at": 680
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "Mod UI ready",
+          "at": 705
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Headphones in Lab",
+          "at": 1186
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1242,\"first_text_ms\":1022,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":2155,\"total_input_tokens\":2078,\"total_output_tokens\":77,\"total_thought_tokens\":0}}",
+          "at": 1395
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1422
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 5,
+          "latency": 0.69
+        },
+        "text": {
+          "response": 6,
+          "latency": 1.184,
+          "status": "complete"
+        }
+      },
+      "response": 6,
+      "latency": 1.44,
+      "message": "Headphones in Lab",
+      "finished": 1792110133.1650162,
+      "duration": 1.4
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792109963.7629309,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can I eat this",
+      "question_id": 10,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.815,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.815,
+            "created": 1792109963.7629309,
+            "title": "Eat the Candies",
+            "body": "Yes, you can eat them because they are leftovers from this week's grad tea ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 2.341,
+            "created": 1792109964.288772,
+            "title": "Eat the Candies",
+            "body": "Yes, you can eat them because they are leftovers from this week's grad tea and people are told to help themselves.",
+            "anchor": {
+              "object": "candy",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Eat the Candies",
+      "body": "Yes, you can eat them because they are leftovers from this week's grad tea and people are told to help themselves.",
+      "items": [],
+      "anchor": {
+        "object": "candy",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "candy",
+        "box_id": "comp:v1"
+      }
+    },
+    {
+      "id": 2,
+      "created": 1792110015.8933198,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's this",
+      "question_id": 11,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.199,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.199,
+            "created": 1792110015.8933198,
+            "title": "Music Brain ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.503,
+            "created": 1792110016.197591,
+            "title": "Music Brain User Study",
+            "body": "This is a user study that you can scan and sign up for in the brain music lab after reading eligibility requirements.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.586,
+            "created": 1792110016.280426,
+            "title": "Music Brain User Study",
+            "body": "This is a user study that you can scan and sign up for in the brain music lab after reading eligibility requirements.",
+            "anchor": {
+              "object": "music-brain user study",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Music Brain User Study",
+      "body": "This is a user study that you can scan and sign up for in the brain music lab after reading eligibility requirements.",
+      "items": [],
+      "anchor": {
+        "object": "music-brain user study",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "music-brain user study",
+        "box_id": "layout:kitchen-upper-fridge_0"
+      }
+    },
+    {
+      "id": 3,
+      "created": 1792110052.905536,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's the weather this weekend",
+      "question_id": 12,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "weather": {
+        "version": 2,
+        "mod": "weather",
+        "mock": true,
+        "forecast": [
+          {
+            "id": "2026-10-16-morning",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "morning",
+            "time": "08:00",
+            "label": "Oct 16 · morning",
+            "condition": "snow",
+            "summary": "Soft snowfall",
+            "temp_c": 0.3,
+            "night": false,
+            "intensity": 0.82,
+            "wind_kph": 16,
+            "samples": [
+              {
+                "id": "2026-10-16-morning-08",
+                "date": "2026-10-16",
+                "day_offset": 1,
+                "day_label": "Tomorrow",
+                "period": "morning",
+                "time": "08:00",
+                "label": "2026-10-16 08:00",
+                "condition": "storm",
+                "summary": "Thunder showers",
+                "temp_c": -0.9,
+                "night": false,
+                "intensity": 0.62,
+                "wind_kph": 16,
+                "parent_id": "2026-10-16-morning",
+                "local_time": "08:00"
+              },
+              {
+                "id": "2026-10-16-morning-10",
+                "date": "2026-10-16",
+                "day_offset": 1,
+                "day_label": "Tomorrow",
+                "period": "morning",
+                "time": "10:00",
+                "label": "2026-10-16 10:00",
+                "condition": "snow",
+                "summary": "Soft snowfall",
+                "temp_c": 0.3,
+                "night": false,
+                "intensity": 0.62,
+                "wind_kph": 16,
+                "parent_id": "2026-10-16-morning",
+                "local_time": "10:00"
+              },
+              {
+                "id": "2026-10-16-morning-11",
+                "date": "2026-10-16",
+                "day_offset": 1,
+                "day_label": "Tomorrow",
+                "period": "morning",
+                "time": "11:00",
+                "label": "2026-10-16 11:00",
+                "condition": "fog",
+                "summary": "Drifting mist",
+                "temp_c": 1.5,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 16,
+                "parent_id": "2026-10-16-morning",
+                "local_time": "11:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-10-16-afternoon",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "afternoon",
+            "time": "14:00",
+            "label": "Oct 16 · afternoon",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 18.3,
+            "night": false,
+            "intensity": 0.28,
+            "wind_kph": 21,
+            "samples": [
+              {
+                "id": "2026-10-16-afternoon-12",
+                "date": "2026-10-16",
+                "day_offset": 1,
+                "day_label": "Tomorrow",
+                "period": "afternoon",
+                "time": "12:00",
+                "label": "2026-10-16 12:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 17.1,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 21,
+                "parent_id": "2026-10-16-afternoon",
+                "local_time": "12:00"
+              },
+              {
+                "id": "2026-10-16-afternoon-15",
+                "date": "2026-10-16",
+                "day_offset": 1,
+                "day_label": "Tomorrow",
+                "period": "afternoon",
+                "time": "15:00",
+                "label": "2026-10-16 15:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 18.3,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 21,
+                "parent_id": "2026-10-16-afternoon",
+                "local_time": "15:00"
+              },
+              {
+                "id": "2026-10-16-afternoon-17",
+                "date": "2026-10-16",
+                "day_offset": 1,
+                "day_label": "Tomorrow",
+                "period": "afternoon",
+                "time": "17:00",
+                "label": "2026-10-16 17:00",
+                "condition": "clear",
+                "summary": "Clear skies",
+                "temp_c": 19.5,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 21,
+                "parent_id": "2026-10-16-afternoon",
+                "local_time": "17:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-10-16-evening",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "evening",
+            "time": "21:00",
+            "label": "Oct 16 · evening",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 8.3,
+            "night": true,
+            "intensity": 0.37,
+            "wind_kph": 26,
+            "samples": [
+              {
+                "id": "2026-10-16-evening-18",
+                "date": "2026-10-16",
+                "day_offset": 1,
+                "day_label": "Tomorrow",
+                "period": "evening",
+                "time": "18:00",
+                "label": "2026-10-16 18:00",
+                "condition": "fog",
+                "summary": "Drifting mist",
+                "temp_c": 7.1,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 26,
+                "parent_id": "2026-10-16-evening",
+                "local_time": "18:00"
+              },
+              {
+                "id": "2026-10-16-evening-21",
+                "date": "2026-10-16",
+                "day_offset": 1,
+                "day_label": "Tomorrow",
+                "period": "evening",
+                "time": "21:00",
+                "label": "2026-10-16 21:00",
+                "condition": "rain",
+                "summary": "Rain showers",
+                "temp_c": 8.3,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 26,
+                "parent_id": "2026-10-16-evening",
+                "local_time": "21:00"
+              },
+              {
+                "id": "2026-10-16-evening-23",
+                "date": "2026-10-16",
+                "day_offset": 1,
+                "day_label": "Tomorrow",
+                "period": "evening",
+                "time": "23:00",
+                "label": "2026-10-16 23:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 9.5,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 26,
+                "parent_id": "2026-10-16-evening",
+                "local_time": "23:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-10-17-morning",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "morning",
+            "time": "08:00",
+            "label": "Oct 17 · morning",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 9.0,
+            "night": false,
+            "intensity": 0.28,
+            "wind_kph": 3,
+            "samples": [
+              {
+                "id": "2026-10-17-morning-08",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "morning",
+                "time": "08:00",
+                "label": "2026-10-17 08:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 7.8,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 3,
+                "parent_id": "2026-10-17-morning",
+                "local_time": "08:00"
+              },
+              {
+                "id": "2026-10-17-morning-10",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "morning",
+                "time": "10:00",
+                "label": "2026-10-17 10:00",
+                "condition": "clear",
+                "summary": "Clear skies",
+                "temp_c": 9.0,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 3,
+                "parent_id": "2026-10-17-morning",
+                "local_time": "10:00"
+              },
+              {
+                "id": "2026-10-17-morning-11",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "morning",
+                "time": "11:00",
+                "label": "2026-10-17 11:00",
+                "condition": "storm",
+                "summary": "Thunder showers",
+                "temp_c": 10.2,
+                "night": false,
+                "intensity": 0.62,
+                "wind_kph": 3,
+                "parent_id": "2026-10-17-morning",
+                "local_time": "11:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-10-17-afternoon",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "afternoon",
+            "time": "14:00",
+            "label": "Oct 17 · afternoon",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 17.0,
+            "night": false,
+            "intensity": 0.37,
+            "wind_kph": 8,
+            "samples": [
+              {
+                "id": "2026-10-17-afternoon-12",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "afternoon",
+                "time": "12:00",
+                "label": "2026-10-17 12:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 15.8,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 8,
+                "parent_id": "2026-10-17-afternoon",
+                "local_time": "12:00"
+              },
+              {
+                "id": "2026-10-17-afternoon-15",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "afternoon",
+                "time": "15:00",
+                "label": "2026-10-17 15:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 17.0,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 8,
+                "parent_id": "2026-10-17-afternoon",
+                "local_time": "15:00"
+              },
+              {
+                "id": "2026-10-17-afternoon-17",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "afternoon",
+                "time": "17:00",
+                "label": "2026-10-17 17:00",
+                "condition": "clear",
+                "summary": "Clear skies",
+                "temp_c": 18.2,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 8,
+                "parent_id": "2026-10-17-afternoon",
+                "local_time": "17:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-10-17-evening",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "evening",
+            "time": "21:00",
+            "label": "Oct 17 · evening",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 7.0,
+            "night": true,
+            "intensity": 0.46,
+            "wind_kph": 13,
+            "samples": [
+              {
+                "id": "2026-10-17-evening-18",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "evening",
+                "time": "18:00",
+                "label": "2026-10-17 18:00",
+                "condition": "fog",
+                "summary": "Drifting mist",
+                "temp_c": 5.8,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 13,
+                "parent_id": "2026-10-17-evening",
+                "local_time": "18:00"
+              },
+              {
+                "id": "2026-10-17-evening-21",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "evening",
+                "time": "21:00",
+                "label": "2026-10-17 21:00",
+                "condition": "rain",
+                "summary": "Rain showers",
+                "temp_c": 7.0,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 13,
+                "parent_id": "2026-10-17-evening",
+                "local_time": "21:00"
+              },
+              {
+                "id": "2026-10-17-evening-23",
+                "date": "2026-10-17",
+                "day_offset": 2,
+                "day_label": "Saturday, Oct 17",
+                "period": "evening",
+                "time": "23:00",
+                "label": "2026-10-17 23:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 8.2,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 13,
+                "parent_id": "2026-10-17-evening",
+                "local_time": "23:00"
+              }
+            ]
+          }
+        ],
+        "timeline": [
+          {
+            "id": "2026-10-16-morning-08",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "morning",
+            "time": "08:00",
+            "label": "2026-10-16 08:00",
+            "condition": "storm",
+            "summary": "Thunder showers",
+            "temp_c": -0.9,
+            "night": false,
+            "intensity": 0.62,
+            "wind_kph": 16,
+            "parent_id": "2026-10-16-morning",
+            "local_time": "08:00"
+          },
+          {
+            "id": "2026-10-16-morning-10",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "morning",
+            "time": "10:00",
+            "label": "2026-10-16 10:00",
+            "condition": "snow",
+            "summary": "Soft snowfall",
+            "temp_c": 0.3,
+            "night": false,
+            "intensity": 0.62,
+            "wind_kph": 16,
+            "parent_id": "2026-10-16-morning",
+            "local_time": "10:00"
+          },
+          {
+            "id": "2026-10-16-morning-11",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "morning",
+            "time": "11:00",
+            "label": "2026-10-16 11:00",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": 1.5,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 16,
+            "parent_id": "2026-10-16-morning",
+            "local_time": "11:00"
+          },
+          {
+            "id": "2026-10-16-afternoon-12",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "afternoon",
+            "time": "12:00",
+            "label": "2026-10-16 12:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 17.1,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 21,
+            "parent_id": "2026-10-16-afternoon",
+            "local_time": "12:00"
+          },
+          {
+            "id": "2026-10-16-afternoon-15",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "afternoon",
+            "time": "15:00",
+            "label": "2026-10-16 15:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 18.3,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 21,
+            "parent_id": "2026-10-16-afternoon",
+            "local_time": "15:00"
+          },
+          {
+            "id": "2026-10-16-afternoon-17",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "afternoon",
+            "time": "17:00",
+            "label": "2026-10-16 17:00",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 19.5,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 21,
+            "parent_id": "2026-10-16-afternoon",
+            "local_time": "17:00"
+          },
+          {
+            "id": "2026-10-16-evening-18",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "evening",
+            "time": "18:00",
+            "label": "2026-10-16 18:00",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": 7.1,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 26,
+            "parent_id": "2026-10-16-evening",
+            "local_time": "18:00"
+          },
+          {
+            "id": "2026-10-16-evening-21",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "evening",
+            "time": "21:00",
+            "label": "2026-10-16 21:00",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 8.3,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 26,
+            "parent_id": "2026-10-16-evening",
+            "local_time": "21:00"
+          },
+          {
+            "id": "2026-10-16-evening-23",
+            "date": "2026-10-16",
+            "day_offset": 1,
+            "day_label": "Tomorrow",
+            "period": "evening",
+            "time": "23:00",
+            "label": "2026-10-16 23:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 9.5,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 26,
+            "parent_id": "2026-10-16-evening",
+            "local_time": "23:00"
+          },
+          {
+            "id": "2026-10-17-morning-08",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "morning",
+            "time": "08:00",
+            "label": "2026-10-17 08:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 7.8,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 3,
+            "parent_id": "2026-10-17-morning",
+            "local_time": "08:00"
+          },
+          {
+            "id": "2026-10-17-morning-10",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "morning",
+            "time": "10:00",
+            "label": "2026-10-17 10:00",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 9.0,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 3,
+            "parent_id": "2026-10-17-morning",
+            "local_time": "10:00"
+          },
+          {
+            "id": "2026-10-17-morning-11",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "morning",
+            "time": "11:00",
+            "label": "2026-10-17 11:00",
+            "condition": "storm",
+            "summary": "Thunder showers",
+            "temp_c": 10.2,
+            "night": false,
+            "intensity": 0.62,
+            "wind_kph": 3,
+            "parent_id": "2026-10-17-morning",
+            "local_time": "11:00"
+          },
+          {
+            "id": "2026-10-17-afternoon-12",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "afternoon",
+            "time": "12:00",
+            "label": "2026-10-17 12:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 15.8,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 8,
+            "parent_id": "2026-10-17-afternoon",
+            "local_time": "12:00"
+          },
+          {
+            "id": "2026-10-17-afternoon-15",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "afternoon",
+            "time": "15:00",
+            "label": "2026-10-17 15:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 17.0,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 8,
+            "parent_id": "2026-10-17-afternoon",
+            "local_time": "15:00"
+          },
+          {
+            "id": "2026-10-17-afternoon-17",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "afternoon",
+            "time": "17:00",
+            "label": "2026-10-17 17:00",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 18.2,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 8,
+            "parent_id": "2026-10-17-afternoon",
+            "local_time": "17:00"
+          },
+          {
+            "id": "2026-10-17-evening-18",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "evening",
+            "time": "18:00",
+            "label": "2026-10-17 18:00",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": 5.8,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 13,
+            "parent_id": "2026-10-17-evening",
+            "local_time": "18:00"
+          },
+          {
+            "id": "2026-10-17-evening-21",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "evening",
+            "time": "21:00",
+            "label": "2026-10-17 21:00",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 7.0,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 13,
+            "parent_id": "2026-10-17-evening",
+            "local_time": "21:00"
+          },
+          {
+            "id": "2026-10-17-evening-23",
+            "date": "2026-10-17",
+            "day_offset": 2,
+            "day_label": "Saturday, Oct 17",
+            "period": "evening",
+            "time": "23:00",
+            "label": "2026-10-17 23:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 8.2,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 13,
+            "parent_id": "2026-10-17-evening",
+            "local_time": "23:00"
+          }
+        ],
+        "preview": {
+          "component": "weather-day-buttons",
+          "autoplay": true,
+          "seconds_per_period": 8,
+          "dates": [
+            "2026-10-16",
+            "2026-10-17"
+          ]
+        },
+        "presentation": {
+          "anchor": "user-view",
+          "background": "composited-scene",
+          "tracking": "recording-timeline",
+          "style": "adaptive"
+        }
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.82
+    },
+    {
+      "id": 4,
+      "created": 1792110053.422327,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's the weather this weekend",
+      "question_id": 12,
+      "part": "text",
+      "layout_slot": 1,
+      "latency": 1.333,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.333,
+            "created": 1792110053.422327,
+            "title": "Weekend Weather Forecast",
+            "body": "This weekend features soft snowfall Saturday morning followed by clear skies and rain showers ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.439,
+            "created": 1792110053.5279202,
+            "title": "Weekend Weather Forecast",
+            "body": "This weekend features soft snowfall Saturday morning followed by clear skies and rain showers on Sunday.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.463,
+            "created": 1792110053.5519638,
+            "title": "Weekend Weather Forecast",
+            "body": "This weekend features soft snowfall Saturday morning followed by clear skies and rain showers on Sunday.",
+            "anchor": {
+              "object": "desk",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Weekend Weather Forecast",
+      "body": "This weekend features soft snowfall Saturday morning followed by clear skies and rain showers on Sunday.",
+      "items": [],
+      "anchor": {
+        "object": "desk",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    },
+    {
+      "id": 5,
+      "created": 1792110132.414458,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Where is my headphone",
+      "question_id": 13,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "findmy": {
+        "version": 1,
+        "mod": "findmy",
+        "status": "found",
+        "item_id": "headphones",
+        "label": "Headphones",
+        "target": {
+          "id": "lab-shelf-1",
+          "label": "shelf 1",
+          "center": [
+            3.95,
+            6.69,
+            14.46
+          ],
+          "size": [
+            0.94,
+            2.28,
+            0.53
+          ],
+          "yaw": 90.0
+        },
+        "visual": "box-highlight",
+        "guidance": "when-out-of-view",
+        "occlusion": "hands-only"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "headphones",
+          "label": "Headphones",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.69
+    },
+    {
+      "id": 6,
+      "created": 1792110132.9076018,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Where is my headphone",
+      "question_id": 13,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.184,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.184,
+            "created": 1792110132.9076018,
+            "title": "Headphones in Lab",
+            "body": "Your headphones are located in the lab on shelf 1.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.414,
+            "created": 1792110133.137187,
+            "title": "Headphones in Lab",
+            "body": "Your headphones are located in the lab on shelf 1.",
+            "anchor": {
+              "object": "shelf 1",
+              "relation": "on"
+            },
+            "referenced_entities": [
+              {
+                "item_id": "headphones",
+                "label": "Headphones",
+                "context_groups": [
+                  "storage"
+                ]
+              }
+            ]
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Headphones in Lab",
+      "body": "Your headphones are located in the lab on shelf 1.",
+      "items": [],
+      "anchor": {
+        "object": "shelf 1",
+        "relation": "on"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "headphones",
+          "label": "Headphones",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "reserve_text": true
+    }
+  ]
+}

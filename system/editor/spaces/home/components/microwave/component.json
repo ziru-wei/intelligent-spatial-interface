@@ -1,0 +1,34 @@
+{
+ "name": "Microwave",
+ "kind": "gltf",
+ "entry": "model.glb",
+ "category": "persistent",
+ "scope": "scene",
+ "defaultScale": 1,
+ "pivot": [
+  0.0,
+  0.194,
+  0.0
+ ],
+ "description": "Digital twin of microwave (微波炉), from scanniverse_home-scan_repaired.blend.",
+ "source": {
+  "manifest": "private/home/scans/repairs/scan_repaired_objects_codex/placement_manifest.json",
+  "asset": "microwave",
+  "parts": [
+   "Microwave_Closed_Casing",
+   "Microwave_Glass_Door",
+   "Microwave_Handle",
+   "Microwave_Control_Strip",
+   "Microwave_Control_Button",
+   "Microwave_Control_Button.001",
+   "Microwave_Control_Button.002",
+   "Microwave_Control_Button.003",
+   "Microwave_Control_Button.004",
+   "Microwave_Control_Button.005",
+   "Microwave_Control_Button.006",
+   "Microwave_Control_Button.007",
+   "Microwave_Control_Button.008",
+   "Microwave_Control_Button.009"
+  ]
+ }
+}

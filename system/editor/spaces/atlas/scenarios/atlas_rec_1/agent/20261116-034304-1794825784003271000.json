@@ -1,0 +1,240 @@
+{
+  "id": "20261116-034304-1794825784003271000",
+  "name": "2026-11-16 03:43:04",
+  "created": 1794825784.0034251,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 2,
+      "text": "What are they working on in there?",
+      "frame": 299,
+      "t": 4.985506541997893,
+      "status": "answered",
+      "created": 1794825787.646243,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "location": {
+        "in": "central-hall-2f",
+        "facing": {
+          "zone": "lab-2f",
+          "via": "window"
+        }
+      },
+      "started": 1794825787.6471648,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_lab",
+          "text": "Started",
+          "at": 10
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_prefetch",
+          "text": "{\"mods\":[\"findmy\",\"lab\",\"weather\",\"worldinfo\"],\"candidates\":15,\"places\":[\"zone:central-hall-2f\",\"zone:lab-2f\"],\"candidate\":null}",
+          "at": 12
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_read",
+          "text": "Started",
+          "at": 13
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_read",
+          "text": "{\"elapsed_ms\":184,\"answers\":{\"retrieval__item_0\":{\"type\":\"noul\",\"noul\":0.06},\"retrieval__item_1\":{\"type\":\"noul\",\"noul\":0.24},\"retrieval__item_2\":{\"type\":\"noul\",\"noul\":0.32},\"retrieval__item_3\":{\"type\":\"noul\",\"noul\":0.13},\"retrieval__item_4\":{\"type\":\"noul\",\"noul\":0.12},\"retrieval__item_5\":{\"type\":\"noul\",\"noul\":0.33},\"retrieval__item_6\":{\"type\":\"noul\",\"noul\":0.05},\"retrieval__item_7\":{\"type\":\"noul\",\"noul\":0.53},\"retrieval__item_8\":{\"type\":\"noul\",\"noul\":0.72},\"retrieval__item_9\":{\"type\":\"noul\",\"nou",
+          "at": 195
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_read\",\"elapsed_ms\":185}",
+          "at": 200
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_read",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"items\":[\"info:Programmable Reality Lab\",\"info:PRL research theme\"]}",
+          "at": 203
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "Started",
+          "at": 206
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_lab",
+          "text": "{\"elapsed_ms\":186,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"labResearchWork\",\"confidence\":0.86,\"probabilities\":{\"labResearchWork\":0.91,\"labResearchLife\":0.02,\"none\":0.07}}},\"usage\":{\"input_tokens\":678,\"output_tokens\":53}}",
+          "at": 210
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_lab\",\"elapsed_ms\":186}",
+          "at": 211
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"lab\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"labResearchWork\"}}}",
+          "at": 215
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "{\"elapsed_ms\":87,\"answers\":{\"mod_findmy\":{\"type\":\"noul\",\"noul\":0.02},\"mod_lab\":{\"type\":\"noul\",\"noul\":0.95},\"mod_weather\":{\"type\":\"noul\",\"noul\":0.01}},\"usage\":{\"input_tokens\":723,\"output_tokens\":57}}",
+          "at": 282
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_mods\",\"elapsed_ms\":87}",
+          "at": 285
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"lab\",0.95]]",
+          "at": 286
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 287
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Animation ready",
+          "at": 288
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab Research",
+          "at": 1430
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1262,\"first_text_ms\":1146,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":800,\"total_input_tokens\":718,\"total_output_tokens\":82,\"total_thought_tokens\":0}}",
+          "at": 1544
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1547
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 1,
+          "latency": 0.28
+        },
+        "text": {
+          "response": 2,
+          "latency": 1.43,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 1.55,
+      "message": "Programmable Reality Lab Research",
+      "finished": 1794825789.196896,
+      "duration": 1.5,
+      "label": "q-1116-2"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794825787.9321222,
+      "frame": 299,
+      "t": 4.985506541997893,
+      "question": "What are they working on in there?",
+      "question_id": 2,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "lab",
+        "variant": "diorama",
+        "slot": "diorama",
+        "settings": {}
+      },
+      "animation": {
+        "id": "labResearchWork",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.28
+    },
+    {
+      "id": 2,
+      "created": 1794825789.076679,
+      "frame": 299,
+      "t": 4.985506541997893,
+      "question": "What are they working on in there?",
+      "question_id": 2,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.43,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.43,
+            "created": 1794825789.076679,
+            "title": "Programmable Reality Lab Research",
+            "body": "Researchers are working on making our living environment dynamic and interactive ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.547,
+            "created": 1794825789.194038,
+            "title": "Programmable Reality Lab Research",
+            "body": "Researchers are working on making our living environment dynamic and interactive through AR/VR, robotics, and shape-changing interfaces.",
+            "anchor": {
+              "object": "Lab",
+              "relation": "in-front"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab Research",
+      "body": "Researchers are working on making our living environment dynamic and interactive through AR/VR, robotics, and shape-changing interfaces.",
+      "items": [],
+      "anchor": {
+        "object": "Lab",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

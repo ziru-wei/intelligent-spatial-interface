@@ -1,0 +1,246 @@
+{
+  "id": "20261117-220818-1794978498739338000",
+  "name": "Gallery · livecoach-stretch",
+  "created": 1794978498.739357,
+  "questions": [
+    {
+      "id": 108,
+      "text": "my back's killing me, any stretches?",
+      "frame": 329,
+      "t": 5.485798749999958,
+      "status": "answered",
+      "created": 1794978505.15648,
+      "live": {
+        "read_s": 5.0
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794978505.213218,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 36
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 51
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 64
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":288,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchWork\":0,\"labResearchLife\":0,\"none\":1}}},\"usage\":{\"input_tokens\":674,\"output_tokens\":48}}",
+          "at": 324
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":288}",
+          "at": 350
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 375
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0],[\"labResearchLife\",0],[\"none\",1]],\"chosen\":\"none\"}]}",
+          "at": 400
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":305,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.03},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"user\",\"confidence\":0.99,\"probabilities\":{\"referent\":0,\"here\":0,\"user\":0.99,\"world\":0,\"other\":0.01}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.68},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.02}},\"usage\":{\"input_tokens\":1706,\"output_tokens\":367}}",
+          "at": 417
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":305}",
+          "at": 430
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"my back's killing me, any stretches?\",\"about\":\"user\"}]}",
+          "at": 444
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.03,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"my back's killing me, any stretches?\",\"about\":\"the user\"}]}",
+          "at": 458
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"livecoach\",0.68]]",
+          "at": 473
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.01],[\"BookCompanion\",0.01],[\"Delegate\",0.02],[\"FindMy\",0.01],[\"IoTControl\",0.01],[\"LiveCoach\",0.68],[\"ObjectStatus\",0.03],[\"Reminder\",0.02],[\"StepGuide\",0.03],[\"Wayfinding\",0.02],[\"Weather\",0.01],[\"LabInfo\",0.02]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"LiveCoach\"]}",
+          "at": 486
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"LiveCoach\",\"from\":[\"Lab · 2F and the things in it\",\"user:me\"],\"items\":[\"steps:desk-stretch\",\"steps:espresso\"]}]",
+          "at": 506
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"LiveCoach\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 521
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 547
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Quick back stretch routine",
+          "at": 1084
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":938,\"first_text_ms\":707,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":932,\"total_input_tokens\":831,\"total_output_tokens\":101,\"total_thought_tokens\":0}}",
+          "at": 1301
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1334
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.083,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.38,
+      "message": "Quick back stretch routine",
+      "finished": 1794978506.5972931,
+      "duration": 1.4,
+      "label": "q-1117-67"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794978506.295826,
+      "frame": 329,
+      "t": 5.485798749999958,
+      "question": "my back's killing me, any stretches?",
+      "question_id": 108,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.083,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.083,
+            "created": 1794978506.295826,
+            "title": "Quick back stretch routine",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.213,
+            "created": 1794978506.4262831,
+            "title": "Quick back stretch routine",
+            "body": "Try this 3-minute routine: clasp hands in front to round your back for 20 seconds, and do a seated spine twist for 15 seconds.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.333,
+            "created": 1794978506.546505,
+            "title": "Quick back stretch routine",
+            "body": "Try this 3-minute routine: clasp hands in front to round your back for 20 seconds, and do a seated spine twist for 15 seconds.",
+            "anchor": {
+              "object": "desk",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Quick back stretch routine",
+      "body": "Try this 3-minute routine: clasp hands in front to round your back for 20 seconds, and do a seated spine twist for 15 seconds.",
+      "items": [],
+      "anchor": {
+        "object": "desk",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "text_ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      },
+      "text_mod": {
+        "id": "livecoach",
+        "settings": {
+          "duration": "stay"
+        }
+      }
+    }
+  ],
+  "gallery_example": {
+    "name": "livecoach-stretch",
+    "mod": "LiveCoach"
+  }
+}

@@ -1,0 +1,600 @@
+{
+  "id": "20261015-150635-1792098395650904000",
+  "name": "Vision Pro",
+  "created": 1792098395.651029,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 4,
+      "text": "Where are my headphones?",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792098395.699689,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "pose": {
+        "position": [
+          5.605993747711182,
+          6.97646427154541,
+          15.398037910461426
+        ],
+        "quaternion": [
+          -0.20186267793178558,
+          0.5632143020629883,
+          0.13256753981113434,
+          0.7902321815490723
+        ],
+        "forward": [
+          -0.8366192560115384,
+          -0.46836463753261626,
+          -0.2840822184198184
+        ]
+      },
+      "started": 1792098395.70275,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 3
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":148,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.02},\"storage\":{\"type\":\"noul\",\"noul\":0.98},\"user_events\":{\"type\":\"noul\",\"noul\":0.08},\"personal\":{\"type\":\"noul\",\"noul\":0.34},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.98,\"probabilities\":{\"standalone\":0.99,\"unresolved\":0.01}}},\"usage\":{\"input_tokens\":1017,\"output_tokens\":102}}",
+          "at": 151
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 161
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "storage",
+          "at": 165
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 167
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 170
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":97,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"findmy\",\"confidence\":0.98,\"probabilities\":{\"none\":0.01,\"findmy\":0.99}}},\"usage\":{\"input_tokens\":2570,\"output_tokens\":33}}",
+          "at": 259
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec_findmy",
+          "text": "Started",
+          "at": 265
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec_findmy",
+          "text": "{\"elapsed_ms\":189,\"answers\":{\"target\":{\"type\":\"choice\",\"choice\":\"item_0\",\"confidence\":1,\"probabilities\":{\"not_found\":0,\"ambiguous\":0,\"item_0\":1}}},\"usage\":{\"input_tokens\":800,\"output_tokens\":45}}",
+          "at": 449
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "Mod UI ready",
+          "at": 461
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Headphones Location",
+          "at": 999
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":931,\"first_text_ms\":830,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1975,\"total_input_tokens\":1898,\"total_output_tokens\":77,\"total_thought_tokens\":0}}",
+          "at": 1094
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1102
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 0.46
+        },
+        "text": {
+          "response": 2,
+          "latency": 0.999,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 1.11,
+      "message": "Headphones Location",
+      "finished": 1792098396.810772,
+      "duration": 1.1
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 5,
+      "text": "What's the weather tonight?",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792098416.434096,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "findmy": true,
+        "weather": true
+      },
+      "pose": {
+        "position": [
+          5.537489891052246,
+          6.926915645599365,
+          15.37546443939209
+        ],
+        "quaternion": [
+          -0.4166465103626251,
+          0.3022562265396118,
+          0.14095135033130646,
+          0.8456829190254211
+        ],
+        "forward": [
+          -0.3937720794143784,
+          -0.7899085207240475,
+          -0.47009371784136356
+        ]
+      },
+      "started": 1792098416.438455,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 6
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":152,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.98},\"storage\":{\"type\":\"noul\",\"noul\":0.03},\"user_events\":{\"type\":\"noul\",\"noul\":0.03},\"personal\":{\"type\":\"noul\",\"noul\":0.05},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":1,\"probabilities\":{\"standalone\":1,\"unresolved\":0,\"ref_0\":0}}},\"usage\":{\"input_tokens\":1221,\"output_tokens\":111}}",
+          "at": 157
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 164
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "weather",
+          "at": 172
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 174
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 177
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":153,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"weather\",\"confidence\":0.46,\"probabilities\":{\"none\":0.27,\"weather\":0.73}}},\"usage\":{\"input_tokens\":9999,\"output_tokens\":31}}",
+          "at": 322
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec",
+          "text": "Started",
+          "at": 329
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec",
+          "text": "{\"elapsed_ms\":310,\"answers\":{\"date_0\":{\"type\":\"noul\",\"noul\":0.03},\"date_1\":{\"type\":\"noul\",\"noul\":0.03},\"date_2\":{\"type\":\"noul\",\"noul\":0.02},\"date_3\":{\"type\":\"noul\",\"noul\":0.03},\"date_4\":{\"type\":\"noul\",\"noul\":0.03},\"date_5\":{\"type\":\"noul\",\"noul\":0.03},\"date_6\":{\"type\":\"noul\",\"noul\":0.03},\"date_7\":{\"type\":\"noul\",\"noul\":0.08},\"date_8\":{\"type\":\"noul\",\"noul\":0.89},\"date_9\":{\"type\":\"noul\",\"noul\":0.06},\"date_10\":{\"type\":\"noul\",\"noul\":0.03},\"date_11\":{\"type\":\"noul\",\"noul\":0.03},\"date_12\":{\"type\":\"noul\",",
+          "at": 635
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "Mod UI ready",
+          "at": 647
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Tonight's Weather",
+          "at": 1277
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1189,\"first_text_ms\":1104,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":21369,\"total_input_tokens\":21297,\"total_output_tokens\":72,\"total_thought_tokens\":0}}",
+          "at": 1358
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1366
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 3,
+          "latency": 0.64
+        },
+        "text": {
+          "response": 4,
+          "latency": 1.277,
+          "status": "complete"
+        }
+      },
+      "response": 4,
+      "latency": 1.37,
+      "message": "Tonight's Weather",
+      "finished": 1792098417.809807,
+      "duration": 1.4
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792098396.161237,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Where are my headphones?",
+      "question_id": 4,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "findmy": {
+        "version": 1,
+        "mod": "findmy",
+        "status": "found",
+        "item_id": "headphones",
+        "label": "Headphones",
+        "target": {
+          "id": "lab-shelf-1",
+          "label": "shelf 1",
+          "center": [
+            3.95,
+            6.69,
+            14.46
+          ],
+          "size": [
+            0.94,
+            2.28,
+            0.53
+          ],
+          "yaw": 90.0
+        },
+        "visual": "box-highlight",
+        "guidance": "when-out-of-view",
+        "occlusion": "hands-only"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "headphones",
+          "label": "Headphones",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.46
+    },
+    {
+      "id": 2,
+      "created": 1792098396.701271,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Where are my headphones?",
+      "question_id": 4,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 0.999,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 0.999,
+            "created": 1792098396.701271,
+            "title": "Headphones Location",
+            "body": "Your headphones are in the lab on shelf 1.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.101,
+            "created": 1792098396.803783,
+            "title": "Headphones Location",
+            "body": "Your headphones are in the lab on shelf 1.",
+            "anchor": {
+              "object": "lab-shelf-1",
+              "relation": "on"
+            },
+            "referenced_entities": [
+              {
+                "item_id": "headphones",
+                "label": "Headphones",
+                "context_groups": [
+                  "storage"
+                ]
+              }
+            ]
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Headphones Location",
+      "body": "Your headphones are in the lab on shelf 1.",
+      "items": [],
+      "anchor": {
+        "object": "lab-shelf-1",
+        "relation": "on"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "headphones",
+          "label": "Headphones",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "reserve_text": true
+    },
+    {
+      "id": 3,
+      "created": 1792098417.080378,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's the weather tonight?",
+      "question_id": 5,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "weather": {
+        "version": 2,
+        "mod": "weather",
+        "mock": true,
+        "forecast": [
+          {
+            "id": "2026-10-15-evening",
+            "date": "2026-10-15",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "21:00",
+            "label": "Oct 15 · evening",
+            "condition": "cloudy",
+            "summary": "Overcast skies",
+            "temp_c": 7.0,
+            "night": true,
+            "intensity": 0.73,
+            "wind_kph": 19,
+            "samples": [
+              {
+                "id": "2026-10-15-evening-18",
+                "date": "2026-10-15",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "evening",
+                "time": "18:00",
+                "label": "2026-10-15 18:00",
+                "condition": "rain",
+                "summary": "Rain showers",
+                "temp_c": 5.8,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 19,
+                "parent_id": "2026-10-15-evening",
+                "local_time": "18:00"
+              },
+              {
+                "id": "2026-10-15-evening-21",
+                "date": "2026-10-15",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "evening",
+                "time": "21:00",
+                "label": "2026-10-15 21:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 7.0,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 19,
+                "parent_id": "2026-10-15-evening",
+                "local_time": "21:00"
+              },
+              {
+                "id": "2026-10-15-evening-23",
+                "date": "2026-10-15",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "evening",
+                "time": "23:00",
+                "label": "2026-10-15 23:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 8.2,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 19,
+                "parent_id": "2026-10-15-evening",
+                "local_time": "23:00"
+              }
+            ]
+          }
+        ],
+        "timeline": [
+          {
+            "id": "2026-10-15-evening-18",
+            "date": "2026-10-15",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "18:00",
+            "label": "2026-10-15 18:00",
+            "condition": "rain",
+            "summary": "Rain showers",
+            "temp_c": 5.8,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 19,
+            "parent_id": "2026-10-15-evening",
+            "local_time": "18:00"
+          },
+          {
+            "id": "2026-10-15-evening-21",
+            "date": "2026-10-15",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "21:00",
+            "label": "2026-10-15 21:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 7.0,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 19,
+            "parent_id": "2026-10-15-evening",
+            "local_time": "21:00"
+          },
+          {
+            "id": "2026-10-15-evening-23",
+            "date": "2026-10-15",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "23:00",
+            "label": "2026-10-15 23:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 8.2,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 19,
+            "parent_id": "2026-10-15-evening",
+            "local_time": "23:00"
+          }
+        ],
+        "preview": {
+          "component": "weather-timeline",
+          "autoplay": true,
+          "seconds_per_period": 8,
+          "dates": [
+            "2026-10-15"
+          ]
+        },
+        "presentation": {
+          "anchor": "user-view",
+          "background": "composited-scene",
+          "tracking": "recording-timeline",
+          "style": "adaptive"
+        }
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.64
+    },
+    {
+      "id": 4,
+      "created": 1792098417.715637,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's the weather tonight?",
+      "question_id": 5,
+      "part": "text",
+      "layout_slot": 1,
+      "latency": 1.277,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.277,
+            "created": 1792098417.715637,
+            "title": "Tonight's Weather",
+            "body": "Tonight's weather is overcast skies with a temperature of ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.367,
+            "created": 1792098417.805174,
+            "title": "Tonight's Weather",
+            "body": "Tonight's weather is overcast skies with a temperature of 7°C.",
+            "anchor": {
+              "object": "window",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Tonight's Weather",
+      "body": "Tonight's weather is overcast skies with a temperature of 7°C.",
+      "items": [],
+      "anchor": {
+        "object": "window",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

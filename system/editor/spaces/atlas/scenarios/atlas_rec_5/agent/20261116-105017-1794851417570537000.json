@@ -1,0 +1,309 @@
+{
+  "id": "20261116-105017-1794851417570537000",
+  "name": "2026-11-16 10:50:17",
+  "created": 1794851417.570582,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 6,
+      "text": "What does this lab work on?",
+      "frame": 59,
+      "t": 0.983766083008959,
+      "status": "answered",
+      "created": 1794851420.611757,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794851420.6142771,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 28
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_prefetch",
+          "text": "{\"mods\":[\"agenda\",\"bookcompanion\",\"findmy\",\"iotcontrol\",\"livecoach\",\"objectstatus\",\"reminder\",\"stepguide\",\"wayfinding\",\"weather\",\"worldinfo\",\"labinfo\"],\"candidates\":15,\"places\":[\"zone:lab-2f\"],\"candidate\":\"zone:lab-2f\"}",
+          "at": 41
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"],\"items\":15}",
+          "at": 44
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_read",
+          "text": "Started",
+          "at": 45
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":298,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"labResearchWork\",\"confidence\":0.98,\"probabilities\":{\"labResearchWork\":0.99,\"labResearchLife\":0,\"none\":0.01}}},\"usage\":{\"input_tokens\":672,\"output_tokens\":53}}",
+          "at": 324
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":298}",
+          "at": 327
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"labResearchWork\"}}}",
+          "at": 328
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0.99],[\"none\",0.01],[\"labResearchLife\",0]],\"chosen\":\"labResearchWork\"}]}",
+          "at": 331
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_read",
+          "text": "{\"elapsed_ms\":302,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.93},\"retrieval__item_0\":{\"type\":\"noul\",\"noul\":0.05},\"retrieval__item_1\":{\"type\":\"noul\",\"noul\":0.52},\"retrieval__item_2\":{\"type\":\"noul\",\"noul\":0.05},\"retrieval__item_3\":{\"type\":\"noul\",\"noul\":0.18},\"retrieval__item_4\":{\"type\":\"noul\",\"noul\":0.11},\"retrieval__item_5\":{\"type\":\"noul\",\"noul\":0.55},\"retrieval__item_6\":{\"type\":\"noul\",\"noul\":0.03},\"retrieval__item_7\":{\"type\":\"noul\",\"noul\":0.61},\"retrieval__item_8\":{\"type\":\"noul\",\"noul\":0.93},\"retrieval__item_9\":{\"type\":\"noul\",\"noul\":0.61},\"retrieval__item_10\":{\"type\":\"noul\",\"noul\":0.1},\"retrieval__item_11\":{\"type\":\"noul\",\"noul\":0.07},\"retrieval__item_12\":{\"type\":\"noul\",\"noul\":0.11},\"retrieval__item_13\":{\"type\":\"noul\",\"noul\":0.02},\"retrieval__item_14\":{\"type\":\"noul\",\"noul\":0.05}},\"usage\":{\"input_tokens\":1725,\"output_tokens\":362}}",
+          "at": 335
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_read\",\"elapsed_ms\":302}",
+          "at": 340
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_read",
+          "text": "{\"referent\":{\"entity\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"name\":\"Lab · 2F\",\"kind\":\"place\",\"source\":\"selection\"},\"reference\":\"standalone\",\"items\":[\"info:lab philosophy\",\"info:ATLAS labs booklet\",\"info:Programmable Reality Lab\",\"info:PRL research theme\",\"info:PRL philosophy\"]}",
+          "at": 344
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.93,\"referent\":\"Lab · 2F\",\"reference\":\"standalone\"}",
+          "at": 346
+        },
+        {
+          "kind": "tool",
+          "tool": "view_retrieval",
+          "text": "{\"options\":[[\"PRL research theme\",0.93],[\"Programmable Reality Lab\",0.61],[\"PRL philosophy\",0.61],[\"ATLAS labs booklet\",0.55],[\"lab philosophy\",0.52],[\"object\",0.18],[\"Poster of Anastasia's Talk\",0.11]],\"chosen\":[\"lab philosophy\",\"ATLAS labs booklet\",\"Programmable Reality Lab\",\"PRL research theme\",\"PRL philosophy\"]}",
+          "at": 350
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "Started",
+          "at": 354
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "{\"elapsed_ms\":158,\"answers\":{\"mod_agenda\":{\"type\":\"noul\",\"noul\":0.04},\"mod_bookcompanion\":{\"type\":\"noul\",\"noul\":0.23},\"mod_findmy\":{\"type\":\"noul\",\"noul\":0.03},\"mod_iotcontrol\":{\"type\":\"noul\",\"noul\":0.02},\"mod_livecoach\":{\"type\":\"noul\",\"noul\":0.01},\"mod_objectstatus\":{\"type\":\"noul\",\"noul\":0.08},\"mod_reminder\":{\"type\":\"noul\",\"noul\":0.02},\"mod_stepguide\":{\"type\":\"noul\",\"noul\":0.05},\"mod_wayfinding\":{\"type\":\"noul\",\"noul\":0.05},\"mod_weather\":{\"type\":\"noul\",\"noul\":0.01},\"mod_labinfo\":{\"type\":\"noul\",\"noul\":0.95}},\"usage\":{\"input_tokens\":1466,\"output_tokens\":212}}",
+          "at": 487
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_mods\",\"elapsed_ms\":158}",
+          "at": 492
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"labinfo\",0.95]]",
+          "at": 493
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.04],[\"BookCompanion\",0.23],[\"FindMy\",0.03],[\"IoTControl\",0.02],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.08],[\"Reminder\",0.02],[\"StepGuide\",0.05],[\"Wayfinding\",0.05],[\"Weather\",0.01],[\"LabInfo\",0.95]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"LabInfo\"]}",
+          "at": 495
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"LabInfo\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 496
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"LabInfo\",\"parts\":[{\"slot\":\"diorama\",\"use\":\"scene-asset\",\"kind\":\"animation\"}]}",
+          "at": 497
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 498
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Animation ready",
+          "at": 500
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab ",
+          "at": 2310
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":2372,\"first_text_ms\":1820,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1768,\"total_input_tokens\":1670,\"total_output_tokens\":98,\"total_thought_tokens\":0}}",
+          "at": 2860
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2864
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 1,
+          "latency": 0.49
+        },
+        "text": {
+          "response": 2,
+          "latency": 2.313,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 2.9,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "source": "selection",
+        "interaction_id": "v1_ChdYVUw3YW91S0dfN1F6N0lQazd1czJRURIXWFVMN2FvdUtHXzdRejdJUGs3dXMyUVE"
+      },
+      "message": "Programmable Reality Lab Research Focus",
+      "finished": 1794851423.513524,
+      "duration": 2.9,
+      "label": "q-1116-6"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794851421.108593,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "What does this lab work on?",
+      "question_id": 6,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "labinfo",
+        "variant": "diorama",
+        "slot": "diorama",
+        "settings": {}
+      },
+      "animation": {
+        "id": "labResearchWork",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.49
+    },
+    {
+      "id": 2,
+      "created": 1794851422.927625,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "What does this lab work on?",
+      "question_id": 6,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 2.313,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 2.313,
+            "created": 1794851422.927625,
+            "title": "Programmable Reality Lab ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 2.419,
+            "created": 1794851423.032872,
+            "title": "Programmable Reality Lab Research Focus",
+            "body": "The lab focuses on making our living environment dynamic, interactive, and programmable through AR/VR, robotics, and shape-changing interfaces.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 2.866,
+            "created": 1794851423.4798138,
+            "title": "Programmable Reality Lab Research Focus",
+            "body": "The lab focuses on making our living environment dynamic, interactive, and programmable through AR/VR, robotics, and shape-changing interfaces.",
+            "anchor": {
+              "object": "Lab",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab Research Focus",
+      "body": "The lab focuses on making our living environment dynamic, interactive, and programmable through AR/VR, robotics, and shape-changing interfaces.",
+      "items": [],
+      "anchor": {
+        "object": "Lab",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "box_id": "zone:lab-2f"
+      }
+    }
+  ]
+}

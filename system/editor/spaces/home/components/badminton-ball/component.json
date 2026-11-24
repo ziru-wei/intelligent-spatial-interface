@@ -1,0 +1,21 @@
+{
+ "name": "badminton ball",
+ "kind": "gltf",
+ "entry": "model.glb",
+ "category": "opportunistic",
+ "scope": "recording",
+ "defaultScale": 0.3021,
+ "origin": "reco_hallway",
+ "pose": {
+  "position": [
+   2.4087,
+   0.2172,
+   -0.4953
+  ],
+  "rotation": [
+   51.51,
+   -15.57,
+   -179.4
+  ]
+ }
+}

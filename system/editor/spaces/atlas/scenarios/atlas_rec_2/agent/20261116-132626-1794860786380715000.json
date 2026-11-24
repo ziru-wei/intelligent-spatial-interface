@@ -1,0 +1,200 @@
+{
+  "id": "20261116-132626-1794860786380715000",
+  "name": "2026-11-16 13:26:26",
+  "created": 1794860786.3807669,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 8,
+      "text": "What is this booklet about?",
+      "frame": 989,
+      "t": 16.49370249999629,
+      "status": "answered",
+      "created": 1794860789.4251451,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "layout:custom_1",
+        "key": "ATLAS labs booklet",
+        "score": 0.75,
+        "cues": {
+          "gaze": 1.0,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "north-hall-2f"
+      },
+      "started": 1794860789.427395,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"North corridor · 2F\"],\"looking\":\"ATLAS labs booklet\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 21
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 23
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":124,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.93},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"referent\",\"confidence\":1,\"probabilities\":{\"referent\":1,\"here\":0,\"user\":0,\"world\":0,\"other\":0}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.85},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01}},\"usage\":{\"input_tokens\":1524,\"output_tokens\":346}}",
+          "at": 144
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":124}",
+          "at": 147
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":{\"entity\":\"layout:custom_1\",\"key\":\"ATLAS labs booklet\",\"name\":\"ATLAS labs booklet\",\"kind\":\"object\",\"source\":\"selection\"},\"reference\":\"standalone\",\"questions\":[{\"text\":\"What is this booklet about?\",\"about\":\"referent\"}]}",
+          "at": 148
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"ATLAS labs booklet\",\"score\":0.93,\"referent\":\"ATLAS labs booklet\",\"reference\":\"standalone\",\"questions\":[{\"text\":\"What is this booklet about?\",\"about\":\"ATLAS labs booklet\"}]}",
+          "at": 150
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"bookcompanion\",0.85]]",
+          "at": 151
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.02],[\"BookCompanion\",0.85],[\"Delegate\",0.02],[\"FindMy\",0.03],[\"IoTControl\",0.02],[\"LiveCoach\",0.02],[\"ObjectStatus\",0.04],[\"Reminder\",0.02],[\"StepGuide\",0.04],[\"Wayfinding\",0.03],[\"Weather\",0.01]],\"skipped\":[\"WorldInfo\",\"LabInfo\"],\"chosen\":[\"BookCompanion\"]}",
+          "at": 152
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"BookCompanion\",\"from\":[\"North corridor · 2F and the things in it\"],\"items\":[]}]",
+          "at": 154
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"WorldInfo\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 155
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 157
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "ATLAS Labs Booklet",
+          "at": 1159
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1365,\"first_text_ms\":1011,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":584,\"total_input_tokens\":515,\"total_output_tokens\":69,\"total_thought_tokens\":0}}",
+          "at": 1510
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1513
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.159,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.52,
+      "info": {
+        "key": "ATLAS labs booklet",
+        "source": "selection",
+        "interaction_id": "v1_Chc5V2I3YXUtV0xaR2E5TW9QcmVHSHlBRRIXOVdiN2F1LVdMWkdhOU1vUHJlR0h5QUU"
+      },
+      "message": "ATLAS Labs Booklet",
+      "finished": 1794860790.945902,
+      "duration": 1.5
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794860790.586829,
+      "frame": 989,
+      "t": 16.49370249999629,
+      "question": "What is this booklet about?",
+      "question_id": 8,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.159,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.159,
+            "created": 1794860790.586829,
+            "title": "ATLAS Labs Booklet",
+            "body": "It is about the research and projects conducted at the ATLAS labs.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.513,
+            "created": 1794860790.939979,
+            "title": "ATLAS Labs Booklet",
+            "body": "It is about the research and projects conducted at the ATLAS labs.",
+            "anchor": {
+              "object": "booklet",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "ATLAS Labs Booklet",
+      "body": "It is about the research and projects conducted at the ATLAS labs.",
+      "items": [],
+      "anchor": {
+        "object": "booklet",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "ATLAS labs booklet",
+        "box_id": "layout:custom_1"
+      }
+    }
+  ]
+}

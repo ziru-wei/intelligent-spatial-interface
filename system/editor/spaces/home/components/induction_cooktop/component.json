@@ -1,0 +1,25 @@
+{
+ "name": "Stovetop",
+ "kind": "gltf",
+ "entry": "model.glb",
+ "category": "persistent",
+ "scope": "scene",
+ "defaultScale": 1,
+ "pivot": [
+  0.0,
+  0.0125,
+  0.0
+ ],
+ "description": "Digital twin of stovetop (平整电磁炉面), from scanniverse_home-scan_repaired.blend.",
+ "source": {
+  "manifest": "private/home/scans/repairs/scan_repaired_objects_codex/placement_manifest.json",
+  "asset": "induction_cooktop",
+  "parts": [
+   "Induction_Cooktop_Flat",
+   "Cooktop_Printed_Ring",
+   "Cooktop_Printed_Ring.001",
+   "Cooktop_Printed_Ring.002",
+   "Cooktop_Printed_Ring.003"
+  ]
+ }
+}

@@ -1,0 +1,22 @@
+{
+  "roomView": false,
+  "zone": "lab-2f",
+  "weatherMod": true,
+  "weatherLock": false,
+  "bodySize": 1.2347240447998047,
+  "headingSize": 1.0,
+  "showHeading": true,
+  "writing": true,
+  "writingStrokes": true,
+  "writingSpeed": 30.0,
+  "stability": 0.8,
+  "occlusion": false,
+  "selectionMode": "score",
+  "infoMinShrink": 0.55,
+  "floatParallel": 80.0,
+  "arrowWidth": 1.0,
+  "findmyMod": true,
+  "findmyRemoveOnApproach": true,
+  "findmyApproach": 0.16388577974759616,
+  "followMode": "realtime"
+}

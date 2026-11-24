@@ -1,0 +1,37 @@
+{
+  "id": "20261117-202943-1794972583610279000",
+  "name": "2026-11-17 20:29:43",
+  "created": 1794972583.6103199,
+  "questions": [
+    {
+      "id": 96,
+      "text": "whose is that printing?",
+      "frame": 59,
+      "t": 0.983766083008959,
+      "status": "failed",
+      "created": 1794972586.681868,
+      "live": {
+        "read_s": 5.0
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794972586.7020009,
+      "message": "Interrupted: the editor server restarted.",
+      "label": "q-1117-59"
+    }
+  ],
+  "responses": []
+}

@@ -1,0 +1,103 @@
+{
+  "id": "20261015-172801-1792106881678122000",
+  "name": "Vision Pro",
+  "created": 1792106881.678207,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 7,
+      "text": "Can I eat this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792106967.038514,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "findmy": true,
+        "default": true,
+        "weather": true
+      },
+      "pose": {
+        "position": [
+          0.432891845703125,
+          7.046665191650391,
+          9.616534233093262
+        ],
+        "quaternion": [
+          -0.17785599827766418,
+          -0.22432425618171692,
+          -0.055938757956027985,
+          0.9565127491950989
+        ],
+        "forward": [
+          0.40923993470567543,
+          -0.36533990028724483,
+          -0.8360917439303499
+        ]
+      },
+      "started": 1792106967.045226,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 12
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":272,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.05},\"storage\":{\"type\":\"noul\",\"noul\":0.86},\"user_events\":{\"type\":\"noul\",\"noul\":0.06},\"personal\":{\"type\":\"noul\",\"noul\":0.24},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"unresolved\",\"confidence\":0.72,\"probabilities\":{\"standalone\":0.14,\"unresolved\":0.86}}},\"usage\":{\"input_tokens\":1016,\"output_tokens\":104}}",
+          "at": 281
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"unresolved\"}",
+          "at": 292
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Which item do you mean?",
+          "at": 296
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 0.29
+        }
+      },
+      "response": 1,
+      "latency": 0.3,
+      "message": "Which item do you mean?",
+      "finished": 1792106967.3497758,
+      "duration": 0.3
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792106967.332889,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can I eat this",
+      "question_id": 7,
+      "title": "Which item do you mean?",
+      "body": "Please name the item you mean.",
+      "items": [],
+      "anchor": {
+        "object": "user-view",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 0.29
+    }
+  ]
+}

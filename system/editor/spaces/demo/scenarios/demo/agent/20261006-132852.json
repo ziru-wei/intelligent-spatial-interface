@@ -1,0 +1,42 @@
+{
+  "id": "20261006-132852",
+  "name": "Laundry evening",
+  "created": 1791314932.828952,
+  "questions": [
+    {
+      "id": 4,
+      "text": "What do I need from the grocery store?",
+      "frame": 4,
+      "t": 0.26666666666666666,
+      "status": "answered",
+      "created": 1791314943.314931,
+      "live": {
+        "read_s": 5.0
+      },
+      "started": 1791314943.3155231,
+      "response": 1,
+      "latency": 1.25,
+      "finished": 1791314944.571839,
+      "duration": 1.3,
+      "label": "q-1006-3"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1791314944.570205,
+      "frame": 4,
+      "t": 0.26666666666666666,
+      "question": "What do I need from the grocery store?",
+      "question_id": 4,
+      "title": "Milk, pasta, coffee",
+      "body": "",
+      "items": [
+        "Milk",
+        "Pasta",
+        "Coffee beans"
+      ],
+      "anchor": null
+    }
+  ]
+}

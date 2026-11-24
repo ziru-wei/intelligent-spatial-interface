@@ -1,0 +1,231 @@
+{
+  "id": "20261117-185657-1794967017587673000",
+  "name": "2026-11-17 18:56:57",
+  "created": 1794967017.587713,
+  "questions": [
+    {
+      "id": 42,
+      "text": "Can I eat you?",
+      "frame": 542,
+      "t": 18.069455040997127,
+      "status": "answered",
+      "created": 1794967020.63219,
+      "live": {
+        "read_s": 5.0
+      },
+      "selection": {
+        "box_id": "comp:c3",
+        "key": "candy",
+        "score": 0.75,
+        "cues": {
+          "gaze": 1.0,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "kitchen-2f"
+      },
+      "started": 1794967020.637558,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Kitchen · 2F\"],\"looking\":\"candy\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 24
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 29
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":596,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.68},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"other\",\"confidence\":0.34,\"probabilities\":{\"referent\":0.4,\"here\":0.11,\"user\":0.02,\"world\":0,\"other\":0.47}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.13},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01}},\"usage\":{\"input_tokens\":1607,\"output_tokens\":344}}",
+          "at": 620
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":596}",
+          "at": 632
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":{\"entity\":\"comp:c3\",\"key\":\"candy\",\"name\":\"candy\",\"kind\":\"object\",\"source\":\"selection\"},\"reference\":\"standalone\",\"questions\":[{\"text\":\"Can I eat you?\",\"about\":\"other\"}]}",
+          "at": 645
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"candy\",\"score\":0.68,\"referent\":\"candy\",\"reference\":\"standalone\",\"questions\":[{\"text\":\"Can I eat you?\",\"about\":\"something else\"}]}",
+          "at": 655
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"worldinfo\",1]]",
+          "at": 659
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"WorldInfo\",\"auto\"],[\"Agenda\",0.01],[\"BookCompanion\",0.02],[\"Delegate\",0.02],[\"FindMy\",0.02],[\"IoTControl\",0.02],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.13],[\"Reminder\",0.02],[\"StepGuide\",0.03],[\"Wayfinding\",0.02],[\"Weather\",0.01]],\"skipped\":[\"LabInfo\"],\"chosen\":[\"WorldInfo\"]}",
+          "at": 661
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"WorldInfo\",\"from\":[\"Kitchen · 2F and the things in it\"],\"items\":[\"candy\",\"directory:2f\"]}]",
+          "at": 664
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"WorldInfo\",\"use\":\"dialogue\",\"voice\":\"candy\"}",
+          "at": 667
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 670
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Eat me",
+          "at": 2871
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":2769,\"first_text_ms\":2169,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":873,\"total_input_tokens\":794,\"total_output_tokens\":79,\"total_thought_tokens\":0}}",
+          "at": 3423
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 3429
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 2.868,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 3.44,
+      "info": {
+        "key": "candy",
+        "source": "selection",
+        "interaction_id": "v1_Chc3UVg5YXVlX090LUVxdHNQc3JDNTBBRRIXN1FYOWF1ZV9PdC1FcXRzUHNyQzUwQUU"
+      },
+      "message": "Eat me",
+      "finished": 1794967024.076715,
+      "duration": 3.4
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794967023.5057228,
+      "frame": 542,
+      "t": 18.069455040997127,
+      "question": "Can I eat you?",
+      "question_id": 42,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 2.868,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 2.868,
+            "created": 1794967023.5057228,
+            "title": "Eat me",
+            "body": "Yes, you can eat me. I am leftover from this week's grad tea ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 2.961,
+            "created": 1794967023.598718,
+            "title": "Eat me",
+            "body": "Yes, you can eat me. I am leftover from this week's grad tea and everyone is welcome to help themselves.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 3.429,
+            "created": 1794967024.0668612,
+            "title": "Eat me",
+            "body": "Yes, you can eat me. I am leftover from this week's grad tea and everyone is welcome to help themselves.",
+            "anchor": {
+              "object": "candy bowl",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Eat me",
+      "body": "Yes, you can eat me. I am leftover from this week's grad tea and everyone is welcome to help themselves.",
+      "items": [],
+      "anchor": {
+        "object": "candy bowl",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "text_ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "dialogue",
+            "when": "target.pointed & request.second_person",
+            "instead_of": [
+              "floatingText",
+              "embeddedText",
+              "textArrow"
+            ]
+          },
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          },
+          {
+            "cue": "textArrow",
+            "when": "text.apart"
+          }
+        ]
+      },
+      "text_mod": {
+        "id": "worldinfo",
+        "settings": {
+          "duration": "stay"
+        }
+      },
+      "dialogue": {
+        "speaker": "comp:c3"
+      }
+    }
+  ]
+}

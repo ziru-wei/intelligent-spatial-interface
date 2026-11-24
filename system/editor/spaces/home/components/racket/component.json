@@ -1,0 +1,25 @@
+{
+ "name": "racket",
+ "kind": "gltf",
+ "entry": "model.glb",
+ "category": "opportunistic",
+ "scope": "recording",
+ "defaultScale": [
+  0.6871,
+  0.677,
+  0.677
+ ],
+ "origin": "reco_hallway",
+ "pose": {
+  "position": [
+   2.0135,
+   1.2874,
+   -0.3115
+  ],
+  "rotation": [
+   -171.27,
+   -44.76,
+   -175.4
+  ]
+ }
+}

@@ -1,0 +1,246 @@
+{
+  "id": "20261015-202510-1792117510272109000",
+  "name": "Vision Pro",
+  "created": 1792117510.272193,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 32,
+      "text": "Research this lab is working on",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792117609.4256792,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          8.154586791992188,
+          6.705544948577881,
+          15.289436340332031
+        ],
+        "quaternion": [
+          0.0053449287079274654,
+          -0.8557272553443909,
+          -0.0019028893439099193,
+          0.517396092414856
+        ],
+        "forward": [
+          0.8855202177919196,
+          0.0022741819044590633,
+          0.4645954076042744
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792117609.4395149,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 9
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 14
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 17
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":146,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.03},\"storage\":{\"type\":\"noul\",\"noul\":0.06},\"user_events\":{\"type\":\"noul\",\"noul\":0.11},\"personal\":{\"type\":\"noul\",\"noul\":0.18},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"unresolved\",\"confidence\":0,\"probabilities\":{\"standalone\":0.5,\"unresolved\":0.5}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.72}},\"usage\":{\"input_tokens\":1111,\"output_tokens\":122}}",
+          "at": 155
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"Programmable Reality Lab\",\"source\":\"selection\",\"continue\":false,\"selected\":0.72,\"follow_up\":null}",
+          "at": 182
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":148,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"RealityDiorama\",\"confidence\":0.98,\"probabilities\":{\"LabDiorama\":0,\"RealityDiorama\":0.99,\"none\":0.01}}},\"usage\":{\"input_tokens\":1038,\"output_tokens\":49}}",
+          "at": 192
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"RealityDiorama\",\"probability\":0.99}",
+          "at": 196
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 200
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"Programmable Reality Lab\",\"value\":\"text\"}",
+          "at": 203
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 206
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab Research",
+          "at": 2559
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":2710,\"first_text_ms\":2358,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":719,\"total_input_tokens\":629,\"total_output_tokens\":90,\"total_thought_tokens\":0}}",
+          "at": 2899
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2922
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 1,
+          "latency": 0.17
+        },
+        "text": {
+          "response": 2,
+          "latency": 2.56,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 2.94,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "source": "selection",
+        "interaction_id": "v1_ChdhWXZSYXZMVE9QRDRqckVQc091TW9RaxIXYVl2UmF2TFRPUEQ0anJFUHNPdU1vUWs"
+      },
+      "message": "Programmable Reality Lab Research",
+      "finished": 1792117612.380675,
+      "duration": 2.9
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792117609.6121888,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Research this lab is working on",
+      "question_id": 32,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "RealityDiorama",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.17
+    },
+    {
+      "id": 2,
+      "created": 1792117611.9993348,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Research this lab is working on",
+      "question_id": 32,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 2.56,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 2.56,
+            "created": 1792117611.9993348,
+            "title": "Programmable Reality Lab Research",
+            "body": "The Programmable Reality Lab (PRL) belongs to the ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 2.663,
+            "created": 1792117612.102923,
+            "title": "Programmable Reality Lab Research",
+            "body": "The Programmable Reality Lab (PRL) belongs to the ATLAS Institute at the University of Colorado Boulder and is led by Prof. Ryo Suzuki.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 2.923,
+            "created": 1792117612.36215,
+            "title": "Programmable Reality Lab Research",
+            "body": "The Programmable Reality Lab (PRL) belongs to the ATLAS Institute at the University of Colorado Boulder and is led by Prof. Ryo Suzuki.",
+            "anchor": {
+              "object": "Programmable Reality Lab",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab Research",
+      "body": "The Programmable Reality Lab (PRL) belongs to the ATLAS Institute at the University of Colorado Boulder and is led by Prof. Ryo Suzuki.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "box_id": "zone:lab-2f"
+      }
+    }
+  ]
+}

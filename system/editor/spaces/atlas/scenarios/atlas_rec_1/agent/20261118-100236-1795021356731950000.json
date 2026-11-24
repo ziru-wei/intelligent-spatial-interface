@@ -1,0 +1,846 @@
+{
+  "id": "20261118-100236-1795021356731950000",
+  "name": "Live replay",
+  "created": 1795021356.7319732,
+  "questions": [
+    {
+      "id": 10,
+      "text": "should i bring my umbrella? where is it",
+      "frame": 59,
+      "t": 1.0,
+      "status": "drafting",
+      "created": 1795021357.411008,
+      "rev": 8,
+      "revisions": [
+        {
+          "rev": 1,
+          "text": "should",
+          "at": 0.0,
+          "t": 1.0,
+          "frame": 59,
+          "pause": false
+        },
+        {
+          "rev": 2,
+          "text": "should i",
+          "at": 0.218,
+          "t": 1.0,
+          "frame": 59,
+          "pause": false
+        },
+        {
+          "rev": 3,
+          "text": "should i bring",
+          "at": 0.892,
+          "t": 1.0,
+          "frame": 59,
+          "pause": false
+        },
+        {
+          "rev": 4,
+          "text": "should i bring my",
+          "at": 1.219,
+          "t": 1.0,
+          "frame": 59,
+          "pause": false
+        },
+        {
+          "rev": 5,
+          "text": "should i bring my umbrella?",
+          "at": 2.334,
+          "t": 1.0,
+          "frame": 59,
+          "pause": false
+        },
+        {
+          "rev": 6,
+          "text": "should i bring my umbrella? where",
+          "at": 2.994,
+          "t": 1.0,
+          "frame": 59,
+          "pause": false
+        },
+        {
+          "rev": 7,
+          "text": "should i bring my umbrella? where is",
+          "at": 3.326,
+          "t": 1.0,
+          "frame": 59,
+          "pause": false
+        },
+        {
+          "rev": 8,
+          "text": "should i bring my umbrella? where is it",
+          "at": 3.834,
+          "t": 1.0,
+          "frame": 59,
+          "pause": true
+        }
+      ],
+      "location": {
+        "in": "central-hall-2f"
+      },
+      "taken_rev": 8,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Central corridor · 2F\"],\"looking\":null,\"mods\":[\"Agenda\",\"BookCompanion\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"Send\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 18
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 21
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":208,\"answers\":{\"request__about_0\":{\"type\":\"choice\",\"choice\":\"world\",\"confidence\":0.64,\"probabilities\":{\"here\":0,\"user\":0.27,\"world\":0.73,\"other\":0}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.06},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.59},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.23},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.13},\"request__mod_send__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.98},\"request__about_1\":{\"type\":\"choice\",\"choice\":\"user\",\"confidence\":0.8,\"probabilities\":{\"here\":0.07,\"user\":0.85,\"world\":0.02,\"other\":0.06}},\"request__mod_agenda__q1\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_bookcompanion__q1\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q1\":{\"type\":\"noul\",\"noul\":0.93},\"request__mod_iotcontrol__q1\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_livecoach__q1\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q1\":{\"type\":\"noul\",\"noul\":0.09},\"request__mod_reminder__q1\":{\"type\":\"noul\",\"noul\":0.08},\"request__mod_send__q1\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q1\":{\"type\":\"noul\",\"noul\":0.05},\"request__mod_wayfinding__q1\":{\"type\":\"noul\",\"noul\":0.22},\"request__mod_weather__q1\":{\"type\":\"noul\",\"noul\":0.11}},\"usage\":{\"input_tokens\":2764,\"output_tokens\":620}}",
+          "at": 225
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":209}",
+          "at": 238
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"should i bring my umbrella?\",\"about\":\"world\"},{\"text\":\"where is it\",\"about\":\"user\"}]}",
+          "at": 251
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":null,\"score\":null,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"should i bring my umbrella?\",\"about\":\"outside data\"},{\"text\":\"where is it\",\"about\":\"the user\"}]}",
+          "at": 277
+        },
+        {
+          "kind": "tool",
+          "tool": "view_live",
+          "text": "{\"final\":false,\"pause\":true,\"shown\":[\"findmy\",\"weather\"]}",
+          "at": 288
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"findmy\",0.93],[\"weather\",0.98]]",
+          "at": 292
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.06],[\"BookCompanion\",0.02],[\"FindMy\",0.93],[\"IoTControl\",0.04],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.23],[\"Reminder\",0.13],[\"Send\",0.02],[\"StepGuide\",0.05],[\"Wayfinding\",0.22],[\"Weather\",0.98]],\"skipped\":[\"WorldInfo\",\"LabInfo\"],\"chosen\":[\"FindMy\",\"Weather\"]}",
+          "at": 294
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"FindMy\",\"from\":[\"user:me\"],\"items\":[\"belongings\"]},{\"mod\":\"Weather\",\"from\":[\"feed:weather\"],\"items\":[\"weather forecast\"]}]",
+          "at": 297
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"Weather\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 301
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_weather",
+          "text": "Started",
+          "at": 304
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_findmy",
+          "text": "Started",
+          "at": 306
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 309
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_findmy",
+          "text": "{\"elapsed_ms\":168,\"answers\":{\"item\":{\"type\":\"choice\",\"choice\":\"item_2\",\"confidence\":1,\"probabilities\":{\"not_found\":0,\"ambiguous\":0,\"item_0\":0,\"item_1\":0,\"item_2\":1}}},\"usage\":{\"input_tokens\":886,\"output_tokens\":63}}",
+          "at": 450
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_findmy\",\"elapsed_ms\":169}",
+          "at": 453
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"findmy\",\"selection\":{\"item\":{\"kind\":\"item-location\",\"status\":\"found\",\"item_id\":\"umbrella\"}}}",
+          "at": 456
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"FindMy\",\"selectors\":[{\"name\":\"item\",\"options\":[[\"not_found\",0],[\"ambiguous\",0],[\"To the Lighthouse by Virginia Woolf\",0],[\"Headphones\",0],[\"Umbrella\",1]],\"chosen\":\"Umbrella\"}]}",
+          "at": 459
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"FindMy\",\"parts\":[{\"slot\":\"container\",\"use\":\"highlight\",\"kind\":\"findmy\"}]}",
+          "at": 461
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_weather",
+          "text": "{\"elapsed_ms\":250,\"answers\":{\"entries_date_0\":{\"type\":\"noul\",\"noul\":0.88},\"entries_date_1\":{\"type\":\"noul\",\"noul\":0.09},\"entries_date_2\":{\"type\":\"noul\",\"noul\":0.06},\"entries_date_3\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_4\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_5\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_6\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_7\":{\"type\":\"noul\",\"noul\":0.06},\"entries_date_8\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_9\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_10\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_11\":{\"type\":\"noul\",\"noul\":0.07},\"entries_date_12\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_13\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_14\":{\"type\":\"noul\",\"noul\":0.03},\"entries_date_15\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_16\":{\"type\":\"noul\",\"noul\":0.03},\"entries_date_17\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_18\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_19\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_20\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_21\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_22\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_23\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_24\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_25\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_26\":{\"type\":\"noul\",\"noul\":0.03},\"entries_date_27\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_28\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_29\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_30\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_31\":{\"type\":\"noul\",\"noul\":0.04},\"entries_slot_0\":{\"type\":\"noul\",\"noul\":0.56},\"entries_slot_1\":{\"type\":\"noul\",\"noul\":0.87},\"entries_slot_2\":{\"type\":\"noul\",\"noul\":0.84},\"entries_slot_3\":{\"type\":\"noul\",\"noul\":0.59},\"entries_slot_4\":{\"type\":\"noul\",\"noul\":0.73},\"entries_slot_5\":{\"type\":\"noul\",\"noul\":0.69},\"entries_slot_6\":{\"type\":\"noul\",\"noul\":0.72},\"entries_slot_7\":{\"type\":\"noul\",\"noul\":0.45},\"entries_slot_8\":{\"type\":\"noul\",\"noul\":0.55},\"entries_focus\":{\"type\":\"choice\",\"choice\":\"e0\",\"confidence\":0.71,\"probabilities\":{\"none\":0.18,\"e0\":0.71,",
+          "at": 525
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_weather\",\"elapsed_ms\":250}",
+          "at": 536
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"weather\",\"selection\":{\"entries\":{\"kind\":\"timeseries\",\"ids\":[\"2026-11-18-morning\",\"2026-11-18-afternoon\",\"2026-11-18-evening-18\",\"2026-11-18-evening-23\"],\"layout\":\"weather-timeline\",\"dates\":[\"2026-11-18\"],\"times\":[\"08:00\",\"10:00\",\"11:00\",\"12:00\",\"15:00\",\"17:00\",\"18:00\",\"23:00\"],\"focus\":\"2026-11-18-morning-10\"}}}",
+          "at": 539
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"Weather\",\"selectors\":[{\"name\":\"entries_focus\",\"options\":[[\"Wednesday 2026-11-18, today · morning · Clear skies\",0.71],[\"none\",0.18],[\"Wednesday 2026-11-18, today · evening · Rain showers\",0.1],[\"Wednesday 2026-11-18, today · afternoon · Sun and passing clouds\",0.01],[\"Thursday 2026-11-19, tomorrow · morning · Drifting mist\",0],[\"Thursday 2026-11-19, tomorrow · afternoon · Clear skies\",0]],\"chosen\":\"Wednesday 2026-11-18, today · morning · Clear skies\"},{\"name\":\"entries · days\",\"options\":[[\"2026-11-18\",0.88],[\"2026-11-19\",0.09],[\"2026-11-20\",0.06],[\"2026-11-21\",0.05],[\"2026-11-22\",0.05],[\"2026-11-23\",0.04],[\"2026-11-24\",0.04],[\"2026-11-25\",0.06]],\"chosen\":[\"2026-11-18\"]},{\"name\":\"entries · times\",\"options\":[[\"08:00\",0.56],[\"10:00\",0.87],[\"11:00\",0.84],[\"12:00\",0.59],[\"15:00\",0.73],[\"17:00\",0.69],[\"18:00\",0.72],[\"21:00\",0.45]],\"chosen\":[\"08:00\",\"10:00\",\"11:00\",\"12:00\",\"15:00\",\"17:00\",\"18:00\",\"23:00\"]}]}",
+          "at": 544
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"Weather\",\"parts\":[{\"slot\":\"sky\",\"use\":\"ambient-effect\",\"kind\":\"weather\"}]}",
+          "at": 547
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Yes, bring your umbrella",
+          "at": 1402
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1218,\"first_text_ms\":1109,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":4835,\"total_input_tokens\":4752,\"total_output_tokens\":83,\"total_thought_tokens\":0}}",
+          "at": 1503
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1509
+        }
+      ],
+      "started": 1795021357.4596,
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 1.62
+        },
+        "text": {
+          "response": 4,
+          "latency": 5.603,
+          "status": "complete"
+        }
+      },
+      "mod_parts": {
+        "findmy": {
+          "response": 2,
+          "latency": 2.78
+        },
+        "weather": {
+          "response": 3,
+          "latency": 2.87
+        }
+      },
+      "response": 4,
+      "latency": 5.709,
+      "label": "q-1118-2"
+    }
+  ],
+  "responses": [
+    {
+      "id": 2,
+      "created": 1795021360.23516,
+      "frame": 59,
+      "t": 1.0,
+      "question": "should i bring my umbrella?",
+      "question_id": 10,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "findmy",
+        "variant": "guide",
+        "slot": "container",
+        "settings": {},
+        "ui": {
+          "container": {
+            "use": "highlight",
+            "ui": {
+              "fixed": [
+                "breathingBox"
+              ],
+              "flexible": [
+                {
+                  "cue": "cornerBrackets",
+                  "when": "target.has_content",
+                  "instead_of": "breathingBox"
+                }
+              ]
+            }
+          },
+          "direction": {
+            "use": "guidance",
+            "ui": {
+              "fixed": [],
+              "flexible": [
+                {
+                  "cue": "arrowAhead",
+                  "when": "target.out_of_view & !target.other_room"
+                },
+                {
+                  "cue": "floorPath",
+                  "when": "target.other_room"
+                }
+              ]
+            }
+          }
+        },
+        "facts": {
+          "target.pointed": false,
+          "request.second_person": false,
+          "question.about": "world"
+        }
+      },
+      "findmy": {
+        "version": 1,
+        "mod": "findmy",
+        "status": "found",
+        "item_id": "umbrella",
+        "label": "Umbrella",
+        "target": {
+          "id": "lab-shelf-1",
+          "label": "shelf 1",
+          "center": [
+            3.95,
+            6.69,
+            14.46
+          ],
+          "size": [
+            0.94,
+            2.28,
+            0.53
+          ],
+          "yaw": 90.0
+        },
+        "visual": "box-highlight",
+        "guidance": "when-out-of-view",
+        "occlusion": "hands-only"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "umbrella",
+          "label": "Umbrella",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 2.78,
+      "key": "findmy:findmy"
+    },
+    {
+      "id": 3,
+      "created": 1795021360.327369,
+      "frame": 59,
+      "t": 1.0,
+      "question": "should i bring my umbrella?",
+      "question_id": 10,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "weather",
+        "variant": "full",
+        "slot": "sky",
+        "settings": {
+          "lock": "lock"
+        },
+        "ui": {
+          "sky": {
+            "use": "ambient-effect",
+            "ui": {
+              "fixed": [
+                "ambient:weather"
+              ],
+              "flexible": []
+            }
+          },
+          "controls": {
+            "use": "data-widget",
+            "ui": {
+              "fixed": [],
+              "flexible": [
+                {
+                  "cue": "datePicker",
+                  "when": "data.days>1"
+                },
+                {
+                  "cue": "playback",
+                  "when": "data.steps_per_day>1"
+                }
+              ]
+            }
+          }
+        },
+        "facts": {
+          "target.pointed": false,
+          "request.second_person": false,
+          "question.about": "world",
+          "data.days": 1,
+          "data.steps_per_day": 8
+        }
+      },
+      "weather": {
+        "version": 2,
+        "mod": "weather",
+        "mock": true,
+        "forecast": [
+          {
+            "id": "2026-11-18-morning",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "morning",
+            "time": "08:00",
+            "label": "Wednesday, Nov 18 · morning",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 9.0,
+            "night": false,
+            "intensity": 0.28,
+            "wind_kph": 3,
+            "samples": [
+              {
+                "id": "2026-11-18-morning-08",
+                "date": "2026-11-18",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "morning",
+                "time": "08:00",
+                "label": "2026-11-18 08:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 7.8,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 3,
+                "parent_id": "2026-11-18-morning",
+                "local_time": "08:00"
+              },
+              {
+                "id": "2026-11-18-morning-10",
+                "date": "2026-11-18",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "morning",
+                "time": "10:00",
+                "label": "2026-11-18 10:00",
+                "condition": "clear",
+                "summary": "Clear skies",
+                "temp_c": 9.0,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 3,
+                "parent_id": "2026-11-18-morning",
+                "local_time": "10:00"
+              },
+              {
+                "id": "2026-11-18-morning-11",
+                "date": "2026-11-18",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "morning",
+                "time": "11:00",
+                "label": "2026-11-18 11:00",
+                "condition": "storm",
+                "summary": "Thunder showers",
+                "temp_c": 10.2,
+                "night": false,
+                "intensity": 0.62,
+                "wind_kph": 3,
+                "parent_id": "2026-11-18-morning",
+                "local_time": "11:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-11-18-afternoon",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "afternoon",
+            "time": "14:00",
+            "label": "Wednesday, Nov 18 · afternoon",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 17.0,
+            "night": false,
+            "intensity": 0.37,
+            "wind_kph": 8,
+            "samples": [
+              {
+                "id": "2026-11-18-afternoon-12",
+                "date": "2026-11-18",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "afternoon",
+                "time": "12:00",
+                "label": "2026-11-18 12:00",
+                "condition": "cloudy",
+                "summary": "Cloudy skies",
+                "temp_c": 15.8,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 8,
+                "parent_id": "2026-11-18-afternoon",
+                "local_time": "12:00"
+              },
+              {
+                "id": "2026-11-18-afternoon-15",
+                "date": "2026-11-18",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "afternoon",
+                "time": "15:00",
+                "label": "2026-11-18 15:00",
+                "condition": "partly_cloudy",
+                "summary": "Sun and passing clouds",
+                "temp_c": 17.0,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 8,
+                "parent_id": "2026-11-18-afternoon",
+                "local_time": "15:00"
+              },
+              {
+                "id": "2026-11-18-afternoon-17",
+                "date": "2026-11-18",
+                "day_offset": 0,
+                "day_label": "Today",
+                "period": "afternoon",
+                "time": "17:00",
+                "label": "2026-11-18 17:00",
+                "condition": "clear",
+                "summary": "Clear skies",
+                "temp_c": 18.2,
+                "night": false,
+                "intensity": 0.3,
+                "wind_kph": 8,
+                "parent_id": "2026-11-18-afternoon",
+                "local_time": "17:00"
+              }
+            ]
+          },
+          {
+            "id": "2026-11-18-evening-18",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "18:00",
+            "label": "2026-11-18 18:00",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": 5.8,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 13,
+            "parent_id": "2026-11-18-evening",
+            "local_time": "18:00"
+          },
+          {
+            "id": "2026-11-18-evening-23",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "23:00",
+            "label": "2026-11-18 23:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 8.2,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 13,
+            "parent_id": "2026-11-18-evening",
+            "local_time": "23:00"
+          }
+        ],
+        "timeline": [
+          {
+            "id": "2026-11-18-morning-08",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "morning",
+            "time": "08:00",
+            "label": "2026-11-18 08:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 7.8,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 3,
+            "parent_id": "2026-11-18-morning",
+            "local_time": "08:00"
+          },
+          {
+            "id": "2026-11-18-morning-10",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "morning",
+            "time": "10:00",
+            "label": "2026-11-18 10:00",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 9.0,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 3,
+            "parent_id": "2026-11-18-morning",
+            "local_time": "10:00"
+          },
+          {
+            "id": "2026-11-18-morning-11",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "morning",
+            "time": "11:00",
+            "label": "2026-11-18 11:00",
+            "condition": "storm",
+            "summary": "Thunder showers",
+            "temp_c": 10.2,
+            "night": false,
+            "intensity": 0.62,
+            "wind_kph": 3,
+            "parent_id": "2026-11-18-morning",
+            "local_time": "11:00"
+          },
+          {
+            "id": "2026-11-18-afternoon-12",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "afternoon",
+            "time": "12:00",
+            "label": "2026-11-18 12:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 15.8,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 8,
+            "parent_id": "2026-11-18-afternoon",
+            "local_time": "12:00"
+          },
+          {
+            "id": "2026-11-18-afternoon-15",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "afternoon",
+            "time": "15:00",
+            "label": "2026-11-18 15:00",
+            "condition": "partly_cloudy",
+            "summary": "Sun and passing clouds",
+            "temp_c": 17.0,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 8,
+            "parent_id": "2026-11-18-afternoon",
+            "local_time": "15:00"
+          },
+          {
+            "id": "2026-11-18-afternoon-17",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "afternoon",
+            "time": "17:00",
+            "label": "2026-11-18 17:00",
+            "condition": "clear",
+            "summary": "Clear skies",
+            "temp_c": 18.2,
+            "night": false,
+            "intensity": 0.3,
+            "wind_kph": 8,
+            "parent_id": "2026-11-18-afternoon",
+            "local_time": "17:00"
+          },
+          {
+            "id": "2026-11-18-evening-18",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "18:00",
+            "label": "2026-11-18 18:00",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": 5.8,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 13,
+            "parent_id": "2026-11-18-evening",
+            "local_time": "18:00"
+          },
+          {
+            "id": "2026-11-18-evening-23",
+            "date": "2026-11-18",
+            "day_offset": 0,
+            "day_label": "Today",
+            "period": "evening",
+            "time": "23:00",
+            "label": "2026-11-18 23:00",
+            "condition": "cloudy",
+            "summary": "Cloudy skies",
+            "temp_c": 8.2,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 13,
+            "parent_id": "2026-11-18-evening",
+            "local_time": "23:00"
+          }
+        ],
+        "preview": {
+          "component": "weather-timeline",
+          "autoplay": true,
+          "seconds_per_period": 8,
+          "dates": [
+            "2026-11-18"
+          ],
+          "focus": "2026-11-18-morning-10"
+        },
+        "presentation": {
+          "anchor": "user-view",
+          "background": "composited-scene",
+          "tracking": "recording-timeline",
+          "style": "adaptive"
+        }
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 2.87,
+      "key": "weather:weather"
+    },
+    {
+      "id": 4,
+      "created": 1795021363.06212,
+      "frame": 59,
+      "t": 1.0,
+      "question": "should i bring my umbrella? where is it",
+      "question_id": 10,
+      "part": "text",
+      "layout_slot": 1,
+      "latency": 5.603,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 5.603,
+            "created": 1795021363.06212,
+            "title": "Yes, bring your umbrella",
+            "body": "Bring your umbrella because evening rain showers are expected. It is on shelf ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 5.709,
+            "created": 1795021363.168975,
+            "title": "Yes, bring your umbrella",
+            "body": "Bring your umbrella because evening rain showers are expected. It is on shelf 1.",
+            "anchor": {
+              "object": "shelf 1",
+              "relation": "on"
+            },
+            "referenced_entities": [
+              {
+                "item_id": "umbrella",
+                "label": "Umbrella",
+                "context_groups": [
+                  "storage"
+                ]
+              }
+            ]
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Yes, bring your umbrella",
+      "body": "Bring your umbrella because evening rain showers are expected. It is on shelf 1.",
+      "items": [],
+      "anchor": {
+        "object": "shelf 1",
+        "relation": "on"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "umbrella",
+          "label": "Umbrella",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "reserve_text": true,
+      "text_ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      },
+      "text_mod": {
+        "id": "weather",
+        "settings": {
+          "duration": "stay"
+        }
+      }
+    }
+  ],
+  "retired_id": 1
+}

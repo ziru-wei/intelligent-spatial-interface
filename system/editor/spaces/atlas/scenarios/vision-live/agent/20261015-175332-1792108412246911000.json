@@ -1,0 +1,182 @@
+{
+  "id": "20261015-175332-1792108412246911000",
+  "name": "Vision Pro",
+  "created": 1792108412.246989,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 8,
+      "text": "What's this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792108544.856707,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "findmy": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "layout:kitchen-upper-fridge_0",
+        "key": "music-brain user study",
+        "score": 0.938,
+        "cues": {
+          "gaze": 0.897,
+          "point": 0.955,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          -0.047906845808029175,
+          7.0992584228515625,
+          7.587896347045898
+        ],
+        "quaternion": [
+          0.22546686232089996,
+          0.028274215757846832,
+          -0.007855570875108242,
+          0.973808765411377
+        ],
+        "forward": [
+          -0.051525016446347244,
+          0.43956743388743275,
+          -0.8967305254368941
+        ]
+      },
+      "started": 1792108544.864241,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:kitchen-upper-fridge_0\",\"key\":\"music-brain user study\",\"score\":0.938,\"cues\":{\"gaze\":0.897,\"point\":0.955,\"touch\":0},\"mode\":\"score\"}",
+          "at": 8
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"music-brain user study\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 14
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"music-brain user study\",\"value\":\"text\"}",
+          "at": 17
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 19
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Music Brain ",
+          "at": 1158
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1549,\"first_text_ms\":1133,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":631,\"total_input_tokens\":552,\"total_output_tokens\":79,\"total_thought_tokens\":0}}",
+          "at": 1565
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1580
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.159,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.59,
+      "info": {
+        "key": "music-brain user study",
+        "source": "selection",
+        "interaction_id": "v1_ChZBV2pSYXRYT0JwZnktOFlQNm9tbWFBEhZBV2pSYXRYT0JwZnktOFlQNm9tbWFB"
+      },
+      "message": "Music Brain User Study",
+      "finished": 1792108546.458972,
+      "duration": 1.6
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792108546.023018,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's this",
+      "question_id": 8,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.159,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.159,
+            "created": 1792108546.023018,
+            "title": "Music Brain ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.283,
+            "created": 1792108546.14769,
+            "title": "Music Brain User Study",
+            "body": "This is a brain music lab user study where you can scan to sign up after reading eligibility requirements.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.581,
+            "created": 1792108546.444915,
+            "title": "Music Brain User Study",
+            "body": "This is a brain music lab user study where you can scan to sign up after reading eligibility requirements.",
+            "anchor": {
+              "object": "music-brain user study",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Music Brain User Study",
+      "body": "This is a brain music lab user study where you can scan to sign up after reading eligibility requirements.",
+      "items": [],
+      "anchor": {
+        "object": "music-brain user study",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "music-brain user study",
+        "box_id": "layout:kitchen-upper-fridge_0"
+      }
+    }
+  ]
+}

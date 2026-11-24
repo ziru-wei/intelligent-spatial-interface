@@ -1,0 +1,345 @@
+{
+  "id": "20261015-183235-1792110755989139000",
+  "name": "Vision Pro",
+  "created": 1792110755.989206,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 14,
+      "text": "What's this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792111241.3150988,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "findmy": true,
+        "default": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_1",
+        "key": "lab philosophy",
+        "score": 0.891,
+        "cues": {
+          "gaze": 0.911,
+          "point": 0.85,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          7.027002811431885,
+          7.067408084869385,
+          15.294365882873535
+        ],
+        "quaternion": [
+          -0.026432184502482414,
+          0.9980766773223877,
+          -0.006030562333762646,
+          -0.05574809014797211
+        ],
+        "forward": [
+          0.11096293529139441,
+          0.014985014841839173,
+          0.9937114283849418
+        ]
+      },
+      "started": 1792111241.329162,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:lab-shelf-3_1\",\"key\":\"lab philosophy\",\"score\":0.891,\"cues\":{\"gaze\":0.911,\"point\":0.85,\"touch\":0},\"mode\":\"score\"}",
+          "at": 6
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"lab philosophy\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 11
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"lab philosophy\",\"value\":\"file attached\",\"file\":\"Programmable Reality Lab.pdf\"}",
+          "at": 18
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 21
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab Philosophy",
+          "at": 2977
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":3406,\"first_text_ms\":2943,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":5832,\"total_input_tokens\":5744,\"total_output_tokens\":88,\"total_thought_tokens\":0},\"files\":1}",
+          "at": 3423
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 3446
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 2.976,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 3.46,
+      "info": {
+        "key": "lab philosophy",
+        "source": "selection",
+        "interaction_id": "v1_ChdpWExSYXRfcEo5YTczOUlQc2ZDZmdBcxIXaVhMUmF0X3BKOWE3MzlJUHNmQ2ZnQXM"
+      },
+      "message": "Programmable Reality Lab Philosophy",
+      "finished": 1792111244.788361,
+      "duration": 3.5
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 15,
+      "text": "What's this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792111260.009511,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "default": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_0",
+        "key": "vision_sean",
+        "score": 0.672,
+        "cues": {
+          "gaze": 0.896,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          6.176071643829346,
+          7.07672119140625,
+          15.399216651916504
+        ],
+        "quaternion": [
+          -0.01620592176914215,
+          0.9931830167770386,
+          -0.11444703489542007,
+          0.015057998709380627
+        ],
+        "forward": [
+          -0.03362013655806573,
+          0.2268456452590725,
+          0.9733502734294537
+        ]
+      },
+      "started": 1792111260.0173628,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:lab-shelf-3_0\",\"key\":\"vision_sean\",\"score\":0.672,\"cues\":{\"gaze\":0.896,\"point\":0,\"touch\":0},\"mode\":\"score\"}",
+          "at": 6
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"vision_sean\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 10
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"vision_sean\",\"value\":\"text\"}",
+          "at": 12
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 14
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Sean's Research Philosophy",
+          "at": 1440
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1891,\"first_text_ms\":1418,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":673,\"total_input_tokens\":601,\"total_output_tokens\":72,\"total_thought_tokens\":0}}",
+          "at": 1900
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1923
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 2,
+          "latency": 1.44,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 1.94,
+      "info": {
+        "key": "vision_sean",
+        "source": "selection",
+        "interaction_id": "v1_ChduSExSYXRLeEY2aTkzOUlQaU5ySWlRRRIXbkhMUmF0S3hGNmk5MzlJUGlOcklpUUU"
+      },
+      "message": "Sean's Research Philosophy",
+      "finished": 1792111261.9525912,
+      "duration": 1.9
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792111244.305634,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's this",
+      "question_id": 14,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 2.976,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 2.976,
+            "created": 1792111244.305634,
+            "title": "Programmable Reality Lab Philosophy",
+            "body": "This document describes the Programmable Reality Lab's philosophy, ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 3.132,
+            "created": 1792111244.4607081,
+            "title": "Programmable Reality Lab Philosophy",
+            "body": "This document describes the Programmable Reality Lab's philosophy, culture, guidelines, research processes, and funding practices by Ryo Suzuki.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 3.434,
+            "created": 1792111244.763635,
+            "title": "Programmable Reality Lab Philosophy",
+            "body": "This document describes the Programmable Reality Lab's philosophy, culture, guidelines, research processes, and funding practices by Ryo Suzuki.",
+            "anchor": {
+              "object": "Programmable Reality Lab.pdf",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab Philosophy",
+      "body": "This document describes the Programmable Reality Lab's philosophy, culture, guidelines, research processes, and funding practices by Ryo Suzuki.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab.pdf",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "lab philosophy",
+        "box_id": "layout:lab-shelf-3_1"
+      }
+    },
+    {
+      "id": 2,
+      "created": 1792111261.457172,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's this",
+      "question_id": 15,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.44,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.44,
+            "created": 1792111261.457172,
+            "title": "Sean's Research Philosophy",
+            "body": "It is Sean's research philosophy, which emphasizes ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.913,
+            "created": 1792111261.930047,
+            "title": "Sean's Research Philosophy",
+            "body": "It is Sean's research philosophy, which emphasizes that self-efficacy matters.",
+            "anchor": {
+              "object": "document",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Sean's Research Philosophy",
+      "body": "It is Sean's research philosophy, which emphasizes that self-efficacy matters.",
+      "items": [],
+      "anchor": {
+        "object": "document",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "vision_sean",
+        "box_id": "layout:lab-shelf-3_0"
+      }
+    }
+  ]
+}

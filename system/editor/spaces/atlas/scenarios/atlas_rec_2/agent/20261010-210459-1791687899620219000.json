@@ -1,0 +1,311 @@
+{
+  "id": "20261010-210459-1791687899620219000",
+  "name": "2026-10-10 21:04:59",
+  "created": 1791687899.62026,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 1,
+      "text": "can you tell me more about the speaker of this talk?",
+      "frame": 431,
+      "t": 7.187858833000064,
+      "status": "answered",
+      "created": 1791746122.5130398,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "custom_0",
+        "key": "Poster of Anastasia's Talk",
+        "score": 0.75,
+        "cues": {
+          "gaze": 1.0,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "started": 1791746122.514185,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"custom_0\",\"key\":\"Poster of Anastasia's Talk\",\"score\":0.75,\"cues\":{\"gaze\":1,\"point\":0,\"touch\":0},\"mode\":\"score\"}",
+          "at": 16
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"Poster of Anastasia's Talk\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 19
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"Poster of Anastasia's Talk\",\"value\":\"text\"}",
+          "at": 20
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 21
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Speaker Background",
+          "at": 2250
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":2843,\"first_text_ms\":2226,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":555,\"total_input_tokens\":465,\"total_output_tokens\":90,\"total_thought_tokens\":0}}",
+          "at": 2861
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2863
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 2.249,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 2.87,
+      "info": {
+        "key": "Poster of Anastasia's Talk",
+        "source": "selection",
+        "interaction_id": "v1_ChdTLURMYW96RUVfalZ6N0lQbzRyZ2dRNBIXUy1ETGFvekVFX2pWejdJUG80cmdnUTQ"
+      },
+      "message": "Speaker Background",
+      "finished": 1791746125.379754,
+      "duration": 2.9
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 2,
+      "text": "what's the overall research focus here?",
+      "frame": 1049,
+      "t": 17.494329832989024,
+      "status": "answered",
+      "created": 1791746826.301671,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "custom_1",
+        "key": "ATLAS labs booklet",
+        "score": 0.75,
+        "cues": {
+          "gaze": 1.0,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "started": 1791746826.303645,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"custom_1\",\"key\":\"ATLAS labs booklet\",\"score\":0.75,\"cues\":{\"gaze\":1,\"point\":0,\"touch\":0},\"mode\":\"score\"}",
+          "at": 16
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"ATLAS labs booklet\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 19
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"ATLAS labs booklet\",\"value\":\"text\"}",
+          "at": 20
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 22
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Overall Research Focus",
+          "at": 1762
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":2306,\"first_text_ms\":1736,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":697,\"total_input_tokens\":621,\"total_output_tokens\":76,\"total_thought_tokens\":0}}",
+          "at": 2326
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2334
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 2,
+          "latency": 1.761,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 2.34,
+      "info": {
+        "key": "ATLAS labs booklet",
+        "source": "selection",
+        "interaction_id": "v1_ChdDdVBMYXVUa003UFV6N0lQbm9MTzBRMBIXQ3VQTGF1VGtNN1BVejdJUG5vTE8wUTA"
+      },
+      "message": "Overall Research Focus",
+      "finished": 1791746828.6449878,
+      "duration": 2.3
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1791746124.762774,
+      "frame": 431,
+      "t": 7.187858833000064,
+      "question": "can you tell me more about the speaker of this talk?",
+      "question_id": 1,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 2.249,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 2.249,
+            "created": 1791746124.762774,
+            "title": "Speaker Background",
+            "body": "Anastasia Kouvaras Ostrowski is an Assistant Professor at Purdue ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 2.377,
+            "created": 1791746124.891215,
+            "title": "Speaker Background",
+            "body": "Anastasia Kouvaras Ostrowski is an Assistant Professor at Purdue and former MIT Media Lab researcher focusing on HRI, HCI, and Human-Centered AI.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 2.863,
+            "created": 1791746125.3775969,
+            "title": "Speaker Background",
+            "body": "Anastasia Kouvaras Ostrowski is an Assistant Professor at Purdue and former MIT Media Lab researcher focusing on HRI, HCI, and Human-Centered AI.",
+            "anchor": {
+              "object": "Poster of Anastasia's Talk",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Speaker Background",
+      "body": "Anastasia Kouvaras Ostrowski is an Assistant Professor at Purdue and former MIT Media Lab researcher focusing on HRI, HCI, and Human-Centered AI.",
+      "items": [],
+      "anchor": {
+        "object": "Poster of Anastasia's Talk",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "Poster of Anastasia's Talk",
+        "box_id": "custom_0"
+      }
+    },
+    {
+      "id": 2,
+      "created": 1791746828.064244,
+      "frame": 1049,
+      "t": 17.494329832989024,
+      "question": "what's the overall research focus here?",
+      "question_id": 2,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.761,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.761,
+            "created": 1791746828.064244,
+            "title": "Overall Research Focus",
+            "body": "The overall focus is HCI, creative technology, physical computing, material innovation, and interdisciplinary design research.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 2.331,
+            "created": 1791746828.634408,
+            "title": "Overall Research Focus",
+            "body": "The overall focus is HCI, creative technology, physical computing, material innovation, and interdisciplinary design research.",
+            "anchor": {
+              "object": "booklet",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Overall Research Focus",
+      "body": "The overall focus is HCI, creative technology, physical computing, material innovation, and interdisciplinary design research.",
+      "items": [],
+      "anchor": {
+        "object": "booklet",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "ATLAS labs booklet",
+        "box_id": "custom_1"
+      }
+    }
+  ]
+}

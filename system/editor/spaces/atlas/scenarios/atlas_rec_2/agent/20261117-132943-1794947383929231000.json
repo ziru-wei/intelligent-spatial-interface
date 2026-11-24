@@ -1,0 +1,54 @@
+{
+  "id": "20261117-132943-1794947383929231000",
+  "name": "2026-11-17 13:29:43",
+  "created": 1794947383.929256,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 15,
+      "text": "Do I need an umbrella tonight?",
+      "frame": 59,
+      "t": 0.9839533749909606,
+      "status": "failed",
+      "created": 1794947386.959677,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "layout:custom_1",
+        "key": "ATLAS labs booklet",
+        "score": 0.558,
+        "cues": {
+          "gaze": 0.745,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "north-hall-2f"
+      },
+      "started": 1794947386.962218,
+      "trace": [
+        {
+          "kind": "error",
+          "tool": "pipeline_error",
+          "text": "MOD agenda: slot answer decides on unknown fact 'surface.score'.",
+          "at": 11
+        }
+      ],
+      "message": "MOD agenda: slot answer decides on unknown fact 'surface.score'.",
+      "finished": 1794947386.9769468,
+      "duration": 0.0
+    }
+  ],
+  "responses": []
+}

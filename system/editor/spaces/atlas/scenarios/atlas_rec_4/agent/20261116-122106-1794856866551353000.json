@@ -1,0 +1,332 @@
+{
+  "id": "20261116-122106-1794856866551353000",
+  "name": "2026-11-16 12:21:06",
+  "created": 1794856866.551404,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 9,
+      "text": "How do I get to the kitchen?",
+      "frame": 59,
+      "t": 0.9837447080062702,
+      "status": "answered",
+      "created": 1794856869.598895,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_0",
+        "key": "vision_sean",
+        "score": 0.75,
+        "cues": {
+          "gaze": 1.0,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794856869.600943,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 19
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"vision_sean\",\"mods\":[\"Agenda\",\"BookCompanion\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 22
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 24
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":364,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.97,\"probabilities\":{\"labResearchWork\":0,\"labResearchLife\":0.02,\"none\":0.98}}},\"usage\":{\"input_tokens\":673,\"output_tokens\":48}}",
+          "at": 382
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":365}",
+          "at": 391
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 398
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0],[\"labResearchLife\",0.02],[\"none\",0.98]],\"chosen\":\"none\"}]}",
+          "at": 403
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":364,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.07},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"other\",\"confidence\":0.77,\"probabilities\":{\"referent\":0,\"here\":0.18,\"user\":0,\"world\":0,\"other\":0.82}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.05},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.05},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.31},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.98},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.04}},\"usage\":{\"input_tokens\":1505,\"output_tokens\":345}}",
+          "at": 409
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":364}",
+          "at": 415
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"How do I get to the kitchen?\",\"about\":\"other\"}]}",
+          "at": 419
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"vision_sean\",\"score\":0.07,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"How do I get to the kitchen?\",\"about\":\"something else\"}]}",
+          "at": 425
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"wayfinding\",0.98]]",
+          "at": 427
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.01],[\"BookCompanion\",0.01],[\"FindMy\",0.05],[\"IoTControl\",0.02],[\"LiveCoach\",0.02],[\"ObjectStatus\",0.05],[\"Reminder\",0.02],[\"StepGuide\",0.31],[\"Wayfinding\",0.98],[\"Weather\",0.01],[\"LabInfo\",0.04]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"Wayfinding\"]}",
+          "at": 428
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"Wayfinding\",\"from\":[\"8 places\"],\"items\":[\"directory:2f\",\"Programmable Reality Lab\",\"PRL research theme\",\"PRL philosophy\"]}]",
+          "at": 429
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"Wayfinding\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 430
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_wayfinding",
+          "text": "Started",
+          "at": 432
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 432
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_wayfinding",
+          "text": "{\"elapsed_ms\":160,\"answers\":{\"place\":{\"type\":\"choice\",\"choice\":\"p0\",\"confidence\":1,\"probabilities\":{\"none\":0,\"p0\":1,\"p1\":0,\"p2\":0,\"p3\":0,\"p4\":0,\"p5\":0,\"p6\":0}}},\"usage\":{\"input_tokens\":630,\"output_tokens\":81}}",
+          "at": 545
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_wayfinding\",\"elapsed_ms\":160}",
+          "at": 548
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"wayfinding\",\"selection\":{\"place\":{\"kind\":\"place\",\"entity\":\"zone:kitchen-2f\"}}}",
+          "at": 558
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"Wayfinding\",\"selectors\":[{\"name\":\"place\",\"options\":[[\"Kitchen · 2F\",1],[\"none\",0],[\"North corridor · 2F\",0],[\"Stair landing · 2F\",0],[\"Central corridor · 2F\",0],[\"Lab corridor · 2F\",0]],\"chosen\":\"Kitchen · 2F\"}]}",
+          "at": 561
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"Wayfinding\",\"parts\":[{\"slot\":\"door\",\"use\":\"highlight\",\"kind\":\"highlight\"},{\"slot\":\"direction\",\"use\":\"guidance\",\"kind\":\"highlight\"},{\"slot\":\"sign\",\"use\":\"label\",\"kind\":\"highlight\"}]}",
+          "at": 563
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "UI ready",
+          "at": 564
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Kitchen Directions",
+          "at": 1237
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":968,\"first_text_ms\":811,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1586,\"total_input_tokens\":1503,\"total_output_tokens\":83,\"total_thought_tokens\":0}}",
+          "at": 1392
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1395
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 0.55
+        },
+        "text": {
+          "response": 2,
+          "latency": 1.239,
+          "status": "complete"
+        }
+      },
+      "mod_parts": {
+        "highlight": {
+          "response": 1,
+          "latency": 0.55
+        }
+      },
+      "response": 2,
+      "latency": 1.4,
+      "message": "Kitchen Directions",
+      "finished": 1794856871.001507,
+      "duration": 1.4
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794856870.152676,
+      "frame": 59,
+      "t": 0.9837447080062702,
+      "question": "How do I get to the kitchen?",
+      "question_id": 9,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "wayfinding",
+        "variant": "guide",
+        "slot": "door",
+        "settings": {
+          "dismiss": "never"
+        }
+      },
+      "highlight": {
+        "version": 1,
+        "targets": [
+          {
+            "id": "layout:kitchen-south-entry",
+            "label": "Kitchen · 2F",
+            "of": "zone:kitchen-2f",
+            "center": [
+              1.619,
+              6.549,
+              10.696
+            ],
+            "size": [
+              1.02,
+              2.18,
+              0.1
+            ],
+            "yaw": 90.1,
+            "tone": "attention"
+          }
+        ],
+        "guidance": true,
+        "label": true
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.55
+    },
+    {
+      "id": 2,
+      "created": 1794856870.840409,
+      "frame": 59,
+      "t": 0.9837447080062702,
+      "question": "How do I get to the kitchen?",
+      "question_id": 9,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.239,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.239,
+            "created": 1794856870.840409,
+            "title": "Kitchen Directions",
+            "body": "The kitchen is located off the central corridor on its west side and ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.34,
+            "created": 1794856870.9411452,
+            "title": "Kitchen Directions",
+            "body": "The kitchen is located off the central corridor on its west side and features two doors.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.397,
+            "created": 1794856870.9977012,
+            "title": "Kitchen Directions",
+            "body": "The kitchen is located off the central corridor on its west side and features two doors.",
+            "anchor": {
+              "object": "central corridor",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Kitchen Directions",
+      "body": "The kitchen is located off the central corridor on its west side and features two doors.",
+      "items": [],
+      "anchor": {
+        "object": "central corridor",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

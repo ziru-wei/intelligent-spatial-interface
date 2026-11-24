@@ -1,0 +1,21 @@
+{
+ "name": "water",
+ "kind": "gltf",
+ "entry": "model.glb",
+ "category": "opportunistic",
+ "scope": "recording",
+ "defaultScale": 0.3812,
+ "origin": "reco_hallway",
+ "pose": {
+  "position": [
+   2.2102,
+   0.1958,
+   -0.3925
+  ],
+  "rotation": [
+   -9.92,
+   -28.36,
+   -20.23
+  ]
+ }
+}

@@ -1,0 +1,2139 @@
+{
+  "id": "20261015-211717-1792120637849300000",
+  "name": "Vision Pro",
+  "created": 1792120637.84937,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 66,
+      "text": "What's this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792120637.990984,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "findmy": true,
+        "default": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_0",
+        "key": "vision_sean",
+        "score": 0.826,
+        "cues": {
+          "gaze": 0.937,
+          "point": 0.874,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          7.047680377960205,
+          7.0665764808654785,
+          14.688661575317383
+        ],
+        "quaternion": [
+          -0.03232693672180176,
+          0.9592885971069336,
+          0.041936684399843216,
+          0.2774197459220886
+        ],
+        "forward": [
+          -0.5295398286648929,
+          -0.09839502743408701,
+          0.8425592867544083
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792120638.009004,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:lab-shelf-3_0\",\"key\":\"vision_sean\",\"score\":0.826,\"cues\":{\"gaze\":0.937,\"point\":0.874,\"touch\":0},\"mode\":\"score\"}",
+          "at": 6
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"vision_sean\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 21
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 26
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":440,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.48,\"probabilities\":{\"labResearchLife\":0.01,\"labResearchWork\":0.34,\"none\":0.65}},\"section_members\":{\"type\":\"noul\",\"noul\":0.58},\"section_theme\":{\"type\":\"noul\",\"noul\":0.49},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.29}},\"usage\":{\"input_tokens\":1383,\"output_tokens\":102}}",
+          "at": 445
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":0.65,\"sections\":[\"members\"],\"scores\":{\"members\":0.58,\"theme\":0.49,\"philosophy\":0.29}}",
+          "at": 462
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"vision_sean\",\"value\":\"text\"}",
+          "at": 473
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 477
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Sean's Research Philosophy",
+          "at": 2053
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1826,\"first_text_ms\":1559,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":606,\"total_input_tokens\":536,\"total_output_tokens\":70,\"total_thought_tokens\":0}}",
+          "at": 2296
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2327
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 2.05,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 2.35,
+      "info": {
+        "key": "vision_sean",
+        "source": "selection",
+        "interaction_id": "v1_ChZQcGZSYXJIZVBKejUtOFlQbGQ2R2FREhZQcGZSYXJIZVBKejUtOFlQbGQ2R2FR"
+      },
+      "message": "Sean's Research Philosophy",
+      "finished": 1792120640.357707,
+      "duration": 2.3
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 67,
+      "text": "Can you tell me more about",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792120660.654093,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "findmy": true,
+        "default": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_1",
+        "key": "lab philosophy",
+        "score": 0.607,
+        "cues": {
+          "gaze": 0.921,
+          "point": 0.883,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          7.078873634338379,
+          7.068787574768066,
+          14.660614013671875
+        ],
+        "quaternion": [
+          0.01820494793355465,
+          0.9979885816574097,
+          -0.02672945335507393,
+          0.054523903876543045
+        ],
+        "forward": [
+          -0.10785525037910927,
+          0.05533658814702945,
+          0.9926252584956634
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792120660.666982,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:lab-shelf-3_1\",\"key\":\"lab philosophy\",\"score\":0.607,\"cues\":{\"gaze\":0.921,\"point\":0.883,\"touch\":0},\"mode\":\"score\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"lab philosophy\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 12
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 17
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":216,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.2,\"probabilities\":{\"labResearchLife\":0.16,\"labResearchWork\":0.37,\"none\":0.47}},\"section_members\":{\"type\":\"noul\",\"noul\":0.73},\"section_theme\":{\"type\":\"noul\",\"noul\":0.67},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.62}},\"usage\":{\"input_tokens\":1460,\"output_tokens\":102}}",
+          "at": 222
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":0.47,\"sections\":[\"members\",\"theme\",\"philosophy\"],\"scores\":{\"members\":0.73,\"theme\":0.67,\"philosophy\":0.62}}",
+          "at": 245
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_info",
+          "text": "{\"zone\":\"lab-2f\",\"parts\":[\"members\",\"theme\",\"philosophy\"]}",
+          "at": 280
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"lab philosophy\",\"value\":\"zone parts\",\"parts\":[\"members\",\"theme\",\"philosophy\"]}",
+          "at": 286
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 291
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Lab Philosophy",
+          "at": 1839
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1955,\"first_text_ms\":1536,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1434,\"total_input_tokens\":1357,\"total_output_tokens\":77,\"total_thought_tokens\":0}}",
+          "at": 2235
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2265
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 2,
+          "latency": 1.836,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 2.29,
+      "info": {
+        "key": "lab philosophy",
+        "source": "selection",
+        "interaction_id": "v1_ChdWWmZSYXRpU0dfS3kxTWtQcTg2N2dBbxIXVlpmUmF0aVNHX0t5MU1rUHE4NjdnQW8"
+      },
+      "message": "Lab Philosophy",
+      "finished": 1792120662.952545,
+      "duration": 2.3
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 68,
+      "text": "OK I'm curious about this lab now can you tell me more about what they're are",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792120678.316424,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_1",
+        "key": "lab philosophy",
+        "score": 0.661,
+        "cues": {
+          "gaze": 0.974,
+          "point": 0.393,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          7.089934825897217,
+          7.0600175857543945,
+          14.71780014038086
+        ],
+        "quaternion": [
+          -0.05706465244293213,
+          0.9980092644691467,
+          0.026477746665477753,
+          0.0044629876501858234
+        ],
+        "forward": [
+          -0.005886319222318692,
+          -0.053359430627057614,
+          0.9985577330493598
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792120678.3299341,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:lab-shelf-3_1\",\"key\":\"lab philosophy\",\"score\":0.661,\"cues\":{\"gaze\":0.974,\"point\":0.393,\"touch\":0},\"mode\":\"score\"}",
+          "at": 8
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"lab philosophy\",\"source\":\"selection\",\"continue\":true,\"selected\":null,\"follow_up\":null}",
+          "at": 15
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 20
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":741,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"labResearchWork\",\"confidence\":0.27,\"probabilities\":{\"labResearchLife\":0.14,\"labResearchWork\":0.51,\"none\":0.35}},\"section_members\":{\"type\":\"noul\",\"noul\":0.78},\"section_theme\":{\"type\":\"noul\",\"noul\":0.7},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.73}},\"usage\":{\"input_tokens\":1560,\"output_tokens\":107}}",
+          "at": 749
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"labResearchWork\",\"probability\":0.51,\"sections\":[\"members\",\"theme\",\"philosophy\"],\"scores\":{\"members\":0.78,\"theme\":0.7,\"philosophy\":0.73}}",
+          "at": 780
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 787
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_info",
+          "text": "{\"zone\":\"lab-2f\",\"parts\":[\"members\",\"theme\",\"philosophy\"]}",
+          "at": 798
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"lab philosophy\",\"value\":\"zone parts\",\"parts\":[\"members\",\"theme\",\"philosophy\"]}",
+          "at": 804
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 809
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab Overview",
+          "at": 2779
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":2182,\"first_text_ms\":1952,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1523,\"total_input_tokens\":1431,\"total_output_tokens\":92,\"total_thought_tokens\":0}}",
+          "at": 2980
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 3010
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 3,
+          "latency": 0.77
+        },
+        "text": {
+          "response": 4,
+          "latency": 2.777,
+          "status": "complete"
+        }
+      },
+      "response": 4,
+      "latency": 3.03,
+      "info": {
+        "key": "lab philosophy",
+        "source": "selection",
+        "interaction_id": "v1_ChdaNWZSYXVLaEtmTEhqTWNQM2VqeW1BTRIXWjVmUmF1S2hLZkxIak1jUDNlanltQU0"
+      },
+      "message": "Programmable Reality Lab Overview",
+      "finished": 1792120681.3616781,
+      "duration": 3.0
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 69,
+      "text": "Can you tell me more about the students and their life there",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792120747.567093,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          7.365036964416504,
+          7.0300469398498535,
+          14.755818367004395
+        ],
+        "quaternion": [
+          -0.1427314728498459,
+          -0.5813300013542175,
+          -0.11778879165649414,
+          0.7923439145088196
+        ],
+        "forward": [
+          0.8876022423521661,
+          -0.36313314466927515,
+          -0.2833663123672383
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792120747.583999,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 13
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 17
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":313,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"labResearchLife\",\"confidence\":0.83,\"probabilities\":{\"labResearchLife\":0.89,\"labResearchWork\":0,\"none\":0.11}},\"section_members\":{\"type\":\"noul\",\"noul\":0.75},\"section_theme\":{\"type\":\"noul\",\"noul\":0.47},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.85}},\"usage\":{\"input_tokens\":1673,\"output_tokens\":107}}",
+          "at": 320
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"labResearchLife\",\"probability\":0.89,\"sections\":[\"members\",\"philosophy\"],\"scores\":{\"members\":0.75,\"theme\":0.47,\"philosophy\":0.85}}",
+          "at": 336
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 354
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":349,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.04},\"storage\":{\"type\":\"noul\",\"noul\":0.05},\"user_events\":{\"type\":\"noul\",\"noul\":0.12},\"personal\":{\"type\":\"noul\",\"noul\":0.12},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.24,\"probabilities\":{\"standalone\":0.62,\"unresolved\":0.38}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.6},\"info_followup\":{\"type\":\"noul\",\"noul\":0.26}},\"usage\":{\"input_tokens\":1528,\"output_tokens\":140}}",
+          "at": 361
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"Programmable Reality Lab\",\"source\":\"selection\",\"continue\":false,\"selected\":0.6,\"follow_up\":0.26}",
+          "at": 372
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_info",
+          "text": "{\"zone\":\"lab-2f\",\"parts\":[\"members\",\"philosophy\"]}",
+          "at": 380
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"Programmable Reality Lab\",\"value\":\"zone parts\",\"parts\":[\"members\",\"philosophy\"]}",
+          "at": 386
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 391
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Lab ",
+          "at": 1897
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1946,\"first_text_ms\":1502,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1475,\"total_input_tokens\":1379,\"total_output_tokens\":96,\"total_thought_tokens\":0}}",
+          "at": 2322
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2359
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 5,
+          "latency": 0.35
+        },
+        "text": {
+          "response": 6,
+          "latency": 1.896,
+          "status": "complete"
+        }
+      },
+      "response": 6,
+      "latency": 2.38,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "source": "selection",
+        "interaction_id": "v1_ChZySmZSYXQtVkYteS0zOUlQbGU3cGFREhZySmZSYXQtVkYteS0zOUlQbGU3cGFR"
+      },
+      "message": "Lab Life and Students",
+      "finished": 1792120749.964687,
+      "duration": 2.4
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 70,
+      "text": "What is this lab",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792120836.940802,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "zone:lab-hall-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          2.243147373199463,
+          7.069746494293213,
+          14.816974639892578
+        ],
+        "quaternion": [
+          -0.03725674748420715,
+          0.9863685369491577,
+          0.08178277313709259,
+          0.1378425806760788
+        ],
+        "forward": [
+          -0.26583324900686645,
+          -0.17160704101539803,
+          0.9486219118326478
+        ]
+      },
+      "location": {
+        "in": "lab-hall-2f"
+      },
+      "started": 1792120836.949985,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-hall-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 6
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 12
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 17
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":110,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.79,\"probabilities\":{\"labResearchLife\":0.01,\"labResearchWork\":0.13,\"none\":0.86}},\"section_members\":{\"type\":\"noul\",\"noul\":0.8},\"section_theme\":{\"type\":\"noul\",\"noul\":0.68},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.43}},\"usage\":{\"input_tokens\":1708,\"output_tokens\":102}}",
+          "at": 116
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":0.86,\"sections\":[\"members\",\"theme\"],\"scores\":{\"members\":0.8,\"theme\":0.68,\"philosophy\":0.43}}",
+          "at": 126
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":130,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.02},\"storage\":{\"type\":\"noul\",\"noul\":0.06},\"user_events\":{\"type\":\"noul\",\"noul\":0.07},\"personal\":{\"type\":\"noul\",\"noul\":0.1},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.38,\"probabilities\":{\"standalone\":0.69,\"unresolved\":0.31}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.81},\"info_followup\":{\"type\":\"noul\",\"noul\":0.62}},\"usage\":{\"input_tokens\":1561,\"output_tokens\":140}}",
+          "at": 136
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"Programmable Reality Lab\",\"source\":\"selection\",\"continue\":true,\"selected\":0.81,\"follow_up\":0.62}",
+          "at": 144
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_info",
+          "text": "{\"zone\":\"lab-2f\",\"parts\":[\"members\",\"theme\"]}",
+          "at": 161
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"Programmable Reality Lab\",\"value\":\"zone parts\",\"parts\":[\"members\",\"theme\"]}",
+          "at": 166
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 172
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab Overview",
+          "at": 1497
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1692,\"first_text_ms\":1311,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1101,\"total_input_tokens\":1012,\"total_output_tokens\":89,\"total_thought_tokens\":0}}",
+          "at": 1854
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1886
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 7,
+          "latency": 1.494,
+          "status": "complete"
+        }
+      },
+      "response": 7,
+      "latency": 1.91,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "source": "selection",
+        "interaction_id": "v1_ChdCWmpSYXJuZEY5eW0xTWtQd3IzMG9BTRIXQlpqUmFybmRGOXltMU1rUHdyMzBvQU0"
+      },
+      "message": "Programmable Reality Lab Overview",
+      "finished": 1792120838.858287,
+      "duration": 1.9
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 71,
+      "text": "I'm very interested can you tell me more about the thing they're working on",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792120852.664629,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "findmy": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "zone:lab-hall-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          2.250607967376709,
+          7.04946231842041,
+          14.82226848602295
+        ],
+        "quaternion": [
+          -0.04652804136276245,
+          0.984309196472168,
+          0.16110104322433472,
+          0.05492765083909035
+        ],
+        "forward": [
+          -0.09314015171760559,
+          -0.32225782883434695,
+          0.9420589057854798
+        ]
+      },
+      "location": {
+        "in": "lab-hall-2f"
+      },
+      "started": 1792120852.683899,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-hall-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 6
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 12
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 17
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":111,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"labResearchWork\",\"confidence\":0.95,\"probabilities\":{\"labResearchLife\":0,\"labResearchWork\":0.97,\"none\":0.03}},\"section_members\":{\"type\":\"noul\",\"noul\":0.63},\"section_theme\":{\"type\":\"noul\",\"noul\":0.82},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.37}},\"usage\":{\"input_tokens\":1734,\"output_tokens\":107}}",
+          "at": 118
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"labResearchWork\",\"probability\":0.97,\"sections\":[\"members\",\"theme\"],\"scores\":{\"members\":0.63,\"theme\":0.82,\"philosophy\":0.37}}",
+          "at": 135
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 142
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":132,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.02},\"storage\":{\"type\":\"noul\",\"noul\":0.05},\"user_events\":{\"type\":\"noul\",\"noul\":0.07},\"personal\":{\"type\":\"noul\",\"noul\":0.11},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"unresolved\",\"confidence\":0.12,\"probabilities\":{\"standalone\":0.44,\"unresolved\":0.56}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.72},\"info_followup\":{\"type\":\"noul\",\"noul\":0.81}},\"usage\":{\"input_tokens\":1587,\"output_tokens\":142}}",
+          "at": 153
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"Programmable Reality Lab\",\"source\":\"selection\",\"continue\":true,\"selected\":0.72,\"follow_up\":0.81}",
+          "at": 162
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_info",
+          "text": "{\"zone\":\"lab-2f\",\"parts\":[\"members\",\"theme\"]}",
+          "at": 167
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"Programmable Reality Lab\",\"value\":\"zone parts\",\"parts\":[\"members\",\"theme\"]}",
+          "at": 172
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 177
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab Goal",
+          "at": 1407
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1598,\"first_text_ms\":1225,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1120,\"total_input_tokens\":1034,\"total_output_tokens\":86,\"total_thought_tokens\":0}}",
+          "at": 1756
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1783
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 8,
+          "latency": 0.13
+        },
+        "text": {
+          "response": 9,
+          "latency": 1.404,
+          "status": "complete"
+        }
+      },
+      "response": 9,
+      "latency": 1.8,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "source": "selection",
+        "interaction_id": "v1_ChdGWmpSYW95ZkE3bXlfUFVQeXMtSXFRdxIXRlpqUmFveWZBN215X1BVUHlzLUlxUXc"
+      },
+      "message": "Programmable Reality Lab Goal",
+      "finished": 1792120854.482444,
+      "duration": 1.8
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 72,
+      "text": "How many students are there in the lab",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792120877.716031,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "findmy": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "zone:lab-hall-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          2.6209864616394043,
+          7.0514421463012695,
+          14.775653839111328
+        ],
+        "quaternion": [
+          -0.029335862025618553,
+          0.9917259812355042,
+          0.10951705276966095,
+          -0.06020776927471161
+        ],
+        "forward": [
+          0.12584477242293474,
+          -0.21368931961539855,
+          0.9687620293166193
+        ]
+      },
+      "location": {
+        "in": "lab-hall-2f"
+      },
+      "started": 1792120877.734375,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-hall-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 9
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 18
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 25
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":128,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.02},\"storage\":{\"type\":\"noul\",\"noul\":0.09},\"user_events\":{\"type\":\"noul\",\"noul\":0.18},\"personal\":{\"type\":\"noul\",\"noul\":0.06},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.98,\"probabilities\":{\"standalone\":0.99,\"unresolved\":0.01}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.75},\"info_followup\":{\"type\":\"noul\",\"noul\":0.25}},\"usage\":{\"input_tokens\":1566,\"output_tokens\":140}}",
+          "at": 137
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"Programmable Reality Lab\",\"source\":\"selection\",\"continue\":true,\"selected\":0.75,\"follow_up\":0.25}",
+          "at": 151
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":133,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchLife\":0,\"labResearchWork\":0,\"none\":1}},\"section_members\":{\"type\":\"noul\",\"noul\":0.69},\"section_theme\":{\"type\":\"noul\",\"noul\":0.14},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.22}},\"usage\":{\"input_tokens\":1713,\"output_tokens\":102}}",
+          "at": 164
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":1,\"sections\":[\"members\"],\"scores\":{\"members\":0.69,\"theme\":0.14,\"philosophy\":0.22}}",
+          "at": 173
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_info",
+          "text": "{\"zone\":\"lab-2f\",\"parts\":[\"members\"]}",
+          "at": 181
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"Programmable Reality Lab\",\"value\":\"zone parts\",\"parts\":[\"members\"]}",
+          "at": 190
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 195
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Lab Students",
+          "at": 1569
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1808,\"first_text_ms\":1378,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":967,\"total_input_tokens\":878,\"total_output_tokens\":89,\"total_thought_tokens\":0}}",
+          "at": 1966
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2003
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 10,
+          "latency": 1.568,
+          "status": "complete"
+        }
+      },
+      "response": 10,
+      "latency": 2.03,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "source": "selection",
+        "interaction_id": "v1_ChdMcGpSYXBDeUNORFRqTWNQdzgycmtBURIXTHBqUmFwQ3lDTkRUak1jUHc4MnJrQVE"
+      },
+      "message": "Lab Students",
+      "finished": 1792120879.763152,
+      "duration": 2.0
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 73,
+      "text": "Seems like this is about the labs philosophy can you tell me more about",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792120900.26542,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_1",
+        "key": "lab philosophy",
+        "score": 0.588,
+        "cues": {
+          "gaze": 0.36,
+          "point": 0.85,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          6.822216510772705,
+          7.069493293762207,
+          15.080381393432617
+        ],
+        "quaternion": [
+          0.034956492483615875,
+          0.9972909688949585,
+          -0.06408549845218658,
+          -0.009037687443196774
+        ],
+        "forward": [
+          0.022506816623496295,
+          0.12719192598064027,
+          0.9916224660124042
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792120900.281416,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:lab-shelf-3_1\",\"key\":\"lab philosophy\",\"score\":0.588,\"cues\":{\"gaze\":0.36,\"point\":0.85,\"touch\":0},\"mode\":\"score\"}",
+          "at": 9
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"lab philosophy\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 17
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 24
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":165,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"labResearchLife\",\"confidence\":0.23,\"probabilities\":{\"labResearchLife\":0.49,\"labResearchWork\":0.24,\"none\":0.27}},\"section_members\":{\"type\":\"noul\",\"noul\":0.46},\"section_theme\":{\"type\":\"noul\",\"noul\":0.79},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.79}},\"usage\":{\"input_tokens\":1704,\"output_tokens\":107}}",
+          "at": 174
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"labResearchLife\",\"probability\":0.49,\"sections\":[\"theme\",\"philosophy\"],\"scores\":{\"members\":0.46,\"theme\":0.79,\"philosophy\":0.79}}",
+          "at": 208
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 228
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_info",
+          "text": "{\"zone\":\"lab-2f\",\"parts\":[\"theme\",\"philosophy\"]}",
+          "at": 234
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"lab philosophy\",\"value\":\"zone parts\",\"parts\":[\"theme\",\"philosophy\"]}",
+          "at": 240
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 246
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Lab Philosophy Priorities",
+          "at": 1480
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1837,\"first_text_ms\":1232,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1512,\"total_input_tokens\":1430,\"total_output_tokens\":82,\"total_thought_tokens\":0}}",
+          "at": 2060
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2094
+        }
+      ],
+      "parts": {
+        "animation": {
+          "response": 11,
+          "latency": 0.22
+        },
+        "text": {
+          "response": 12,
+          "latency": 1.477,
+          "status": "complete"
+        }
+      },
+      "response": 12,
+      "latency": 2.12,
+      "info": {
+        "key": "lab philosophy",
+        "source": "selection",
+        "interaction_id": "v1_ChdSSmpSYXZhZ0xabTlfdU1QMU1hcC1BMBIXUkpqUmF2YWdMWm05X3VNUDFNYXAtQTA"
+      },
+      "message": "Lab Philosophy Priorities",
+      "finished": 1792120902.401844,
+      "duration": 2.1
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 74,
+      "text": "This is cool who leads the lab",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792120920.066598,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_1",
+        "key": "lab philosophy",
+        "score": 0.47,
+        "cues": {
+          "gaze": 0.914,
+          "point": 0.134,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          6.8529953956604,
+          7.053916931152344,
+          15.085485458374023
+        ],
+        "quaternion": [
+          -0.037869855761528015,
+          0.997866153717041,
+          0.034677904099226,
+          0.04032933712005615
+        ],
+        "forward": [
+          -0.07786006657519706,
+          -0.07226234592431524,
+          0.9943419734188805
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792120920.0862331,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:lab-shelf-3_1\",\"key\":\"lab philosophy\",\"score\":0.47,\"cues\":{\"gaze\":0.914,\"point\":0.134,\"touch\":0},\"mode\":\"score\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"lab philosophy\",\"source\":\"selection\",\"continue\":true,\"selected\":null,\"follow_up\":null}",
+          "at": 14
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 21
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":110,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchLife\":0,\"labResearchWork\":0,\"none\":1}},\"section_members\":{\"type\":\"noul\",\"noul\":0.82},\"section_theme\":{\"type\":\"noul\",\"noul\":0.18},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.2}},\"usage\":{\"input_tokens\":1700,\"output_tokens\":102}}",
+          "at": 117
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":1,\"sections\":[\"members\"],\"scores\":{\"members\":0.82,\"theme\":0.18,\"philosophy\":0.2}}",
+          "at": 135
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_info",
+          "text": "{\"zone\":\"lab-2f\",\"parts\":[\"members\"]}",
+          "at": 143
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"lab philosophy\",\"value\":\"zone parts\",\"parts\":[\"members\"]}",
+          "at": 150
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 157
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Programmable Reality Lab Director",
+          "at": 1385
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1603,\"first_text_ms\":1229,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":944,\"total_input_tokens\":869,\"total_output_tokens\":75,\"total_thought_tokens\":0}}",
+          "at": 1728
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1766
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 13,
+          "latency": 1.379,
+          "status": "complete"
+        }
+      },
+      "response": 13,
+      "latency": 1.79,
+      "info": {
+        "key": "lab philosophy",
+        "source": "selection",
+        "interaction_id": "v1_ChdXSmpSYXFYX0hNbTEtOFlQaDl5a3FBbxIXV0pqUmFxWF9ITW0xLThZUGg5eWtxQW8"
+      },
+      "message": "Programmable Reality Lab Director",
+      "finished": 1792120921.8775098,
+      "duration": 1.8
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 75,
+      "text": "Should I email him directly if I wanna join",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792120931.4217632,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "default": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_1",
+        "key": "lab philosophy",
+        "score": 0.629,
+        "cues": {
+          "gaze": 0.961,
+          "point": 0.355,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          6.865281105041504,
+          7.048193454742432,
+          15.101118087768555
+        ],
+        "quaternion": [
+          -0.03782539442181587,
+          0.9970214366912842,
+          0.06671426445245743,
+          -0.008167590945959091
+        ],
+        "forward": [
+          0.02133351325144478,
+          -0.13241321888636884,
+          0.9909650113702366
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792120931.435821,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:lab-shelf-3_1\",\"key\":\"lab philosophy\",\"score\":0.629,\"cues\":{\"gaze\":0.961,\"point\":0.355,\"touch\":0},\"mode\":\"score\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"lab philosophy\",\"source\":\"selection\",\"continue\":true,\"selected\":null,\"follow_up\":null}",
+          "at": 13
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 19
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":109,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.91,\"probabilities\":{\"labResearchLife\":0.06,\"labResearchWork\":0,\"none\":0.9400000000000001}},\"section_members\":{\"type\":\"noul\",\"noul\":0.36},\"section_theme\":{\"type\":\"noul\",\"noul\":0.23},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.22}},\"usage\":{\"input_tokens\":1681,\"output_tokens\":102}}",
+          "at": 116
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":0.9400000000000001,\"sections\":[],\"scores\":{\"members\":0.36,\"theme\":0.23,\"philosophy\":0.22}}",
+          "at": 125
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 133
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Contacting the Lab ",
+          "at": 1430
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1816,\"first_text_ms\":1293,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":822,\"total_input_tokens\":739,\"total_output_tokens\":83,\"total_thought_tokens\":0},\"continued\":true}",
+          "at": 1932
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1971
+        },
+        {
+          "kind": "tool",
+          "tool": "info_reuse",
+          "text": "Continued interaction v1_ChdXSmpSYXFYX0hNbTEtOFlQaDl5a3FBbxIXV0pqUmFxWF9ITW0xLThZUGg5eWtxQW8",
+          "at": 1991
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 14,
+          "latency": 1.427,
+          "status": "complete"
+        }
+      },
+      "response": 14,
+      "latency": 2.01,
+      "info": {
+        "key": "lab philosophy",
+        "source": "selection",
+        "interaction_id": "v1_ChdXSmpSYXFYX0hNbTEtOFlQaDl5a3FBbxIWWTVqUmFzcXFNX3FOak1jUDE3cVNNQQ"
+      },
+      "message": "Contacting the Lab Director",
+      "finished": 1792120933.442135,
+      "duration": 2.0
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792120640.05886,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's this",
+      "question_id": 66,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 2.05,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 2.05,
+            "created": 1792120640.05886,
+            "title": "Sean's Research Philosophy",
+            "body": "Sean's research philosophy is that self-efficacy matters.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 2.314,
+            "created": 1792120640.323391,
+            "title": "Sean's Research Philosophy",
+            "body": "Sean's research philosophy is that self-efficacy matters.",
+            "anchor": {
+              "object": "vision_sean",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Sean's Research Philosophy",
+      "body": "Sean's research philosophy is that self-efficacy matters.",
+      "items": [],
+      "anchor": {
+        "object": "vision_sean",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "vision_sean",
+        "box_id": "layout:lab-shelf-3_0"
+      }
+    },
+    {
+      "id": 2,
+      "created": 1792120662.503417,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about",
+      "question_id": 67,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.836,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.836,
+            "created": 1792120662.503417,
+            "title": "Lab Philosophy",
+            "body": "Student success and happiness are the first priorities, and you should follow your heart by ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.938,
+            "created": 1792120662.605206,
+            "title": "Lab Philosophy",
+            "body": "Student success and happiness are the first priorities, and you should follow your heart by doing what excites you most.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 2.256,
+            "created": 1792120662.9226398,
+            "title": "Lab Philosophy",
+            "body": "Student success and happiness are the first priorities, and you should follow your heart by doing what excites you most.",
+            "anchor": {
+              "object": "lab philosophy",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Lab Philosophy",
+      "body": "Student success and happiness are the first priorities, and you should follow your heart by doing what excites you most.",
+      "items": [],
+      "anchor": {
+        "object": "lab philosophy",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "lab philosophy",
+        "box_id": "layout:lab-shelf-3_1"
+      }
+    },
+    {
+      "id": 3,
+      "created": 1792120679.097667,
+      "frame": 0,
+      "t": 0.0,
+      "question": "OK I'm curious about this lab now can you tell me more about what they're are",
+      "question_id": 68,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "labResearchWork",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.77
+    },
+    {
+      "id": 4,
+      "created": 1792120681.106517,
+      "frame": 0,
+      "t": 0.0,
+      "question": "OK I'm curious about this lab now can you tell me more about what they're are",
+      "question_id": 68,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 2.777,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 2.777,
+            "created": 1792120681.106517,
+            "title": "Programmable Reality Lab Overview",
+            "body": "The Programmable Reality Lab (PRL) at CU ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 2.999,
+            "created": 1792120681.3292758,
+            "title": "Programmable Reality Lab Overview",
+            "body": "The Programmable Reality Lab (PRL) at CU Boulder's ATLAS Institute aims to make our entire environment dynamic, interactive, and programmable using AR/VR and robotics.",
+            "anchor": {
+              "object": "lab",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab Overview",
+      "body": "The Programmable Reality Lab (PRL) at CU Boulder's ATLAS Institute aims to make our entire environment dynamic, interactive, and programmable using AR/VR and robotics.",
+      "items": [],
+      "anchor": {
+        "object": "lab",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "lab philosophy",
+        "box_id": "layout:lab-shelf-3_1"
+      }
+    },
+    {
+      "id": 5,
+      "created": 1792120747.9315991,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about the students and their life there",
+      "question_id": 69,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "labResearchLife",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.35
+    },
+    {
+      "id": 6,
+      "created": 1792120749.479502,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about the students and their life there",
+      "question_id": 69,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.896,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.896,
+            "created": 1792120749.479502,
+            "title": "Lab ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 2.066,
+            "created": 1792120749.650356,
+            "title": "Lab Life and Students",
+            "body": "The lab's students are Hye-Young Jo, Keiichi Ihara, Ada Yi Zhao, Sean Xiaoan Liu, and Ziru Wei. Student success and happiness are top priorities.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 2.345,
+            "created": 1792120749.929402,
+            "title": "Lab Life and Students",
+            "body": "The lab's students are Hye-Young Jo, Keiichi Ihara, Ada Yi Zhao, Sean Xiaoan Liu, and Ziru Wei. Student success and happiness are top priorities.",
+            "anchor": {
+              "object": "Programmable Reality Lab",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Lab Life and Students",
+      "body": "The lab's students are Hye-Young Jo, Keiichi Ihara, Ada Yi Zhao, Sean Xiaoan Liu, and Ziru Wei. Student success and happiness are top priorities.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "box_id": "zone:lab-2f"
+      }
+    },
+    {
+      "id": 7,
+      "created": 1792120838.44418,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What is this lab",
+      "question_id": 70,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.494,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.494,
+            "created": 1792120838.44418,
+            "title": "Programmable Reality Lab Overview",
+            "body": "The Programmable Reality Lab at CU Boulder's ATLAS ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.612,
+            "created": 1792120838.561524,
+            "title": "Programmable Reality Lab Overview",
+            "body": "The Programmable Reality Lab at CU Boulder's ATLAS Institute makes our environment dynamic, interactive, and programmable using AR, VR, and robotics.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.885,
+            "created": 1792120838.834906,
+            "title": "Programmable Reality Lab Overview",
+            "body": "The Programmable Reality Lab at CU Boulder's ATLAS Institute makes our environment dynamic, interactive, and programmable using AR, VR, and robotics.",
+            "anchor": {
+              "object": "Programmable Reality Lab",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab Overview",
+      "body": "The Programmable Reality Lab at CU Boulder's ATLAS Institute makes our environment dynamic, interactive, and programmable using AR, VR, and robotics.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "box_id": "zone:lab-hall-2f"
+      }
+    },
+    {
+      "id": 8,
+      "created": 1792120852.8121228,
+      "frame": 0,
+      "t": 0.0,
+      "question": "I'm very interested can you tell me more about the thing they're working on",
+      "question_id": 71,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "labResearchWork",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.13
+    },
+    {
+      "id": 9,
+      "created": 1792120854.087575,
+      "frame": 0,
+      "t": 0.0,
+      "question": "I'm very interested can you tell me more about the thing they're working on",
+      "question_id": 71,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.404,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.404,
+            "created": 1792120854.087575,
+            "title": "Programmable Reality Lab Goal",
+            "body": "The goal is to make our entire environment dynamic, interactive, and programmable using ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.773,
+            "created": 1792120854.456865,
+            "title": "Programmable Reality Lab Goal",
+            "body": "The goal is to make our entire environment dynamic, interactive, and programmable using AR, VR, robotics, and shape-changing interfaces.",
+            "anchor": {
+              "object": "Programmable Reality Lab",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab Goal",
+      "body": "The goal is to make our entire environment dynamic, interactive, and programmable using AR, VR, robotics, and shape-changing interfaces.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "box_id": "zone:lab-hall-2f"
+      }
+    },
+    {
+      "id": 10,
+      "created": 1792120879.302188,
+      "frame": 0,
+      "t": 0.0,
+      "question": "How many students are there in the lab",
+      "question_id": 72,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.568,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.568,
+            "created": 1792120879.302188,
+            "title": "Lab Students",
+            "body": "There are five students in the lab: Hye-Young Jo, Keiichi Ihara, Ada ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.667,
+            "created": 1792120879.401421,
+            "title": "Lab Students",
+            "body": "There are five students in the lab: Hye-Young Jo, Keiichi Ihara, Ada Yi Zhao, Sean Xiaoan Liu, and Ziru Wei.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 2.002,
+            "created": 1792120879.736647,
+            "title": "Lab Students",
+            "body": "There are five students in the lab: Hye-Young Jo, Keiichi Ihara, Ada Yi Zhao, Sean Xiaoan Liu, and Ziru Wei.",
+            "anchor": {
+              "object": "Programmable Reality Lab",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Lab Students",
+      "body": "There are five students in the lab: Hye-Young Jo, Keiichi Ihara, Ada Yi Zhao, Sean Xiaoan Liu, and Ziru Wei.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "box_id": "zone:lab-hall-2f"
+      }
+    },
+    {
+      "id": 11,
+      "created": 1792120900.498506,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Seems like this is about the labs philosophy can you tell me more about",
+      "question_id": 73,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "labResearchLife",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.22
+    },
+    {
+      "id": 12,
+      "created": 1792120901.7581189,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Seems like this is about the labs philosophy can you tell me more about",
+      "question_id": 73,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.477,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.477,
+            "created": 1792120901.7581189,
+            "title": "Lab Philosophy Priorities",
+            "body": "The lab's philosophy prioritizes student success and happiness above ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.59,
+            "created": 1792120901.871475,
+            "title": "Lab Philosophy Priorities",
+            "body": "The lab's philosophy prioritizes student success and happiness above all, emphasizing that you should follow your heart and do what excites you.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 2.087,
+            "created": 1792120902.368206,
+            "title": "Lab Philosophy Priorities",
+            "body": "The lab's philosophy prioritizes student success and happiness above all, emphasizing that you should follow your heart and do what excites you.",
+            "anchor": {
+              "object": "lab philosophy",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Lab Philosophy Priorities",
+      "body": "The lab's philosophy prioritizes student success and happiness above all, emphasizing that you should follow your heart and do what excites you.",
+      "items": [],
+      "anchor": {
+        "object": "lab philosophy",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "lab philosophy",
+        "box_id": "layout:lab-shelf-3_1"
+      }
+    },
+    {
+      "id": 13,
+      "created": 1792120921.465089,
+      "frame": 0,
+      "t": 0.0,
+      "question": "This is cool who leads the lab",
+      "question_id": 74,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.379,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.379,
+            "created": 1792120921.465089,
+            "title": "Programmable Reality Lab Director",
+            "body": "The Programmable Reality Lab is led by Prof. ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.503,
+            "created": 1792120921.588773,
+            "title": "Programmable Reality Lab Director",
+            "body": "The Programmable Reality Lab is led by Prof. Ryo Suzuki.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.766,
+            "created": 1792120921.852642,
+            "title": "Programmable Reality Lab Director",
+            "body": "The Programmable Reality Lab is led by Prof. Ryo Suzuki.",
+            "anchor": {
+              "object": "Programmable Reality Lab",
+              "relation": "in-front"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Programmable Reality Lab Director",
+      "body": "The Programmable Reality Lab is led by Prof. Ryo Suzuki.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "lab philosophy",
+        "box_id": "layout:lab-shelf-3_1"
+      }
+    },
+    {
+      "id": 14,
+      "created": 1792120932.863044,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Should I email him directly if I wanna join",
+      "question_id": 75,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.427,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.427,
+            "created": 1792120932.863044,
+            "title": "Contacting the Lab ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.524,
+            "created": 1792120932.959827,
+            "title": "Contacting the Lab Director",
+            "body": "The provided information does not state whether you should email Prof. Ryo Suzuki directly if ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.957,
+            "created": 1792120933.392711,
+            "title": "Contacting the Lab Director",
+            "body": "The provided information does not state whether you should email Prof. Ryo Suzuki directly if you want to join.",
+            "anchor": {
+              "object": "Programmable Reality Lab",
+              "relation": "in-front"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Contacting the Lab Director",
+      "body": "The provided information does not state whether you should email Prof. Ryo Suzuki directly if you want to join.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "lab philosophy",
+        "box_id": "layout:lab-shelf-3_1"
+      }
+    }
+  ]
+}

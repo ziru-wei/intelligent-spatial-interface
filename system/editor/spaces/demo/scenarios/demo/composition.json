@@ -1,0 +1,44 @@
+{
+ "version": 2,
+ "revision": 1,
+ "components": [
+  {
+   "id": "c1",
+   "component": "calibration-cube",
+   "position": [
+    0,
+    0,
+    -2.5
+   ],
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "yaw": 0,
+   "scale": 1,
+   "initial": {
+    "position": [
+     0,
+     0,
+     -2.5
+    ],
+    "rotation": [
+     0,
+     0,
+     0
+    ],
+    "scale": 1
+   },
+   "name": "Calibration cube",
+   "visible": true,
+   "mount": "floor",
+   "params": {
+    "color": "#d99c56",
+    "size": 0.225
+   },
+   "scope": "recording",
+   "category": "widget"
+  }
+ ]
+}

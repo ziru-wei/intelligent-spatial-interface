@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "live": true,
+  "label": "Vision Pro (live)",
+  "frames": [
+    {
+      "t": 0,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ]
+}

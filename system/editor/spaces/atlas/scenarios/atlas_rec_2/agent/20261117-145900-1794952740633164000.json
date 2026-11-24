@@ -1,0 +1,466 @@
+{
+  "id": "20261117-145900-1794952740633164000",
+  "name": "2026-11-17 14:59:00",
+  "created": 1794952740.6331892,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 24,
+      "text": "Do I need an umbrella tonight?",
+      "frame": 59,
+      "t": 0.9839533749909606,
+      "status": "answered",
+      "created": 1794952743.6638038,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "layout:custom_1",
+        "key": "ATLAS labs booklet",
+        "score": 0.558,
+        "cues": {
+          "gaze": 0.745,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "north-hall-2f"
+      },
+      "started": 1794952743.669151,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"North corridor · 2F\"],\"looking\":\"ATLAS labs booklet\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 22
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 26
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":284,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.03},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"world\",\"confidence\":0.99,\"probabilities\":{\"referent\":0,\"here\":0,\"user\":0.01,\"world\":0.99,\"other\":0}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.47},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.12},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.98}},\"usage\":{\"input_tokens\":1621,\"output_tokens\":344}}",
+          "at": 306
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":286}",
+          "at": 325
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Do I need an umbrella tonight?\",\"about\":\"world\"}]}",
+          "at": 347
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"ATLAS labs booklet\",\"score\":0.03,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Do I need an umbrella tonight?\",\"about\":\"outside data\"}]}",
+          "at": 349
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"weather\",0.98]]",
+          "at": 352
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.02],[\"BookCompanion\",0.02],[\"Delegate\",0.02],[\"FindMy\",0.47],[\"IoTControl\",0.02],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.04],[\"Reminder\",0.12],[\"StepGuide\",0.02],[\"Wayfinding\",0.02],[\"Weather\",0.98]],\"skipped\":[\"WorldInfo\",\"LabInfo\"],\"chosen\":[\"Weather\"]}",
+          "at": 354
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"Weather\",\"from\":[\"feed:weather\"],\"items\":[\"weather forecast\"]}]",
+          "at": 357
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"Weather\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 360
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_weather",
+          "text": "Started",
+          "at": 363
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 365
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_weather",
+          "text": "{\"elapsed_ms\":301,\"answers\":{\"entries_date_0\":{\"type\":\"noul\",\"noul\":0.11},\"entries_date_1\":{\"type\":\"noul\",\"noul\":0.97},\"entries_date_2\":{\"type\":\"noul\",\"noul\":0.09},\"entries_date_3\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_4\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_5\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_6\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_7\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_8\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_9\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_10\":{\"type\":\"noul\",\"noul\":0.03},\"entries_date_11\":{\"type\":\"noul\",\"noul\":0.05},\"entries_date_12\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_13\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_14\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_15\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_16\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_17\":{\"type\":\"noul\",\"noul\":0.03},\"entries_date_18\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_19\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_20\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_21\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_22\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_23\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_24\":{\"type\":\"noul\",\"noul\":0.03},\"entries_date_25\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_26\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_27\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_28\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_29\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_30\":{\"type\":\"noul\",\"noul\":0.04},\"entries_date_31\":{\"type\":\"noul\",\"noul\":0.04},\"entries_slot_0\":{\"type\":\"noul\",\"noul\":0.08},\"entries_slot_1\":{\"type\":\"noul\",\"noul\":0.22},\"entries_slot_2\":{\"type\":\"noul\",\"noul\":0.15},\"entries_slot_3\":{\"type\":\"noul\",\"noul\":0.24},\"entries_slot_4\":{\"type\":\"noul\",\"noul\":0.16},\"entries_slot_5\":{\"type\":\"noul\",\"noul\":0.3},\"entries_slot_6\":{\"type\":\"noul\",\"noul\":0.91},\"entries_slot_7\":{\"type\":\"noul\",\"noul\":0.95},\"entries_slot_8\":{\"type\":\"noul\",\"noul\":0.86}},\"usage\":{\"input_tokens\":11861,\"output_tokens\":805}}",
+          "at": 645
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_weather\",\"elapsed_ms\":301}",
+          "at": 651
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"weather\",\"selection\":{\"entries\":{\"kind\":\"timeseries\",\"ids\":[\"2026-11-17-evening\"],\"layout\":\"weather-timeline\",\"dates\":[\"2026-11-17\"],\"times\":[\"18:00\",\"21:00\",\"23:00\"]}}}",
+          "at": 658
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"Weather\",\"selectors\":[{\"name\":\"entries · days\",\"options\":[[\"2026-11-16\",0.11],[\"2026-11-17\",0.97],[\"2026-11-18\",0.09],[\"2026-11-19\",0.05],[\"2026-11-20\",0.04],[\"2026-11-21\",0.05],[\"2026-11-22\",0.05],[\"2026-11-23\",0.04]],\"chosen\":[\"2026-11-17\"]},{\"name\":\"entries · times\",\"options\":[[\"08:00\",0.08],[\"10:00\",0.22],[\"11:00\",0.15],[\"12:00\",0.24],[\"15:00\",0.16],[\"17:00\",0.3],[\"18:00\",0.91],[\"21:00\",0.95]],\"chosen\":[\"18:00\",\"21:00\",\"23:00\"]}]}",
+          "at": 662
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"Weather\",\"parts\":[{\"slot\":\"sky\",\"use\":\"ambient-effect\",\"kind\":\"weather\"}]}",
+          "at": 666
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "Weather UI ready",
+          "at": 670
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Weather Forecast ",
+          "at": 1421
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1193,\"first_text_ms\":1072,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":4388,\"total_input_tokens\":4317,\"total_output_tokens\":71,\"total_thought_tokens\":0}}",
+          "at": 1539
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1546
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 0.66
+        },
+        "text": {
+          "response": 2,
+          "latency": 1.423,
+          "status": "complete"
+        }
+      },
+      "mod_parts": {
+        "weather": {
+          "response": 1,
+          "latency": 0.66
+        }
+      },
+      "response": 2,
+      "latency": 1.55,
+      "message": "Weather Forecast For Tonight",
+      "finished": 1794952745.222474,
+      "duration": 1.5
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794952744.3248022,
+      "frame": 59,
+      "t": 0.9839533749909606,
+      "question": "Do I need an umbrella tonight?",
+      "question_id": 24,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "weather",
+        "variant": "full",
+        "slot": "sky",
+        "settings": {
+          "lock": "follow"
+        },
+        "ui": {
+          "sky": {
+            "use": "ambient-effect",
+            "ui": {
+              "fixed": [
+                "ambient:weather"
+              ],
+              "flexible": []
+            }
+          },
+          "controls": {
+            "use": "data-widget",
+            "ui": {
+              "fixed": [],
+              "flexible": [
+                {
+                  "cue": "datePicker",
+                  "when": "data.days>1"
+                },
+                {
+                  "cue": "playback",
+                  "when": "data.steps_per_day>1"
+                }
+              ]
+            }
+          }
+        },
+        "facts": {
+          "target.pointed": false,
+          "request.second_person": false,
+          "question.about": "world",
+          "data.days": 1,
+          "data.steps_per_day": 3
+        }
+      },
+      "weather": {
+        "version": 2,
+        "mod": "weather",
+        "mock": true,
+        "forecast": [
+          {
+            "id": "2026-11-17-evening",
+            "date": "2026-11-17",
+            "day_offset": 1,
+            "day_label": "Thursday, Oct 08",
+            "period": "evening",
+            "time": "21:00",
+            "label": "Oct 08 · evening",
+            "condition": "snow",
+            "summary": "Soft snowfall",
+            "temp_c": -1.7,
+            "night": true,
+            "intensity": 0.73,
+            "wind_kph": 20,
+            "samples": [
+              {
+                "id": "2026-11-17-evening-18",
+                "date": "2026-11-17",
+                "day_offset": 1,
+                "day_label": "Thursday, Oct 08",
+                "period": "evening",
+                "time": "18:00",
+                "label": "2026-11-17 18:00",
+                "condition": "storm",
+                "summary": "Thunder showers",
+                "temp_c": -2.9,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 20,
+                "parent_id": "2026-11-17-evening",
+                "local_time": "18:00"
+              },
+              {
+                "id": "2026-11-17-evening-21",
+                "date": "2026-11-17",
+                "day_offset": 1,
+                "day_label": "Thursday, Oct 08",
+                "period": "evening",
+                "time": "21:00",
+                "label": "2026-11-17 21:00",
+                "condition": "snow",
+                "summary": "Soft snowfall",
+                "temp_c": -1.7,
+                "night": true,
+                "intensity": 0.62,
+                "wind_kph": 20,
+                "parent_id": "2026-11-17-evening",
+                "local_time": "21:00"
+              },
+              {
+                "id": "2026-11-17-evening-23",
+                "date": "2026-11-17",
+                "day_offset": 1,
+                "day_label": "Thursday, Oct 08",
+                "period": "evening",
+                "time": "23:00",
+                "label": "2026-11-17 23:00",
+                "condition": "fog",
+                "summary": "Drifting mist",
+                "temp_c": -0.5,
+                "night": true,
+                "intensity": 0.3,
+                "wind_kph": 20,
+                "parent_id": "2026-11-17-evening",
+                "local_time": "23:00"
+              }
+            ]
+          }
+        ],
+        "timeline": [
+          {
+            "id": "2026-11-17-evening-18",
+            "date": "2026-11-17",
+            "day_offset": 1,
+            "day_label": "Thursday, Oct 08",
+            "period": "evening",
+            "time": "18:00",
+            "label": "2026-11-17 18:00",
+            "condition": "storm",
+            "summary": "Thunder showers",
+            "temp_c": -2.9,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 20,
+            "parent_id": "2026-11-17-evening",
+            "local_time": "18:00"
+          },
+          {
+            "id": "2026-11-17-evening-21",
+            "date": "2026-11-17",
+            "day_offset": 1,
+            "day_label": "Thursday, Oct 08",
+            "period": "evening",
+            "time": "21:00",
+            "label": "2026-11-17 21:00",
+            "condition": "snow",
+            "summary": "Soft snowfall",
+            "temp_c": -1.7,
+            "night": true,
+            "intensity": 0.62,
+            "wind_kph": 20,
+            "parent_id": "2026-11-17-evening",
+            "local_time": "21:00"
+          },
+          {
+            "id": "2026-11-17-evening-23",
+            "date": "2026-11-17",
+            "day_offset": 1,
+            "day_label": "Thursday, Oct 08",
+            "period": "evening",
+            "time": "23:00",
+            "label": "2026-11-17 23:00",
+            "condition": "fog",
+            "summary": "Drifting mist",
+            "temp_c": -0.5,
+            "night": true,
+            "intensity": 0.3,
+            "wind_kph": 20,
+            "parent_id": "2026-11-17-evening",
+            "local_time": "23:00"
+          }
+        ],
+        "preview": {
+          "component": "weather-timeline",
+          "autoplay": true,
+          "seconds_per_period": 8,
+          "dates": [
+            "2026-11-17"
+          ]
+        },
+        "presentation": {
+          "anchor": "user-view",
+          "background": "composited-scene",
+          "tracking": "recording-timeline",
+          "style": "adaptive"
+        }
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.66
+    },
+    {
+      "id": 2,
+      "created": 1794952745.091841,
+      "frame": 59,
+      "t": 0.9839533749909606,
+      "question": "Do I need an umbrella tonight?",
+      "question_id": 24,
+      "part": "text",
+      "layout_slot": 1,
+      "latency": 1.423,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.423,
+            "created": 1794952745.091841,
+            "title": "Weather Forecast ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.541,
+            "created": 1794952745.210082,
+            "title": "Weather Forecast For Tonight",
+            "body": "No, you do not need an umbrella tonight. The forecast predicts soft snowfall.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.545,
+            "created": 1794952745.214085,
+            "title": "Weather Forecast For Tonight",
+            "body": "No, you do not need an umbrella tonight. The forecast predicts soft snowfall.",
+            "anchor": {
+              "object": "weather",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Weather Forecast For Tonight",
+      "body": "No, you do not need an umbrella tonight. The forecast predicts soft snowfall.",
+      "items": [],
+      "anchor": {
+        "object": "weather",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "text_ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
+  ]
+}

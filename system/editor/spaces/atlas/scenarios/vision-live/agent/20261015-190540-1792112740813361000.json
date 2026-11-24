@@ -1,0 +1,613 @@
+{
+  "id": "20261015-190540-1792112740813361000",
+  "name": "Vision Pro",
+  "created": 1792112740.8134348,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 16,
+      "text": "What's this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792112813.83056,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "layout:lab-shelf-3_1",
+        "key": "lab philosophy",
+        "score": 0.719,
+        "cues": {
+          "gaze": 0.85,
+          "point": 0.399,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          7.106419563293457,
+          7.085474967956543,
+          15.317723274230957
+        ],
+        "quaternion": [
+          0.013470320031046867,
+          0.9882345199584961,
+          -0.15209798514842987,
+          -0.008789700455963612
+        ],
+        "forward": [
+          0.021470187893409876,
+          0.3003801585233884,
+          0.9535778319186761
+        ]
+      },
+      "started": 1792112813.842796,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:lab-shelf-3_1\",\"key\":\"lab philosophy\",\"score\":0.719,\"cues\":{\"gaze\":0.85,\"point\":0.399,\"touch\":0},\"mode\":\"score\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"lab philosophy\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 35
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"lab philosophy\",\"value\":\"file attached\",\"file\":\"Programmable Reality Lab.pdf\"}",
+          "at": 39
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 42
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Lab Philosophy and Culture",
+          "at": 3231
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":3561,\"first_text_ms\":3203,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":5825,\"total_input_tokens\":5744,\"total_output_tokens\":81,\"total_thought_tokens\":0},\"files\":1}",
+          "at": 3576
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 3594
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 3.23,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 3.61,
+      "info": {
+        "key": "lab philosophy",
+        "source": "selection",
+        "interaction_id": "v1_ChdybmpSYXQybURwV25fdU1QanBEenNBdxIXcm5qUmF0Mm1EcFduX3VNUGpwRHpzQXc"
+      },
+      "message": "Lab Philosophy and Culture",
+      "finished": 1792112817.4487302,
+      "duration": 3.6
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 17,
+      "text": "Where am I",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792112836.2067049,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "pose": {
+        "position": [
+          8.259199142456055,
+          7.031217575073242,
+          16.15254783630371
+        ],
+        "quaternion": [
+          -0.11594700813293457,
+          -0.6543883085250854,
+          -0.0660620629787445,
+          0.7442902326583862
+        ],
+        "forward": [
+          0.9587902556951775,
+          -0.2590569346192879,
+          -0.11666446594139757
+        ]
+      },
+      "started": 1792112836.2155452,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 8
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":157,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.12},\"storage\":{\"type\":\"noul\",\"noul\":0.49},\"user_events\":{\"type\":\"noul\",\"noul\":0.21},\"personal\":{\"type\":\"noul\",\"noul\":0.38},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.92,\"probabilities\":{\"standalone\":0.96,\"unresolved\":0.04}},\"info_followup\":{\"type\":\"noul\",\"noul\":0.06}},\"usage\":{\"input_tokens\":1184,\"output_tokens\":123}}",
+          "at": 165
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":null,\"follow_up\":0.06}",
+          "at": 176
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 192
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "No groups needed",
+          "at": 196
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 201
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 204
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":99,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"none\":1}}},\"usage\":{\"input_tokens\":1258,\"output_tokens\":24}}",
+          "at": 285
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Current Location",
+          "at": 1126
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1015,\"first_text_ms\":923,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1136,\"total_input_tokens\":1065,\"total_output_tokens\":71,\"total_thought_tokens\":0}}",
+          "at": 1203
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1223
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 2,
+          "latency": 1.127,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 1.23,
+      "message": "Current Location",
+      "finished": 1792112837.449895,
+      "duration": 1.2
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 18,
+      "text": "Where is my headphone",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792113192.003755,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "default": true,
+        "findmy": true
+      },
+      "pose": {
+        "position": [
+          8.221280097961426,
+          6.67825984954834,
+          15.204648971557617
+        ],
+        "quaternion": [
+          -0.09660639613866806,
+          0.7341843843460083,
+          0.10016633570194244,
+          0.6645352840423584
+        ],
+        "forward": [
+          -0.956429439368516,
+          -0.27547783681568916,
+          0.09671901198485688
+        ]
+      },
+      "started": 1792113192.01289,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 9
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":296,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.03},\"storage\":{\"type\":\"noul\",\"noul\":0.95},\"user_events\":{\"type\":\"noul\",\"noul\":0.09},\"personal\":{\"type\":\"noul\",\"noul\":0.34},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.98,\"probabilities\":{\"standalone\":0.99,\"unresolved\":0.01}}},\"usage\":{\"input_tokens\":1180,\"output_tokens\":102}}",
+          "at": 305
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 318
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "storage",
+          "at": 333
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 337
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 341
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":105,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"findmy\",\"confidence\":1,\"probabilities\":{\"none\":0,\"findmy\":1}}},\"usage\":{\"input_tokens\":2733,\"output_tokens\":33}}",
+          "at": 435
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec_findmy",
+          "text": "Started",
+          "at": 460
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_UI_dec_findmy",
+          "text": "{\"elapsed_ms\":98,\"answers\":{\"target\":{\"type\":\"choice\",\"choice\":\"item_1\",\"confidence\":1,\"probabilities\":{\"not_found\":0,\"ambiguous\":0,\"item_0\":0,\"item_1\":1}}},\"usage\":{\"input_tokens\":1053,\"output_tokens\":54}}",
+          "at": 537
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "Mod UI ready",
+          "at": 564
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Headphones Location",
+          "at": 1357
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1169,\"first_text_ms\":1011,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":2090,\"total_input_tokens\":2011,\"total_output_tokens\":79,\"total_thought_tokens\":0}}",
+          "at": 1500
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1527
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 3,
+          "latency": 0.56
+        },
+        "text": {
+          "response": 4,
+          "latency": 1.353,
+          "status": "complete"
+        }
+      },
+      "response": 4,
+      "latency": 1.54,
+      "message": "Headphones Location",
+      "finished": 1792113193.552468,
+      "duration": 1.5
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792112817.073014,
+      "frame": 0,
+      "t": 0.0,
+      "question": "What's this",
+      "question_id": 16,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 3.23,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 3.23,
+            "created": 1792112817.073014,
+            "title": "Lab Philosophy and Culture",
+            "body": "This document describes the Programmable Reality Lab philosophy, culture, and guidelines for ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 3.485,
+            "created": 1792112817.32753,
+            "title": "Lab Philosophy and Culture",
+            "body": "This document describes the Programmable Reality Lab philosophy, culture, and guidelines for working together at CU Boulder.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 3.593,
+            "created": 1792112817.4357529,
+            "title": "Lab Philosophy and Culture",
+            "body": "This document describes the Programmable Reality Lab philosophy, culture, and guidelines for working together at CU Boulder.",
+            "anchor": {
+              "object": "Programmable Reality Lab.pdf",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Lab Philosophy and Culture",
+      "body": "This document describes the Programmable Reality Lab philosophy, culture, and guidelines for working together at CU Boulder.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab.pdf",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "lab philosophy",
+        "box_id": "layout:lab-shelf-3_1"
+      }
+    },
+    {
+      "id": 2,
+      "created": 1792112837.342273,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Where am I",
+      "question_id": 17,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.127,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.127,
+            "created": 1792112837.342273,
+            "title": "Current Location",
+            "body": "You are in your bedroom, looking at your desk while winding down after dinner.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.225,
+            "created": 1792112837.4406888,
+            "title": "Current Location",
+            "body": "You are in your bedroom, looking at your desk while winding down after dinner.",
+            "anchor": {
+              "object": "desk",
+              "relation": "in-front"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Current Location",
+      "body": "You are in your bedroom, looking at your desk while winding down after dinner.",
+      "items": [],
+      "anchor": {
+        "object": "desk",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    },
+    {
+      "id": 3,
+      "created": 1792113192.570336,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Where is my headphone",
+      "question_id": 18,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "findmy": {
+        "version": 1,
+        "mod": "findmy",
+        "status": "found",
+        "item_id": "headphones",
+        "label": "Headphones",
+        "target": {
+          "id": "lab-shelf-3-bottom",
+          "label": "shelf 3/bottom shelf",
+          "center": [
+            5.57,
+            6.21,
+            14.171
+          ],
+          "size": [
+            0.88,
+            1.26,
+            0.5
+          ],
+          "yaw": 0.0,
+          "parent": {
+            "id": "lab-shelf-3",
+            "label": "shelf 3",
+            "center": [
+              5.57,
+              6.69,
+              14.171
+            ],
+            "size": [
+              0.92,
+              2.28,
+              0.54
+            ],
+            "yaw": 0
+          }
+        },
+        "visual": "box-highlight",
+        "guidance": "when-out-of-view",
+        "occlusion": "hands-only"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "headphones",
+          "label": "Headphones",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.56
+    },
+    {
+      "id": 4,
+      "created": 1792113193.365461,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Where is my headphone",
+      "question_id": 18,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.353,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.353,
+            "created": 1792113193.365461,
+            "title": "Headphones Location",
+            "body": "Your headphones are located in the lab on shelf 3, on the bottom shelf.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.517,
+            "created": 1792113193.529548,
+            "title": "Headphones Location",
+            "body": "Your headphones are located in the lab on shelf 3, on the bottom shelf.",
+            "anchor": {
+              "object": "shelf",
+              "relation": "on"
+            },
+            "referenced_entities": [
+              {
+                "item_id": "headphones",
+                "label": "Headphones",
+                "context_groups": [
+                  "storage"
+                ]
+              }
+            ]
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Headphones Location",
+      "body": "Your headphones are located in the lab on shelf 3, on the bottom shelf.",
+      "items": [],
+      "anchor": {
+        "object": "shelf",
+        "relation": "on"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "headphones",
+          "label": "Headphones",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "reserve_text": true
+    }
+  ]
+}

@@ -1,0 +1,391 @@
+{
+  "id": "20261116-133158-1794861118220212000",
+  "name": "2026-11-16 13:31:58",
+  "created": 1794861118.2202508,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 23,
+      "text": "I want to make the light brighter",
+      "frame": 59,
+      "t": 0.983766083008959,
+      "status": "answered",
+      "created": 1794861121.270547,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794861121.276331,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 26
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 30
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 33
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":216,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.25},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"here\",\"confidence\":0.84,\"probabilities\":{\"referent\":0.07,\"here\":0.87,\"user\":0,\"world\":0,\"other\":0.06}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.98},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.07},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.34},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.02}},\"usage\":{\"input_tokens\":1655,\"output_tokens\":367}}",
+          "at": 242
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":216}",
+          "at": 252
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"I want to make the light brighter\",\"about\":\"here\"}]}",
+          "at": 266
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.25,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"I want to make the light brighter\",\"about\":\"Lab · 2F\"}]}",
+          "at": 271
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"iotcontrol\",0.98]]",
+          "at": 273
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.01],[\"BookCompanion\",0.01],[\"Delegate\",0.02],[\"FindMy\",0.02],[\"IoTControl\",0.98],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.07],[\"Reminder\",0.02],[\"StepGuide\",0.34],[\"Wayfinding\",0.02],[\"Weather\",0.01],[\"LabInfo\",0.02]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"IoTControl\"]}",
+          "at": 276
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"IoTControl\",\"from\":[\"Lab · 2F and the things in it\"],\"items\":[\"device:layout:lab-central-tv\",\"device:layout:lab-printer\",\"device:layout:lab-desk-lamp\"]}]",
+          "at": 278
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"IoTControl\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 281
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_iotcontrol",
+          "text": "Started",
+          "at": 284
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 286
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":247,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchWork\":0,\"labResearchLife\":0,\"none\":1}}},\"usage\":{\"input_tokens\":672,\"output_tokens\":48}}",
+          "at": 289
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":247}",
+          "at": 291
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 294
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0],[\"labResearchLife\",0],[\"none\",1]],\"chosen\":\"none\"}]}",
+          "at": 296
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_iotcontrol",
+          "text": "{\"elapsed_ms\":97,\"answers\":{\"device\":{\"type\":\"choice\",\"choice\":\"d2_a2\",\"confidence\":0.97,\"probabilities\":{\"none\":0,\"d0_show\":0,\"d0_a0\":0,\"d0_a1\":0,\"d0_a2\":0,\"d1_show\":0,\"d1_a0\":0,\"d1_a1\":0,\"d1_a2\":0,\"d2_show\":0.03,\"d2_a0\":0,\"d2_a1\":0,\"d2_a2\":0.97,\"d2_a3\":0}}},\"usage\":{\"input_tokens\":990,\"output_tokens\":154}}",
+          "at": 340
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_iotcontrol\",\"elapsed_ms\":97}",
+          "at": 343
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"iotcontrol\",\"selection\":{\"device\":{\"kind\":\"device\",\"entity\":\"layout:lab-desk-lamp\",\"action\":\"brighter\"}}}",
+          "at": 356
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"IoTControl\",\"selectors\":[{\"name\":\"device\",\"options\":[[\"desk lamp: brighter\",0.97],[\"desk lamp: controls\",0.03],[\"none\",0],[\"TV: controls\",0],[\"TV: on\",0],[\"TV: off\",0]],\"chosen\":\"desk lamp: brighter\"}]}",
+          "at": 372
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"IoTControl\",\"parts\":[{\"slot\":\"device\",\"use\":\"highlight\",\"kind\":\"highlight\"},{\"slot\":\"controls\",\"use\":\"control\",\"kind\":\"control\"}]}",
+          "at": 375
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "UI ready",
+          "at": 378
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Brighter Lamp",
+          "at": 951
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":771,\"first_text_ms\":679,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":938,\"total_input_tokens\":892,\"total_output_tokens\":46,\"total_thought_tokens\":0}}",
+          "at": 1040
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1046
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 0.35
+        },
+        "text": {
+          "response": 3,
+          "latency": 0.952,
+          "status": "complete"
+        }
+      },
+      "mod_parts": {
+        "highlight": {
+          "response": 1,
+          "latency": 0.35
+        },
+        "control": {
+          "response": 2,
+          "latency": 0.36
+        }
+      },
+      "response": 3,
+      "latency": 1.05,
+      "message": "Brighter Lamp",
+      "finished": 1794861122.330276,
+      "duration": 1.1,
+      "label": "q-1116-23"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794861121.622719,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "I want to make the light brighter",
+      "question_id": 23,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "iotcontrol",
+        "variant": "panel",
+        "slot": "device",
+        "settings": {
+          "dismiss": "never"
+        }
+      },
+      "highlight": {
+        "version": 1,
+        "targets": [
+          {
+            "id": "layout:lab-desk-lamp",
+            "label": "desk lamp",
+            "center": [
+              13.19,
+              6.79,
+              16.22
+            ],
+            "size": [
+              0.14,
+              0.24,
+              0.14
+            ],
+            "yaw": 0,
+            "tone": "neutral"
+          }
+        ],
+        "guidance": false,
+        "label": false
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.35
+    },
+    {
+      "id": 2,
+      "created": 1794861121.635551,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "I want to make the light brighter",
+      "question_id": 23,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "iotcontrol",
+        "variant": "panel",
+        "slot": "controls",
+        "settings": {}
+      },
+      "control": {
+        "version": 1,
+        "device": {
+          "id": "layout:lab-desk-lamp",
+          "label": "desk lamp",
+          "center": [
+            13.19,
+            6.79,
+            16.22
+          ],
+          "size": [
+            0.14,
+            0.24,
+            0.14
+          ],
+          "yaw": 0
+        },
+        "before": {
+          "power": "on",
+          "brightness": 40
+        },
+        "states": {
+          "power": "on",
+          "brightness": 60
+        },
+        "actions": [
+          "on",
+          "off",
+          "brighter",
+          "dimmer"
+        ],
+        "options": {},
+        "ranges": {
+          "brightness": [
+            0,
+            100
+          ]
+        },
+        "applied": "brighter",
+        "panel": true
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.36
+    },
+    {
+      "id": 3,
+      "created": 1794861122.2278788,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "I want to make the light brighter",
+      "question_id": 23,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 0.952,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 0.952,
+            "created": 1794861122.2278788,
+            "title": "Brighter Lamp",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.047,
+            "created": 1794861122.3229032,
+            "title": "Brighter Lamp",
+            "body": "I made the desk lamp brighter.",
+            "anchor": {
+              "object": "desk lamp",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Brighter Lamp",
+      "body": "I made the desk lamp brighter.",
+      "items": [],
+      "anchor": {
+        "object": "desk lamp",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

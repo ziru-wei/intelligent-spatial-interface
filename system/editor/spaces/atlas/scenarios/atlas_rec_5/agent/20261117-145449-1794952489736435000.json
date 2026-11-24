@@ -1,0 +1,373 @@
+{
+  "id": "20261117-145449-1794952489736435000",
+  "name": "2026-11-17 14:54:49",
+  "created": 1794952489.736462,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 56,
+      "text": "Is the printer free?",
+      "frame": 59,
+      "t": 0.983766083008959,
+      "status": "answered",
+      "created": 1794952492.77844,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794952492.790306,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 36
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 45
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 53
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":441,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.96,\"probabilities\":{\"labResearchWork\":0,\"labResearchLife\":0.03,\"none\":0.97}}},\"usage\":{\"input_tokens\":670,\"output_tokens\":48}}",
+          "at": 476
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":441}",
+          "at": 483
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 490
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0],[\"labResearchLife\",0.03],[\"none\",0.97]],\"chosen\":\"none\"}]}",
+          "at": 502
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":915,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.08},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"here\",\"confidence\":0.82,\"probabilities\":{\"referent\":0.05,\"here\":0.86,\"user\":0,\"world\":0,\"other\":0.09}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.07},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.92},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.97},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.05},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.05}},\"usage\":{\"input_tokens\":1702,\"output_tokens\":367}}",
+          "at": 951
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":916}",
+          "at": 971
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Is the printer free?\",\"about\":\"here\"}]}",
+          "at": 982
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.08,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Is the printer free?\",\"about\":\"Lab · 2F\"}]}",
+          "at": 989
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"iotcontrol\",0.92],[\"objectstatus\",0.97]]",
+          "at": 996
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.04],[\"BookCompanion\",0.01],[\"Delegate\",0.02],[\"FindMy\",0.07],[\"IoTControl\",0.92],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.97],[\"Reminder\",0.03],[\"StepGuide\",0.05],[\"Wayfinding\",0.04],[\"Weather\",0.01],[\"LabInfo\",0.05]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"IoTControl\",\"ObjectStatus\"]}",
+          "at": 1002
+        },
+        {
+          "kind": "tool",
+          "tool": "view_alternatives",
+          "text": "[[\"IoTControl\",\"ObjectStatus\"]]",
+          "at": 1009
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods_final",
+          "text": "[[\"objectstatus\",0.97]]",
+          "at": 1020
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"ObjectStatus\",\"from\":[\"Lab · 2F and the things in it\"],\"items\":[\"status:tv\",\"status:printer\",\"status:espresso\"]}]",
+          "at": 1027
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"ObjectStatus\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 1034
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_objectstatus",
+          "text": "Started",
+          "at": 1041
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 1047
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_objectstatus",
+          "text": "{\"elapsed_ms\":127,\"answers\":{\"things_0\":{\"type\":\"noul\",\"noul\":0.04},\"things_1\":{\"type\":\"noul\",\"noul\":0.96},\"things_2\":{\"type\":\"noul\",\"noul\":0.02}},\"usage\":{\"input_tokens\":578,\"output_tokens\":58}}",
+          "at": 1079
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_objectstatus\",\"elapsed_ms\":127}",
+          "at": 1094
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"objectstatus\",\"selection\":{\"things\":{\"kind\":\"entities\",\"ids\":[\"layout:lab-printer\"],\"tones\":{\"layout:lab-printer\":\"attention\"}}}}",
+          "at": 1101
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"ObjectStatus\",\"selectors\":[{\"name\":\"things\",\"options\":[[\"TV\",0.04],[\"printer\",0.96],[\"espresso machine\",0.02]],\"chosen\":[\"printer\"]}]}",
+          "at": 1107
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"ObjectStatus\",\"parts\":[{\"slot\":\"state\",\"use\":\"highlight\",\"kind\":\"highlight\"}]}",
+          "at": 1114
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "UI ready",
+          "at": 1120
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Printer status",
+          "at": 2646
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1794,\"first_text_ms\":1671,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":802,\"total_input_tokens\":730,\"total_output_tokens\":72,\"total_thought_tokens\":0}}",
+          "at": 2762
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2784
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 1.09
+        },
+        "text": {
+          "response": 2,
+          "latency": 2.645,
+          "status": "complete"
+        }
+      },
+      "mod_parts": {
+        "highlight": {
+          "response": 1,
+          "latency": 1.09
+        }
+      },
+      "response": 2,
+      "latency": 2.8,
+      "message": "Printer status",
+      "finished": 1794952495.593955,
+      "duration": 2.8,
+      "label": "q-1117-19"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794952493.875684,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "Is the printer free?",
+      "question_id": 56,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "objectstatus",
+        "variant": "highlight",
+        "slot": "state",
+        "settings": {
+          "dismiss": "never"
+        },
+        "ui": {
+          "state": {
+            "use": "highlight",
+            "ui": {
+              "fixed": [
+                "statusPulse"
+              ],
+              "flexible": [
+                {
+                  "cue": "breathingBox",
+                  "when": "state.level!=ok"
+                },
+                {
+                  "cue": "pinnedTags",
+                  "when": "value.type=reading"
+                }
+              ]
+            }
+          }
+        },
+        "facts": {
+          "target.pointed": false,
+          "request.second_person": false,
+          "question.about": "here"
+        }
+      },
+      "highlight": {
+        "version": 1,
+        "targets": [
+          {
+            "id": "layout:lab-printer",
+            "label": "printer",
+            "center": [
+              13.54,
+              6.76,
+              16.59
+            ],
+            "size": [
+              0.45,
+              0.18,
+              0.38
+            ],
+            "yaw": 90,
+            "tone": "attention",
+            "has_content": false
+          }
+        ],
+        "guidance": false,
+        "label": false
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 1.09
+    },
+    {
+      "id": 2,
+      "created": 1794952495.435165,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "Is the printer free?",
+      "question_id": 56,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 2.645,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 2.645,
+            "created": 1794952495.435165,
+            "title": "Printer status",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 2.783,
+            "created": 1794952495.57361,
+            "title": "Printer status",
+            "body": "No, the printer is busy printing a poster for Ana with about 4 minutes left.",
+            "anchor": {
+              "object": "printer",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Printer status",
+      "body": "No, the printer is busy printing a poster for Ana with about 4 minutes left.",
+      "items": [],
+      "anchor": {
+        "object": "printer",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "text_ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      }
+    }
+  ]
+}

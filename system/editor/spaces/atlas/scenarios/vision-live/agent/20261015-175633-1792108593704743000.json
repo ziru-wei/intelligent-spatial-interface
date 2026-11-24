@@ -1,0 +1,172 @@
+{
+  "id": "20261015-175633-1792108593704743000",
+  "name": "Vision Pro",
+  "created": 1792108593.7048168,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 9,
+      "text": "Can I eat this",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792108638.922976,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "findmy": true,
+        "weather": true,
+        "default": true
+      },
+      "selection": {
+        "box_id": "comp:v1",
+        "key": "candy",
+        "score": 0.931,
+        "cues": {
+          "gaze": 0.851,
+          "point": 0.951,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "pose": {
+        "position": [
+          0.4383355379104614,
+          6.890292167663574,
+          9.2388277053833
+        ],
+        "quaternion": [
+          -0.2131015658378601,
+          -0.4600820243358612,
+          -0.1503971666097641,
+          0.8487008213996887
+        ],
+        "forward": [
+          0.7168442405259174,
+          -0.5001090136726996,
+          -0.4858245070409364
+        ]
+      },
+      "started": 1792108638.929759,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"comp:v1\",\"key\":\"candy\",\"score\":0.931,\"cues\":{\"gaze\":0.851,\"point\":0.951,\"touch\":0},\"mode\":\"score\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"candy\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 11
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"candy\",\"value\":\"text\"}",
+          "at": 13
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 14
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Eat Grad Tea Candy",
+          "at": 1359
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1621,\"first_text_ms\":1332,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":617,\"total_input_tokens\":541,\"total_output_tokens\":76,\"total_thought_tokens\":0}}",
+          "at": 1632
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1648
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.357,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.66,
+      "info": {
+        "key": "candy",
+        "source": "selection",
+        "interaction_id": "v1_ChdYMmpSYXF6c0NvS2NfdU1QM1A2MnVBOBIXWDJqUmFxenNDb0tjX3VNUDNQNjJ1QTg"
+      },
+      "message": "Eat Grad Tea Candy",
+      "finished": 1792108640.594663,
+      "duration": 1.7
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792108640.28705,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can I eat this",
+      "question_id": 9,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.357,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.357,
+            "created": 1792108640.28705,
+            "title": "Eat Grad Tea Candy",
+            "body": "Yes, you can. These candies are grad tea leftovers, ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.648,
+            "created": 1792108640.5777988,
+            "title": "Eat Grad Tea Candy",
+            "body": "Yes, you can. These candies are grad tea leftovers, and people are told to help themselves.",
+            "anchor": {
+              "object": "candy",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Eat Grad Tea Candy",
+      "body": "Yes, you can. These candies are grad tea leftovers, and people are told to help themselves.",
+      "items": [],
+      "anchor": {
+        "object": "candy",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "candy",
+        "box_id": "comp:v1"
+      }
+    }
+  ]
+}

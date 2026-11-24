@@ -1,0 +1,899 @@
+{
+  "id": "20261015-212454-1792121094240575000",
+  "name": "Vision Pro",
+  "created": 1792121094.240674,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 76,
+      "text": "Where am I",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792121134.0937998,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "weather": true,
+        "default": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          8.687195777893066,
+          7.054486274719238,
+          15.3013277053833
+        ],
+        "quaternion": [
+          0.007032331079244614,
+          0.9878122806549072,
+          0.11496802419424057,
+          -0.10468899458646774
+        ],
+        "forward": [
+          0.20520916258453487,
+          -0.22860606770397324,
+          0.9516451109861146
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792121134.111247,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 10
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 18
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 25
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":243,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.09},\"storage\":{\"type\":\"noul\",\"noul\":0.55},\"user_events\":{\"type\":\"noul\",\"noul\":0.24},\"personal\":{\"type\":\"noul\",\"noul\":0.42},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.98,\"probabilities\":{\"standalone\":0.99,\"unresolved\":0.01}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.44}},\"usage\":{\"input_tokens\":1151,\"output_tokens\":120}}",
+          "at": 253
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":0.44,\"follow_up\":null}",
+          "at": 279
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"standalone\"}",
+          "at": 303
+        },
+        {
+          "kind": "tool",
+          "tool": "context_groups",
+          "text": "storage",
+          "at": 309
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":268,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.98,\"probabilities\":{\"labResearchLife\":0,\"labResearchWork\":0.01,\"none\":0.99}},\"section_members\":{\"type\":\"noul\",\"noul\":0.49},\"section_theme\":{\"type\":\"noul\",\"noul\":0.34},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.36}},\"usage\":{\"input_tokens\":1379,\"output_tokens\":102}}",
+          "at": 315
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":0.99,\"sections\":[],\"scores\":{\"members\":0.49,\"theme\":0.34,\"philosophy\":0.36}}",
+          "at": 320
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "Started",
+          "at": 326
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 330
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_mod",
+          "text": "{\"elapsed_ms\":88,\"answers\":{\"mod\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.94,\"probabilities\":{\"none\":0.97,\"findmy\":0.03}}},\"usage\":{\"input_tokens\":2893,\"output_tokens\":32}}",
+          "at": 378
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "You ",
+          "at": 1649
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1507,\"first_text_ms\":1334,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":2231,\"total_input_tokens\":2157,\"total_output_tokens\":74,\"total_thought_tokens\":0}}",
+          "at": 1798
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1815
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.647,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.83,
+      "message": "You Are In The Lab",
+      "finished": 1792121135.939161,
+      "duration": 1.8
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 77,
+      "text": "Can you tell me more about the students and the director of the",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792121151.166045,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "findmy": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          8.728840827941895,
+          7.05490255355835,
+          15.308205604553223
+        ],
+        "quaternion": [
+          0.042777251452207565,
+          0.9259324073791504,
+          0.11176696419715881,
+          -0.35822802782058716
+        ],
+        "forward": [
+          0.6538277133181796,
+          -0.23762532929568847,
+          0.7183614325535086
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792121151.1834939,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 16
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 22
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":183,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.03},\"storage\":{\"type\":\"noul\",\"noul\":0.09},\"user_events\":{\"type\":\"noul\",\"noul\":0.16},\"personal\":{\"type\":\"noul\",\"noul\":0.16},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"unresolved\",\"confidence\":0.24,\"probabilities\":{\"standalone\":0.38,\"unresolved\":0.62}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.19}},\"usage\":{\"input_tokens\":1244,\"output_tokens\":122}}",
+          "at": 190
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":0.19,\"follow_up\":null}",
+          "at": 223
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"unresolved\"}",
+          "at": 233
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":184,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchLife\":0,\"labResearchWork\":0,\"none\":1}},\"section_members\":{\"type\":\"noul\",\"noul\":0.86},\"section_theme\":{\"type\":\"noul\",\"noul\":0.27},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.34}},\"usage\":{\"input_tokens\":1472,\"output_tokens\":102}}",
+          "at": 240
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":1,\"sections\":[\"members\"],\"scores\":{\"members\":0.86,\"theme\":0.27,\"philosophy\":0.34}}",
+          "at": 246
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Which item do you mean?",
+          "at": 252
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 2,
+          "latency": 0.21
+        }
+      },
+      "response": 2,
+      "latency": 0.26,
+      "message": "Which item do you mean?",
+      "finished": 1792121151.4469461,
+      "duration": 0.3
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 78,
+      "text": "Where am I",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792121166.273174,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          8.709077835083008,
+          7.047264575958252,
+          15.303614616394043
+        ],
+        "quaternion": [
+          -0.0002891524345614016,
+          0.9603411555290222,
+          0.14287497103214264,
+          -0.23943974077701569
+        ],
+        "forward": [
+          0.45997029996616123,
+          -0.27427896038641403,
+          0.8445104372238961
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792121166.290528,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 9
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 18
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 24
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":125,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.06},\"storage\":{\"type\":\"noul\",\"noul\":0.57},\"user_events\":{\"type\":\"noul\",\"noul\":0.13},\"personal\":{\"type\":\"noul\",\"noul\":0.3},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.98,\"probabilities\":{\"standalone\":0.99,\"unresolved\":0.01}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.82}},\"usage\":{\"input_tokens\":1317,\"output_tokens\":120}}",
+          "at": 134
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"Programmable Reality Lab\",\"source\":\"selection\",\"continue\":false,\"selected\":0.82,\"follow_up\":null}",
+          "at": 146
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":129,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchLife\":0,\"labResearchWork\":0,\"none\":1}},\"section_members\":{\"type\":\"noul\",\"noul\":0.46},\"section_theme\":{\"type\":\"noul\",\"noul\":0.31},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.31}},\"usage\":{\"input_tokens\":1545,\"output_tokens\":102}}",
+          "at": 160
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":null,\"probability\":1,\"sections\":[],\"scores\":{\"members\":0.46,\"theme\":0.31,\"philosophy\":0.31}}",
+          "at": 167
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"Programmable Reality Lab\",\"value\":\"text\"}",
+          "at": 172
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 178
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "You Are In The Lab",
+          "at": 1882
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1948,\"first_text_ms\":1702,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":824,\"total_input_tokens\":736,\"total_output_tokens\":88,\"total_thought_tokens\":0}}",
+          "at": 2102
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2135
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 3,
+          "latency": 1.879,
+          "status": "complete"
+        }
+      },
+      "response": 3,
+      "latency": 2.16,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "source": "selection",
+        "interaction_id": "v1_ChdUcG5SYXVmakxiZUQtOFlQdFpPbGlBcxIXVHBuUmF1ZmpMYmVELThZUHRaT2xpQXM"
+      },
+      "message": "You Are In The Lab",
+      "finished": 1792121168.449997,
+      "duration": 2.2
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 79,
+      "text": "Can you tell me more about what they are working on",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792121177.801801,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          8.761148452758789,
+          7.040794372558594,
+          15.868047714233398
+        ],
+        "quaternion": [
+          -0.015175402164459229,
+          -0.8393806219100952,
+          -0.14758890867233276,
+          0.5229024887084961
+        ],
+        "forward": [
+          0.8733489902527154,
+          -0.2636370510147259,
+          0.4095802425380626
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792121177.8191519,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 9
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 15
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 21
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":123,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"labResearchWork\",\"confidence\":0.97,\"probabilities\":{\"labResearchLife\":0,\"labResearchWork\":0.98,\"none\":0.02}},\"section_members\":{\"type\":\"noul\",\"noul\":0.62},\"section_theme\":{\"type\":\"noul\",\"noul\":0.74},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.37}},\"usage\":{\"input_tokens\":1648,\"output_tokens\":107}}",
+          "at": 131
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"labResearchWork\",\"probability\":0.98,\"sections\":[\"members\",\"theme\"],\"scores\":{\"members\":0.62,\"theme\":0.74,\"philosophy\":0.37}}",
+          "at": 145
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":125,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.05},\"storage\":{\"type\":\"noul\",\"noul\":0.15},\"user_events\":{\"type\":\"noul\",\"noul\":0.25},\"personal\":{\"type\":\"noul\",\"noul\":0.3},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"unresolved\",\"confidence\":0.64,\"probabilities\":{\"standalone\":0.18,\"unresolved\":0.82}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.21},\"info_followup\":{\"type\":\"noul\",\"noul\":0.24}},\"usage\":{\"input_tokens\":1507,\"output_tokens\":142}}",
+          "at": 162
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":0.21,\"follow_up\":0.24}",
+          "at": 167
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"unresolved\"}",
+          "at": 172
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Which item do you mean?",
+          "at": 177
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 181
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 4,
+          "latency": 0.15
+        },
+        "animation": {
+          "response": 5,
+          "latency": 0.16
+        }
+      },
+      "response": 5,
+      "latency": 0.19,
+      "message": "Which item do you mean?",
+      "finished": 1792121178.010218,
+      "duration": 0.2
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": false,
+      "id": 80,
+      "text": "Can you tell me more about the thing that people here are working",
+      "frame": 0,
+      "t": 0.0,
+      "status": "answered",
+      "created": 1792121198.445339,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "findmy": true,
+        "weather": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "pose": {
+        "position": [
+          8.962440490722656,
+          7.042934894561768,
+          16.28769302368164
+        ],
+        "quaternion": [
+          -0.03950228914618492,
+          -0.8452180624008179,
+          -0.15107080340385437,
+          0.5111002326011658
+        ],
+        "forward": [
+          0.8520470114683183,
+          -0.2957548018184686,
+          0.4319080077127633
+        ]
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1792121198.461739,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"zone:lab-2f\",\"key\":\"Programmable Reality Lab\",\"score\":0.4,\"cues\":{\"gaze\":0,\"point\":0,\"touch\":0,\"zone\":1},\"mode\":\"jev\"}",
+          "at": 7
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 13
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "Started",
+          "at": 18
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":189,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.04},\"storage\":{\"type\":\"noul\",\"noul\":0.2},\"user_events\":{\"type\":\"noul\",\"noul\":0.23},\"personal\":{\"type\":\"noul\",\"noul\":0.29},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"unresolved\",\"confidence\":0.86,\"probabilities\":{\"standalone\":0.07,\"unresolved\":0.93}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.41}},\"usage\":{\"input_tokens\":1419,\"output_tokens\":122}}",
+          "at": 195
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"user\",\"key\":null,\"source\":null,\"continue\":false,\"selected\":0.41,\"follow_up\":null}",
+          "at": 228
+        },
+        {
+          "kind": "tool",
+          "tool": "conversation_reference",
+          "text": "{\"status\":\"unresolved\"}",
+          "at": 237
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Which item do you mean?",
+          "at": 245
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_zone_animation",
+          "text": "{\"elapsed_ms\":282,\"answers\":{\"animation\":{\"type\":\"choice\",\"choice\":\"labResearchWork\",\"confidence\":0.94,\"probabilities\":{\"labResearchLife\":0,\"labResearchWork\":0.96,\"none\":0.04}},\"section_members\":{\"type\":\"noul\",\"noul\":0.6},\"section_theme\":{\"type\":\"noul\",\"noul\":0.75},\"section_philosophy\":{\"type\":\"noul\",\"noul\":0.36}},\"usage\":{\"input_tokens\":1647,\"output_tokens\":107}}",
+          "at": 288
+        },
+        {
+          "kind": "tool",
+          "tool": "zone_animation",
+          "text": "{\"zone\":\"lab-2f\",\"via\":\"in\",\"id\":\"labResearchWork\",\"probability\":0.96,\"sections\":[\"members\",\"theme\"],\"scores\":{\"members\":0.6,\"theme\":0.75,\"philosophy\":0.36}}",
+          "at": 298
+        },
+        {
+          "kind": "tool",
+          "tool": "show_animation",
+          "text": "Mod UI ready",
+          "at": 304
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 6,
+          "latency": 0.22
+        },
+        "animation": {
+          "response": 7,
+          "latency": 0.29
+        }
+      },
+      "response": 7,
+      "latency": 0.31,
+      "message": "Which item do you mean?",
+      "finished": 1792121198.776196,
+      "duration": 0.3
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1792121135.7583208,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Where am I",
+      "question_id": 76,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.647,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.647,
+            "created": 1792121135.7583208,
+            "title": "You ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.797,
+            "created": 1792121135.9083588,
+            "title": "You Are In The Lab",
+            "body": "You are in the Programmable Reality Lab (PRL) on the second floor.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.816,
+            "created": 1792121135.9270349,
+            "title": "You Are In The Lab",
+            "body": "You are in the Programmable Reality Lab (PRL) on the second floor.",
+            "anchor": {
+              "object": "desk",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "You Are In The Lab",
+      "body": "You are in the Programmable Reality Lab (PRL) on the second floor.",
+      "items": [],
+      "anchor": {
+        "object": "desk",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    },
+    {
+      "id": 2,
+      "created": 1792121151.394937,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about the students and the director of the",
+      "question_id": 77,
+      "title": "Which item do you mean?",
+      "body": "Please name the item you mean.",
+      "items": [],
+      "anchor": {
+        "object": "user-view",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 0.21
+    },
+    {
+      "id": 3,
+      "created": 1792121168.169097,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Where am I",
+      "question_id": 78,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.879,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.879,
+            "created": 1792121168.169097,
+            "title": "You Are In The Lab",
+            "body": "You are in the Programmable Reality Lab ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 2.135,
+            "created": 1792121168.425311,
+            "title": "You Are In The Lab",
+            "body": "You are in the Programmable Reality Lab (PRL) on the second floor of the ATLAS Institute at the University of Colorado Boulder.",
+            "anchor": {
+              "object": "Programmable Reality Lab",
+              "relation": "in-front"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "You Are In The Lab",
+      "body": "You are in the Programmable Reality Lab (PRL) on the second floor of the ATLAS Institute at the University of Colorado Boulder.",
+      "items": [],
+      "anchor": {
+        "object": "Programmable Reality Lab",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "Programmable Reality Lab",
+        "box_id": "zone:lab-2f"
+      }
+    },
+    {
+      "id": 4,
+      "created": 1792121177.9709609,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about what they are working on",
+      "question_id": 79,
+      "title": "Which item do you mean?",
+      "body": "Please name the item you mean.",
+      "items": [],
+      "anchor": {
+        "object": "user-view",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 0.15
+    },
+    {
+      "id": 5,
+      "created": 1792121177.977839,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about what they are working on",
+      "question_id": 79,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "labResearchWork",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.16
+    },
+    {
+      "id": 6,
+      "created": 1792121198.679202,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about the thing that people here are working",
+      "question_id": 80,
+      "title": "Which item do you mean?",
+      "body": "Please name the item you mean.",
+      "items": [],
+      "anchor": {
+        "object": "user-view",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 0.22
+    },
+    {
+      "id": 7,
+      "created": 1792121198.756329,
+      "frame": 0,
+      "t": 0.0,
+      "question": "Can you tell me more about the thing that people here are working",
+      "question_id": 80,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "animation": {
+        "id": "labResearchWork",
+        "zone": "lab-2f"
+      },
+      "referenced_entities": [],
+      "part": "animation",
+      "layout_slot": 0,
+      "latency": 0.29
+    }
+  ]
+}

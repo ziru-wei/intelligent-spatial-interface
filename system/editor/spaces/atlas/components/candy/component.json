@@ -1,0 +1,25 @@
+{
+ "name": "candy",
+ "kind": "box",
+ "category": "opportunistic",
+ "scope": "recording",
+ "defaultScale": [
+  0.2056,
+  0.1119,
+  0.1445
+ ],
+ "origin": "atlas_rec_3",
+ "pose": {
+  "position": [
+   1.1412,
+   6.3048,
+   8.9789
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ]
+ },
+ "info": "candy"
+}

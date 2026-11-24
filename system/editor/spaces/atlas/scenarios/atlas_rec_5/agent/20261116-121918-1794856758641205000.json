@@ -1,0 +1,379 @@
+{
+  "id": "20261116-121918-1794856758641205000",
+  "name": "2026-11-16 12:19:18",
+  "created": 1794856758.641241,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 11,
+      "text": "Turn on the lamp",
+      "frame": 59,
+      "t": 0.983766083008959,
+      "status": "answered",
+      "created": 1794856761.696338,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794856761.701153,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 26
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 30
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 32
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":295,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchWork\":0,\"labResearchLife\":0,\"none\":1}}},\"usage\":{\"input_tokens\":669,\"output_tokens\":48}}",
+          "at": 320
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":295}",
+          "at": 323
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 326
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0],[\"labResearchLife\",0],[\"none\",1]],\"chosen\":\"none\"}]}",
+          "at": 328
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":341,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.09},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"here\",\"confidence\":0.86,\"probabilities\":{\"referent\":0.04,\"here\":0.89,\"user\":0,\"world\":0,\"other\":0.07}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.97},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.07},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.02}},\"usage\":{\"input_tokens\":1538,\"output_tokens\":345}}",
+          "at": 367
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":342}",
+          "at": 374
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Turn on the lamp\",\"about\":\"here\"}]}",
+          "at": 380
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.09,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Turn on the lamp\",\"about\":\"Lab · 2F\"}]}",
+          "at": 388
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"iotcontrol\",0.97]]",
+          "at": 391
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.01],[\"BookCompanion\",0.01],[\"FindMy\",0.03],[\"IoTControl\",0.97],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.07],[\"Reminder\",0.01],[\"StepGuide\",0.04],[\"Wayfinding\",0.02],[\"Weather\",0.01],[\"LabInfo\",0.02]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"IoTControl\"]}",
+          "at": 393
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"IoTControl\",\"from\":[\"Lab · 2F\",\"desk 1\",\"desk 4\",\"desk 6\",\"desk 9\",\"desk 5\",\"desk 7\",\"desk 8\",\"desk 3\",\"desk 2\",\"shelf 1\",\"shelf 2\",\"shelf 3\",\"sofa\",\"coffee table\",\"TV\",\"vision_sean\",\"lab philosophy\",\"lab philosophy\",\"lab philosophy\",\"shelf 3/bottom shelf\",\"printer\",\"desk lamp\",\"espresso machine\",\"door 1\",\"door 2\",\"door 3\",\"window 1\",\"high opening\",\"front sidelight\",\"wall 1\",\"wall 2\",\"wall 3\",\"wall 4\",\"wall 5\",\"wall 6\",\"wall 7\",\"wall 8\",\"ceiling\",\"To the Lighthouse by Virginia Woolf\",\"Headphones\"],\"items\":[\"device:layout:lab-central-tv\",\"device:layout:lab-printer\",\"device:layout:lab-desk-lamp\"]}]",
+          "at": 395
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"IoTControl\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 396
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_iotcontrol",
+          "text": "Started",
+          "at": 398
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 399
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_iotcontrol",
+          "text": "{\"elapsed_ms\":114,\"answers\":{\"device\":{\"type\":\"choice\",\"choice\":\"d2_a0\",\"confidence\":1,\"probabilities\":{\"none\":0,\"d0_show\":0,\"d0_a0\":0,\"d0_a1\":0,\"d0_a2\":0,\"d1_show\":0,\"d1_a0\":0,\"d1_a1\":0,\"d1_a2\":0,\"d2_show\":0,\"d2_a0\":1,\"d2_a1\":0,\"d2_a2\":0,\"d2_a3\":0}}},\"usage\":{\"input_tokens\":894,\"output_tokens\":154}}",
+          "at": 483
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_iotcontrol\",\"elapsed_ms\":114}",
+          "at": 486
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"iotcontrol\",\"selection\":{\"device\":{\"kind\":\"device\",\"entity\":\"layout:lab-desk-lamp\",\"action\":\"on\"}}}",
+          "at": 495
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"IoTControl\",\"selectors\":[{\"name\":\"device\",\"options\":[[\"desk lamp: on\",1],[\"none\",0],[\"TV: controls\",0],[\"TV: on\",0],[\"TV: off\",0],[\"TV: next input\",0]],\"chosen\":\"desk lamp: on\"}]}",
+          "at": 507
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"IoTControl\",\"parts\":[{\"slot\":\"device\",\"use\":\"highlight\",\"kind\":\"highlight\"},{\"slot\":\"controls\",\"use\":\"control\",\"kind\":\"control\"}]}",
+          "at": 509
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "UI ready",
+          "at": 511
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Turn on Desk Lamp",
+          "at": 1314
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":924,\"first_text_ms\":921,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":687,\"total_input_tokens\":623,\"total_output_tokens\":64,\"total_thought_tokens\":0}}",
+          "at": 1316
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1320
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 0.49
+        },
+        "text": {
+          "response": 3,
+          "latency": 1.315,
+          "status": "complete"
+        }
+      },
+      "mod_parts": {
+        "highlight": {
+          "response": 1,
+          "latency": 0.49
+        },
+        "control": {
+          "response": 2,
+          "latency": 0.5
+        }
+      },
+      "response": 3,
+      "latency": 1.33,
+      "message": "Turn on Desk Lamp",
+      "finished": 1794856763.0265331,
+      "duration": 1.3,
+      "label": "q-1116-11"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794856762.190063,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "Turn on the lamp",
+      "question_id": 11,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "iotcontrol",
+        "variant": "panel",
+        "slot": "device",
+        "settings": {
+          "dismiss": "never"
+        }
+      },
+      "highlight": {
+        "version": 1,
+        "targets": [
+          {
+            "id": "layout:lab-desk-lamp",
+            "label": "desk lamp",
+            "center": [
+              13.19,
+              6.79,
+              16.22
+            ],
+            "size": [
+              0.14,
+              0.24,
+              0.14
+            ],
+            "yaw": 0,
+            "tone": "neutral"
+          }
+        ],
+        "guidance": false,
+        "label": false
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.49
+    },
+    {
+      "id": 2,
+      "created": 1794856762.2002199,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "Turn on the lamp",
+      "question_id": 11,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "iotcontrol",
+        "variant": "panel",
+        "slot": "controls",
+        "settings": {}
+      },
+      "control": {
+        "version": 1,
+        "device": {
+          "id": "layout:lab-desk-lamp",
+          "label": "desk lamp",
+          "center": [
+            13.19,
+            6.79,
+            16.22
+          ],
+          "size": [
+            0.14,
+            0.24,
+            0.14
+          ],
+          "yaw": 0
+        },
+        "states": {
+          "power": "on",
+          "brightness": 60
+        },
+        "actions": [
+          "on",
+          "off",
+          "brighter",
+          "dimmer"
+        ],
+        "applied": "on"
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.5
+    },
+    {
+      "id": 3,
+      "created": 1794856763.016246,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "Turn on the lamp",
+      "question_id": 11,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.315,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.315,
+            "created": 1794856763.016246,
+            "title": "Turn on Desk Lamp",
+            "body": "I turned on your desk lamp.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.319,
+            "created": 1794856763.020315,
+            "title": "Turn on Desk Lamp",
+            "body": "I turned on your desk lamp.",
+            "anchor": {
+              "object": "desk lamp",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Turn on Desk Lamp",
+      "body": "I turned on your desk lamp.",
+      "items": [],
+      "anchor": {
+        "object": "desk lamp",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

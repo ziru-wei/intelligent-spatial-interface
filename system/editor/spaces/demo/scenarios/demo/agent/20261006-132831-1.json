@@ -1,0 +1,23 @@
+{
+  "id": "20261006-132831-1",
+  "name": "2026-10-06 13:28:31",
+  "created": 1791314911.444721,
+  "questions": [
+    {
+      "id": 1,
+      "text": "How many clothes do I need to wash?",
+      "frame": 30,
+      "t": 2.0,
+      "status": "failed",
+      "created": 1791314912.087563,
+      "live": {
+        "rate": 0.25,
+        "read_s": 5.0
+      },
+      "started": 1791314912.088483,
+      "message": "Interrupted: the editor server restarted.",
+      "label": "q-1006-1"
+    }
+  ],
+  "responses": []
+}

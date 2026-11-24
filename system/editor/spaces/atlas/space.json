@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "name": "atlas",
+  "created": 1791686423.553805,
+  "scan": {
+    "id": "atlas-reassembled",
+    "mesh": "scan/atlas-reassembled.glb",
+    "source": "repairs/reassembled-2f/atlas-reassembled.glb",
+    "label": "atlas \u00b7 reassembled 2F",
+    "semantic": "scan/semantic.json"
+  },
+  "scans": [
+    {
+      "id": "atlas-reassembled",
+      "label": "atlas \u00b7 reassembled 2F",
+      "mesh": "scan/atlas-reassembled.glb",
+      "source": "repairs/reassembled-2f/atlas-reassembled.glb",
+      "semantic": "scan/semantic.json",
+      "toSpace": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "registration": {
+        "method": "same-atlas-frame; source 2F rigidly registered to lab"
+      },
+      "added": 1791721120.124809
+    }
+  ],
+  "frame": "atlas",
+  "semantic": "scan/semantic.json"
+}

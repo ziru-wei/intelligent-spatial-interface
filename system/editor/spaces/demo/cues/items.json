@@ -1,0 +1,42 @@
+{
+ "version": 1,
+ "items": [],
+ "canvas": {
+  "nodes": {
+   "llm-node": {
+    "x": 360.0,
+    "y": 0.0
+   },
+   "rep1-node": {
+    "x": 740.0,
+    "y": 0.0
+   },
+   "orc-node": {
+    "x": 1100.0,
+    "y": 0.0
+   },
+   "view-node": {
+    "x": 1060.0,
+    "y": 560.0
+   },
+   "rep2-node": {
+    "x": 1500.0,
+    "y": 0.0
+   },
+   "camera-node": {
+    "x": 1860.0,
+    "y": 0.0
+   }
+  },
+  "view": {
+   "x": -421.94724454484845,
+   "y": -61.92048673160821,
+   "scale": 0.7942275172919819
+  },
+  "links": []
+ },
+ "prompt": null,
+ "model": null,
+ "effort": null,
+ "decisions": {}
+}

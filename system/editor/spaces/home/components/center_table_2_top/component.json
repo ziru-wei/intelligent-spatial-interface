@@ -1,0 +1,21 @@
+{
+ "name": "Square table 2 · top",
+ "kind": "gltf",
+ "entry": "model.glb",
+ "category": "persistent",
+ "scope": "scene",
+ "defaultScale": 1,
+ "pivot": [
+  0.0,
+  0.016,
+  0.0
+ ],
+ "description": "Digital twin of square table 2 · top (中间方桌 2：仅桌面), from scanniverse_home-scan_repaired.blend.",
+ "source": {
+  "manifest": "private/home/scans/repairs/scan_repaired_objects_codex/placement_manifest.json",
+  "asset": "center_table_2_top",
+  "parts": [
+   "Center_Square_Table_2_Top"
+  ]
+ }
+}

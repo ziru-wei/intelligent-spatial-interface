@@ -1,0 +1,253 @@
+{
+  "id": "20261116-133123-1794861083973800000",
+  "name": "2026-11-16 13:31:23",
+  "created": 1794861083.973821,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 22,
+      "text": "Will it rain this weekend?",
+      "frame": 89,
+      "t": 1.4839859580097254,
+      "status": "answered",
+      "created": 1794861087.0191228,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794861087.024694,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 27
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 31
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 34
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":102,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.05},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"world\",\"confidence\":1,\"probabilities\":{\"referent\":0,\"here\":0,\"user\":0,\"world\":1,\"other\":0}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.98},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.02}},\"usage\":{\"input_tokens\":1654,\"output_tokens\":367}}",
+          "at": 129
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":102}",
+          "at": 144
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Will it rain this weekend?\",\"about\":\"world\"}]}",
+          "at": 161
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.05,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Will it rain this weekend?\",\"about\":\"outside data\"}]}",
+          "at": 163
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"weather\",0.98]]",
+          "at": 166
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.01],[\"BookCompanion\",0.01],[\"Delegate\",0.02],[\"FindMy\",0.01],[\"IoTControl\",0.02],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.02],[\"Reminder\",0.02],[\"StepGuide\",0.02],[\"Wayfinding\",0.01],[\"Weather\",0.98],[\"LabInfo\",0.02]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"Weather\"]}",
+          "at": 168
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"Weather\",\"from\":[\"feed:weather\"],\"items\":[\"weather forecast\"]}]",
+          "at": 171
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"Weather\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 173
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":119,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchWork\":0,\"labResearchLife\":0,\"none\":1}}},\"usage\":{\"input_tokens\":671,\"output_tokens\":48}}",
+          "at": 175
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":119}",
+          "at": 178
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 180
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0],[\"labResearchLife\",0],[\"none\",1]],\"chosen\":\"none\"}]}",
+          "at": 182
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 184
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_weather",
+          "text": "Started",
+          "at": 187
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_weather",
+          "text": "{\"elapsed_ms\":134,\"answers\":{\"entries_date_0\":{\"type\":\"noul\",\"noul\":0.08},\"entries_date_1\":{\"type\":\"noul\",\"noul\":0.09},\"entries_date_2\":{\"type\":\"noul\",\"noul\":0.07},\"entries_date_3\":{\"type\":\"noul\",\"noul\":0.09},\"entries_date_4\":{\"type\":\"noul\",\"noul\":0.07},\"entries_date_5\":{\"type\":\"noul\",\"noul\":0.07},\"entries_date_6\":{\"type\":\"noul\",\"noul\":0.08},\"entries_date_7\":{\"type\":\"noul\",\"noul\":0.09},\"entries_date_8\":{\"type\":\"noul\",\"noul\":0.1},\"entries_date_9\":{\"type\":\"noul\",\"noul\":0.14},\"entries_date_10\":{\"type\":\"noul\",\"noul\":0.16},\"entries_date_11\":{\"type\":\"noul\",\"noul\":0.1},\"entries_date_12\":{\"type\":\"noul\",\"noul\":0.09},\"entries_date_13\":{\"type\":\"noul\",\"noul\":0.08},\"entries_date_14\":{\"type\":\"noul\",\"noul\":0.12},\"entries_date_15\":{\"type\":\"noul\",\"noul\":0.12},\"entries_date_16\":{\"type\":\"noul\",\"noul\":0.13},\"entries_date_17\":{\"type\":\"noul\",\"noul\":0.13},\"entries_date_18\":{\"type\":\"noul\",\"noul\":0.1},\"entries_date_19\":{\"type\":\"noul\",\"noul\":0.11},\"entries_date_20\":{\"type\":\"noul\",\"noul\":0.11},\"entries_date_21\":{\"type\":\"noul\",\"noul\":0.1},\"entries_date_22\":{\"type\":\"noul\",\"noul\":0.11},\"entries_date_23\":{\"type\":\"noul\",\"noul\":0.12},\"entries_date_24\":{\"type\":\"noul\",\"noul\":0.18},\"entries_date_25\":{\"type\":\"noul\",\"noul\":0.12},\"entries_date_26\":{\"type\":\"noul\",\"noul\":0.1},\"entries_date_27\":{\"type\":\"noul\",\"noul\":0.12},\"entries_date_28\":{\"type\":\"noul\",\"noul\":0.09},\"entries_date_29\":{\"type\":\"noul\",\"noul\":0.12},\"entries_date_30\":{\"type\":\"noul\",\"noul\":0.15},\"entries_date_31\":{\"type\":\"noul\",\"noul\":0.2},\"entries_slot_0\":{\"type\":\"noul\",\"noul\":0.58},\"entries_slot_1\":{\"type\":\"noul\",\"noul\":0.66},\"entries_slot_2\":{\"type\":\"noul\",\"noul\":0.58},\"entries_slot_3\":{\"type\":\"noul\",\"noul\":0.57},\"entries_slot_4\":{\"type\":\"noul\",\"noul\":0.6},\"entries_slot_5\":{\"type\":\"noul\",\"noul\":0.58},\"entries_slot_6\":{\"type\":\"noul\",\"noul\":0.62},\"entries_slot_7\":{\"type\":\"noul\",\"noul\":0.58},\"entries_slot_8\":{\"type\":\"noul\",\"noul\":0.68}},\"usage\":{\"input_tokens\":11859,\"output_tokens\":805}}",
+          "at": 294
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_weather\",\"elapsed_ms\":134}",
+          "at": 298
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"weather\",\"selection\":{\"entries\":null}}",
+          "at": 301
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"Weather\",\"selectors\":[{\"name\":\"entries · days\",\"options\":[[\"2026-10-07\",0.08],[\"2026-10-08\",0.09],[\"2026-10-09\",0.07],[\"2026-10-10\",0.09],[\"2026-10-11\",0.07],[\"2026-10-12\",0.07],[\"2026-10-13\",0.08],[\"2026-10-14\",0.09]],\"chosen\":[]},{\"name\":\"entries · times\",\"options\":[[\"08:00\",0.58],[\"10:00\",0.66],[\"11:00\",0.58],[\"12:00\",0.57],[\"15:00\",0.6],[\"17:00\",0.58],[\"18:00\",0.62],[\"21:00\",0.58]],\"chosen\":[\"08:00\",\"10:00\",\"11:00\",\"12:00\",\"15:00\",\"17:00\",\"18:00\",\"21:00\",\"23:00\"]}]}",
+          "at": 304
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Weather Unavailable",
+          "at": 1067
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":969,\"first_text_ms\":905,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":4342,\"total_input_tokens\":4281,\"total_output_tokens\":61,\"total_thought_tokens\":0}}",
+          "at": 1127
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1135
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.066,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.14,
+      "message": "Weather Unavailable",
+      "finished": 1794861088.167092,
+      "duration": 1.1,
+      "label": "q-1116-22"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794861088.091105,
+      "frame": 89,
+      "t": 1.4839859580097254,
+      "question": "Will it rain this weekend?",
+      "question_id": 22,
+      "part": "text",
+      "layout_slot": 1,
+      "latency": 1.066,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.066,
+            "created": 1794861088.091105,
+            "title": "Weather Unavailable",
+            "body": "Forecast facts are unavailable for this weekend.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.135,
+            "created": 1794861088.159668,
+            "title": "Weather Unavailable",
+            "body": "Forecast facts are unavailable for this weekend.",
+            "anchor": {
+              "object": "desk",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Weather Unavailable",
+      "body": "Forecast facts are unavailable for this weekend.",
+      "items": [],
+      "anchor": {
+        "object": "desk",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

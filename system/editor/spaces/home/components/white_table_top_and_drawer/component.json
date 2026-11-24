@@ -1,0 +1,24 @@
+{
+ "name": "White desk · top",
+ "kind": "gltf",
+ "entry": "model.glb",
+ "category": "persistent",
+ "scope": "scene",
+ "defaultScale": 1,
+ "pivot": [
+  0.004,
+  0.081,
+  0.0
+ ],
+ "description": "Digital twin of white desk · top (白桌：仅桌面和无把手黄色抽屉), from scanniverse_home-scan_repaired.blend.",
+ "source": {
+  "manifest": "private/home/scans/repairs/scan_repaired_objects_codex/placement_manifest.json",
+  "asset": "white_table_top_and_drawer",
+  "parts": [
+   "White_Desk_Rectangular_Top"
+  ]
+ },
+ "nodes": [
+  "White_Desk_Rectangular_Top"
+ ]
+}

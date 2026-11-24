@@ -1,0 +1,420 @@
+{
+  "id": "20261117-120514-1794942314800953000",
+  "name": "2026-11-17 12:05:14",
+  "created": 1794942314.800979,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 40,
+      "text": "Switch the TV to HDMI 2",
+      "frame": 59,
+      "t": 0.983766083008959,
+      "status": "answered",
+      "created": 1794942317.837538,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794942317.8451872,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 28
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 34
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 38
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":231,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchWork\":0,\"labResearchLife\":0,\"none\":1}}},\"usage\":{\"input_tokens\":672,\"output_tokens\":48}}",
+          "at": 259
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":231}",
+          "at": 264
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 268
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0],[\"labResearchLife\",0],[\"none\",1]],\"chosen\":\"none\"}]}",
+          "at": 276
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":242,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.03},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"here\",\"confidence\":0.71,\"probabilities\":{\"referent\":0.06,\"here\":0.77,\"user\":0.01,\"world\":0,\"other\":0.16}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.99},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.05},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.09},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.02}},\"usage\":{\"input_tokens\":1697,\"output_tokens\":367}}",
+          "at": 292
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":242}",
+          "at": 297
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Switch the TV to HDMI 2\",\"about\":\"here\"}]}",
+          "at": 301
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.03,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Switch the TV to HDMI 2\",\"about\":\"Lab · 2F\"}]}",
+          "at": 306
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"iotcontrol\",0.99]]",
+          "at": 310
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.01],[\"BookCompanion\",0.01],[\"Delegate\",0.01],[\"FindMy\",0.02],[\"IoTControl\",0.99],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.05],[\"Reminder\",0.02],[\"StepGuide\",0.09],[\"Wayfinding\",0.02],[\"Weather\",0.01],[\"LabInfo\",0.02]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"IoTControl\"]}",
+          "at": 314
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"IoTControl\",\"from\":[\"Lab · 2F and the things in it\"],\"items\":[\"device:layout:lab-central-tv\",\"device:layout:lab-printer\",\"device:layout:lab-desk-lamp\"]}]",
+          "at": 318
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"IoTControl\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 323
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_iotcontrol",
+          "text": "Started",
+          "at": 326
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 330
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_iotcontrol",
+          "text": "{\"elapsed_ms\":158,\"answers\":{\"device\":{\"type\":\"choice\",\"choice\":\"d0_4\",\"confidence\":1,\"probabilities\":{\"none\":0,\"d0_0\":0,\"d0_1\":0,\"d0_2\":0,\"d0_3\":0,\"d0_4\":1,\"d0_5\":0,\"d0_6\":0,\"d0_7\":0,\"d0_8\":0,\"d0_9\":0,\"d1_0\":0,\"d1_1\":0,\"d1_2\":0,\"d1_3\":0,\"d1_4\":0,\"d2_0\":0,\"d2_1\":0,\"d2_2\":0,\"d2_3\":0,\"d2_4\":0,\"d2_5\":0,\"d2_6\":0}}},\"usage\":{\"input_tokens\":1157,\"output_tokens\":247}}",
+          "at": 428
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_iotcontrol\",\"elapsed_ms\":158}",
+          "at": 434
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"iotcontrol\",\"selection\":{\"device\":{\"kind\":\"device\",\"entity\":\"layout:lab-central-tv\",\"action\":{\"key\":\"input\",\"op\":\"set\",\"value\":\"HDMI 2\"}}}}",
+          "at": 445
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"IoTControl\",\"selectors\":[{\"name\":\"device\",\"options\":[[\"TV: input: HDMI 2\",1],[\"none\",0],[\"TV: look\",0],[\"TV: turn on\",0],[\"TV: turn off\",0],[\"TV: input: HDMI 1\",0]],\"chosen\":\"TV: input: HDMI 2\"}]}",
+          "at": 466
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"IoTControl\",\"parts\":[{\"slot\":\"device\",\"use\":\"highlight\",\"kind\":\"highlight\"},{\"slot\":\"controls\",\"use\":\"control\",\"kind\":\"control\"}]}",
+          "at": 471
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "UI ready",
+          "at": 476
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Switched TV ",
+          "at": 1375
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1178,\"first_text_ms\":1078,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1047,\"total_input_tokens\":1006,\"total_output_tokens\":41,\"total_thought_tokens\":0}}",
+          "at": 1470
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1479
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 0.44
+        },
+        "text": {
+          "response": 3,
+          "latency": 1.375,
+          "status": "complete"
+        }
+      },
+      "mod_parts": {
+        "highlight": {
+          "response": 1,
+          "latency": 0.44
+        },
+        "control": {
+          "response": 2,
+          "latency": 0.45
+        }
+      },
+      "response": 3,
+      "latency": 1.49,
+      "message": "Switched TV input",
+      "finished": 1794942319.334728,
+      "duration": 1.5,
+      "label": "q-1117-3"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794942318.283231,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "Switch the TV to HDMI 2",
+      "question_id": 40,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "iotcontrol",
+        "variant": "panel",
+        "slot": "device",
+        "settings": {
+          "dismiss": "never"
+        }
+      },
+      "highlight": {
+        "version": 1,
+        "targets": [
+          {
+            "id": "layout:lab-central-tv",
+            "label": "TV",
+            "center": [
+              12.9,
+              6.955,
+              16.49
+            ],
+            "size": [
+              1.26,
+              0.73,
+              0.1
+            ],
+            "yaw": 90.0,
+            "tone": "neutral"
+          }
+        ],
+        "guidance": false,
+        "label": false
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.44
+    },
+    {
+      "id": 2,
+      "created": 1794942318.29705,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "Switch the TV to HDMI 2",
+      "question_id": 40,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "iotcontrol",
+        "variant": "panel",
+        "slot": "controls",
+        "settings": {}
+      },
+      "control": {
+        "version": 2,
+        "device": {
+          "id": "layout:lab-central-tv",
+          "label": "TV",
+          "center": [
+            12.9,
+            6.955,
+            16.49
+          ],
+          "size": [
+            1.26,
+            0.73,
+            0.1
+          ],
+          "yaw": 90.0,
+          "class": "television"
+        },
+        "before": {
+          "inputs": {
+            "power": {
+              "type": "toggle",
+              "value": "on"
+            },
+            "input": {
+              "type": "choice",
+              "value": "HDMI 1",
+              "options": [
+                "HDMI 1",
+                "HDMI 2",
+                "HDMI 3"
+              ]
+            },
+            "volume": {
+              "type": "level",
+              "value": 20,
+              "min": 0,
+              "max": 100,
+              "step": 10
+            }
+          },
+          "outputs": {}
+        },
+        "inputs": {
+          "power": {
+            "type": "toggle",
+            "value": "on"
+          },
+          "input": {
+            "type": "choice",
+            "value": "HDMI 2",
+            "options": [
+              "HDMI 1",
+              "HDMI 2",
+              "HDMI 3"
+            ]
+          },
+          "volume": {
+            "type": "level",
+            "value": 20,
+            "min": 0,
+            "max": 100,
+            "step": 10
+          }
+        },
+        "outputs": {},
+        "changed": "input",
+        "op": "set",
+        "panel": true
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.45
+    },
+    {
+      "id": 3,
+      "created": 1794942319.219766,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "Switch the TV to HDMI 2",
+      "question_id": 40,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.375,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.375,
+            "created": 1794942319.219766,
+            "title": "Switched TV ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.474,
+            "created": 1794942319.3196568,
+            "title": "Switched TV input",
+            "body": "I have switched the TV input to HDMI 2.",
+            "anchor": {
+              "object": "TV",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Switched TV input",
+      "body": "I have switched the TV input to HDMI 2.",
+      "items": [],
+      "anchor": {
+        "object": "TV",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

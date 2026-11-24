@@ -1,0 +1,64 @@
+{
+  "id": "20261006-161318",
+  "name": "Laundry evening",
+  "created": 1791324798.5764632,
+  "questions": [
+    {
+      "id": 22,
+      "text": "How many clothes do I need to wash?",
+      "frame": 30,
+      "t": 2,
+      "status": "answered",
+      "created": 1791324789.2320561,
+      "live": {
+        "read_s": 5
+      },
+      "started": 1791324789.235743,
+      "trace": [
+        {
+          "kind": "reasoning",
+          "tool": null,
+          "text": "Checking the laundry basket",
+          "at": 1200
+        },
+        {
+          "kind": "tool",
+          "tool": "get_user_context",
+          "text": "",
+          "at": 2500
+        },
+        {
+          "kind": "message",
+          "tool": null,
+          "text": "I showed 14 items to wash above the laundry basket.",
+          "at": 9000
+        }
+      ],
+      "response": 1,
+      "latency": 3.21,
+      "finished": 1791324792.449759,
+      "duration": 12.3,
+      "label": "q-1006-12"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1791324792.445605,
+      "frame": 30,
+      "t": 2,
+      "question": "How many clothes do I need to wash?",
+      "question_id": 22,
+      "title": "14 items to wash",
+      "body": "",
+      "items": [
+        "3 white T-shirts",
+        "2 dark jeans"
+      ],
+      "anchor": {
+        "object": "laundry-basket",
+        "relation": "above"
+      }
+    }
+  ]
+}

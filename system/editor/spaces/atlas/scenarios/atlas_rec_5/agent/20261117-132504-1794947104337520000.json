@@ -1,0 +1,56 @@
+{
+  "id": "20261117-132504-1794947104337520000",
+  "name": "2026-11-17 13:25:04",
+  "created": 1794947104.337549,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 46,
+      "text": "How long until my print job is done?",
+      "frame": 59,
+      "t": 0.983766083008959,
+      "status": "failed",
+      "created": 1794947107.379411,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794947107.391967,
+      "trace": [
+        {
+          "kind": "error",
+          "tool": "pipeline_error",
+          "text": "MOD agenda: slot timeline draws unknown UI floatingText.",
+          "at": 21
+        }
+      ],
+      "message": "MOD agenda: slot timeline draws unknown UI floatingText.",
+      "finished": 1794947107.423467,
+      "duration": 0.0,
+      "label": "q-1117-9"
+    }
+  ],
+  "responses": []
+}

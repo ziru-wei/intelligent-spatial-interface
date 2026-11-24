@@ -1,0 +1,55 @@
+{
+  "id": "20261116-101606-1794849366961524000",
+  "name": "2026-11-16 10:16:06",
+  "created": 1794849366.9615612,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 3,
+      "text": "What does this lab work on?",
+      "frame": 557,
+      "t": 9.287204207998002,
+      "status": "failed",
+      "created": 1794849370.620115,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794849370.6225128,
+      "trace": [
+        {
+          "kind": "error",
+          "tool": "pipeline_error",
+          "text": "fetch failed",
+          "at": 10
+        }
+      ],
+      "message": "fetch failed",
+      "finished": 1794849370.638636,
+      "duration": 0.0
+    }
+  ],
+  "responses": []
+}

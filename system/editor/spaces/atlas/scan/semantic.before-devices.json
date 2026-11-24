@@ -1,0 +1,5465 @@
+{
+ "version": 1,
+ "source": "atlas-reassembled-2f",
+ "edited": true,
+ "revision": 353,
+ "boxesRevision": 351,
+ "objects": [
+  {
+   "id": "lab-table-1",
+   "label": "desk 1",
+   "category": "table_other_rect",
+   "center": [
+    8.28,
+    6.324,
+    14.308
+   ],
+   "size": [
+    1.48,
+    0.02,
+    0.77
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-table-2",
+   "label": "desk 4",
+   "category": "table_other_rect",
+   "center": [
+    10.771,
+    6.312,
+    14.335
+   ],
+   "size": [
+    1.52,
+    0.02,
+    0.77
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-table-3",
+   "label": "desk 6",
+   "category": "table_other_rect",
+   "center": [
+    12.843,
+    6.252,
+    14.358
+   ],
+   "size": [
+    1.52,
+    0.02,
+    0.77
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-table-4",
+   "label": "desk 9",
+   "category": "table_other_rect",
+   "center": [
+    14.475,
+    6.38,
+    14.373
+   ],
+   "size": [
+    1.56,
+    0.02,
+    0.84
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-table-5",
+   "label": "desk 5",
+   "category": "table_other_rect",
+   "center": [
+    12.272,
+    6.351,
+    16.471
+   ],
+   "size": [
+    1.41,
+    0.02,
+    1.44
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-table-6",
+   "label": "desk 7",
+   "category": "table_other_rect",
+   "center": [
+    13.52,
+    6.655,
+    16.48
+   ],
+   "size": [
+    1.54,
+    0.02,
+    1.02
+   ],
+   "yaw": 90.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-table-7",
+   "label": "desk 8",
+   "category": "table_other_rect",
+   "center": [
+    13.631,
+    6.58,
+    18.682
+   ],
+   "size": [
+    1.52,
+    0.02,
+    0.77
+   ],
+   "yaw": 90.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-table-8",
+   "label": "desk 3",
+   "category": "table_other_rect",
+   "center": [
+    10.484,
+    6.333,
+    18.821
+   ],
+   "size": [
+    1.52,
+    0.02,
+    0.77
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-table-9",
+   "label": "desk 2",
+   "category": "table_other_rect",
+   "center": [
+    8.785,
+    6.418,
+    17.815
+   ],
+   "size": [
+    1.52,
+    0.02,
+    0.77
+   ],
+   "yaw": -51.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-shelf-1",
+   "label": "shelf 1",
+   "category": "storage_shelf",
+   "center": [
+    3.95,
+    6.69,
+    14.46
+   ],
+   "size": [
+    0.94,
+    2.28,
+    0.53
+   ],
+   "yaw": 90.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-shelf-2",
+   "label": "shelf 2",
+   "category": "storage_shelf",
+   "center": [
+    4.68,
+    6.69,
+    14.16
+   ],
+   "size": [
+    0.91,
+    2.28,
+    0.54
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-shelf-3",
+   "label": "shelf 3",
+   "category": "storage_shelf",
+   "center": [
+    5.57,
+    6.69,
+    14.171
+   ],
+   "size": [
+    0.92,
+    2.28,
+    0.54
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-sofa",
+   "label": "sofa",
+   "category": "sofa",
+   "center": [
+    15.615,
+    6.122,
+    17.435
+   ],
+   "size": [
+    1.67,
+    1.04,
+    2.57
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "shape": {
+    "type": "prism",
+    "footprint": [
+     [
+      0.5,
+      -0.5
+     ],
+     [
+      0.5,
+      0.5
+     ],
+     [
+      -0.5,
+      0.5
+     ],
+     [
+      -0.5,
+      0.13
+     ],
+     [
+      -0.07,
+      0.13
+     ],
+     [
+      -0.07,
+      -0.5
+     ]
+    ]
+   },
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-coffee-table",
+   "label": "coffee table",
+   "category": "table_other_rect",
+   "center": [
+    16.11,
+    5.87,
+    15.89
+   ],
+   "size": [
+    0.58,
+    0.46,
+    0.58
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-central-tv",
+   "label": "TV",
+   "category": "television",
+   "center": [
+    12.9,
+    6.955,
+    16.49
+   ],
+   "size": [
+    1.26,
+    0.73,
+    0.1
+   ],
+   "yaw": 90.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "kitchen-base-sink",
+   "label": "appliance counter base",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    -1.035,
+    5.906,
+    10.042
+   ],
+   "size": [
+    2.843,
+    0.86,
+    0.62
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-upper-1",
+   "label": "upper cabinet 3",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    -1.183,
+    7.339,
+    11.191
+   ],
+   "size": [
+    1.098,
+    0.98,
+    0.37
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-upper-2",
+   "label": "upper cabinet 2",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    -1.185,
+    7.338,
+    10.097
+   ],
+   "size": [
+    1.028,
+    0.98,
+    0.37
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-upper-3",
+   "label": "upper cabinet 1",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    -1.188,
+    7.338,
+    9.074
+   ],
+   "size": [
+    0.972,
+    0.98,
+    0.37
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-upper-fridge",
+   "label": "cabinet above fridge 1",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    -1.189,
+    7.526,
+    7.461
+   ],
+   "size": [
+    2.135,
+    0.632,
+    0.37
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-upper-microwave",
+   "label": "cabinet above microwave 1",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    -1.16,
+    7.042,
+    10.012
+   ],
+   "size": [
+    0.465,
+    0.271,
+    0.451
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-fridge",
+   "label": "refrigerator",
+   "category": "refrigerator",
+   "center": [
+    -0.95,
+    6.319,
+    7.591
+   ],
+   "size": [
+    1.783,
+    1.673,
+    0.81
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-round-table",
+   "label": "round tabletop",
+   "category": "table_other_round",
+   "center": [
+    0.903,
+    6.215,
+    8.906
+   ],
+   "size": [
+    1.04,
+    0.025,
+    1.04
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "shape": {
+    "type": "cylinder",
+    "surfaceOnly": true
+   },
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-short-base-1",
+   "label": "short-wall base cabinet 1",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    -0.862,
+    5.924,
+    11.79
+   ],
+   "size": [
+    0.87,
+    0.89,
+    0.61
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-short-upper-1",
+   "label": "short-wall upper cabinet 1",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    -0.862,
+    7.299,
+    11.919
+   ],
+   "size": [
+    0.87,
+    0.98,
+    0.35
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-short-base-2",
+   "label": "short-wall base cabinet 2",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    0.028,
+    5.924,
+    11.788
+   ],
+   "size": [
+    0.87,
+    0.89,
+    0.61
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-short-upper-2",
+   "label": "short-wall upper cabinet 2",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    0.028,
+    7.299,
+    11.918
+   ],
+   "size": [
+    0.87,
+    0.98,
+    0.35
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-short-base-3",
+   "label": "short-wall base cabinet 3",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    0.916,
+    5.924,
+    11.786
+   ],
+   "size": [
+    0.866,
+    0.89,
+    0.61
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-short-upper-3",
+   "label": "short-wall upper cabinet 3",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    0.918,
+    7.299,
+    11.916
+   ],
+   "size": [
+    0.87,
+    0.98,
+    0.35
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-short-sink",
+   "label": "double sink",
+   "category": "sink",
+   "center": [
+    0.095,
+    6.359,
+    11.806
+   ],
+   "size": [
+    0.712,
+    0.14,
+    0.364
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-upper-microwave_0",
+   "label": "cabinet above microwave 3",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    -1.029,
+    7.518,
+    10.096
+   ],
+   "size": [
+    0.896,
+    0.229,
+    0.715
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-upper-microwave_1",
+   "label": "cabinet above microwave 2",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    -1.057,
+    6.045,
+    10.037
+   ],
+   "size": [
+    0.579,
+    0.33,
+    0.451
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "kitchen-2f"
+  },
+  {
+   "id": "kitchen-upper-fridge_1",
+   "label": "kitchen bulletin board 1",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    0.017,
+    7.203,
+    6.419
+   ],
+   "size": [
+    0.09,
+    0.48,
+    1.183
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": null
+  },
+  {
+   "id": "custom_2",
+   "label": "table",
+   "category": "custom",
+   "center": [
+    -0.46,
+    5.669,
+    2.575
+   ],
+   "size": [
+    1.858,
+    0.542,
+    0.569
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "room": "north-hall-2f"
+  },
+  {
+   "id": "kitchen-upper-fridge_0",
+   "label": "music-brain user study",
+   "category": "storage_cabinet_mid1",
+   "center": [
+    -0.052,
+    7.335,
+    6.539
+   ],
+   "size": [
+    0.12,
+    0.188,
+    0.137
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "info": "music-brain user study",
+   "room": null
+  },
+  {
+   "id": "lab-shelf-3_0",
+   "label": "vision_sean",
+   "category": "storage_shelf",
+   "center": [
+    5.904,
+    7.171,
+    16.58
+   ],
+   "size": [
+    1.813,
+    1.235,
+    0.107
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "info": "vision_sean",
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-shelf-3_1",
+   "label": "lab philosophy",
+   "category": "storage_shelf",
+   "center": [
+    7.032,
+    6.858,
+    16.58
+   ],
+   "size": [
+    0.341,
+    1.861,
+    0.107
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "info": "lab philosophy",
+   "room": null
+  },
+  {
+   "id": "lab-shelf-3_2",
+   "label": "lab philosophy",
+   "category": "storage_shelf",
+   "center": [
+    5.902,
+    6.189,
+    16.581
+   ],
+   "size": [
+    1.854,
+    0.523,
+    0.107
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "info": "lab philosophy",
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-shelf-3_3",
+   "label": "lab philosophy",
+   "category": "storage_shelf",
+   "center": [
+    4.539,
+    7.143,
+    16.581
+   ],
+   "size": [
+    0.771,
+    0.878,
+    0.107
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "info": "lab philosophy",
+   "room": "lab-2f"
+  },
+  {
+   "id": "custom_0",
+   "label": "Poster of Anastasia's Talk",
+   "category": "custom",
+   "center": [
+    -1.057,
+    6.53,
+    2.847
+   ],
+   "size": [
+    0.269,
+    0.42,
+    0.058
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "info": "Poster of Anastasia's Talk",
+   "room": "north-hall-2f"
+  },
+  {
+   "id": "custom_1",
+   "label": "ATLAS labs booklet",
+   "category": "custom",
+   "center": [
+    -0.309,
+    5.981,
+    2.438
+   ],
+   "size": [
+    0.295,
+    0.038,
+    0.359
+   ],
+   "yaw": 17.4,
+   "parent": null,
+   "info": "ATLAS labs booklet",
+   "room": "north-hall-2f"
+  },
+  {
+   "id": "lab-shelf-3-bottom",
+   "label": "shelf 3/bottom shelf",
+   "category": "storage_shelf",
+   "center": [
+    5.57,
+    6.21,
+    14.171
+   ],
+   "size": [
+    0.88,
+    1.26,
+    0.5
+   ],
+   "yaw": 0.0,
+   "parent": "lab-shelf-3",
+   "room": "lab-2f"
+  }
+ ],
+ "openings": [
+  {
+   "id": "lab-entry",
+   "label": "door 1",
+   "category": "Door",
+   "center": [
+    3.555,
+    6.7,
+    15.98
+   ],
+   "size": [
+    0.96,
+    2.26,
+    0.1
+   ],
+   "yaw": 90.0,
+   "parent": null,
+   "destination": "Lab \u00b7 2F",
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-back-door",
+   "label": "door 2",
+   "category": "Door",
+   "center": [
+    15.75,
+    6.73,
+    13.815
+   ],
+   "size": [
+    0.9,
+    2.22,
+    0.051
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "destination": "Lab \u00b7 2F",
+   "room": null
+  },
+  {
+   "id": "lab-east-door",
+   "label": "door 3",
+   "category": "Door",
+   "center": [
+    16.44,
+    6.72,
+    14.57
+   ],
+   "size": [
+    0.94,
+    2.24,
+    0.1
+   ],
+   "yaw": 90.0,
+   "parent": null,
+   "destination": "Lab \u00b7 2F",
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-east-sidelight",
+   "label": "window 1",
+   "category": "Window",
+   "center": [
+    16.441,
+    7.068,
+    15.413
+   ],
+   "size": [
+    0.66,
+    1.58,
+    0.1
+   ],
+   "yaw": 90.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "lab-high-opening",
+   "label": "high opening",
+   "category": "Opening",
+   "center": [
+    15.67,
+    7.79,
+    18.62
+   ],
+   "size": [
+    1.13,
+    0.55,
+    0.1
+   ],
+   "yaw": 0.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "kitchen-north-entry",
+   "label": "door 6",
+   "category": "Door",
+   "center": [
+    1.615,
+    6.538,
+    7.174
+   ],
+   "size": [
+    0.99,
+    2.16,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "destination": "Kitchen \u00b7 2F",
+   "room": "central-hall-2f"
+  },
+  {
+   "id": "kitchen-south-entry",
+   "label": "door 7",
+   "category": "Door",
+   "center": [
+    1.619,
+    6.549,
+    10.696
+   ],
+   "size": [
+    1.02,
+    2.18,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "destination": "Kitchen \u00b7 2F",
+   "room": "central-hall-2f"
+  },
+  {
+   "id": "hall-east-north-door",
+   "label": "door 14",
+   "category": "Door",
+   "center": [
+    3.749,
+    6.487,
+    1.341
+   ],
+   "size": [
+    0.94,
+    2.2,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": null
+  },
+  {
+   "id": "hall-east-north-window",
+   "label": "window 3",
+   "category": "Window",
+   "center": [
+    3.745,
+    6.965,
+    2.949
+   ],
+   "size": [
+    1.878,
+    1.17,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "central-hall-2f"
+  },
+  {
+   "id": "hall-east-door-2",
+   "label": "door 15",
+   "category": "Door",
+   "center": [
+    3.774,
+    6.55,
+    4.662
+   ],
+   "size": [
+    0.93,
+    2.2,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": null
+  },
+  {
+   "id": "hall-east-window-3",
+   "label": "window 2",
+   "category": "Window",
+   "center": [
+    3.51,
+    7.312,
+    11.453
+   ],
+   "size": [
+    3.298,
+    1.414,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "central-hall-2f"
+  },
+  {
+   "id": "hall-east-window-4",
+   "label": "window 9",
+   "category": "Window",
+   "center": [
+    3.56,
+    7.182,
+    17.742
+   ],
+   "size": [
+    1.74,
+    1.29,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": null
+  },
+  {
+   "id": "hall-east-door-3",
+   "label": "door 9",
+   "category": "Door",
+   "center": [
+    3.564,
+    6.731,
+    20.681
+   ],
+   "size": [
+    0.9,
+    2.25,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "south-hall-2f"
+  },
+  {
+   "id": "hall-east-door-4",
+   "label": "door 10",
+   "category": "Door",
+   "center": [
+    3.571,
+    6.742,
+    24.421
+   ],
+   "size": [
+    0.92,
+    2.25,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "south-hall-2f"
+  },
+  {
+   "id": "hall-east-sidelight-4",
+   "label": "window 5",
+   "category": "Window",
+   "center": [
+    3.57,
+    7.262,
+    23.621
+   ],
+   "size": [
+    0.62,
+    1.37,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "south-hall-2f"
+  },
+  {
+   "id": "hall-west-door-north",
+   "label": "door 12",
+   "category": "Door",
+   "center": [
+    1.593,
+    6.508,
+    3.615
+   ],
+   "size": [
+    0.97,
+    2.2,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": null
+  },
+  {
+   "id": "hall-west-door-lab",
+   "label": "door 13",
+   "category": "Door",
+   "center": [
+    1.608,
+    6.649,
+    12.895
+   ],
+   "size": [
+    0.96,
+    2.2,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": null
+  },
+  {
+   "id": "hall-west-sidelight-lab",
+   "label": "window 4",
+   "category": "Window",
+   "center": [
+    1.683,
+    7.09,
+    13.753
+   ],
+   "size": [
+    0.6,
+    1.34,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "lab-hall-2f"
+  },
+  {
+   "id": "hall-west-window-south",
+   "label": "window 7",
+   "category": "Window",
+   "center": [
+    1.626,
+    7.151,
+    21.585
+   ],
+   "size": [
+    1.64,
+    1.29,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": null
+  },
+  {
+   "id": "hall-west-sidelight-south",
+   "label": "window 8",
+   "category": "Window",
+   "center": [
+    1.63,
+    7.181,
+    23.885
+   ],
+   "size": [
+    0.51,
+    1.4,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": null
+  },
+  {
+   "id": "hall-west-door-south",
+   "label": "door 8",
+   "category": "Door",
+   "center": [
+    1.632,
+    6.732,
+    24.665
+   ],
+   "size": [
+    0.93,
+    2.2,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": "south-hall-2f"
+  },
+  {
+   "id": "stair-landing-entry",
+   "label": "door 5",
+   "category": "Door",
+   "center": [
+    -1.793,
+    6.466,
+    0.341
+   ],
+   "size": [
+    1.55,
+    2.26,
+    0.1
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": "stair-landing-2f"
+  },
+  {
+   "id": "north-hall-office-door",
+   "label": "door 11",
+   "category": "Door",
+   "center": [
+    -0.162,
+    6.457,
+    0.768
+   ],
+   "size": [
+    0.95,
+    2.22,
+    0.1
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": null
+  },
+  {
+   "id": "north-hall-office-window",
+   "label": "window 6",
+   "category": "Window",
+   "center": [
+    0.648,
+    6.927,
+    0.766
+   ],
+   "size": [
+    0.6,
+    1.39,
+    0.1
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": null
+  },
+  {
+   "id": "north-inner-door",
+   "label": "door 4",
+   "category": "Door",
+   "center": [
+    -2.208,
+    6.487,
+    2.882
+   ],
+   "size": [
+    0.98,
+    2.22,
+    0.1
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": "north-hall-2f"
+  },
+  {
+   "id": "north-inner-passage",
+   "label": "opening",
+   "category": "Opening",
+   "center": [
+    -5.878,
+    6.646,
+    2.889
+   ],
+   "size": [
+    3.2,
+    2.62,
+    0.1
+   ],
+   "yaw": 0.1,
+   "parent": null,
+   "room": null
+  },
+  {
+   "id": "lab-front-sidelight",
+   "label": "front sidelight",
+   "category": "Window",
+   "center": [
+    3.555,
+    7.04,
+    15.17
+   ],
+   "size": [
+    0.6,
+    1.58,
+    0.1
+   ],
+   "yaw": 90.0,
+   "parent": null,
+   "room": "lab-2f"
+  },
+  {
+   "id": "hall-east-door-2_0",
+   "label": "door 16",
+   "category": "Door",
+   "center": [
+    4.605,
+    6.637,
+    8.218
+   ],
+   "size": [
+    0.93,
+    2.374,
+    0.1
+   ],
+   "yaw": 90.1,
+   "parent": null,
+   "room": null
+  }
+ ],
+ "rooms": [
+  {
+   "id": "lab-2f",
+   "name": "Lab \u00b7 2F",
+   "floorY": 5.6,
+   "center": [
+    10.8291,
+    16.2411
+   ],
+   "polygon": [
+    [
+     [
+      [
+       3.555,
+       13.826
+      ],
+      [
+       16.463,
+       13.82
+      ],
+      [
+       16.457,
+       18.645
+      ],
+      [
+       14.756,
+       18.638
+      ],
+      [
+       14.756,
+       19.478
+      ],
+      [
+       9.415,
+       19.515
+      ],
+      [
+       7.238,
+       16.573
+      ],
+      [
+       3.541,
+       16.601
+      ]
+     ]
+    ]
+   ],
+   "triangles": [
+    [
+     [
+      3.541,
+      16.601
+     ],
+     [
+      3.555,
+      13.826
+     ],
+     [
+      7.238,
+      16.573
+     ]
+    ],
+    [
+     [
+      9.415,
+      19.515
+     ],
+     [
+      7.238,
+      16.573
+     ],
+     [
+      14.756,
+      18.638
+     ]
+    ],
+    [
+     [
+      9.415,
+      19.515
+     ],
+     [
+      14.756,
+      18.638
+     ],
+     [
+      14.756,
+      19.478
+     ]
+    ],
+    [
+     [
+      16.457,
+      18.645
+     ],
+     [
+      14.756,
+      18.638
+     ],
+     [
+      16.463,
+      13.82
+     ]
+    ],
+    [
+     [
+      16.463,
+      13.82
+     ],
+     [
+      14.756,
+      18.638
+     ],
+     [
+      7.238,
+      16.573
+     ]
+    ],
+    [
+     [
+      16.463,
+      13.82
+     ],
+     [
+      7.238,
+      16.573
+     ],
+     [
+      3.555,
+      13.826
+     ]
+    ]
+   ],
+   "area": 57.901,
+   "floor": 2,
+   "ceilingY": 8.6,
+   "info": "Programmable Reality Lab"
+  },
+  {
+   "id": "kitchen-2f",
+   "name": "Kitchen \u00b7 2F",
+   "floorY": 5.4784,
+   "center": [
+    0.1186,
+    9.3328
+   ],
+   "polygon": [
+    [
+     [
+      [
+       -1.3715,
+       6.5705
+      ],
+      [
+       1.5985,
+       6.565
+      ],
+      [
+       1.6087,
+       12.095
+      ],
+      [
+       -1.3613,
+       12.1005
+      ]
+     ]
+    ]
+   ],
+   "triangles": [
+    [
+     [
+      -1.3613,
+      12.1005
+     ],
+     [
+      -1.3715,
+      6.5705
+     ],
+     [
+      1.6087,
+      12.095
+     ]
+    ],
+    [
+     [
+      1.6087,
+      12.095
+     ],
+     [
+      -1.3715,
+      6.5705
+     ],
+     [
+      1.5985,
+      6.565
+     ]
+    ]
+   ],
+   "area": 16.4241,
+   "floor": 2,
+   "ceilingY": 8.4984
+  },
+  {
+   "id": "north-hall-2f",
+   "name": "North corridor \u00b7 2F",
+   "floorY": 5.3866,
+   "center": [
+    -2.1133,
+    1.6912
+   ],
+   "polygon": [
+    [
+     [
+      [
+       -7.4829,
+       0.3518
+      ],
+      [
+       -0.893,
+       0.3396
+      ],
+      [
+       -0.8922,
+       0.7696
+      ],
+      [
+       3.7478,
+       0.7611
+      ],
+      [
+       3.7517,
+       2.8711
+      ],
+      [
+       -7.4783,
+       2.8918
+      ]
+     ]
+    ]
+   ],
+   "triangles": [
+    [
+     [
+      -7.4783,
+      2.8918
+     ],
+     [
+      -7.4829,
+      0.3518
+     ],
+     [
+      -0.8922,
+      0.7696
+     ]
+    ],
+    [
+     [
+      -7.4783,
+      2.8918
+     ],
+     [
+      -0.8922,
+      0.7696
+     ],
+     [
+      3.7517,
+      2.8711
+     ]
+    ],
+    [
+     [
+      3.7517,
+      2.8711
+     ],
+     [
+      -0.8922,
+      0.7696
+     ],
+     [
+      3.7478,
+      0.7611
+     ]
+    ],
+    [
+     [
+      -0.893,
+      0.3396
+     ],
+     [
+      -0.8922,
+      0.7696
+     ],
+     [
+      -7.4829,
+      0.3518
+     ]
+    ]
+   ],
+   "area": 26.529,
+   "floor": 2,
+   "ceilingY": 8.1166
+  },
+  {
+   "id": "stair-landing-2f",
+   "name": "Stair landing \u00b7 2F",
+   "floorY": 5.376,
+   "center": [
+    -1.7917,
+    -1.6687
+   ],
+   "polygon": [
+    [
+     [
+      [
+       -2.6904,
+       -3.677
+      ],
+      [
+       -0.9004,
+       -3.6803
+      ],
+      [
+       -0.893,
+       0.3397
+      ],
+      [
+       -2.6829,
+       0.343
+      ]
+     ]
+    ]
+   ],
+   "triangles": [
+    [
+     [
+      -2.6829,
+      0.343
+     ],
+     [
+      -2.6904,
+      -3.677
+     ],
+     [
+      -0.893,
+      0.3397
+     ]
+    ],
+    [
+     [
+      -0.893,
+      0.3397
+     ],
+     [
+      -2.6904,
+      -3.677
+     ],
+     [
+      -0.9004,
+      -3.6803
+     ]
+    ]
+   ],
+   "area": 7.1958,
+   "floor": 2,
+   "ceilingY": 9.546
+  },
+  {
+   "id": "central-hall-2f",
+   "name": "Central corridor \u00b7 2F",
+   "floorY": 5.4584,
+   "center": [
+    2.7383,
+    7.4551
+   ],
+   "polygon": [
+    [
+     [
+      [
+       1.5917,
+       2.8751
+      ],
+      [
+       3.7517,
+       2.8711
+      ],
+      [
+       3.7607,
+       7.7311
+      ],
+      [
+       4.4807,
+       7.7297
+      ],
+      [
+       4.4838,
+       9.4297
+      ],
+      [
+       3.5438,
+       9.4315
+      ],
+      [
+       3.5487,
+       12.0915
+      ],
+      [
+       1.6087,
+       12.095
+      ]
+     ]
+    ]
+   ],
+   "triangles": [
+    [
+     [
+      1.6087,
+      12.095
+     ],
+     [
+      1.5917,
+      2.8751
+     ],
+     [
+      3.7607,
+      7.7311
+     ]
+    ],
+    [
+     [
+      1.6087,
+      12.095
+     ],
+     [
+      3.7607,
+      7.7311
+     ],
+     [
+      3.5438,
+      9.4315
+     ]
+    ],
+    [
+     [
+      1.6087,
+      12.095
+     ],
+     [
+      3.5438,
+      9.4315
+     ],
+     [
+      3.5487,
+      12.0915
+     ]
+    ],
+    [
+     [
+      4.4838,
+      9.4297
+     ],
+     [
+      3.5438,
+      9.4315
+     ],
+     [
+      3.7607,
+      7.7311
+     ]
+    ],
+    [
+     [
+      4.4838,
+      9.4297
+     ],
+     [
+      3.7607,
+      7.7311
+     ],
+     [
+      4.4807,
+      7.7297
+     ]
+    ],
+    [
+     [
+      3.7517,
+      2.8711
+     ],
+     [
+      3.7607,
+      7.7311
+     ],
+     [
+      1.5917,
+      2.8751
+     ]
+    ]
+   ],
+   "area": 20.554,
+   "floor": 2,
+   "ceilingY": 8.2184
+  },
+  {
+   "id": "lab-hall-2f",
+   "name": "Lab corridor \u00b7 2F",
+   "floorY": 5.5601,
+   "center": [
+    2.586,
+    16.0382
+   ],
+   "polygon": [
+    [
+     [
+      [
+       1.6087,
+       12.095
+      ],
+      [
+       3.5487,
+       12.0914
+      ],
+      [
+       3.5633,
+       19.9814
+      ],
+      [
+       1.6233,
+       19.985
+      ]
+     ]
+    ]
+   ],
+   "triangles": [
+    [
+     [
+      1.6233,
+      19.985
+     ],
+     [
+      1.6087,
+      12.095
+     ],
+     [
+      3.5633,
+      19.9814
+     ]
+    ],
+    [
+     [
+      3.5633,
+      19.9814
+     ],
+     [
+      1.6087,
+      12.095
+     ],
+     [
+      3.5487,
+      12.0914
+     ]
+    ]
+   ],
+   "area": 15.3066,
+   "floor": 2,
+   "ceilingY": 8.29,
+   "info": "Programmable Reality Lab"
+  },
+  {
+   "id": "south-hall-2f",
+   "name": "South corridor \u00b7 2F",
+   "floorY": 5.6316,
+   "center": [
+    2.6006,
+    23.9582
+   ],
+   "polygon": [
+    [
+     [
+      [
+       1.6233,
+       19.985
+      ],
+      [
+       3.5633,
+       19.9814
+      ],
+      [
+       3.578,
+       27.9314
+      ],
+      [
+       1.638,
+       27.935
+      ]
+     ]
+    ]
+   ],
+   "triangles": [
+    [
+     [
+      1.638,
+      27.935
+     ],
+     [
+      1.6233,
+      19.985
+     ],
+     [
+      3.578,
+      27.9314
+     ]
+    ],
+    [
+     [
+      3.578,
+      27.9314
+     ],
+     [
+      1.6233,
+      19.985
+     ],
+     [
+      3.5633,
+      19.9814
+     ]
+    ]
+   ],
+   "area": 15.423,
+   "floor": 2,
+   "ceilingY": 8.3616
+  },
+  {
+   "id": "west-hall-2f",
+   "name": "West corridor \u00b7 2F",
+   "floorY": 5.6913,
+   "center": [
+    -1.484,
+    27.2964
+   ],
+   "polygon": [
+    [
+     [
+      [
+       -2.482,
+       27.9426
+      ],
+      [
+       -2.4801,
+       28.9926
+      ],
+      [
+       1.0199,
+       28.9861
+      ],
+      [
+       1.018,
+       27.9361
+      ],
+      [
+       1.638,
+       27.935
+      ],
+      [
+       1.6344,
+       25.985
+      ],
+      [
+       -5.03,
+       25.9973
+      ],
+      [
+       -5.03,
+       27.9473
+      ]
+     ]
+    ]
+   ],
+   "triangles": [
+    [
+     [
+      -5.03,
+      27.9473
+     ],
+     [
+      -5.03,
+      25.9973
+     ],
+     [
+      -2.482,
+      27.9426
+     ]
+    ],
+    [
+     [
+      -2.4801,
+      28.9926
+     ],
+     [
+      -2.482,
+      27.9426
+     ],
+     [
+      1.0199,
+      28.9861
+     ]
+    ],
+    [
+     [
+      1.0199,
+      28.9861
+     ],
+     [
+      -2.482,
+      27.9426
+     ],
+     [
+      1.018,
+      27.9361
+     ]
+    ],
+    [
+     [
+      1.638,
+      27.935
+     ],
+     [
+      1.018,
+      27.9361
+     ],
+     [
+      1.6344,
+      25.985
+     ]
+    ],
+    [
+     [
+      1.6344,
+      25.985
+     ],
+     [
+      1.018,
+      27.9361
+     ],
+     [
+      -2.482,
+      27.9426
+     ]
+    ],
+    [
+     [
+      1.6344,
+      25.985
+     ],
+     [
+      -2.482,
+      27.9426
+     ],
+     [
+      -5.03,
+      25.9973
+     ]
+    ]
+   ],
+   "area": 16.674,
+   "floor": 2,
+   "ceilingY": 8.6013
+  }
+ ],
+ "walls": [
+  {
+   "id": "lab-wall-1",
+   "label": "wall",
+   "center": [
+    10.009,
+    7.09,
+    13.823
+   ],
+   "size": [
+    12.908,
+    3.04,
+    0.1
+   ],
+   "yaw": 0.027,
+   "rooms": [
+    "lab-2f"
+   ],
+   "outline": [
+    [
+     3.555,
+     5.57,
+     13.826
+    ],
+    [
+     16.463,
+     5.57,
+     13.82
+    ],
+    [
+     16.463,
+     8.61,
+     13.82
+    ],
+    [
+     3.555,
+     8.61,
+     13.826
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       3.555,
+       8.61,
+       13.826
+      ],
+      [
+       16.463,
+       8.61,
+       13.82
+      ],
+      [
+       16.463,
+       5.57,
+       13.82
+      ],
+      [
+       3.555,
+       5.57,
+       13.826
+      ]
+     ],
+     [
+      [
+       16.2,
+       5.62,
+       13.82
+      ],
+      [
+       16.2,
+       7.84,
+       13.82
+      ],
+      [
+       15.3,
+       7.84,
+       13.821
+      ],
+      [
+       15.3,
+       5.62,
+       13.821
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "lab-back-door"
+   ]
+  },
+  {
+   "id": "lab-wall-2",
+   "label": "wall",
+   "center": [
+    16.46,
+    7.09,
+    16.233
+   ],
+   "size": [
+    4.825,
+    3.04,
+    0.1
+   ],
+   "yaw": -90.071,
+   "rooms": [
+    "lab-2f"
+   ],
+   "outline": [
+    [
+     16.463,
+     5.57,
+     13.82
+    ],
+    [
+     16.457,
+     5.57,
+     18.645
+    ],
+    [
+     16.457,
+     8.61,
+     18.645
+    ],
+    [
+     16.463,
+     8.61,
+     13.82
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       16.463,
+       8.61,
+       13.82
+      ],
+      [
+       16.457,
+       8.61,
+       18.645
+      ],
+      [
+       16.457,
+       5.57,
+       18.645
+      ],
+      [
+       16.463,
+       5.57,
+       13.82
+      ]
+     ],
+     [
+      [
+       16.463,
+       5.6,
+       14.1
+      ],
+      [
+       16.461,
+       5.6,
+       15.04
+      ],
+      [
+       16.461,
+       7.84,
+       15.04
+      ],
+      [
+       16.463,
+       7.84,
+       14.1
+      ]
+     ],
+     [
+      [
+       16.461,
+       6.278,
+       15.083
+      ],
+      [
+       16.461,
+       6.278,
+       15.743
+      ],
+      [
+       16.461,
+       7.858,
+       15.743
+      ],
+      [
+       16.461,
+       7.858,
+       15.083
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "lab-east-door",
+    "lab-east-sidelight"
+   ]
+  },
+  {
+   "id": "lab-wall-3",
+   "label": "wall",
+   "center": [
+    15.606,
+    7.09,
+    18.642
+   ],
+   "size": [
+    1.701,
+    3.04,
+    0.1
+   ],
+   "yaw": 179.764,
+   "rooms": [
+    "lab-2f"
+   ],
+   "outline": [
+    [
+     16.457,
+     5.57,
+     18.645
+    ],
+    [
+     14.756,
+     5.57,
+     18.638
+    ],
+    [
+     14.756,
+     8.61,
+     18.638
+    ],
+    [
+     16.457,
+     8.61,
+     18.645
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       16.457,
+       8.61,
+       18.646
+      ],
+      [
+       14.756,
+       8.61,
+       18.638
+      ],
+      [
+       14.756,
+       5.57,
+       18.638
+      ],
+      [
+       16.457,
+       5.57,
+       18.646
+      ]
+     ],
+     [
+      [
+       15.105,
+       7.515,
+       18.64
+      ],
+      [
+       15.105,
+       8.065,
+       18.64
+      ],
+      [
+       16.235,
+       8.065,
+       18.645
+      ],
+      [
+       16.235,
+       7.515,
+       18.645
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "lab-high-opening"
+   ]
+  },
+  {
+   "id": "lab-wall-4",
+   "label": "wall",
+   "center": [
+    14.756,
+    7.09,
+    19.058
+   ],
+   "size": [
+    0.84,
+    3.04,
+    0.1
+   ],
+   "yaw": -90.0,
+   "rooms": [
+    "lab-2f"
+   ],
+   "outline": [
+    [
+     14.756,
+     5.57,
+     18.638
+    ],
+    [
+     14.756,
+     5.57,
+     19.478
+    ],
+    [
+     14.756,
+     8.61,
+     19.478
+    ],
+    [
+     14.756,
+     8.61,
+     18.638
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       14.756,
+       5.57,
+       18.638
+      ],
+      [
+       14.756,
+       8.61,
+       18.638
+      ],
+      [
+       14.756,
+       8.61,
+       19.478
+      ],
+      [
+       14.756,
+       5.57,
+       19.478
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "lab-wall-5",
+   "label": "wall",
+   "center": [
+    12.086,
+    7.09,
+    19.496
+   ],
+   "size": [
+    5.341,
+    3.04,
+    0.1
+   ],
+   "yaw": -179.603,
+   "rooms": [
+    "lab-2f"
+   ],
+   "outline": [
+    [
+     14.756,
+     5.57,
+     19.478
+    ],
+    [
+     9.415,
+     5.57,
+     19.515
+    ],
+    [
+     9.415,
+     8.61,
+     19.515
+    ],
+    [
+     14.756,
+     8.61,
+     19.478
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       14.756,
+       5.57,
+       19.477
+      ],
+      [
+       14.756,
+       8.61,
+       19.477
+      ],
+      [
+       9.415,
+       8.61,
+       19.515
+      ],
+      [
+       9.415,
+       5.57,
+       19.515
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "lab-wall-6",
+   "label": "wall",
+   "center": [
+    8.326,
+    7.09,
+    18.044
+   ],
+   "size": [
+    3.66,
+    3.04,
+    0.1
+   ],
+   "yaw": 126.5,
+   "rooms": [
+    "lab-2f"
+   ],
+   "outline": [
+    [
+     9.415,
+     5.57,
+     19.515
+    ],
+    [
+     7.238,
+     5.57,
+     16.573
+    ],
+    [
+     7.238,
+     8.61,
+     16.573
+    ],
+    [
+     9.415,
+     8.61,
+     19.515
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       9.415,
+       5.57,
+       19.515
+      ],
+      [
+       9.415,
+       8.61,
+       19.515
+      ],
+      [
+       7.238,
+       8.61,
+       16.573
+      ],
+      [
+       7.238,
+       5.57,
+       16.573
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "lab-wall-7",
+   "label": "wall",
+   "center": [
+    5.39,
+    7.09,
+    16.587
+   ],
+   "size": [
+    3.697,
+    3.04,
+    0.1
+   ],
+   "yaw": -179.566,
+   "rooms": [
+    "lab-2f"
+   ],
+   "outline": [
+    [
+     7.238,
+     5.57,
+     16.573
+    ],
+    [
+     3.541,
+     5.57,
+     16.601
+    ],
+    [
+     3.541,
+     8.61,
+     16.601
+    ],
+    [
+     7.238,
+     8.61,
+     16.573
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       7.238,
+       5.57,
+       16.573
+      ],
+      [
+       7.238,
+       8.61,
+       16.573
+      ],
+      [
+       3.541,
+       8.61,
+       16.601
+      ],
+      [
+       3.541,
+       5.57,
+       16.601
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "lab-wall-8",
+   "label": "wall",
+   "center": [
+    3.548,
+    7.09,
+    15.214
+   ],
+   "size": [
+    2.775,
+    3.04,
+    0.1
+   ],
+   "yaw": 89.711,
+   "rooms": [
+    "lab-2f",
+    "lab-hall-2f"
+   ],
+   "outline": [
+    [
+     3.541,
+     5.57,
+     16.601
+    ],
+    [
+     3.555,
+     5.57,
+     13.826
+    ],
+    [
+     3.555,
+     8.61,
+     13.826
+    ],
+    [
+     3.541,
+     8.61,
+     16.601
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       3.541,
+       8.61,
+       16.601
+      ],
+      [
+       3.555,
+       8.61,
+       13.826
+      ],
+      [
+       3.555,
+       5.57,
+       13.826
+      ],
+      [
+       3.547,
+       5.57,
+       15.5
+      ],
+      [
+       3.547,
+       7.83,
+       15.5
+      ],
+      [
+       3.542,
+       7.83,
+       16.46
+      ],
+      [
+       3.542,
+       5.57,
+       16.46
+      ],
+      [
+       3.541,
+       5.57,
+       16.601
+      ]
+     ],
+     [
+      [
+       3.547,
+       6.25,
+       15.47
+      ],
+      [
+       3.55,
+       6.25,
+       14.87
+      ],
+      [
+       3.55,
+       7.83,
+       14.87
+      ],
+      [
+       3.547,
+       7.83,
+       15.47
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "lab-entry",
+    "lab-front-sidelight"
+   ]
+  },
+  {
+   "id": "kitchen-wall-1",
+   "label": "wall",
+   "center": [
+    0.1133,
+    6.9679,
+    6.5675
+   ],
+   "size": [
+    2.97,
+    3.08,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "kitchen-2f"
+   ],
+   "outline": [
+    [
+     -1.3715,
+     5.4277,
+     6.5705
+    ],
+    [
+     1.5985,
+     5.4281,
+     6.5651
+    ],
+    [
+     1.5981,
+     8.5081,
+     6.5644
+    ],
+    [
+     -1.3719,
+     8.5077,
+     6.5699
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -1.372,
+       5.428,
+       6.57
+      ],
+      [
+       -1.372,
+       8.508,
+       6.57
+      ],
+      [
+       1.598,
+       8.508,
+       6.565
+      ],
+      [
+       1.598,
+       5.428,
+       6.565
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "kitchen-wall-2",
+   "label": "wall",
+   "center": [
+    1.6034,
+    6.9686,
+    9.3297
+   ],
+   "size": [
+    5.53,
+    3.08,
+    0.1
+   ],
+   "yaw": -89.8942,
+   "rooms": [
+    "central-hall-2f",
+    "kitchen-2f"
+   ],
+   "outline": [
+    [
+     1.5985,
+     5.4281,
+     6.5651
+    ],
+    [
+     1.6087,
+     5.4292,
+     12.095
+    ],
+    [
+     1.6083,
+     8.5092,
+     12.0944
+    ],
+    [
+     1.5981,
+     8.5081,
+     6.5644
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       1.598,
+       8.508,
+       6.564
+      ],
+      [
+       1.609,
+       8.509,
+       12.094
+      ],
+      [
+       1.609,
+       5.429,
+       12.095
+      ],
+      [
+       1.598,
+       5.428,
+       6.565
+      ]
+     ],
+     [
+      [
+       1.599,
+       5.458,
+       6.679
+      ],
+      [
+       1.6,
+       5.458,
+       7.669
+      ],
+      [
+       1.6,
+       7.618,
+       7.669
+      ],
+      [
+       1.599,
+       7.618,
+       6.679
+      ]
+     ],
+     [
+      [
+       1.605,
+       5.459,
+       10.186
+      ],
+      [
+       1.607,
+       5.459,
+       11.206
+      ],
+      [
+       1.607,
+       7.639,
+       11.206
+      ],
+      [
+       1.605,
+       7.639,
+       10.186
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "kitchen-north-entry",
+    "kitchen-south-entry"
+   ]
+  },
+  {
+   "id": "kitchen-wall-3",
+   "label": "wall",
+   "center": [
+    0.1235,
+    6.969,
+    12.0975
+   ],
+   "size": [
+    2.97,
+    3.08,
+    0.1
+   ],
+   "yaw": -179.8942,
+   "rooms": [
+    "kitchen-2f"
+   ],
+   "outline": [
+    [
+     1.6087,
+     5.4292,
+     12.095
+    ],
+    [
+     -1.3612,
+     5.4288,
+     12.1005
+    ],
+    [
+     -1.3617,
+     8.5088,
+     12.0999
+    ],
+    [
+     1.6083,
+     8.5092,
+     12.0944
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       1.609,
+       5.429,
+       12.095
+      ],
+      [
+       1.608,
+       8.509,
+       12.095
+      ],
+      [
+       -1.362,
+       8.509,
+       12.1
+      ],
+      [
+       -1.361,
+       5.429,
+       12.1
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "kitchen-wall-4",
+   "label": "wall",
+   "center": [
+    -1.3666,
+    6.9682,
+    9.3352
+   ],
+   "size": [
+    5.53,
+    3.08,
+    0.1
+   ],
+   "yaw": 90.1058,
+   "rooms": [
+    "kitchen-2f"
+   ],
+   "outline": [
+    [
+     -1.3612,
+     5.4288,
+     12.1005
+    ],
+    [
+     -1.3715,
+     5.4277,
+     6.5705
+    ],
+    [
+     -1.3719,
+     8.5077,
+     6.5699
+    ],
+    [
+     -1.3617,
+     8.5088,
+     12.0999
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -1.361,
+       5.429,
+       12.101
+      ],
+      [
+       -1.361,
+       8.509,
+       12.1
+      ],
+      [
+       -1.372,
+       8.508,
+       6.57
+      ],
+      [
+       -1.372,
+       5.428,
+       6.571
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "north-outer",
+   "label": "wall",
+   "center": [
+    -5.0831,
+    6.726,
+    0.3471
+   ],
+   "size": [
+    4.8,
+    2.78,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "north-hall-2f"
+   ],
+   "outline": [
+    [
+     -7.4829,
+     5.3357,
+     0.3518
+    ],
+    [
+     -2.6829,
+     5.3363,
+     0.343
+    ],
+    [
+     -2.6833,
+     8.1163,
+     0.3424
+    ],
+    [
+     -7.4833,
+     8.1157,
+     0.3513
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -7.483,
+       5.336,
+       0.352
+      ],
+      [
+       -7.483,
+       8.116,
+       0.352
+      ],
+      [
+       -2.683,
+       8.116,
+       0.343
+      ],
+      [
+       -2.683,
+       5.336,
+       0.343
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "north-entry",
+   "label": "wall",
+   "center": [
+    1.4277,
+    6.7369,
+    0.7651
+   ],
+   "size": [
+    4.64,
+    2.8,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "north-hall-2f"
+   ],
+   "outline": [
+    [
+     -0.8922,
+     5.3366,
+     0.7697
+    ],
+    [
+     3.7478,
+     5.3372,
+     0.7611
+    ],
+    [
+     3.7475,
+     8.1372,
+     0.7605
+    ],
+    [
+     -0.8925,
+     8.1366,
+     0.7691
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -0.892,
+       8.137,
+       0.769
+      ],
+      [
+       3.748,
+       8.137,
+       0.761
+      ],
+      [
+       3.748,
+       5.337,
+       0.761
+      ],
+      [
+       -0.892,
+       5.337,
+       0.769
+      ]
+     ],
+     [
+      [
+       -0.637,
+       5.347,
+       0.769
+      ],
+      [
+       0.313,
+       5.347,
+       0.767
+      ],
+      [
+       0.313,
+       7.567,
+       0.767
+      ],
+      [
+       -0.637,
+       7.567,
+       0.769
+      ]
+     ],
+     [
+      [
+       0.348,
+       6.232,
+       0.767
+      ],
+      [
+       0.948,
+       6.232,
+       0.766
+      ],
+      [
+       0.948,
+       7.622,
+       0.766
+      ],
+      [
+       0.348,
+       7.622,
+       0.767
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "north-hall-office-door",
+    "north-hall-office-window"
+   ]
+  },
+  {
+   "id": "north-inner",
+   "label": "wall",
+   "center": [
+    -2.9434,
+    6.7418,
+    2.8832
+   ],
+   "size": [
+    9.07,
+    2.81,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "north-hall-2f"
+   ],
+   "outline": [
+    [
+     -7.4782,
+     5.3362,
+     2.8918
+    ],
+    [
+     1.5917,
+     5.3374,
+     2.8751
+    ],
+    [
+     1.5914,
+     8.1474,
+     2.8745
+    ],
+    [
+     -7.4786,
+     8.1462,
+     2.8913
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -7.479,
+       8.146,
+       2.892
+      ],
+      [
+       1.591,
+       8.147,
+       2.875
+      ],
+      [
+       1.592,
+       5.337,
+       2.875
+      ],
+      [
+       -4.278,
+       5.337,
+       2.886
+      ],
+      [
+       -4.278,
+       7.956,
+       2.886
+      ],
+      [
+       -7.478,
+       7.956,
+       2.892
+      ],
+      [
+       -7.478,
+       5.336,
+       2.892
+      ],
+      [
+       -7.478,
+       5.336,
+       2.892
+      ]
+     ],
+     [
+      [
+       -2.698,
+       5.377,
+       2.883
+      ],
+      [
+       -1.718,
+       5.377,
+       2.881
+      ],
+      [
+       -1.718,
+       7.597,
+       2.881
+      ],
+      [
+       -2.698,
+       7.597,
+       2.883
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "north-inner-door",
+    "north-inner-passage"
+   ]
+  },
+  {
+   "id": "stair-east",
+   "label": "wall",
+   "center": [
+    -0.8969,
+    7.4411,
+    -1.6708
+   ],
+   "size": [
+    4.02,
+    4.21,
+    0.1
+   ],
+   "yaw": -89.8942,
+   "rooms": [
+    "stair-landing-2f"
+   ],
+   "outline": [
+    [
+     -0.9004,
+     5.3357,
+     -3.6803
+    ],
+    [
+     -0.8929,
+     5.3365,
+     0.3397
+    ],
+    [
+     -0.8935,
+     9.5465,
+     0.3388
+    ],
+    [
+     -0.9009,
+     9.5457,
+     -3.6812
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -0.901,
+       5.336,
+       -3.68
+      ],
+      [
+       -0.901,
+       9.546,
+       -3.681
+      ],
+      [
+       -0.893,
+       9.546,
+       0.339
+      ],
+      [
+       -0.893,
+       5.336,
+       0.34
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "stair-north",
+   "label": "wall",
+   "center": [
+    -1.7956,
+    7.4406,
+    -3.6791
+   ],
+   "size": [
+    1.79,
+    4.21,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "stair-landing-2f"
+   ],
+   "outline": [
+    [
+     -2.6904,
+     5.3355,
+     -3.677
+    ],
+    [
+     -0.9004,
+     5.3357,
+     -3.6803
+    ],
+    [
+     -0.9009,
+     9.5457,
+     -3.6812
+    ],
+    [
+     -2.6909,
+     9.5455,
+     -3.6779
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -2.69,
+       5.336,
+       -3.677
+      ],
+      [
+       -2.691,
+       9.546,
+       -3.677
+      ],
+      [
+       -0.901,
+       9.546,
+       -3.681
+      ],
+      [
+       -0.9,
+       5.336,
+       -3.681
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "central-west",
+   "label": "wall",
+   "center": [
+    1.5949,
+    6.8427,
+    4.7198
+   ],
+   "size": [
+    3.69,
+    2.95,
+    0.1
+   ],
+   "yaw": -89.8942,
+   "rooms": [
+    "central-hall-2f"
+   ],
+   "outline": [
+    [
+     1.5917,
+     5.3674,
+     2.8751
+    ],
+    [
+     1.5985,
+     5.3681,
+     6.5651
+    ],
+    [
+     1.5982,
+     8.3181,
+     6.5645
+    ],
+    [
+     1.5913,
+     8.3174,
+     2.8745
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       1.591,
+       8.317,
+       2.874
+      ],
+      [
+       1.598,
+       8.318,
+       6.564
+      ],
+      [
+       1.598,
+       5.368,
+       6.565
+      ],
+      [
+       1.591,
+       5.367,
+       2.875
+      ]
+     ],
+     [
+      [
+       1.594,
+       5.408,
+       4.1
+      ],
+      [
+       1.594,
+       7.608,
+       4.1
+      ],
+      [
+       1.592,
+       7.608,
+       3.13
+      ],
+      [
+       1.592,
+       5.408,
+       3.13
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "hall-west-door-north"
+   ]
+  },
+  {
+   "id": "central-east",
+   "label": "wall",
+   "center": [
+    3.7541,
+    6.8329,
+    4.2458
+   ],
+   "size": [
+    6.97,
+    2.93,
+    0.1
+   ],
+   "yaw": -89.8942,
+   "rooms": [
+    "central-hall-2f",
+    "north-hall-2f"
+   ],
+   "outline": [
+    [
+     3.7478,
+     5.3672,
+     0.7611
+    ],
+    [
+     3.7607,
+     5.3686,
+     7.7311
+    ],
+    [
+     3.7603,
+     8.2986,
+     7.7305
+    ],
+    [
+     3.7474,
+     8.2972,
+     0.7605
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       3.748,
+       8.297,
+       0.76
+      ],
+      [
+       3.761,
+       8.299,
+       7.73
+      ],
+      [
+       3.761,
+       5.369,
+       7.731
+      ],
+      [
+       3.748,
+       5.367,
+       0.761
+      ]
+     ],
+     [
+      [
+       3.748,
+       5.387,
+       0.871
+      ],
+      [
+       3.75,
+       5.387,
+       1.811
+      ],
+      [
+       3.75,
+       7.587,
+       1.811
+      ],
+      [
+       3.748,
+       7.587,
+       0.871
+      ]
+     ],
+     [
+      [
+       3.754,
+       7.65,
+       4.197
+      ],
+      [
+       3.754,
+       5.45,
+       4.197
+      ],
+      [
+       3.756,
+       5.45,
+       5.127
+      ],
+      [
+       3.756,
+       7.65,
+       5.127
+      ]
+     ],
+     [
+      [
+       3.75,
+       7.55,
+       2.01
+      ],
+      [
+       3.75,
+       6.38,
+       2.01
+      ],
+      [
+       3.753,
+       6.38,
+       3.888
+      ],
+      [
+       3.753,
+       7.55,
+       3.888
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "hall-east-door-2",
+    "hall-east-north-door",
+    "hall-east-north-window"
+   ]
+  },
+  {
+   "id": "central-recess-north",
+   "label": "wall",
+   "center": [
+    4.1205,
+    6.8987,
+    7.7301
+   ],
+   "size": [
+    0.72,
+    3.0,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "central-hall-2f"
+   ],
+   "outline": [
+    [
+     3.7607,
+     5.3986,
+     7.7311
+    ],
+    [
+     4.4807,
+     5.3987,
+     7.7297
+    ],
+    [
+     4.4803,
+     8.3987,
+     7.7291
+    ],
+    [
+     3.7603,
+     8.3986,
+     7.7305
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       3.761,
+       5.399,
+       7.731
+      ],
+      [
+       3.76,
+       8.399,
+       7.731
+      ],
+      [
+       4.48,
+       8.399,
+       7.729
+      ],
+      [
+       4.481,
+       5.399,
+       7.729
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "central-recess-east",
+   "label": "wall",
+   "center": [
+    4.4821,
+    6.8989,
+    8.5794
+   ],
+   "size": [
+    1.7,
+    3.0,
+    0.1
+   ],
+   "yaw": -89.8942,
+   "rooms": [
+    "central-hall-2f"
+   ],
+   "outline": [
+    [
+     4.4807,
+     5.3987,
+     7.7297
+    ],
+    [
+     4.4838,
+     5.399,
+     9.4297
+    ],
+    [
+     4.4834,
+     8.399,
+     9.4291
+    ],
+    [
+     4.4803,
+     8.3987,
+     7.7291
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       4.481,
+       8.399,
+       7.729
+      ],
+      [
+       4.484,
+       8.399,
+       9.429
+      ],
+      [
+       4.484,
+       5.399,
+       9.43
+      ],
+      [
+       4.481,
+       5.399,
+       7.73
+      ]
+     ],
+     [
+      [
+       4.482,
+       5.45,
+       8.683
+      ],
+      [
+       4.482,
+       7.824,
+       8.683
+      ],
+      [
+       4.481,
+       7.824,
+       7.753
+      ],
+      [
+       4.481,
+       5.45,
+       7.753
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "hall-east-door-2_0"
+   ]
+  },
+  {
+   "id": "central-recess-south",
+   "label": "wall",
+   "center": [
+    4.0136,
+    6.899,
+    9.4303
+   ],
+   "size": [
+    0.94,
+    3.0,
+    0.1
+   ],
+   "yaw": -179.8942,
+   "rooms": [
+    "central-hall-2f"
+   ],
+   "outline": [
+    [
+     4.4838,
+     5.399,
+     9.4297
+    ],
+    [
+     3.5438,
+     5.3989,
+     9.4315
+    ],
+    [
+     3.5434,
+     8.3989,
+     9.4309
+    ],
+    [
+     4.4834,
+     8.399,
+     9.4291
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       4.484,
+       5.399,
+       9.429
+      ],
+      [
+       4.483,
+       8.399,
+       9.429
+      ],
+      [
+       3.543,
+       8.399,
+       9.431
+      ],
+      [
+       3.544,
+       5.399,
+       9.431
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "central-east-south",
+   "label": "wall",
+   "center": [
+    3.5477,
+    6.9243,
+    11.6112
+   ],
+   "size": [
+    4.36,
+    2.95,
+    0.1
+   ],
+   "yaw": -89.8942,
+   "rooms": [
+    "central-hall-2f",
+    "lab-hall-2f"
+   ],
+   "outline": [
+    [
+     3.5438,
+     5.4489,
+     9.4315
+    ],
+    [
+     3.5519,
+     5.4498,
+     13.7915
+    ],
+    [
+     3.5515,
+     8.3998,
+     13.7909
+    ],
+    [
+     3.5434,
+     8.3989,
+     9.4309
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       3.544,
+       8.399,
+       9.431
+      ],
+      [
+       3.552,
+       8.4,
+       13.791
+      ],
+      [
+       3.552,
+       5.45,
+       13.792
+      ],
+      [
+       3.544,
+       5.449,
+       9.432
+      ]
+     ],
+     [
+      [
+       3.55,
+       6.605,
+       13.102
+      ],
+      [
+       3.55,
+       8.019,
+       13.102
+      ],
+      [
+       3.544,
+       8.019,
+       9.804
+      ],
+      [
+       3.544,
+       6.605,
+       9.804
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "hall-east-window-3"
+   ]
+  },
+  {
+   "id": "lab-hall-west",
+   "label": "wall",
+   "center": [
+    1.62,
+    6.94,
+    16.055
+   ],
+   "size": [
+    7.89,
+    2.88,
+    0.1
+   ],
+   "yaw": -90.0,
+   "rooms": [
+    "lab-hall-2f"
+   ],
+   "outline": [
+    [
+     1.62,
+     5.5,
+     12.11
+    ],
+    [
+     1.62,
+     5.5,
+     20.0
+    ],
+    [
+     1.62,
+     8.38,
+     20.0
+    ],
+    [
+     1.62,
+     8.38,
+     12.11
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       1.62,
+       8.38,
+       12.11
+      ],
+      [
+       1.62,
+       8.38,
+       20.0
+      ],
+      [
+       1.62,
+       5.5,
+       20.0
+      ],
+      [
+       1.62,
+       5.5,
+       12.11
+      ]
+     ],
+     [
+      [
+       1.62,
+       5.549,
+       12.415
+      ],
+      [
+       1.62,
+       5.549,
+       13.375
+      ],
+      [
+       1.62,
+       7.749,
+       13.375
+      ],
+      [
+       1.62,
+       7.749,
+       12.415
+      ]
+     ],
+     [
+      [
+       1.62,
+       6.42,
+       13.453
+      ],
+      [
+       1.62,
+       6.42,
+       14.053
+      ],
+      [
+       1.62,
+       7.76,
+       14.053
+      ],
+      [
+       1.62,
+       7.76,
+       13.453
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "hall-west-door-lab",
+    "hall-west-sidelight-lab"
+   ]
+  },
+  {
+   "id": "south-hall-west",
+   "label": "wall",
+   "center": [
+    1.6286,
+    7.0263,
+    22.9847
+   ],
+   "size": [
+    6.0,
+    2.91,
+    0.1
+   ],
+   "yaw": -89.8942,
+   "rooms": [
+    "south-hall-2f"
+   ],
+   "outline": [
+    [
+     1.6233,
+     5.5707,
+     19.985
+    ],
+    [
+     1.6344,
+     5.5719,
+     25.985
+    ],
+    [
+     1.634,
+     8.4819,
+     25.9844
+    ],
+    [
+     1.6229,
+     8.4807,
+     19.9844
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       1.623,
+       8.481,
+       19.984
+      ],
+      [
+       1.634,
+       8.482,
+       25.984
+      ],
+      [
+       1.634,
+       5.572,
+       25.985
+      ],
+      [
+       1.623,
+       5.571,
+       19.985
+      ]
+     ],
+     [
+      [
+       1.631,
+       5.632,
+       24.2
+      ],
+      [
+       1.633,
+       5.632,
+       25.13
+      ],
+      [
+       1.633,
+       7.832,
+       25.13
+      ],
+      [
+       1.631,
+       7.832,
+       24.2
+      ]
+     ],
+     [
+      [
+       1.625,
+       7.796,
+       20.765
+      ],
+      [
+       1.625,
+       6.506,
+       20.765
+      ],
+      [
+       1.628,
+       6.506,
+       22.405
+      ],
+      [
+       1.628,
+       7.796,
+       22.405
+      ]
+     ],
+     [
+      [
+       1.63,
+       7.881,
+       23.63
+      ],
+      [
+       1.63,
+       6.481,
+       23.63
+      ],
+      [
+       1.631,
+       6.481,
+       24.14
+      ],
+      [
+       1.631,
+       7.881,
+       24.14
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "hall-west-door-south",
+    "hall-west-sidelight-south",
+    "hall-west-window-south"
+   ]
+  },
+  {
+   "id": "south-hall-east",
+   "label": "wall",
+   "center": [
+    3.5673,
+    7.0214,
+    22.2511
+   ],
+   "size": [
+    11.36,
+    2.92,
+    0.1
+   ],
+   "yaw": -89.8942,
+   "rooms": [
+    "south-hall-2f",
+    "lab-hall-2f"
+   ],
+   "outline": [
+    [
+     3.557,
+     5.5603,
+     16.5714
+    ],
+    [
+     3.578,
+     5.5625,
+     27.9314
+    ],
+    [
+     3.5776,
+     8.4825,
+     27.9308
+    ],
+    [
+     3.5566,
+     8.4803,
+     16.5709
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       3.557,
+       8.48,
+       16.571
+      ],
+      [
+       3.578,
+       8.482,
+       27.931
+      ],
+      [
+       3.578,
+       5.562,
+       27.931
+      ],
+      [
+       3.557,
+       5.56,
+       16.571
+      ]
+     ],
+     [
+      [
+       3.564,
+       7.856,
+       20.231
+      ],
+      [
+       3.564,
+       5.606,
+       20.231
+      ],
+      [
+       3.565,
+       5.606,
+       21.131
+      ],
+      [
+       3.565,
+       7.856,
+       21.131
+      ]
+     ],
+     [
+      [
+       3.57,
+       7.867,
+       23.961
+      ],
+      [
+       3.57,
+       5.617,
+       23.961
+      ],
+      [
+       3.572,
+       5.617,
+       24.881
+      ],
+      [
+       3.572,
+       7.867,
+       24.881
+      ]
+     ],
+     [
+      [
+       3.557,
+       7.827,
+       16.872
+      ],
+      [
+       3.557,
+       6.537,
+       16.872
+      ],
+      [
+       3.561,
+       6.537,
+       18.612
+      ],
+      [
+       3.561,
+       7.827,
+       18.612
+      ]
+     ],
+     [
+      [
+       3.569,
+       7.947,
+       23.311
+      ],
+      [
+       3.569,
+       6.577,
+       23.311
+      ],
+      [
+       3.57,
+       6.577,
+       23.931
+      ],
+      [
+       3.57,
+       7.947,
+       23.931
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "hall-east-door-3",
+    "hall-east-door-4",
+    "hall-east-sidelight-4",
+    "hall-east-window-4"
+   ]
+  },
+  {
+   "id": "south-end",
+   "label": "wall",
+   "center": [
+    2.6078,
+    7.0724,
+    27.9329
+   ],
+   "size": [
+    1.94,
+    2.9,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "south-hall-2f"
+   ],
+   "outline": [
+    [
+     1.638,
+     5.6223,
+     27.935
+    ],
+    [
+     3.578,
+     5.6225,
+     27.9314
+    ],
+    [
+     3.5776,
+     8.5225,
+     27.9308
+    ],
+    [
+     1.6376,
+     8.5223,
+     27.9344
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       1.638,
+       5.622,
+       27.935
+      ],
+      [
+       1.638,
+       8.522,
+       27.935
+      ],
+      [
+       3.578,
+       8.522,
+       27.931
+      ],
+      [
+       3.578,
+       5.622,
+       27.931
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "west-inner",
+   "label": "wall",
+   "center": [
+    -1.6978,
+    7.1361,
+    25.9911
+   ],
+   "size": [
+    6.6644,
+    3.05,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "west-hall-2f"
+   ],
+   "outline": [
+    [
+     -5.03,
+     5.6103,
+     25.9973
+    ],
+    [
+     1.6344,
+     5.6103,
+     25.985
+    ],
+    [
+     1.6344,
+     8.6619,
+     25.985
+    ],
+    [
+     -5.03,
+     8.6619,
+     25.9973
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -5.03,
+       5.61,
+       25.997
+      ],
+      [
+       -5.03,
+       8.662,
+       25.997
+      ],
+      [
+       1.634,
+       8.662,
+       25.985
+      ],
+      [
+       1.634,
+       5.61,
+       25.985
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "west-outer-left",
+   "label": "wall",
+   "center": [
+    -3.756,
+    7.1511,
+    27.9449
+   ],
+   "size": [
+    2.548,
+    3.04,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "west-hall-2f"
+   ],
+   "outline": [
+    [
+     -5.03,
+     5.6305,
+     27.9473
+    ],
+    [
+     -2.482,
+     5.6305,
+     27.9426
+    ],
+    [
+     -2.482,
+     8.6717,
+     27.9426
+    ],
+    [
+     -5.03,
+     8.6717,
+     27.9473
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -5.03,
+       5.63,
+       27.947
+      ],
+      [
+       -5.03,
+       8.672,
+       27.947
+      ],
+      [
+       -2.482,
+       8.672,
+       27.943
+      ],
+      [
+       -2.482,
+       5.63,
+       27.943
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "west-outer-right",
+   "label": "wall",
+   "center": [
+    1.328,
+    7.1522,
+    27.9355
+   ],
+   "size": [
+    0.62,
+    3.04,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "west-hall-2f"
+   ],
+   "outline": [
+    [
+     1.018,
+     5.6322,
+     27.9361
+    ],
+    [
+     1.638,
+     5.6322,
+     27.935
+    ],
+    [
+     1.638,
+     8.6723,
+     27.935
+    ],
+    [
+     1.018,
+     8.6723,
+     27.9361
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       1.018,
+       5.632,
+       27.936
+      ],
+      [
+       1.018,
+       8.672,
+       27.936
+      ],
+      [
+       1.638,
+       8.672,
+       27.935
+      ],
+      [
+       1.638,
+       5.632,
+       27.935
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "west-alcove-left",
+   "label": "wall",
+   "center": [
+    -2.4811,
+    7.1518,
+    28.4676
+   ],
+   "size": [
+    1.05,
+    3.04,
+    0.1
+   ],
+   "yaw": -89.8942,
+   "rooms": [
+    "west-hall-2f"
+   ],
+   "outline": [
+    [
+     -2.482,
+     5.6317,
+     27.9426
+    ],
+    [
+     -2.4801,
+     5.6317,
+     28.9926
+    ],
+    [
+     -2.4801,
+     8.6719,
+     28.9926
+    ],
+    [
+     -2.482,
+     8.6719,
+     27.9426
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -2.482,
+       5.632,
+       27.943
+      ],
+      [
+       -2.482,
+       8.672,
+       27.943
+      ],
+      [
+       -2.48,
+       8.672,
+       28.993
+      ],
+      [
+       -2.48,
+       5.632,
+       28.993
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "west-alcove-back",
+   "label": "wall",
+   "center": [
+    -0.7301,
+    7.1522,
+    28.9893
+   ],
+   "size": [
+    3.5,
+    3.04,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "west-hall-2f"
+   ],
+   "outline": [
+    [
+     -2.4801,
+     5.6319,
+     28.9926
+    ],
+    [
+     1.0199,
+     5.6319,
+     28.9861
+    ],
+    [
+     1.0199,
+     8.6724,
+     28.9861
+    ],
+    [
+     -2.4801,
+     8.6724,
+     28.9926
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -2.48,
+       5.632,
+       28.993
+      ],
+      [
+       -2.48,
+       8.672,
+       28.993
+      ],
+      [
+       1.02,
+       8.672,
+       28.986
+      ],
+      [
+       1.02,
+       5.632,
+       28.986
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "west-alcove-right",
+   "label": "wall",
+   "center": [
+    1.0189,
+    7.1523,
+    28.4611
+   ],
+   "size": [
+    1.05,
+    3.04,
+    0.1
+   ],
+   "yaw": 90.1058,
+   "rooms": [
+    "west-hall-2f"
+   ],
+   "outline": [
+    [
+     1.0199,
+     5.6324,
+     28.9861
+    ],
+    [
+     1.018,
+     5.6324,
+     27.9361
+    ],
+    [
+     1.018,
+     8.6722,
+     27.9361
+    ],
+    [
+     1.0199,
+     8.6722,
+     28.9861
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       1.02,
+       5.632,
+       28.986
+      ],
+      [
+       1.02,
+       8.672,
+       28.986
+      ],
+      [
+       1.018,
+       8.672,
+       27.936
+      ],
+      [
+       1.018,
+       5.632,
+       27.936
+      ]
+     ]
+    ]
+   ],
+   "openings": []
+  },
+  {
+   "id": "stair-threshold",
+   "label": "wall",
+   "center": [
+    -1.7881,
+    6.7264,
+    0.341
+   ],
+   "size": [
+    1.79,
+    2.78,
+    0.1
+   ],
+   "yaw": 0.1058,
+   "rooms": [
+    "north-hall-2f",
+    "stair-landing-2f"
+   ],
+   "outline": [
+    [
+     -2.6829,
+     5.3363,
+     0.343
+    ],
+    [
+     -0.8929,
+     5.3365,
+     0.3397
+    ],
+    [
+     -0.8933,
+     8.1165,
+     0.3391
+    ],
+    [
+     -2.6833,
+     8.1163,
+     0.3424
+    ]
+   ],
+   "floor": 2,
+   "region": [
+    [
+     [
+      [
+       -2.683,
+       8.116,
+       0.343
+      ],
+      [
+       -0.893,
+       8.116,
+       0.339
+      ],
+      [
+       -0.893,
+       5.336,
+       0.339
+      ],
+      [
+       -1.018,
+       5.336,
+       0.34
+      ],
+      [
+       -1.018,
+       7.596,
+       0.34
+      ],
+      [
+       -2.568,
+       7.596,
+       0.342
+      ],
+      [
+       -2.568,
+       5.336,
+       0.342
+      ],
+      [
+       -2.683,
+       5.336,
+       0.343
+      ]
+     ]
+    ]
+   ],
+   "openings": [
+    "stair-landing-entry"
+   ]
+  }
+ ],
+ "ceilings": [
+  {
+   "id": "lab-2f-ceiling",
+   "label": "ceiling",
+   "room": "lab-2f",
+   "rooms": [
+    "lab-2f"
+   ],
+   "center": [
+    10.8291,
+    8.6,
+    16.2411
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "slope": 0,
+   "outline": [
+    [
+     3.555,
+     8.6,
+     13.826
+    ],
+    [
+     16.463,
+     8.6,
+     13.82
+    ],
+    [
+     16.457,
+     8.6,
+     18.645
+    ],
+    [
+     14.756,
+     8.6,
+     18.638
+    ],
+    [
+     14.756,
+     8.6,
+     19.478
+    ],
+    [
+     9.415,
+     8.6,
+     19.515
+    ],
+    [
+     7.238,
+     8.6,
+     16.573
+    ],
+    [
+     3.541,
+     8.6,
+     16.601
+    ]
+   ],
+   "floor": 2
+  },
+  {
+   "id": "kitchen-2f-ceiling",
+   "label": "ceiling",
+   "room": "kitchen-2f",
+   "rooms": [
+    "kitchen-2f"
+   ],
+   "center": [
+    0.1186,
+    8.4984,
+    9.3328
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "slope": 0,
+   "outline": [
+    [
+     -1.3715,
+     8.4984,
+     6.5705
+    ],
+    [
+     1.5985,
+     8.4984,
+     6.565
+    ],
+    [
+     1.6087,
+     8.4984,
+     12.095
+    ],
+    [
+     -1.3613,
+     8.4984,
+     12.1005
+    ]
+   ],
+   "floor": 2
+  },
+  {
+   "id": "north-hall-2f-ceiling",
+   "label": "ceiling",
+   "room": "north-hall-2f",
+   "rooms": [
+    "north-hall-2f"
+   ],
+   "center": [
+    -2.1133,
+    8.1166,
+    1.6912
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "slope": 0,
+   "outline": [
+    [
+     -7.4829,
+     8.1166,
+     0.3518
+    ],
+    [
+     -0.893,
+     8.1166,
+     0.3396
+    ],
+    [
+     -0.8922,
+     8.1166,
+     0.7696
+    ],
+    [
+     3.7478,
+     8.1166,
+     0.7611
+    ],
+    [
+     3.7517,
+     8.1166,
+     2.8711
+    ],
+    [
+     -7.4783,
+     8.1166,
+     2.8918
+    ]
+   ],
+   "floor": 2
+  },
+  {
+   "id": "stair-landing-2f-ceiling",
+   "label": "ceiling",
+   "room": "stair-landing-2f",
+   "rooms": [
+    "stair-landing-2f"
+   ],
+   "center": [
+    -1.7917,
+    9.546,
+    -1.6687
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "slope": 0,
+   "outline": [
+    [
+     -2.6904,
+     9.546,
+     -3.677
+    ],
+    [
+     -0.9004,
+     9.546,
+     -3.6803
+    ],
+    [
+     -0.893,
+     9.546,
+     0.3397
+    ],
+    [
+     -2.6829,
+     9.546,
+     0.343
+    ]
+   ],
+   "floor": 2
+  },
+  {
+   "id": "central-hall-2f-ceiling",
+   "label": "ceiling",
+   "room": "central-hall-2f",
+   "rooms": [
+    "central-hall-2f"
+   ],
+   "center": [
+    2.7383,
+    8.2184,
+    7.4551
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "slope": 0,
+   "outline": [
+    [
+     1.5917,
+     8.2184,
+     2.8751
+    ],
+    [
+     3.7517,
+     8.2184,
+     2.8711
+    ],
+    [
+     3.7607,
+     8.2184,
+     7.7311
+    ],
+    [
+     4.4807,
+     8.2184,
+     7.7297
+    ],
+    [
+     4.4838,
+     8.2184,
+     9.4297
+    ],
+    [
+     3.5438,
+     8.2184,
+     9.4315
+    ],
+    [
+     3.5487,
+     8.2184,
+     12.0915
+    ],
+    [
+     1.6087,
+     8.2184,
+     12.095
+    ]
+   ],
+   "floor": 2
+  },
+  {
+   "id": "lab-hall-2f-ceiling",
+   "label": "ceiling",
+   "room": "lab-hall-2f",
+   "rooms": [
+    "lab-hall-2f"
+   ],
+   "center": [
+    2.586,
+    8.29,
+    16.0382
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "slope": 0,
+   "outline": [
+    [
+     1.6087,
+     8.29,
+     12.095
+    ],
+    [
+     3.5487,
+     8.29,
+     12.0914
+    ],
+    [
+     3.5633,
+     8.29,
+     19.9814
+    ],
+    [
+     1.6233,
+     8.29,
+     19.985
+    ]
+   ],
+   "floor": 2
+  },
+  {
+   "id": "south-hall-2f-ceiling",
+   "label": "ceiling",
+   "room": "south-hall-2f",
+   "rooms": [
+    "south-hall-2f"
+   ],
+   "center": [
+    2.6006,
+    8.3616,
+    23.9582
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "slope": 0,
+   "outline": [
+    [
+     1.6233,
+     8.3616,
+     19.985
+    ],
+    [
+     3.5633,
+     8.3616,
+     19.9814
+    ],
+    [
+     3.578,
+     8.3616,
+     27.9314
+    ],
+    [
+     1.638,
+     8.3616,
+     27.935
+    ]
+   ],
+   "floor": 2
+  },
+  {
+   "id": "west-hall-2f-ceiling",
+   "label": "ceiling",
+   "room": "west-hall-2f",
+   "rooms": [
+    "west-hall-2f"
+   ],
+   "center": [
+    -1.484,
+    8.6013,
+    27.2964
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "slope": 0,
+   "outline": [
+    [
+     -2.482,
+     8.6013,
+     27.9426
+    ],
+    [
+     -2.4801,
+     8.6013,
+     28.9926
+    ],
+    [
+     1.0199,
+     8.6013,
+     28.9861
+    ],
+    [
+     1.018,
+     8.6013,
+     27.9361
+    ],
+    [
+     1.638,
+     8.6013,
+     27.935
+    ],
+    [
+     1.6344,
+     8.6013,
+     25.985
+    ],
+    [
+     -5.03,
+     8.6013,
+     25.9973
+    ],
+    [
+     -5.03,
+     8.6013,
+     27.9473
+    ]
+   ],
+   "floor": 2
+  }
+ ]
+}

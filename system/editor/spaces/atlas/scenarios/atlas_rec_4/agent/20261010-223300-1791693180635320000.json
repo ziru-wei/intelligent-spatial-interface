@@ -1,0 +1,317 @@
+{
+  "id": "20261010-223300-1791693180635320000",
+  "name": "2026-10-10 22:33:00",
+  "created": 1791693180.635353,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 1,
+      "text": "what's sean's vision?",
+      "frame": 59,
+      "t": 0.9837447080062702,
+      "status": "answered",
+      "created": 1791729875.928714,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "lab-shelf-3_0",
+        "key": "vision_sean",
+        "score": 0.75,
+        "cues": {
+          "gaze": 1.0,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "jev"
+      },
+      "started": 1791729875.9308329,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"lab-shelf-3_0\",\"key\":\"vision_sean\",\"score\":0.75,\"cues\":{\"gaze\":1,\"point\":0,\"touch\":0},\"mode\":\"jev\"}",
+          "at": 14
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 26
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":310,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.04},\"storage\":{\"type\":\"noul\",\"noul\":0.06},\"user_events\":{\"type\":\"noul\",\"noul\":0.14},\"personal\":{\"type\":\"noul\",\"noul\":0.36},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.9,\"probabilities\":{\"standalone\":0.95,\"unresolved\":0.05}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.57}},\"usage\":{\"input_tokens\":1110,\"output_tokens\":120}}",
+          "at": 323
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"vision_sean\",\"source\":\"selection\",\"continue\":false,\"selected\":0.57,\"follow_up\":null}",
+          "at": 332
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"vision_sean\",\"value\":\"text\"}",
+          "at": 348
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 352
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Sean's Research Philosophy",
+          "at": 1618
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1674,\"first_text_ms\":1277,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":459,\"total_input_tokens\":391,\"total_output_tokens\":68,\"total_thought_tokens\":0}}",
+          "at": 2010
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2016
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.626,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 2.03,
+      "info": {
+        "key": "vision_sean",
+        "source": "selection",
+        "interaction_id": "v1_ChcxS0RMYXFpVkpiZWR6N0lQNzRMRDBBMBIXMUtETGFxaVZKYmVkejdJUDc0TEQwQTA"
+      },
+      "message": "Sean's Research Philosophy",
+      "finished": 1791729877.9609852,
+      "duration": 2.0
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 2,
+      "text": "what's the lab's overall philosophy?",
+      "frame": 368,
+      "t": 6.1358913330041105,
+      "status": "answered",
+      "created": 1791729949.523909,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "lab-shelf-3_1",
+        "key": "lab philosophy",
+        "score": 0.75,
+        "cues": {
+          "gaze": 1.0,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "jev"
+      },
+      "started": 1791729949.5256891,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"lab-shelf-3_1\",\"key\":\"lab philosophy\",\"score\":0.75,\"cues\":{\"gaze\":1,\"point\":0,\"touch\":0},\"mode\":\"jev\"}",
+          "at": 15
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "Started",
+          "at": 18
+        },
+        {
+          "kind": "tool",
+          "tool": "jev_call_context_read",
+          "text": "{\"elapsed_ms\":228,\"answers\":{\"weather\":{\"type\":\"noul\",\"noul\":0.02},\"storage\":{\"type\":\"noul\",\"noul\":0.05},\"user_events\":{\"type\":\"noul\",\"noul\":0.06},\"personal\":{\"type\":\"noul\",\"noul\":0.17},\"conversation_reference\":{\"type\":\"choice\",\"choice\":\"standalone\",\"confidence\":0.84,\"probabilities\":{\"standalone\":0.92,\"unresolved\":0.08}},\"info_selected\":{\"type\":\"noul\",\"noul\":0.55},\"info_followup\":{\"type\":\"noul\",\"noul\":0.2}},\"usage\":{\"input_tokens\":1272,\"output_tokens\":140}}",
+          "at": 242
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"lab philosophy\",\"source\":\"selection\",\"continue\":false,\"selected\":0.55,\"follow_up\":0.2}",
+          "at": 247
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"lab philosophy\",\"value\":\"file attached\",\"file\":\"Programmable Reality Lab.pdf\"}",
+          "at": 254
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 257
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Lab's Overall Philosophy",
+          "at": 3972
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":4217,\"first_text_ms\":3716,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":5737,\"total_input_tokens\":5654,\"total_output_tokens\":83,\"total_thought_tokens\":0},\"files\":1}",
+          "at": 4468
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 4479
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 2,
+          "latency": 3.971,
+          "status": "complete"
+        }
+      },
+      "response": 2,
+      "latency": 4.49,
+      "info": {
+        "key": "lab philosophy",
+        "source": "selection",
+        "interaction_id": "v1_ChZINkhMYXMwd3AtalBzZy1LcExMUUFREhZINkhMYXMwd3AtalBzZy1LcExMUUFR"
+      },
+      "message": "Lab's Overall Philosophy",
+      "finished": 1791729954.016681,
+      "duration": 4.5
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1791729877.556712,
+      "frame": 59,
+      "t": 0.9837447080062702,
+      "question": "what's sean's vision?",
+      "question_id": 1,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.626,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.626,
+            "created": 1791729877.556712,
+            "title": "Sean's Research Philosophy",
+            "body": "Sean's research philosophy is that self-efficacy matters.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 2.021,
+            "created": 1791729877.952262,
+            "title": "Sean's Research Philosophy",
+            "body": "Sean's research philosophy is that self-efficacy matters.",
+            "anchor": {
+              "object": "document",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Sean's Research Philosophy",
+      "body": "Sean's research philosophy is that self-efficacy matters.",
+      "items": [],
+      "anchor": {
+        "object": "document",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    },
+    {
+      "id": 2,
+      "created": 1791729953.496208,
+      "frame": 368,
+      "t": 6.1358913330041105,
+      "question": "what's the lab's overall philosophy?",
+      "question_id": 2,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 3.971,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 3.971,
+            "created": 1791729953.496208,
+            "title": "Lab's Overall Philosophy",
+            "body": "First and foremost, student success and happiness are the first ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 4.475,
+            "created": 1791729954.000729,
+            "title": "Lab's Overall Philosophy",
+            "body": "First and foremost, student success and happiness are the first priorities. Everything else is secondary, including doing what you are most excited about.",
+            "anchor": {
+              "object": "document",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Lab's Overall Philosophy",
+      "body": "First and foremost, student success and happiness are the first priorities. Everything else is secondary, including doing what you are most excited about.",
+      "items": [],
+      "anchor": {
+        "object": "document",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

@@ -1,0 +1,311 @@
+{
+  "id": "20261010-211752-1791688672336606000",
+  "name": "2026-10-10 21:17:52",
+  "created": 1791688672.3366249,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 5,
+      "text": "can i eat this?",
+      "frame": 549,
+      "t": 18.302824500002316,
+      "status": "answered",
+      "created": 1791822886.331879,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "comp:c3",
+        "key": "candy",
+        "score": 0.75,
+        "cues": {
+          "gaze": 1.0,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "score"
+      },
+      "started": 1791822886.336585,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"comp:c3\",\"key\":\"candy\",\"score\":0.75,\"cues\":{\"gaze\":1,\"point\":0,\"touch\":0},\"mode\":\"score\"}",
+          "at": 18
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"candy\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 22
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"candy\",\"value\":\"text\"}",
+          "at": 24
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 25
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Eat the grad tea candies",
+          "at": 1387
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1770,\"first_text_ms\":1361,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":532,\"total_input_tokens\":454,\"total_output_tokens\":78,\"total_thought_tokens\":0}}",
+          "at": 1793
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1801
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 6,
+          "latency": 1.387,
+          "status": "complete"
+        }
+      },
+      "response": 6,
+      "latency": 1.81,
+      "info": {
+        "key": "candy",
+        "source": "selection",
+        "interaction_id": "v1_ChdKZ3pOYXYyRkphMnVfUFVQdGIzQzRBMBIXSmd6TmF2MkZKYTJ1X1BVUHRiM0M0QTA"
+      },
+      "message": "Eat the grad tea candies",
+      "finished": 1791822888.147545,
+      "duration": 1.8
+    },
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 6,
+      "text": "looks interesting. what's this?",
+      "frame": 1979,
+      "t": 47.49574412500078,
+      "status": "answered",
+      "created": 1791824138.5356932,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "layout:kitchen-upper-fridge_0",
+        "key": "music-brain user study",
+        "score": 0.986,
+        "cues": {
+          "gaze": 1.0,
+          "point": 1.0,
+          "touch": 0.655
+        },
+        "mode": "score"
+      },
+      "started": 1791824138.539936,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "info_selection",
+          "text": "{\"box_id\":\"layout:kitchen-upper-fridge_0\",\"key\":\"music-brain user study\",\"score\":0.986,\"cues\":{\"gaze\":1,\"point\":1,\"touch\":0.655},\"mode\":\"score\"}",
+          "at": 21
+        },
+        {
+          "kind": "tool",
+          "tool": "info_route",
+          "text": "{\"route\":\"info\",\"key\":\"music-brain user study\",\"source\":\"selection\",\"continue\":false,\"selected\":null,\"follow_up\":null}",
+          "at": 24
+        },
+        {
+          "kind": "tool",
+          "tool": "info_context",
+          "text": "{\"key\":\"music-brain user study\",\"value\":\"text\"}",
+          "at": 26
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 27
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Music Brain User Study",
+          "at": 1204
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1491,\"first_text_ms\":1173,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":546,\"total_input_tokens\":466,\"total_output_tokens\":80,\"total_thought_tokens\":0}}",
+          "at": 1516
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1525
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 7,
+          "latency": 1.204,
+          "status": "complete"
+        }
+      },
+      "response": 7,
+      "latency": 1.53,
+      "info": {
+        "key": "music-brain user study",
+        "source": "selection",
+        "interaction_id": "v1_ChdDaEhOYXMtYU1jeVFqckVQNzl6bjRBWRIXQ2hITmFzLWFNY3lRanJFUDc5em40QVk"
+      },
+      "message": "Music Brain User Study",
+      "finished": 1791824140.071336,
+      "duration": 1.5
+    }
+  ],
+  "responses": [
+    {
+      "id": 6,
+      "created": 1791822887.7238731,
+      "frame": 549,
+      "t": 18.302824500002316,
+      "question": "can i eat this?",
+      "question_id": 5,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.387,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.387,
+            "created": 1791822887.7238731,
+            "title": "Eat the grad tea candies",
+            "body": "Yes, these candies are leftover from this week's grad tea ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.797,
+            "created": 1791822888.133417,
+            "title": "Eat the grad tea candies",
+            "body": "Yes, these candies are leftover from this week's grad tea and people are told to help themselves.",
+            "anchor": {
+              "object": "candy",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Eat the grad tea candies",
+      "body": "Yes, these candies are leftover from this week's grad tea and people are told to help themselves.",
+      "items": [],
+      "anchor": {
+        "object": "candy",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "candy",
+        "box_id": "comp:c3"
+      }
+    },
+    {
+      "id": 7,
+      "created": 1791824139.7441988,
+      "frame": 1979,
+      "t": 47.49574412500078,
+      "question": "looks interesting. what's this?",
+      "question_id": 6,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.204,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.204,
+            "created": 1791824139.7441988,
+            "title": "Music Brain User Study",
+            "body": "This is a user study where users can scan and sign ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.321,
+            "created": 1791824139.8606322,
+            "title": "Music Brain User Study",
+            "body": "This is a user study where users can scan and sign up in the brain music lab after reading eligibility requirements.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.524,
+            "created": 1791824140.063873,
+            "title": "Music Brain User Study",
+            "body": "This is a user study where users can scan and sign up in the brain music lab after reading eligibility requirements.",
+            "anchor": {
+              "object": "study flyer",
+              "relation": "in-front"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Music Brain User Study",
+      "body": "This is a user study where users can scan and sign up in the brain music lab after reading eligibility requirements.",
+      "items": [],
+      "anchor": {
+        "object": "study flyer",
+        "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "music-brain user study",
+        "box_id": "layout:kitchen-upper-fridge_0"
+      }
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+{
+  "id": "20261116-033934-1794825574897083000",
+  "name": "2026-11-16 03:39:34",
+  "created": 1794825574.897115,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 19,
+      "text": "Can I eat this?",
+      "frame": 542,
+      "t": 18.069455040997127,
+      "status": "answered",
+      "created": 1794825578.531154,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "comp:c3",
+        "key": "candy",
+        "score": 0.75,
+        "cues": {
+          "gaze": 1.0,
+          "point": 0.0,
+          "touch": 0.0
+        },
+        "mode": "jev"
+      },
+      "started": 1794825578.532087,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_prefetch",
+          "text": "{\"mods\":[\"findmy\",\"lab\",\"weather\",\"worldinfo\"],\"candidates\":15,\"places\":[],\"candidate\":\"comp:c3\"}",
+          "at": 16
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_read",
+          "text": "Started",
+          "at": 28
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_read",
+          "text": "{\"elapsed_ms\":228,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.95},\"retrieval__item_0\":{\"type\":\"noul\",\"noul\":0.04},\"retrieval__item_1\":{\"type\":\"noul\",\"noul\":0.02},\"retrieval__item_2\":{\"type\":\"noul\",\"noul\":0.02},\"retrieval__item_3\":{\"type\":\"noul\",\"noul\":0.04},\"retrieval__item_4\":{\"type\":\"noul\",\"noul\":0.03},\"retrieval__item_5\":{\"type\":\"noul\",\"noul\":0.03},\"retrieval__item_6\":{\"type\":\"noul\",\"noul\":0.69},\"retrieval__item_7\":{\"type\":\"noul\",\"noul\":0.03},\"retrieval__item_8\":{\"type\":\"noul\",\"n",
+          "at": 243
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_read\",\"elapsed_ms\":228}",
+          "at": 248
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_read",
+          "text": "{\"referent\":{\"entity\":\"comp:c3\",\"key\":\"candy\",\"name\":\"candy\",\"kind\":\"object\",\"source\":\"selection\"},\"reference\":\"standalone\",\"items\":[\"info:candy\",\"user:household\"]}",
+          "at": 250
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "Started",
+          "at": 253
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "{\"elapsed_ms\":106,\"answers\":{\"mod_findmy\":{\"type\":\"noul\",\"noul\":0.04},\"mod_weather\":{\"type\":\"noul\",\"noul\":0.01}},\"usage\":{\"input_tokens\":588,\"output_tokens\":40}}",
+          "at": 350
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_mods\",\"elapsed_ms\":106}",
+          "at": 353
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"worldinfo\",1]]",
+          "at": 354
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 355
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Candy Bowl Status",
+          "at": 2467
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":2586,\"first_text_ms\":2114,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1013,\"total_input_tokens\":923,\"total_output_tokens\":90,\"total_thought_tokens\":0}}",
+          "at": 2937
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2939
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 2.467,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 2.94,
+      "info": {
+        "key": "candy",
+        "source": "selection",
+        "interaction_id": "v1_ChdhOTM2YXVlYkVJV19xdHNQNjQyZGlRYxIXYTkzNmF1ZWJFSVdfcXRzUDY0MmRpUWM"
+      },
+      "message": "Candy Bowl Status",
+      "finished": 1794825581.474165,
+      "duration": 2.9
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794825580.9990551,
+      "frame": 542,
+      "t": 18.069455040997127,
+      "question": "Can I eat this?",
+      "question_id": 19,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 2.467,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 2.467,
+            "created": 1794825580.9990551,
+            "title": "Candy Bowl Status",
+            "body": "Yes, you can eat these candies. They are leftovers from ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 2.568,
+            "created": 1794825581.10032,
+            "title": "Candy Bowl Status",
+            "body": "Yes, you can eat these candies. They are leftovers from this week's grad tea and people may help themselves.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 2.939,
+            "created": 1794825581.471363,
+            "title": "Candy Bowl Status",
+            "body": "Yes, you can eat these candies. They are leftovers from this week's grad tea and people may help themselves.",
+            "anchor": {
+              "object": "candy bowl",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Candy Bowl Status",
+      "body": "Yes, you can eat these candies. They are leftovers from this week's grad tea and people may help themselves.",
+      "items": [],
+      "anchor": {
+        "object": "candy bowl",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "candy",
+        "box_id": "comp:c3"
+      }
+    }
+  ]
+}

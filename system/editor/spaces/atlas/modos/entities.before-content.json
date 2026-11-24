@@ -1,0 +1,134 @@
+{
+ "version": 1,
+ "entities": {
+  "layout:lab-desk-lamp": {
+   "traits": [
+    "iot"
+   ],
+   "device": {
+    "protocol": "mock",
+    "class": "light",
+    "inputs": {
+     "power": {
+      "type": "toggle",
+      "value": "on"
+     },
+     "brightness": {
+      "type": "level",
+      "value": 60,
+      "min": 0,
+      "max": 100,
+      "step": 20,
+      "unit": "%"
+     }
+    },
+    "outputs": {}
+   }
+  },
+  "layout:lab-central-tv": {
+   "traits": [
+    "display",
+    "iot"
+   ],
+   "device": {
+    "protocol": "mock",
+    "class": "television",
+    "inputs": {
+     "power": {
+      "type": "toggle",
+      "value": "on"
+     },
+     "input": {
+      "type": "choice",
+      "value": "HDMI 2",
+      "options": [
+       "HDMI 1",
+       "HDMI 2",
+       "HDMI 3"
+      ]
+     },
+     "volume": {
+      "type": "level",
+      "value": 20,
+      "min": 0,
+      "max": 100,
+      "step": 10
+     }
+    },
+    "outputs": {}
+   }
+  },
+  "layout:lab-printer": {
+   "traits": [
+    "iot"
+   ],
+   "device": {
+    "protocol": "mock",
+    "class": "printer",
+    "inputs": {
+     "power": {
+      "type": "toggle",
+      "value": "on"
+     },
+     "job": {
+      "type": "command",
+      "commands": [
+       "pause",
+       "cancel"
+      ],
+      "for": "current_job",
+      "confirm": [
+       "cancel"
+      ]
+     }
+    },
+    "outputs": {
+     "current_job": {
+      "type": "task",
+      "title": "Ana's CHI poster",
+      "total": 12,
+      "unit": "pages",
+      "total_s": 300,
+      "elapsed_s": 170
+     },
+     "queue": {
+      "type": "queue",
+      "items": [
+       {
+        "title": "Lab meeting slides",
+        "total": 3,
+        "unit": "pages",
+        "total_s": 60
+       },
+       {
+        "title": "Consent forms",
+        "total": 8,
+        "unit": "pages",
+        "total_s": 90
+       }
+      ]
+     },
+     "paper": {
+      "type": "level",
+      "value": 60,
+      "min": 0,
+      "max": 250,
+      "unit": "sheets"
+     },
+     "toner": {
+      "type": "level",
+      "value": 35,
+      "min": 0,
+      "max": 100,
+      "unit": "%"
+     }
+    }
+   }
+  },
+  "item:headphones": {
+   "category": "belonging",
+   "device": null
+  }
+ },
+ "added": []
+}

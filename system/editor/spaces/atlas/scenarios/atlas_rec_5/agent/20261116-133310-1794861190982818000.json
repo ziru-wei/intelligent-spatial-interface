@@ -1,0 +1,473 @@
+{
+  "id": "20261116-133310-1794861190982818000",
+  "name": "2026-11-16 13:33:10",
+  "created": 1794861190.9828422,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 25,
+      "text": "How long until my print job is done?",
+      "frame": 59,
+      "t": 0.983766083008959,
+      "status": "answered",
+      "created": 1794861194.023508,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794861194.028252,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 25
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 29
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 32
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":99,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchWork\":0,\"labResearchLife\":0,\"none\":1}}},\"usage\":{\"input_tokens\":674,\"output_tokens\":48}}",
+          "at": 124
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":99}",
+          "at": 128
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 130
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0],[\"labResearchLife\",0],[\"none\",1]],\"chosen\":\"none\"}]}",
+          "at": 133
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":127,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.04},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"here\",\"confidence\":0.25,\"probabilities\":{\"referent\":0.06,\"here\":0.4,\"user\":0.36,\"world\":0,\"other\":0.18}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.97},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.71},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.09},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.03}},\"usage\":{\"input_tokens\":1657,\"output_tokens\":367}}",
+          "at": 152
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":128}",
+          "at": 161
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"How long until my print job is done?\",\"about\":\"here\"}]}",
+          "at": 174
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.04,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"How long until my print job is done?\",\"about\":\"Lab · 2F\"}]}",
+          "at": 177
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"iotcontrol\",0.97],[\"objectstatus\",0.71]]",
+          "at": 180
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.02],[\"BookCompanion\",0.02],[\"Delegate\",0.02],[\"FindMy\",0.02],[\"IoTControl\",0.97],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.71],[\"Reminder\",0.09],[\"StepGuide\",0.04],[\"Wayfinding\",0.02],[\"Weather\",0.01],[\"LabInfo\",0.03]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"IoTControl\",\"ObjectStatus\"]}",
+          "at": 182
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"IoTControl\",\"from\":[\"Lab · 2F and the things in it\"],\"items\":[\"device:layout:lab-central-tv\",\"device:layout:lab-printer\",\"device:layout:lab-desk-lamp\"]},{\"mod\":\"ObjectStatus\",\"from\":[\"Lab · 2F and the things in it\"],\"items\":[\"status:tv\",\"status:printer\",\"status:espresso\"]}]",
+          "at": 185
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"IoTControl\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 187
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_iotcontrol",
+          "text": "Started",
+          "at": 190
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_objectstatus",
+          "text": "Started",
+          "at": 193
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 196
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_objectstatus",
+          "text": "{\"elapsed_ms\":89,\"answers\":{\"things_0\":{\"type\":\"noul\",\"noul\":0.04},\"things_1\":{\"type\":\"noul\",\"noul\":0.9},\"things_2\":{\"type\":\"noul\",\"noul\":0.03}},\"usage\":{\"input_tokens\":582,\"output_tokens\":58}}",
+          "at": 242
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_objectstatus\",\"elapsed_ms\":89}",
+          "at": 246
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"objectstatus\",\"selection\":{\"things\":{\"kind\":\"entities\",\"ids\":[\"layout:lab-printer\"],\"tones\":{\"layout:lab-printer\":\"attention\"}}}}",
+          "at": 259
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"ObjectStatus\",\"selectors\":[{\"name\":\"things\",\"options\":[[\"TV\",0.04],[\"printer\",0.9],[\"espresso machine\",0.03]],\"chosen\":[\"printer\"]}]}",
+          "at": 264
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"ObjectStatus\",\"parts\":[{\"slot\":\"state\",\"use\":\"highlight\",\"kind\":\"highlight\"}]}",
+          "at": 275
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_iotcontrol",
+          "text": "{\"elapsed_ms\":96,\"answers\":{\"device\":{\"type\":\"choice\",\"choice\":\"d1_show\",\"confidence\":0.98,\"probabilities\":{\"none\":0.02,\"d0_show\":0,\"d0_a0\":0,\"d0_a1\":0,\"d0_a2\":0,\"d1_show\":0.98,\"d1_a0\":0,\"d1_a1\":0,\"d1_a2\":0,\"d2_show\":0,\"d2_a0\":0,\"d2_a1\":0,\"d2_a2\":0,\"d2_a3\":0}}},\"usage\":{\"input_tokens\":992,\"output_tokens\":153}}",
+          "at": 278
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_iotcontrol\",\"elapsed_ms\":96}",
+          "at": 281
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"iotcontrol\",\"selection\":{\"device\":{\"kind\":\"device\",\"entity\":\"layout:lab-printer\",\"action\":null}}}",
+          "at": 284
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"IoTControl\",\"selectors\":[{\"name\":\"device\",\"options\":[[\"printer: controls\",0.98],[\"none\",0.02],[\"TV: controls\",0],[\"TV: on\",0],[\"TV: off\",0],[\"TV: next input\",0]],\"chosen\":\"printer: controls\"}]}",
+          "at": 287
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"IoTControl\",\"parts\":[{\"slot\":\"device\",\"use\":\"highlight\",\"kind\":\"highlight\"},{\"slot\":\"controls\",\"use\":\"control\",\"kind\":\"control\"}]}",
+          "at": 290
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "UI ready",
+          "at": 293
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Print Job Status",
+          "at": 971
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":905,\"first_text_ms\":792,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1175,\"total_input_tokens\":1096,\"total_output_tokens\":79,\"total_thought_tokens\":0}}",
+          "at": 1079
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1086
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 0.25
+        },
+        "text": {
+          "response": 3,
+          "latency": 0.97,
+          "status": "complete"
+        }
+      },
+      "mod_parts": {
+        "highlight": {
+          "response": 1,
+          "latency": 0.25
+        },
+        "control": {
+          "response": 2,
+          "latency": 0.27
+        }
+      },
+      "response": 3,
+      "latency": 1.09,
+      "message": "Print Job Status",
+      "finished": 1794861195.120779,
+      "duration": 1.1,
+      "label": "q-1116-25"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794861194.2807522,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "How long until my print job is done?",
+      "question_id": 25,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "objectstatus",
+        "variant": "highlight",
+        "slot": "state",
+        "settings": {
+          "dismiss": "never"
+        }
+      },
+      "highlight": {
+        "version": 1,
+        "targets": [
+          {
+            "id": "layout:lab-printer",
+            "label": "printer",
+            "center": [
+              13.54,
+              6.76,
+              16.59
+            ],
+            "size": [
+              0.45,
+              0.18,
+              0.38
+            ],
+            "yaw": 90,
+            "tone": "attention"
+          }
+        ],
+        "guidance": false,
+        "label": false
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.25
+    },
+    {
+      "id": 2,
+      "created": 1794861194.2940621,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "How long until my print job is done?",
+      "question_id": 25,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "iotcontrol",
+        "variant": "panel",
+        "slot": "controls",
+        "settings": {}
+      },
+      "control": {
+        "version": 1,
+        "device": {
+          "id": "layout:lab-printer",
+          "label": "printer",
+          "center": [
+            13.54,
+            6.76,
+            16.59
+          ],
+          "size": [
+            0.45,
+            0.18,
+            0.38
+          ],
+          "yaw": 90
+        },
+        "before": {
+          "power": "on",
+          "job": {
+            "title": "Ana's CHI poster",
+            "total": 12,
+            "unit": "pages",
+            "total_s": 300,
+            "elapsed_s": 170
+          },
+          "queue": [
+            {
+              "title": "Lab meeting slides",
+              "total": 3,
+              "unit": "pages",
+              "total_s": 60
+            },
+            {
+              "title": "Consent forms",
+              "total": 8,
+              "unit": "pages",
+              "total_s": 90
+            }
+          ],
+          "paper": "60 sheets"
+        },
+        "states": {
+          "power": "on",
+          "job": {
+            "title": "Ana's CHI poster",
+            "total": 12,
+            "unit": "pages",
+            "total_s": 300,
+            "elapsed_s": 170
+          },
+          "queue": [
+            {
+              "title": "Lab meeting slides",
+              "total": 3,
+              "unit": "pages",
+              "total_s": 60
+            },
+            {
+              "title": "Consent forms",
+              "total": 8,
+              "unit": "pages",
+              "total_s": 90
+            }
+          ],
+          "paper": "60 sheets"
+        },
+        "actions": [
+          "on",
+          "off",
+          "cancel job"
+        ],
+        "options": {},
+        "ranges": {},
+        "applied": null,
+        "panel": true
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.27
+    },
+    {
+      "id": 3,
+      "created": 1794861194.9981492,
+      "frame": 59,
+      "t": 0.983766083008959,
+      "question": "How long until my print job is done?",
+      "question_id": 25,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 0.97,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 0.97,
+            "created": 1794861194.9981492,
+            "title": "Print Job Status",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "streaming",
+            "at": 1.072,
+            "created": 1794861195.100514,
+            "title": "Print Job Status",
+            "body": "Your print job has about 2 minutes left.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 3,
+            "status": "complete",
+            "at": 1.086,
+            "created": 1794861195.113914,
+            "title": "Print Job Status",
+            "body": "Your print job has about 2 minutes left.",
+            "anchor": {
+              "object": "printer",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 3,
+        "status": "complete"
+      },
+      "title": "Print Job Status",
+      "body": "Your print job has about 2 minutes left.",
+      "items": [],
+      "anchor": {
+        "object": "printer",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
+    }
+  ]
+}

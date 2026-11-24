@@ -1,0 +1,44 @@
+{
+  "id": "20261116-134137-1794861697788073000",
+  "name": "2026-11-16 13:41:37",
+  "created": 1794861697.7881322,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 24,
+      "text": "What is this study about?",
+      "frame": 2045,
+      "t": 48.59621354099363,
+      "status": "failed",
+      "created": 1794861700.8377979,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "layout:kitchen-upper-fridge_0",
+        "key": "music-brain user study",
+        "score": 0.998,
+        "cues": {
+          "gaze": 1.0,
+          "point": 1.0,
+          "touch": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "kitchen-2f"
+      },
+      "started": 1794861700.840325,
+      "message": "Interrupted: the agent stopped before answering."
+    }
+  ],
+  "responses": []
+}

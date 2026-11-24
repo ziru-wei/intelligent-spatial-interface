@@ -1,0 +1,412 @@
+{
+  "id": "20261117-220603-1794978363829108000",
+  "name": "Gallery · findmy",
+  "created": 1794978363.829141,
+  "questions": [
+    {
+      "id": 34,
+      "text": "wait, where did I put my headphones",
+      "frame": 419,
+      "t": 6.986245499996585,
+      "status": "answered",
+      "created": 1794978370.0263019,
+      "live": {
+        "read_s": 5.0
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794978370.043676,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 19
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 24
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 27
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":298,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchWork\":0,\"labResearchLife\":0,\"none\":1}}},\"usage\":{\"input_tokens\":673,\"output_tokens\":48}}",
+          "at": 316
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":298}",
+          "at": 320
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 323
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0],[\"labResearchLife\",0],[\"none\",1]],\"chosen\":\"none\"}]}",
+          "at": 327
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":313,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.03},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"user\",\"confidence\":0.98,\"probabilities\":{\"referent\":0,\"here\":0.01,\"user\":0.98,\"world\":0,\"other\":0.01}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.91},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.05},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.05},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.03}},\"usage\":{\"input_tokens\":1705,\"output_tokens\":367}}",
+          "at": 332
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":313}",
+          "at": 353
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"wait, where did I put my headphones\",\"about\":\"user\"}]}",
+          "at": 370
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.03,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"wait, where did I put my headphones\",\"about\":\"the user\"}]}",
+          "at": 374
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"findmy\",0.91]]",
+          "at": 378
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.01],[\"BookCompanion\",0.01],[\"Delegate\",0.02],[\"FindMy\",0.91],[\"IoTControl\",0.04],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.05],[\"Reminder\",0.05],[\"StepGuide\",0.03],[\"Wayfinding\",0.03],[\"Weather\",0.01],[\"LabInfo\",0.03]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"FindMy\"]}",
+          "at": 382
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"FindMy\",\"from\":[\"user:me\"],\"items\":[\"belongings\"]}]",
+          "at": 386
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"FindMy\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 389
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_findmy",
+          "text": "Started",
+          "at": 393
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 397
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_findmy",
+          "text": "{\"elapsed_ms\":142,\"answers\":{\"item\":{\"type\":\"choice\",\"choice\":\"item_1\",\"confidence\":1,\"probabilities\":{\"not_found\":0,\"ambiguous\":0,\"item_0\":0,\"item_1\":1,\"item_2\":0}}},\"usage\":{\"input_tokens\":884,\"output_tokens\":63}}",
+          "at": 510
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_findmy\",\"elapsed_ms\":142}",
+          "at": 521
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"findmy\",\"selection\":{\"item\":{\"kind\":\"item-location\",\"status\":\"found\",\"item_id\":\"headphones\"}}}",
+          "at": 533
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"FindMy\",\"selectors\":[{\"name\":\"item\",\"options\":[[\"not_found\",0],[\"ambiguous\",0],[\"To the Lighthouse by Virginia Woolf\",0],[\"Headphones\",1],[\"Umbrella\",0]],\"chosen\":\"Headphones\"}]}",
+          "at": 536
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"FindMy\",\"parts\":[{\"slot\":\"container\",\"use\":\"highlight\",\"kind\":\"findmy\"}]}",
+          "at": 540
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "FindMy UI ready",
+          "at": 543
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Headphones on ",
+          "at": 1051
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":801,\"first_text_ms\":678,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":971,\"total_input_tokens\":921,\"total_output_tokens\":50,\"total_thought_tokens\":0}}",
+          "at": 1171
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1180
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 0.51
+        },
+        "text": {
+          "response": 2,
+          "latency": 1.051,
+          "status": "complete"
+        }
+      },
+      "mod_parts": {
+        "findmy": {
+          "response": 1,
+          "latency": 0.51
+        }
+      },
+      "response": 2,
+      "latency": 1.2,
+      "message": "Headphones on middle shelf",
+      "finished": 1794978371.238812,
+      "duration": 1.2
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794978370.5578911,
+      "frame": 419,
+      "t": 6.986245499996585,
+      "question": "wait, where did I put my headphones",
+      "question_id": 34,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "findmy",
+        "variant": "guide",
+        "slot": "container",
+        "settings": {},
+        "ui": {
+          "container": {
+            "use": "highlight",
+            "ui": {
+              "fixed": [
+                "breathingBox"
+              ],
+              "flexible": [
+                {
+                  "cue": "cornerBrackets",
+                  "when": "target.has_content",
+                  "instead_of": "breathingBox"
+                }
+              ]
+            }
+          },
+          "direction": {
+            "use": "guidance",
+            "ui": {
+              "fixed": [],
+              "flexible": [
+                {
+                  "cue": "arrowAhead",
+                  "when": "target.out_of_view & !target.other_room"
+                },
+                {
+                  "cue": "floorPath",
+                  "when": "target.other_room"
+                }
+              ]
+            }
+          }
+        },
+        "facts": {
+          "target.pointed": false,
+          "request.second_person": false,
+          "question.about": "user"
+        }
+      },
+      "findmy": {
+        "version": 1,
+        "mod": "findmy",
+        "status": "found",
+        "item_id": "headphones",
+        "label": "Headphones",
+        "target": {
+          "id": "lab-shelf-3-middle",
+          "label": "shelf 3/middle shelf",
+          "center": [
+            5.32,
+            6.99,
+            14.3
+          ],
+          "size": [
+            0.95,
+            0.24,
+            0.5
+          ],
+          "yaw": 0.0,
+          "parent": {
+            "id": "lab-shelf-3",
+            "label": "shelf 3",
+            "center": [
+              5.57,
+              6.69,
+              14.171
+            ],
+            "size": [
+              0.92,
+              2.28,
+              0.54
+            ],
+            "yaw": 0
+          }
+        },
+        "visual": "box-highlight",
+        "guidance": "when-out-of-view",
+        "occlusion": "hands-only"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "headphones",
+          "label": "Headphones",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.51
+    },
+    {
+      "id": 2,
+      "created": 1794978371.094696,
+      "frame": 419,
+      "t": 6.986245499996585,
+      "question": "wait, where did I put my headphones",
+      "question_id": 34,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.051,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.051,
+            "created": 1794978371.094696,
+            "title": "Headphones on ",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.18,
+            "created": 1794978371.223427,
+            "title": "Headphones on middle shelf",
+            "body": "Your headphones are on shelf 3, middle shelf.",
+            "anchor": {
+              "object": "shelf",
+              "relation": "on"
+            },
+            "referenced_entities": [
+              {
+                "item_id": "headphones",
+                "label": "Headphones",
+                "context_groups": [
+                  "storage"
+                ]
+              }
+            ]
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Headphones on middle shelf",
+      "body": "Your headphones are on shelf 3, middle shelf.",
+      "items": [],
+      "anchor": {
+        "object": "shelf",
+        "relation": "on"
+      },
+      "referenced_entities": [
+        {
+          "item_id": "headphones",
+          "label": "Headphones",
+          "context_groups": [
+            "storage"
+          ]
+        }
+      ],
+      "reserve_text": true,
+      "text_ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      },
+      "text_mod": {
+        "id": "findmy",
+        "settings": {
+          "duration": "stay"
+        }
+      }
+    }
+  ],
+  "gallery_example": {
+    "name": "findmy",
+    "mod": "FindMy"
+  }
+}

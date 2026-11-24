@@ -1,0 +1,239 @@
+{
+  "id": "20261117-155525-1794956125524673000",
+  "name": "2026-11-17 15:55:25",
+  "created": 1794956125.524704,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 78,
+      "text": "Remind me what happened in the part I'm reading",
+      "frame": 299,
+      "t": 4.985579458007123,
+      "status": "answered",
+      "created": 1794956128.590742,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794956128.611955,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 43
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 55
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 64
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":144,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.09},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"here\",\"confidence\":0.3,\"probabilities\":{\"referent\":0.25,\"here\":0.44,\"user\":0.05,\"world\":0,\"other\":0.26}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.92},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.09},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.06}},\"usage\":{\"input_tokens\":1708,\"output_tokens\":367}}",
+          "at": 187
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":144}",
+          "at": 198
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Remind me what happened in the part I'm reading\",\"about\":\"here\"}]}",
+          "at": 207
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.09,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"Remind me what happened in the part I'm reading\",\"about\":\"Lab · 2F\"}]}",
+          "at": 215
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"bookcompanion\",0.92]]",
+          "at": 224
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.02],[\"BookCompanion\",0.92],[\"Delegate\",0.02],[\"FindMy\",0.02],[\"IoTControl\",0.04],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.04],[\"Reminder\",0.09],[\"StepGuide\",0.02],[\"Wayfinding\",0.02],[\"Weather\",0.01],[\"LabInfo\",0.06]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"BookCompanion\"]}",
+          "at": 232
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"BookCompanion\",\"from\":[\"Lab · 2F and the things in it\"],\"items\":[]}]",
+          "at": 241
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"BookCompanion\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 249
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 257
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":207,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.86,\"probabilities\":{\"labResearchWork\":0.06,\"labResearchLife\":0.03,\"none\":0.91}}},\"usage\":{\"input_tokens\":676,\"output_tokens\":48}}",
+          "at": 264
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":207}",
+          "at": 275
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 284
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0.06],[\"labResearchLife\",0.03],[\"none\",0.91]],\"chosen\":\"none\"}]}",
+          "at": 292
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Current Reading",
+          "at": 856
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":732,\"first_text_ms\":652,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":601,\"total_input_tokens\":536,\"total_output_tokens\":65,\"total_thought_tokens\":0}}",
+          "at": 920
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 946
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 0.856,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 0.97,
+      "message": "Current Reading",
+      "finished": 1794956129.5845408,
+      "duration": 1.0,
+      "label": "q-1117-41"
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794956129.468371,
+      "frame": 299,
+      "t": 4.985579458007123,
+      "question": "Remind me what happened in the part I'm reading",
+      "question_id": 78,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 0.856,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 0.856,
+            "created": 1794956129.468371,
+            "title": "Current Reading",
+            "body": "No information about the part you are reading is currently available.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 0.948,
+            "created": 1794956129.559892,
+            "title": "Current Reading",
+            "body": "No information about the part you are reading is currently available.",
+            "anchor": {
+              "object": "book",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Current Reading",
+      "body": "No information about the part you are reading is currently available.",
+      "items": [],
+      "anchor": {
+        "object": "book",
+        "relation": "on"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "text_ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          },
+          {
+            "cue": "textArrow",
+            "when": "text.apart"
+          }
+        ]
+      }
+    }
+  ]
+}

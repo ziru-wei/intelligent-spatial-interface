@@ -4,7 +4,15 @@
 **/.venv-mesh/
 **/node_modules/
 **/sessions/
-**/spaces/
+# The scene data (editor/spaces) is synced, but not its 3D models, nor the home recordings, nor the camera frames of recordings the Gallery does not use
+editor/spaces/home/scenarios/
+editor/spaces/**/*.glb
+editor/spaces/*/scenarios/*/frames/
+!editor/spaces/atlas/scenarios/atlas_rec_1/frames/
+!editor/spaces/atlas/scenarios/atlas_rec_2/frames/
+!editor/spaces/atlas/scenarios/atlas_rec_3/frames/
+!editor/spaces/atlas/scenarios/atlas_rec_4/frames/
+!editor/spaces/atlas/scenarios/atlas_rec_5/frames/
 **/exports/
 **/private/
 *.mp4

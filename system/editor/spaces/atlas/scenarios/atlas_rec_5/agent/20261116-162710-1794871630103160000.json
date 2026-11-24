@@ -1,0 +1,46 @@
+{
+  "id": "20261116-162710-1794871630103160000",
+  "name": "2026-11-16 16:27:10",
+  "created": 1794871630.103195,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 36,
+      "text": "How should I stretch after sitting all day?",
+      "frame": 329,
+      "t": 5.485798749999958,
+      "status": "failed",
+      "created": 1794871633.1758249,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794871633.184343,
+      "message": "Interrupted: the agent stopped before answering.",
+      "label": "q-1116-36"
+    }
+  ],
+  "responses": []
+}

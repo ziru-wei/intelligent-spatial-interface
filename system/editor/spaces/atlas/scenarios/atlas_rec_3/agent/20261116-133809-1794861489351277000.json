@@ -1,0 +1,230 @@
+{
+  "id": "20261116-133809-1794861489351277000",
+  "name": "2026-11-16 13:38:09",
+  "created": 1794861489.351319,
+  "questions": [
+    {
+      "weather_mod": true,
+      "findmy_mod": true,
+      "ego_mod": true,
+      "id": 21,
+      "text": "Can I sign up for this study?",
+      "frame": 2045,
+      "t": 48.59621354099363,
+      "status": "answered",
+      "created": 1794861492.398369,
+      "live": {
+        "read_s": 5.0
+      },
+      "text_response": {
+        "default": true,
+        "weather": true,
+        "findmy": true,
+        "ego": true
+      },
+      "selection": {
+        "box_id": "layout:kitchen-upper-fridge_0",
+        "key": "music-brain user study",
+        "score": 0.998,
+        "cues": {
+          "gaze": 1.0,
+          "point": 1.0,
+          "touch": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "kitchen-2f"
+      },
+      "started": 1794861492.402379,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Kitchen · 2F\"],\"looking\":\"music-brain user study\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 23
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 25
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":169,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.85},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"referent\",\"confidence\":0.96,\"probabilities\":{\"referent\":0.97,\"here\":0,\"user\":0.02,\"world\":0,\"other\":0.01}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.05},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.67},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.32},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01}},\"usage\":{\"input_tokens\":1529,\"output_tokens\":346}}",
+          "at": 191
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":169}",
+          "at": 198
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":{\"entity\":\"layout:kitchen-upper-fridge_0\",\"key\":\"music-brain user study\",\"name\":\"music-brain user study\",\"kind\":\"object\",\"source\":\"selection\"},\"reference\":\"standalone\",\"questions\":[{\"text\":\"Can I sign up for this study?\",\"about\":\"referent\"}]}",
+          "at": 201
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"music-brain user study\",\"score\":0.85,\"referent\":\"music-brain user study\",\"reference\":\"standalone\",\"questions\":[{\"text\":\"Can I sign up for this study?\",\"about\":\"music-brain user study\"}]}",
+          "at": 207
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"objectstatus\",0.67]]",
+          "at": 209
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.05],[\"BookCompanion\",0.04],[\"Delegate\",0.03],[\"FindMy\",0.01],[\"IoTControl\",0.01],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.67],[\"Reminder\",0.03],[\"StepGuide\",0.32],[\"Wayfinding\",0.02],[\"Weather\",0.01]],\"skipped\":[\"WorldInfo\",\"LabInfo\"],\"chosen\":[\"ObjectStatus\"]}",
+          "at": 211
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"ObjectStatus\",\"from\":[\"Kitchen · 2F and the things in it\"],\"items\":[\"status:fridge\"]}]",
+          "at": 212
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"WorldInfo\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 213
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_objectstatus",
+          "text": "Started",
+          "at": 214
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 216
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_objectstatus",
+          "text": "{\"elapsed_ms\":70,\"answers\":{\"things_0\":{\"type\":\"noul\",\"noul\":0.06}},\"usage\":{\"input_tokens\":492,\"output_tokens\":22}}",
+          "at": 263
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_objectstatus\",\"elapsed_ms\":71}",
+          "at": 266
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"objectstatus\",\"selection\":{\"things\":null}}",
+          "at": 267
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"ObjectStatus\",\"selectors\":[{\"name\":\"things\",\"options\":[[\"refrigerator\",0.06]],\"chosen\":[]}]}",
+          "at": 269
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Study Sign-Up",
+          "at": 1463
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1708,\"first_text_ms\":1251,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":654,\"total_input_tokens\":569,\"total_output_tokens\":85,\"total_thought_tokens\":0}}",
+          "at": 1917
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1920
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.465,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.93,
+      "info": {
+        "key": "music-brain user study",
+        "source": "selection",
+        "interaction_id": "v1_Chd0R243YXJ5Skw5WFdqTWNQbExmSmdRWRIXdEduN2FyeUpMOVhXak1jUGxMZkpnUVk"
+      },
+      "message": "Study Sign-Up",
+      "finished": 1794861494.329289,
+      "duration": 1.9
+    }
+  ],
+  "responses": [
+    {
+      "id": 1,
+      "created": 1794861493.867635,
+      "frame": 2045,
+      "t": 48.59621354099363,
+      "question": "Can I sign up for this study?",
+      "question_id": 21,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.465,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.465,
+            "created": 1794861493.867635,
+            "title": "Study Sign-Up",
+            "body": "I am not able to tell you if you can sign up for ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.921,
+            "created": 1794861494.3238049,
+            "title": "Study Sign-Up",
+            "body": "I am not able to tell you if you can sign up for the music-brain user study as I have no information on that topic.",
+            "anchor": {
+              "object": "fridge",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Study Sign-Up",
+      "body": "I am not able to tell you if you can sign up for the music-brain user study as I have no information on that topic.",
+      "items": [],
+      "anchor": {
+        "object": "fridge",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "info": {
+        "key": "music-brain user study",
+        "box_id": "layout:kitchen-upper-fridge_0"
+      }
+    }
+  ]
+}
