@@ -39,6 +39,9 @@ def _prepare(d):
                 if r.get('question_id') == q['id'] and r.get('stream', {}).get('status') == 'streaming': _fail_stream(r, q)
         linked = _link_orphans(d, c)
         if stale or linked: _write(d, c)
+    unnamed = sorted(((q.get('created', 0), c['id'], q['id']) for c in _all(d) for q in c['questions'] if not q.get('label')), key=lambda x: x[:1])
+    for created, cid, qid in unnamed:
+        c = read(d, cid); q = next(x for x in c['questions'] if x['id'] == qid); q['label'] = _label(d, created or time.time()); _write(d, c)
 
 def _link_orphans(d, c):
     """Answers without a question (earlier versions, or asked in the terminal) get one, so every answer has a timeline marker."""
@@ -46,7 +49,7 @@ def _link_orphans(d, c):
     orphans = [r for r in c['responses'] if r.get('question_id') not in known]
     first = _next_qid(d)
     for i, r in enumerate(orphans):
-        q = dict(id=first+i, text=r.get('question') or r.get('title') or '(asked in the terminal)', frame=r.get('frame', 0), t=r.get('t', 0),
+        q = dict(id=first+i, label=_label(d, r.get('created', time.time())), text=r.get('question') or r.get('title') or '(asked in the terminal)', frame=r.get('frame', 0), t=r.get('t', 0),
             status='answered', response=r['id'], created=r.get('created', time.time()))
         c['questions'].append(q); r['question_id'] = q['id']
     return bool(orphans)
@@ -75,9 +78,18 @@ def import_conversation(d, data):
     questions = []
     for i, q in enumerate(data.get('questions', [])):
         ids[q.get('id')] = first+i
-        questions.append(dict(q, id=first+i, status=q.get('status') if q.get('status') in ('answered', 'failed') else 'failed'))
+        questions.append(dict(q, id=first+i, label=_label(d, q.get('created') or time.time()), status=q.get('status') if q.get('status') in ('answered', 'failed') else 'failed'))
     responses = [dict(r, id=i+1, question_id=ids.get(r.get('question_id'))) for i, r in enumerate(data.get('responses', []))]
     return create(d, str(data.get('name') or 'Imported'), questions, responses)
+
+def _label(d, ts):
+    """q-MMDD-N: a question's name for people, its number among the questions made that day (local time) in this scene. Never given
+    again: the day's last number is kept apart (`.question-labels`), so a deleted question's name is not reused."""
+    day = datetime.fromtimestamp(ts).strftime('%m%d'); hw = folder(d)/'.question-labels'
+    kept = json.loads(hw.read_text()) if hw.is_file() else {}
+    used = [int(str(q['label']).rsplit('-', 1)[1]) for c in _all(d) for q in c['questions'] if str(q.get('label', '')).startswith(f'q-{day}-')]
+    n = max([kept.get(day, 0), *used])+1; kept[day] = n; hw.write_text(json.dumps(kept))
+    return f'q-{day}-{n}'
 
 def _next_qid(d):
     counter = folder(d)/'.question-high-water'
@@ -85,10 +97,10 @@ def _next_qid(d):
     return max(floor, max((q['id'] for c in _all(d) for q in c['questions']), default=0))+1
 
 def delete_conversation(d, cid):
-    p = _path(d, cid)
+    p = _path(d, cid); recordings = [q.get('audio', {}).get('file') for q in read(d, cid)['questions']] if p.is_file() else []
     # Never reuse deleted question ids: a bridge may still return an old answer.
     (folder(d)/'.question-high-water').write_text(str(_next_qid(d)-1))
-    p.unlink()
+    p.unlink(); _drop_audio(d, recordings)
     remaining = _all(d)
     next_session = max(remaining, key=lambda c: c['created']) if remaining else create(d)
     if editor_state.get(str(d), {}).get('conversation') == cid:
@@ -110,7 +122,7 @@ def ask(d, cid, frame, t, text, live=None, selection=None, pose=None, location=N
     """live = {read_s}: asked in the editor, which held the video on the question's frame while the agent answered and for `read_s`
     real seconds after the answer appeared; replays hold the same way, using the measured latency."""
     c = read(d, cid)
-    q = dict(id=_next_qid(d), text=text[:500], frame=frame, t=t, status='queued', created=time.time())
+    now = time.time(); q = dict(id=_next_qid(d), label=_label(d, now), text=text[:500], frame=frame, t=t, status='queued', created=now)
     if isinstance(live, dict):
         read_s = float(live.get('read_s', 5))
         if not 0 <= read_s <= 30: raise ValueError('Bad live timing.')
@@ -128,7 +140,7 @@ def draft(d, cid, qid, frame, t, text, pause=False, selection=None, pose=None, l
     q = next((x for x in c['questions'] if str(x['id']) == str(qid)), None) if qid is not None else None
     if qid is not None and not q: raise ValueError('Unknown question.')
     if q is None:
-        q = dict(id=_next_qid(d), text=text, frame=frame, t=t, status='drafting', created=now, rev=0, revisions=[])
+        q = dict(id=_next_qid(d), label=_label(d, now), text=text, frame=frame, t=t, status='drafting', created=now, rev=0, revisions=[])
         c['questions'].append(q)
     elif q['status'] != 'drafting': raise ValueError('That question was already asked.')
     q['rev'] += 1; q.update(text=text, frame=frame, t=t)   # the question's moment is its latest revision's; typing began at revisions[0]
@@ -152,6 +164,25 @@ def revision(d, qid):
     c, q = _find_question(d, qid)
     return dict(rev=q.get('rev', 0), status=q['status']) if q else dict(rev=-1, status='gone')
 
+def _new_run(q):
+    """A typed question taken again (its next revision, or asked): the trace of the run before is kept with the revision it answered
+    and when that run began (`at`, s since the question began), so a replay shows the pipeline as it went; the new run starts empty."""
+    if q.get('trace') or q.get('run_at') is not None:
+        runs = q.setdefault('traces', [])
+        if len(runs) < 200: runs.append(dict(rev=q.get('taken_rev', 0), at=q.get('run_at', 0), steps=q.get('trace', [])))
+    q['trace'] = []; q['run_at'] = round(time.time()-q['created'], 3)
+
+RECOMPUTE_S = 1.6   # a draft is answered again at most this often: the newest revision when the time comes (words said meanwhile wait)
+
+def _draft_wait(q):
+    """Seconds until a draft may be answered again (its last run began less than RECOMPUTE_S ago)."""
+    return 0 if q.get('run_at') is None else q['created']+q['run_at']+RECOMPUTE_S-time.time()
+
+def next_draft_in(d):
+    """Seconds until a waiting revision may be taken (None: none waits)."""
+    waits = [_draft_wait(q) for c in _all(d) for q in c['questions'] if q['status'] == 'drafting' and q.get('rev', 0) > q.get('taken_rev', 0)]
+    return max(0, min(waits)) if waits else None
+
 def take_next(d):
     """Oldest queued question in any of the scene's conversations, marked running; None if there is none.
     A question still running well past the bridge's 4-minute turn limit was interrupted (bridge stopped mid-answer). Several bridges
@@ -160,16 +191,16 @@ def take_next(d):
         stuck = [q for q in c['questions'] if q['status'] == 'running' and time.time()-q.get('started', 0) > STUCK_S]
         for q in stuck: q.update(status='failed', message='Interrupted: the agent stopped before answering.')
         if stuck: _write(d, c)
-    drafts = [(q['created'], c, q) for c in _all(d) for q in c['questions'] if q['status'] == 'drafting' and q.get('rev', 0) > q.get('taken_rev', 0)]
+    drafts = [(q['created'], c, q) for c in _all(d) for q in c['questions'] if q['status'] == 'drafting' and q.get('rev', 0) > q.get('taken_rev', 0) and _draft_wait(q) <= 0]
     if drafts:
-        _, c, q = min(drafts, key=lambda x: x[0]); q.update(taken_rev=q['rev'], trace=[], started=q.get('started') or time.time()); _write(d, c)
-        return dict(q, conversation=c['id'])
+        _, c, q = min(drafts, key=lambda x: x[0]); _new_run(q); q.update(taken_rev=q['rev'], started=q.get('started') or time.time()); _write(d, c)
+        return dict(q, conversation=c['id'], n=c['questions'].index(q)+1)
     queued = [(q['created'], c, q) for c in _all(d) for q in c['questions'] if q['status'] == 'queued']
     if not queued: return None
     _, c, q = min(queued, key=lambda x: x[0]); q.update(status='running', started=time.time())
-    if q.get('revisions'): q.update(taken_rev=q['rev'], trace=[])   # a draft asked: answered again, from its parts so far
+    if q.get('revisions'): _new_run(q); q.update(taken_rev=q['rev'])   # a draft asked: answered again, from its parts so far
     _write(d, c)
-    return dict(q, conversation=c['id'])
+    return dict(q, conversation=c['id'], n=c['questions'].index(q)+1)   # n: its number in the conversation (themes cool by it)
 
 def set_info(d, qid, info_key, interaction_id=None, source=None):
     """The info key a question was answered with (modos/text.mjs) and the language model's interaction id, so a
@@ -215,11 +246,39 @@ def add_trace(d, qid, step):
     if not q: raise ValueError('Unknown question.')
     if not isinstance(step, dict): raise ValueError('Bad trace step.')
     trace = q.setdefault('trace', [])
-    if len(trace) < 60:
+    # the run's decision record (modos/decisions.mjs) is the pipeline's raw data: kept whole, and always (one per run)
+    record = step.get('tool') == 'decisions'
+    if len(trace) < 60 or record:
         trace.append(dict(kind=str(step.get('kind') or 'message')[:16], tool=str(step.get('tool') or '')[:60] or None,
-            text=str(step.get('text') or '')[:2000], at=int(step.get('at') or 0)))
+            text=str(step.get('text') or '')[:40000 if record else 2000], at=int(step.get('at') or 0)))
         _write(d, c)
     return dict(ok=True)
+
+def set_audio(d, qid, data, started_ms, video_t=None, video_at_ms=None, video_end_t=None, video_end_at_ms=None, video_rate=None):
+    """A spoken question's recording (what the microphone heard, a 16 kHz WAV), kept beside its conversations (agent/audio/<id>.wav,
+    in the space: local, never committed) with when it began against the question (`at`, s since the question began), so a replay
+    plays it in step and can recognize it again. video_t, video_at_ms: the video's time when Space went down, and when that was (a
+    replay moves the video from there instead of waiting on the first revision); video_end_*: the same when Space was let go, and video_rate:
+    how the video went on from there (its playback speed; 0 paused). The question's line on the timeline runs from the one to the other."""
+    c, q = _find_question(d, qid)
+    if not q: raise ValueError('Unknown question.')
+    if not (data[:4] == b'RIFF' and data[8:12] == b'WAVE') or len(data) > 40_000_000: raise ValueError('The recording must be a WAV.')
+    folder(d).joinpath('audio').mkdir(exist_ok=True); name = f'audio/{q["id"]}.wav'; folder(d).joinpath(name).write_bytes(data)
+    rate = int.from_bytes(data[28:32], 'little') or 32000   # bytes a second (the WAV header's byte rate)
+    q['audio'] = dict(file='agent/'+name, at=round(started_ms/1000-q['created'], 3), duration=round(max(0, len(data)-44)/rate, 3),
+                      **(dict(video=dict(t=round(float(video_t), 3), at=round(float(video_at_ms)/1000-q['created'], 3),
+                          **(dict(t_end=round(float(video_end_t), 3), at_end=round(float(video_end_at_ms)/1000-q['created'], 3), rate=float(video_rate or 0)) if video_end_t is not None and video_end_at_ms is not None else {})))
+                         if video_t is not None and video_at_ms is not None else {}))
+    _write(d, c); lock.notify_all()
+    return dict(q['audio'])
+
+def runs(d, qid):
+    """A typed question's runs, one per revision answered: {rev, at, steps}, the last one the run now kept as its trace."""
+    c, q = _find_question(d, qid)
+    if not q: raise ValueError('Unknown question.')
+    # typed before runs were kept: its one trace is the last run, from when it was asked
+    at = q['run_at'] if q.get('run_at') is not None else round(q['asked']-q['created'], 3) if q.get('asked') else 0
+    return dict(runs=q.get('traces', [])+([dict(rev=q.get('taken_rev', 0), at=at, steps=q.get('trace', []))] if q.get('run_at') is not None or q.get('trace') else []))
 
 def finish(d, qid, message, duration=None):
     c, q = _find_question(d, qid)
@@ -236,12 +295,30 @@ def finish(d, qid, message, duration=None):
     q['duration'] = round(float(duration), 1) if isinstance(duration, (int, float)) else round(q['finished']-q.get('started', q['finished']), 1)
     _write(d, c); return q
 
+def _drop_audio(d, gone):
+    """Recordings no question refers to any more (a question or conversation deleted; a Gallery copy may still refer to one)."""
+    used = {q.get('audio', {}).get('file') for c in _all(d) for q in c['questions']}
+    for f in gone:
+        if f and f not in used: (Path(d)/f).unlink(missing_ok=True)
+
 def delete_question(d, cid, qid):
     c = read(d, cid); q = next((q for q in c['questions'] if str(q['id']) == str(qid)), None)
     if not q: raise ValueError('Unknown question.')
     if q['status'] == 'running': raise ValueError('The agent is answering this question right now.')
+    # Never reuse its id (a recording is named by it, and a bridge may still return an old answer): the high-water mark passes it.
+    hw = folder(d)/'.question-high-water'; hw.write_text(str(max(int(hw.read_text()) if hw.is_file() else 0, int(q['id']))))
     c['questions'].remove(q); c['responses'] = [r for r in c['responses'] if str(r.get('question_id')) != str(qid)]
-    _write(d, c); return dict(ok=True)
+    if c.get('themes'): c['themes'] = _book_of(c)
+    _write(d, c); _drop_audio(d, [q.get('audio', {}).get('file')]); return dict(ok=True)
+
+def _book_of(c):
+    """The theme book with only what the conversation's questions said: a deleted question's sentences leave its themes, and a theme
+    left with none goes (a Rerun's question otherwise joins the themes of the one it replaced)."""
+    book = c.get('themes')
+    if not isinstance(book, dict) or not isinstance(book.get('themes'), list): return book
+    ids = {str(q['id']) for q in c['questions']}
+    kept = [{**t, 'sentences': [s for s in t.get('sentences', []) if str(s.get('q')) in ids]} for t in book['themes']]
+    return {**book, 'themes': [t for t in kept if t['sentences']]}
 
 def _mod_meta(m):
     """Which MOD, variant and slot made a part, with the slot's settled settings (shown and logged; renderers read it later)."""
@@ -274,15 +351,10 @@ def add_response(d, body):
     if body.get('stream') is not None:
         if part != 'text' or any(body.get(k) is not None for k in UI_KINDS): raise ValueError('Only text parts can stream.')
         return _add_stream(d, c, q, body)
-    # One part of each kind per question; a ui part is one per MOD (ModOS composes several MODs into one response).
+    # A part is one per kind and MOD on its question's surface (part_key). Posted again, it is the same part with new data: it keeps
+    # its id (what is drawn for it is updated in place, src/spatial-ui/cue-set.mjs) and the version before is kept (_withdraw).
     mod_of = lambda r: next((k for k in UI_KINDS if r.get(k) is not None), None)
-    same = lambda r: r.get('part') == part and r.get('question_id') == q['id'] and (part != 'ui' or mod_of(r) == mod_of(body))
-    if part and body.get('upsert'):
-        # A draft's part (answer while typing): one per kind and MOD, replaced in place as the question changes; rebuilt below
-        key = part_key(body); old = next((r for r in c['responses'] if r.get('question_id') == q['id'] and part_key(r) == key), None)
-        if old: c['retired_id'] = max(c.get('retired_id', 0), old['id']); c['responses'].remove(old)   # ids are never given twice
-    elif part and any(same(r) for r in c['responses']):
-        return next(r for r in c['responses'] if same(r))
+    old = next((r for r in c['responses'] if r.get('question_id') == q['id'] and part_key(r) == part_key(body)), None) if part else None
     if part == 'ui' and (body.get('title') or body.get('body') or body.get('items')): raise ValueError('UI part cannot contain language text.')
     if part == 'text' and any(body.get(k) is not None for k in UI_KINDS): raise ValueError('Text part cannot contain mod UI.')
     if q: at = q
@@ -295,6 +367,8 @@ def add_response(d, body):
         body=str(body.get('body') or ''), items=[str(i) for i in body.get('items') or []][:12], anchor=body.get('anchor') or None)
     if body.get('reserve_text') is True: r['reserve_text'] = True
     if body.get('mod') is not None: r['mod'] = _mod_meta(body['mod'])
+    # the theme(s) the part shows and whether one is the user's focus (modos/themes.mjs): a fact its MOD's UI rules may read
+    if isinstance(body.get('theme'), dict): r['theme'] = dict(ids=[int(x) for x in body['theme'].get('ids') or [] if isinstance(x, int)][:6], focus=bool(body['theme'].get('focus')))
     # A zone's animation (LabInfo's diorama), played on the headset beside the text.
     if part == 'animation':
         a = body.get('animation')
@@ -336,7 +410,12 @@ def add_response(d, body):
         q.setdefault('parts', {}).setdefault(part, dict(response=r['id'], latency=r['latency']))
         # ModOS: several MODs can each add a ui part; their own arrival times are kept apart from the per-kind `parts`.
         if part == 'ui' and mod_of(r): q.setdefault('mod_parts', {})[mod_of(r)] = dict(response=r['id'], latency=r['latency'])
-    if part and body.get('upsert'): r['key'] = part_key(body)
+    if part: r['key'] = part_key(r)
+    if old:
+        volatile = ('id', 'created', 'updated_at', 'latency', 'question', 'frame', 't')   # the question's own fields, not the part's data
+        if {k: v for k, v in r.items() if k not in volatile} == {k: v for k, v in old.items() if k not in volatile}: return old   # nothing new
+        r.update(id=old['id'], created=old['created'], latency=old.get('latency', r.get('latency')), updated_at=round(time.time(), 3))
+        c['responses'].remove(old); _withdraw(q, old)
     c['responses'].append(r)
     # Real seconds from the agent starting on the question to its answer being shown.
     if q:
@@ -366,7 +445,7 @@ def _text_mod(m):
 
 def _fail_stream(r, q):
     now = time.time(); stream = r['stream']
-    stream.update(seq=stream['seq']+1, status='failed')
+    stream.update(seq=stream['seq']+1, status='failed'); _writing(r, False, now)
     q.get('parts', {}).get('text', {})['status'] = 'failed'
     r.update(title='Answer unavailable', body='Please try again.', anchor=None, referenced_entities=[])
     stream['updates'].append(dict(seq=stream['seq'], status='failed', at=round(now-q.get('started', now), 3), created=now,
@@ -377,7 +456,11 @@ def _add_stream(d, c, q, body):
     if not isinstance(stream, dict) or type(stream.get('seq')) is not int or stream['seq'] < 1 or stream.get('status') not in ('streaming', 'complete', 'failed'):
         raise ValueError('Bad text stream update.')
     r = next((r for r in c['responses'] if r.get('question_id') == q['id'] and r.get('part') == 'text'), None)
-    if r:
+    if r and q.get('revisions') and stream['seq'] == 1 and (not r.get('stream') or r['stream']['status'] != 'streaming'):
+        # A draft's text written again: the same part (its id stays, what is drawn for it is updated in place), a new stream; the text
+        # before is kept as a version (_withdraw), so a replay shows it until the new one began.
+        _withdraw(q, r); r['stream'] = dict(updates=[]); r['updated_at'] = round(time.time(), 3); r.pop('stale_at', None)
+    elif r:
         previous = r.get('stream')
         if not previous: raise ValueError('Text response already completed.')
         if stream['seq'] <= previous['seq']: return r  # retries/out-of-order deliveries cannot roll text back
@@ -399,11 +482,16 @@ def _add_stream(d, c, q, body):
         c['responses'].append(r)
         q.setdefault('parts', {})['text'] = dict(response=r['id'], latency=at)
     r.update(title=title, body=text, items=[], anchor=anchor, referenced_entities=refs, reserve_text=True)
+    # the theme it answers and whether it is the user's focus, from when it is written (later changes: mark_focus)
+    if isinstance(body.get('theme'), dict) and r.get('stream', {}).get('updates') == []:
+        r['theme'] = dict(ids=[int(x) for x in body['theme'].get('ids') or [] if isinstance(x, int)][:6], focus=bool(body['theme'].get('focus')))
+        r['focus_log'] = [[round(now, 3), r['theme']['focus']]]
     if body.get('info') is not None: r['info'] = response_info(c, q, body['info'])
     if isinstance(body.get('text_ui'), dict): r['text_ui'] = _text_ui(body['text_ui'])
     if isinstance(body.get('text_mod'), dict): r['text_mod'] = _text_mod(body['text_mod'])
     if body.get('dialogue') is not None: r['dialogue'] = _dialogue(body['dialogue'])
     r['stream'].update(seq=stream['seq'], status=stream['status'])
+    _writing(r, stream['status'] == 'streaming', now)
     q['parts']['text']['status'] = stream['status']
     r['stream']['updates'].append(dict(seq=stream['seq'], status=stream['status'], at=at, created=now, title=title, body=text, anchor=anchor, referenced_entities=refs))
     q.update(response=r['id'], latency=at)
@@ -413,6 +501,12 @@ class Stale(ValueError):
     """A part for a revision older than the one the bridge took since (the server answers 409; the bridge stops that work). The
     revision being answered finishes even when the user has typed on: the bridge then takes the newest text, skipping the ones between,
     so a fast typist still sees the answer grow."""
+
+def _withdraw(q, r):
+    """A typed question's part that left its surface (replaced by a newer one, or no longer needed) is kept on the question with the
+    moment it left (`withdrawn_at`), so a replay shows the surface as it grew while the question was typed (each part from `created`
+    to `withdrawn_at`). It travels with the question (an import, a Gallery copy)."""
+    if q.get('revisions') and len(q.setdefault('withdrawn', [])) < 300: q['withdrawn'].append(dict(r, withdrawn_at=round(time.time(), 3)))
 
 def part_key(r):
     """A part's identity on its question's surface: its kind and its MOD (a highlight of ObjectStatus and one of Wayfinding are two)."""
@@ -425,10 +519,70 @@ def retract(d, qid, keys, rev=None):
     if not q: raise ValueError('Unknown question.')
     if rev is not None and rev < q.get('taken_rev', 0): raise Stale('A newer revision of the question is being answered.')
     keys = set(keys or []); gone = [r for r in c['responses'] if r.get('question_id') == q['id'] and part_key(r) in keys]
-    for r in gone: c['retired_id'] = max(c.get('retired_id', 0), r['id']); c['responses'].remove(r)
+    for r in gone: c['retired_id'] = max(c.get('retired_id', 0), r['id']); c['responses'].remove(r); _withdraw(q, r)
     if any(r.get('part') == 'text' for r in gone): q.get('parts', {}).pop('text', None)
     if gone: _write(d, c); lock.notify_all()
     return dict(removed=len(gone))
+
+def _writing(r, on, now):
+    """While the language model writes a text (from when a new one is begun until its stream ends): `writing` {from, to?}, so the
+    editor shows it writing, and a replay at the moment it was."""
+    w = r.get('writing'); open_ = isinstance(w, dict) and 'to' not in w
+    if on and not open_: r['writing'] = dict({'from': round(now, 3)}); return True
+    if not on and open_: w['to'] = round(now, 3); return True
+    return False
+
+def mark_writing(d, qid, keys, on=True, rev=None):
+    """A draft's text that is being written anew (on: its words have not come yet) or no longer is (the write was given up)."""
+    c, q = _find_question(d, qid)
+    if not q: raise ValueError('Unknown question.')
+    if rev is not None and rev < q.get('taken_rev', 0): raise Stale('A newer revision of the question is being answered.')
+    keys = set(keys or []); now = time.time()
+    hit = [r for r in c['responses'] if r.get('question_id') == q['id'] and part_key(r) in keys and r.get('part') == 'text' and _writing(r, on, now)]
+    if hit: _write(d, c); lock.notify_all()
+    return dict(changed=len(hit))
+
+def mark_stale(d, qid, keys, stale=True, rev=None):
+    """A draft's part that this revision does not update although it no longer answers what is asked (its text, while what it answers
+    changed and nothing new is written yet): it stays in view, dimmed (`stale_at`, when it became so), instead of going. stale=False:
+    it answers again."""
+    c, q = _find_question(d, qid)
+    if not q: raise ValueError('Unknown question.')
+    if rev is not None and rev < q.get('taken_rev', 0): raise Stale('A newer revision of the question is being answered.')
+    keys = set(keys or []); hit = [r for r in c['responses'] if r.get('question_id') == q['id'] and part_key(r) in keys and bool(r.get('stale_at')) != bool(stale)]
+    for r in hit:
+        if stale: r['stale_at'] = round(time.time(), 3)
+        else: r.pop('stale_at', None)
+    if hit: _write(d, c); lock.notify_all()
+    return dict(changed=len(hit))
+
+def themes(d, qid):
+    """The theme book of a question's conversation (modos/themes.mjs: what the user speaks of, kept across its questions)."""
+    c, q = _find_question(d, qid)
+    if not q: raise ValueError('Unknown question.')
+    return dict(themes=_book_of(c))
+
+def set_themes(d, qid, book):
+    """The theme book after a question's run (the pipeline gives it back updated)."""
+    c, q = _find_question(d, qid)
+    if not q: raise ValueError('Unknown question.')
+    if not (isinstance(book, dict) and isinstance(book.get('themes'), list)) or len(json.dumps(book)) > 200_000: raise ValueError('Bad themes.')
+    c['themes'] = book; _write(d, c); return dict(ok=True)
+
+def mark_focus(d, qid, keys, focus, rev=None):
+    """Whether a part's theme is the user's focus now (the text's: it is not written again for it), logged with the moment it changed,
+    so a replay shows it as it was."""
+    c, q = _find_question(d, qid)
+    if not q: raise ValueError('Unknown question.')
+    if rev is not None and rev < q.get('taken_rev', 0): raise Stale('A newer revision of the question is being answered.')
+    keys = set(keys or []); hit = []
+    for r in c['responses']:
+        if r.get('question_id') == q['id'] and part_key(r) in keys and (r.get('focus_log') or [[0, True]])[-1][1] != bool(focus):
+            r.setdefault('focus_log', []).append([round(time.time(), 3), bool(focus)])
+            if isinstance(r.get('theme'), dict): r['theme']['focus'] = bool(focus)
+            hit.append(r)
+    if hit: _write(d, c); lock.notify_all()
+    return dict(changed=len(hit))
 
 def status(d, cid):
     c = read(d, cid); busy = running_question(d)[1] is not None
@@ -443,4 +597,10 @@ def status(d, cid):
         things = modos_twin.entities(Path(d).parents[1], d)
         responses = [dict(r, info=dict(r['info'], has_content=modos_parts.has_content(things.get(r['info']['box_id'], {}))))
                      if (r.get('info') or {}).get('box_id') else r for r in responses]
-    return dict(connected=busy or time.time()-bridge_seen.get(str(d), 0) < 40, questions=c['questions'], responses=responses)
+    # a typed question's withdrawn parts, for replaying how its surface grew (ids of their own: negative, never a live part's)
+    gone = [dict(r, question_id=q['id'], id=-(i+1), part_id=r['id']) for i, (q, r) in enumerate((q, r) for q in c['questions'] for r in q.get('withdrawn', []))]   # part_id: the part it is a version of
+    def audio(a):   # recordings kept before their length was: their length from the file (16 kHz mono 16-bit)
+        f = Path(d)/a.get('file', '')
+        return a if 'duration' in a or not f.is_file() else dict(a, duration=round(max(0, f.stat().st_size-44)/32000, 3))
+    questions_out = [{**{k: v for k, v in q.items() if k not in ('withdrawn', 'traces')}, **({'audio': audio(q['audio'])} if q.get('audio') else {})} for q in c['questions']]   # traces: on request (runs)
+    return dict(connected=busy or time.time()-bridge_seen.get(str(d), 0) < 40, questions=questions_out, responses=responses, withdrawn=gone)

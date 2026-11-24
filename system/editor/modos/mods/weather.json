@@ -5,7 +5,8 @@
   "examples": [
     "Will it rain tonight?",
     "What's the weather this weekend?",
-    "Do I need a jacket tomorrow morning?"
+    "Do I need a jacket tomorrow morning?",
+    "am I supposed to bring my umbrella?"
   ],
   "scope": "global",
   "knowledge": [

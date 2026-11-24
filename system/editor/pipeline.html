@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ModOS Pipeline</title>
+<style>
+:root{--ink:#111;--soft:#55555b;--mute:#9a9aa0;--faint:#c9c9ce;--line:#e3e3e7;--fill:#f4f4f6}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;color:var(--ink);font:12px/1.35 system-ui,-apple-system,sans-serif}
+/* the sentences: a wheel at the top of the page, the one picked in the middle */
+.top{position:relative;height:216px;border-bottom:1px solid var(--line)}
+.qpick{position:absolute;left:28px;top:14px;width:250px;font:12px system-ui;color:var(--soft)}
+.qpick select{width:100%;margin-top:4px;font:12px system-ui;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
+.qpick .live{margin-top:8px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute)}
+.qpick .live input{margin:0}
+.qpick .st{margin-top:8px;font-size:11px;color:var(--mute)}
+.picker{position:absolute;left:300px;top:0;bottom:0;right:360px;overflow-y:scroll;scrollbar-width:none;user-select:none}
+.picker::-webkit-scrollbar{display:none}
+.picker.moving .row{opacity:max(var(--o),.55)!important}
+.picker .row{transition:opacity .25s,color .15s}
+.picker .pad{height:93px}
+.picker .row{height:30px;line-height:30px;padding:0 28px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transform-origin:28px center;transition:color .15s}
+.top .meta{position:absolute;right:28px;bottom:10px;width:310px;font-size:10.5px;color:var(--mute);pointer-events:none}
+.legend{position:absolute;right:28px;top:14px;width:310px;font-size:11px;color:var(--soft)}
+.legend .li{margin:5px 0!important}
+.legend .h{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);margin-bottom:8px}
+.legend .li{display:flex;align-items:center;gap:10px;margin:7px 0}
+.legend svg{flex:none}
+/* the flow is the bottom section: it fills the window under the top section */
+body{height:100vh;display:flex;flex-direction:column}
+.stage{position:relative;overflow:hidden;flex:1;min-height:420px;cursor:grab;touch-action:none}
+.stage.drag{cursor:grabbing}
+.board{position:absolute;left:0;top:0;transform-origin:0 0}
+.zoom{position:absolute;left:18px;bottom:16px;display:flex;gap:4px;z-index:5}
+.zoom button{height:28px;padding:0 12px;border-radius:999px;font-size:11.5px!important;border:1px solid var(--line);background:#fff;color:var(--soft);font:14px system-ui;cursor:pointer}
+.zoom button:hover{color:var(--ink);border-color:#cfcfd4}
+svg.edges{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:3}
+.lab{position:absolute;top:18px;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);white-space:nowrap}
+.grp{position:absolute;border:1px dashed #dcdce0;border-radius:12px}
+.item{position:absolute;z-index:2}
+/* a decision: its question, then its options one under another on a rail; the one taken black with a filled dot */
+.dec{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px 8px 10px}
+.dec .t{font-size:11px;color:var(--soft);margin-bottom:6px}
+.k{font:10px ui-monospace,Menlo,monospace;color:var(--mute);margin-left:5px}
+.opts{position:relative;margin-left:4px;padding-left:14px;border-left:1px solid #d9d9dd}
+.o{position:relative;display:flex;align-items:center;gap:6px;height:20px;font-size:11.5px;color:#a7a7ac;white-space:nowrap}
+.o:before{content:"";position:absolute;left:-14px;width:10px;border-top:1px solid #d9d9dd}
+.o:after{content:"";position:absolute;left:-19px;width:7px;height:7px;border-radius:50%;background:#fff;border:1px solid #c9c9ce}
+.o .l{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.o i{font-style:normal;font-size:10px;color:var(--faint)}
+.o.on{color:var(--ink);font-weight:650}
+.o.on:after{background:var(--ink);border-color:var(--ink)}
+.o.on i{color:var(--soft)}
+.sw{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:5px;vertical-align:0}
+.note{font-size:10.5px;color:var(--mute);margin-top:5px}
+.off{opacity:.35}
+.ghost{border:1px dashed #e2e2e6;border-radius:8px;color:var(--faint);font-size:11px;padding:10px;background:#fff}
+/* a rule: no options; its outcome and why, set off by a line at its left */
+.rule{border-left:2px solid #cfcfd4;padding:2px 8px 2px 10px;background:#fff}
+.rule .rl{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute)}
+.rule .q{font-size:11px;color:var(--soft);margin:2px 0 3px}
+.rule .out{font-size:13px;font-weight:700}
+.rule .why{font-size:10.5px;color:var(--mute);font-style:italic;margin-top:3px}
+/* what each MOD fills in: a grey panel of small decisions */
+.fill{background:var(--fill);border-radius:10px;padding:9px 10px}
+.fill.mod{overflow-y:auto;overscroll-behavior:contain}
+.fill .name{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.fill .d{margin-bottom:6px}.fill .d:last-child{margin-bottom:0}
+.fill .t{font-size:10.5px;color:var(--soft);margin-bottom:3px}
+.fill .opts{border-left-color:#d3d3d8}
+.fill .o:after{background:var(--fill)}
+.fill .o.on:after{background:var(--ink)}
+.fill .o{height:18px;font-size:11px}
+.heard{font-size:14px;font-weight:700;line-height:1.35;padding-right:8px}
+.heard small{display:block;font-weight:400;font-size:10.5px;color:var(--mute);margin-top:4px}
+.shown .s{font-size:12.5px;display:flex;align-items:center;gap:7px;height:22px}
+.shown .s:before{content:"";width:6px;height:6px;background:var(--ink)}
+.shown .s.kept{color:var(--mute)}.shown .s.kept:before{background:var(--faint)}
+.shown{padding-left:6px}
+.dec,.rule,.fill,.heard,.shown .s{cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.dec.lit,.fill.lit{border:1px solid #e0579a;box-shadow:0 0 0 1px #e0579a}
+.grp.lit{border-color:#e0579a}
+.grp{z-index:1}
+.fill{border:1px solid transparent}
+.rule.lit{border-left-color:#e0579a}
+.heard.lit,.shown .s.lit{outline:1.5px solid #e0579a;outline-offset:3px;border-radius:4px}
+.rule .th{display:flex;gap:6px;font-size:12px;color:var(--faint);margin:3px 0;white-space:nowrap}
+.rule .th .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rule .th.cur{color:var(--ink);font-weight:700}
+.rule .th.rel{color:#8a8a90;font-weight:700}
+.rule .th .tag{font-weight:400;font-size:10.5px;color:var(--mute)}
+.rule .sub{font-size:10.5px;font-weight:400;color:var(--mute);margin-top:3px}
+.dec .nm,.rule .nm,.fill .nm{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.fill .nm{text-transform:none;letter-spacing:0}
+.ctx{margin-top:7px;padding-top:6px;border-top:1px dashed #dcdce0;font-size:10.5px;color:var(--soft)}
+.rule .ms{display:flex;gap:6px;font-size:12px;color:var(--faint);margin:3px 0;white-space:nowrap}
+.rule .ms.cur{color:var(--ink);font-weight:700}
+.rule .ms .tn,.rule .th .tn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rule .ms .tag{font-weight:400;font-size:10.5px;color:var(--mute)}
+.rule .law{font-size:10.5px;color:var(--mute);margin-top:6px}
+.rule .case{display:flex;gap:6px;justify-content:space-between;font-size:11px;color:var(--faint);margin:3px 0}
+.rule .case b{font-weight:600;white-space:nowrap}
+.rule .case.cur{color:var(--ink)}.rule .case.cur b{font-weight:800}
+.rule .t{font-size:11px;color:var(--soft);margin-bottom:4px}
+.seen{border:1px dashed #d6d6db;border-radius:8px;padding:8px 10px;background:#fff}
+.seen .rl{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
+.seen .row2{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--soft);margin:2px 0}
+.seen .row2 b{color:var(--ink);font-weight:600;text-align:right}
+.seen.lit{border-color:#e0579a}
+.rn{font-size:11px;color:var(--soft);margin-bottom:5px}
+.rule .laws{margin:7px 0 0;padding-left:15px;font-size:10.5px;color:var(--soft);line-height:1.4}
+.rule .laws li{margin:2px 0}
+.tb{border-collapse:collapse;font-size:10.5px;width:100%;margin-top:2px}
+.tb th{font-weight:400;color:var(--mute);text-align:left;padding:3px;vertical-align:bottom;line-height:1.25}
+.tb tr th:first-child{width:34%}
+.tb td,.tb th{width:22%}
+.tb td{color:var(--faint);padding:4px 3px;border-top:1px solid #f0f0f2;vertical-align:top;line-height:1.25}
+.tb tr:not(:first-child) th{color:var(--soft);border-top:1px solid #f0f0f2;vertical-align:top}
+.tb td.cur{color:var(--ink);font-weight:700}
+.foot2{font-size:10.5px;color:var(--faint);margin-top:5px}.foot2.cur{color:var(--ink);font-weight:700}
+/* the peek: a decision's prompt, seen and edited over the flow (double-click a decision) */
+.peek{position:fixed;z-index:20;width:min(560px,calc(100vw - 32px));max-height:min(72vh,720px);display:flex;flex-direction:column;background:#fff;border:1px solid #d9d9de;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.14),0 2px 8px rgba(0,0,0,.06)}
+.peek[hidden]{display:none}
+.peek .ph{display:flex;align-items:baseline;gap:8px;padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+.peek .ph b{font-size:13px}
+.peek .ph .k{margin-left:0}
+.peek .ph .sp{flex:1}
+.peek .x{border:0;background:none;font-size:17px;line-height:1;color:var(--mute);cursor:pointer;padding:0 2px}
+.peek .x:hover{color:var(--ink)}
+.peek .pb{overflow-y:auto;padding:0 14px 4px}
+.peek .stick{position:sticky;top:0;z-index:1;background:#fff;padding:10px 0 2px}
+.peek .sec{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);margin:10px 0 6px}
+.peek .sec:first-child{margin-top:2px}
+.peek .as{font-size:12px;line-height:1.45;color:var(--ink);background:var(--fill);border-radius:8px;padding:8px 10px;white-space:pre-wrap}
+.peek .as .hole{font:10.5px ui-monospace,Menlo,monospace;color:var(--soft);background:#e6e6ea;border-radius:4px;padding:0 3px}
+.peek .f{margin-bottom:10px}
+.peek .f label{display:flex;gap:6px;align-items:baseline;font-size:11px;color:var(--soft);margin-bottom:3px}
+.peek .f label .k{margin-left:auto}
+.peek textarea{width:100%;resize:none;overflow:hidden;font:12px/1.45 system-ui,-apple-system,sans-serif;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff}
+.peek textarea:focus{outline:none;border-color:#9a9aa0}
+.peek .f.changed textarea{border-color:#8a8a90;background:#fbfbfc}
+.peek .holes{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.peek .holes span{font:10px ui-monospace,Menlo,monospace;color:var(--mute)}
+.peek .holes span.lost{color:#c0392b}
+.peek .holes span.extra{color:#c0392b;text-decoration:line-through}
+.peek .runtime{font-size:11px;color:var(--mute);margin:-2px 0 10px}
+.peek details{margin:4px 0 8px}
+.peek summary{font-size:11px;color:var(--soft);cursor:pointer;margin-bottom:8px}
+.peek .pf{display:flex;align-items:center;gap:6px;padding:10px 14px;border-top:1px solid var(--line)}
+.peek .pf .msg{flex:1;font-size:11px;color:var(--mute)}
+.peek .pf .msg.err{color:#c0392b}
+.peek .pf button{height:28px;padding:0 14px;border-radius:999px;font:11.5px system-ui;border:1px solid var(--line);background:#fff;color:var(--soft);cursor:pointer}
+.peek .pf button.save{background:var(--ink);border-color:var(--ink);color:#fff}
+.peek .pf button:disabled{opacity:.35;cursor:default}
+.help{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1px solid var(--faint);font-size:9.5px;color:var(--mute);cursor:help;position:relative}
+.help:hover:after{content:attr(data-tip);position:absolute;right:0;top:18px;width:260px;padding:7px 9px;background:#111;color:#fff;font-size:11px;line-height:1.4;border-radius:6px;z-index:30;white-space:normal;text-transform:none;letter-spacing:0}
+</style></head><body>
+<section class="top"><div class="qpick"><div>Question</div><select id="qsel"></select><label class="live"><input type="checkbox" id="live"> follow the newest question, live</label><div class="st" id="qst"></div></div><div class="picker" id="picker"><div class="pad"></div><div id="list"></div><div class="pad"></div></div>
+<div class="legend"><div class="h">lines</div>
+<div class="li"><svg width="48" height="10"><path d="M2 5H40" stroke="#111" stroke-width="1.4"/><circle cx="2" cy="5" r="3" fill="#111"/><circle cx="42" cy="5" r="3" fill="#111"/></svg>data: what was decided leads on (from a frame, or from one of its answers)</div>
+<div class="li"><svg width="48" height="10"><path d="M2 5H40" stroke="#c9c9ce" stroke-width="1"/><circle cx="2" cy="5" r="3" fill="#fff" stroke="#c9c9ce"/><circle cx="42" cy="5" r="3" fill="#fff" stroke="#c9c9ce"/></svg>data: where an answer not taken would lead</div>
+<div class="li"><svg width="48" height="10"><path d="M2 5H40" stroke="#8a8a90" stroke-width="1.4" stroke-dasharray="0.1 4" stroke-linecap="round"/><circle cx="2" cy="5" r="2.6" fill="#8a8a90"/><circle cx="42" cy="5" r="2.6" fill="#8a8a90"/></svg>context: informs a later step (said at the foot of its frame)</div>
+</div></section>
+<div class="stage" id="stage"><div class="board" id="board"><svg class="edges"></svg></div><div class="zoom"><button data-z="height">fit height</button><button data-z="all">fit all</button></div></div>
+<div class="peek" id="peek" hidden></div>
+<script>
+let D={sentences:[],runs:[]};;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f2=p=>p==null?'':(+p).toFixed(2);
+const SW=['#6f8fbf','#b07fb8','#6fae86','#c98a6a','#8f8f95'];
+const SEL={entries_span:'One stretch of days, or apart?',entries_from:'Which is the first day?',entries_to:'Which is the last day?',entries_focus:'Which entry answers it?',entries_focus_time:'At which time first?',recipient:'Who to send it to?',attachment:'What goes with it?',capture:'Take a photo?',device:'Which device, what to do?'};
+const day=s=>{const m=String(s).match(/^(\w+) (\d{4}-\d{2}-\d{2})(?:, ([^,·]+))?/);return m?`${m[1].slice(0,3)} ${m[2].slice(5)}${m[3]?' '+m[3]:''}`:s;};
+const moment=l=>{const [d,...rest]=String(l).replace(/\s*·\s*$/,'').split(' · ');return [day(d),...rest].filter(Boolean).join(' · ');};
+const W={referent:'the thing looked at',here:'the area here',user:'the user’s own',world:'outside data',other:'something else'};
+const HOW={more:'asks more',detail:'adds a detail',correct:'corrects a detail'};
+// the board: fixed columns and slots, so nothing moves from one sentence to the next
+const FW=280,GAP=60,COLS=['heard','type','g1','g2','r1','mods','r2','fill','shown'].map(k=>[k,k==='heard'?FW/2:FW]);   // every frame the same width, but the sentence heard
+const X={};{let x=0;for(const [k,w] of COLS){X[k]={x,w};x+=w+GAP;}X.width=x-GAP;}
+const Y={top:52,mid:296,low:530,bus:900};
+const LABELS=[['heard','heard'],['type','call 1'],['g1','call 2 · grounding'],['r1','rule'],['mods','call 3'],['r2','rules'],['fill','fill · write'],['shown','shown']];
+let pick=5;
+function render(){
+  shade();
+  const r=D.runs[pick];
+
+  const items=[],E=[];
+  const put=(col,y,html)=>items.push(`<div class="item" style="left:${X[col].x}px;top:${y}px;width:${X[col].w}px">${html}</div>`);
+  const opt=(n,label,p,on,swatch='')=>`<div class="o${on?' on':''}"${n?` data-n="${n}"`:''} title="${esc(label)}"><span class="l">${swatch}${esc(label)}</span><i>${f2(p)}</i></div>`;
+  // a decision of the decision model: its name, its question, its options; ctx: what it informs later (its dotted line leaves from there)
+  const dec=(n,name,q,k,opts,{off=false,note='',ctx=''}={})=>`<div class="dec${off?' off':''}" data-n="${n}" data-d="${k}" title="Double-click: its prompt"><div class="t">${q}<span class="k">${k}</span></div><div class="opts">${opts.join('')||'<div class="note" style="margin:0">none</div>'}</div>${note?`<div class="note">${note}</div>`:''}${ctx?`<div class="ctx" data-n="${n}_c">${ctx}</div>`:''}</div>`;
+  const ghost=t=>`<div class="ghost">${t}</div>`;
+  calls=r.run.grounding_calls||1;
+  const s=r.sentences[pick],j=s.judged||{},th=Object.fromEntries(r.themes.map(t=>[t.id,t])),has=k=>(s.request_type||[]).includes(k);
+  const order=[];for(const x of r.sentences)for(const t of x.into)if(!order.includes(t))order.push(t);for(const t of r.themes)if(!order.includes(t.id))order.push(t.id);
+  const T=t=>`T${order.indexOf(t)+1}`,sw=t=>`<span class="sw" style="background:${SW[order.indexOf(t)%SW.length]}"></span>`;
+  const first=t=>{const w=(th[t]?.words||'').split(/(?<=[.?!])\s/)[0];return w.length>22?w.slice(0,22)+'…':w;},tl=t=>`${T(t)} “${first(t)}”`;
+  put('heard',Y.top,`<div class="heard" data-n="heard">“${esc(s.text)}”<small>${s.id}</small></div>`);
+  const v=r.view||{};
+  put('heard',Y.mid,`<div class="seen" data-n="view"><div class="rn">Where the user is and looks</div><div class="row2"><span>in</span><b>${esc((v.places||[]).join(', ')||'—')}</b></div><div class="row2"><span>looking or pointing at</span><b>${esc(v.looking||'nothing in particular')}</b></div><div class="ctx" data-n="view_c">Informs the context anchor: what “the thing looked at” and “the area here” are.</div></div>`);
+  // call 1
+  const ty=j.request_type||{};
+  put('type',Y.top,dec('type','Request type','What does the user want with it?','request_type',[opt('t_info','information',ty.information,has('information')),opt('t_action','action',ty.action,has('action')),opt('t_stop','stop_prev',ty.stop_prev,has('stop_prev')),opt('t_none','none: a filler',ty.none,has('none'))],{note:'Several may hold.'}));
+  E.push(['heard','type','on']);
+  if(has('none')){put('g1',Y.top,`<div class="rule" data-n="end"><div class="rn">None</div><div class="out">the sentence changes nothing</div></div>`);E.push(['t_none','end','on','opt']);
+    for(const c of ['g2','r1','mods','r2','fill','shown'])put(c,Y.top,ghost('not run'));return draw(items,E);}
+  // call 2: grounding
+  const to=s.into[0],isNew=!s.follows&&th[to]?.change==='new',taken=s.follows||(isNew?'new':to);
+  const prevE=Object.entries(j.earlier_or_new||{new:1}).sort((a,b)=>b[1]-a[1]);
+  const lab1=k=>k==='new'?'new':k.startsWith('s')?`“${(r.sentences.find(x=>x.id===k)?.text||'').slice(0,20)}…” just said`:tl(k);
+  put('g1',Y.top,dec('q1','Earlier or new','Is it about an earlier theme, or something new?','earlier_or_new',prevE.map(([k,p])=>opt('p_'+k,lab1(k),p,k===taken,k.startsWith('t')?sw(k):''))));
+  if(has('information'))put('g1',Y.low,dec('yesno','Answer form','Is it a question answered by yes or no?','answer_form',[opt('y_yes','true',j.answer_form,s.yesNo),opt('y_no','false',j.answer_form==null?null:1-j.answer_form,!s.yesNo)],{ctx:'Informs the text response: its heading is the answer, Yes, No or Not sure.'}));
+  else put('g1',Y.low,dec('yesno','Answer form','Is it a question answered by yes or no?','answer_form',[opt('y_yes','true',null,false),opt('y_no','false',null,false)],{off:true}));
+  put('g2',Y.top,dec('q2a','Continuation','How does it go on with the earlier theme?','continuation',Object.entries(j.continuation||{}).sort((a,b)=>b[1]-a[1]).map(([k,p])=>opt('h_'+k,HOW[k]||k,p,!isNew&&s.continuation===k)),{off:isNew,ctx:isNew?'':'Informs each fill: when it corrects a detail, the fill takes the new words over the earlier ones.'}));
+  const world=Object.entries(j.context_anchor||{}).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  put('g1',Y.mid,dec('q2b','Context anchor','What in the world does it refer to?','context_anchor',world.map(([k,p],i)=>opt('w_'+k,k.startsWith('place:')?'the place '+k.slice(6).replace(/^zone:/,''):W[k]||k,p,i===0)),{ctx:isNew?'Informs each fill and the text response: where they look things up, and the thing referred to.':'Informs each fill and the text response; when it names another thing looked at, or another place, the earlier theme moves there.'}));
+  E.push(['view_c','q2b','ctx','opt']);
+  const uses=Object.entries(j.also_uses||{}).filter(([t])=>t!==to);
+  put('g2',Y.mid,dec('q3','Also uses','Which other earlier themes does it use?','also_uses',uses.map(([t,p])=>opt('u_'+t,tl(t),p,s.also_uses.includes(t),sw(t)))));
+  for(const [t,k] of [['t_info','information'],['t_action','action'],['t_stop','stop_prev']])for(const to2 of ['q1','q2b','q3'])E.push([t,to2,has(k)?'on':'off','opt']);E.push(['t_info','yesno',has('information')?'on':'off','opt']);
+  for(const [k] of prevE)if(k!=='new')E.push(['p_'+k,'q2a',k===taken?'on':'off','opt']);
+  // rule: theme grounding (from earlier_or_new, with a stop, and also_uses)
+  const said=isNew?'begins':has('stop_prev')&&s.ends?'ends':'joins';
+  const listed=r.themes.map(t=>{const cur=s.into.includes(t.id)||s.ends===t.id,rel=s.also_uses.includes(t.id);
+    return `<div class="th${cur?' cur':rel?' rel':''}"><span class="tn">${sw(t.id)}${esc(tl(t.id))}</span>${cur?`<span class="tag">${s.ends===t.id?'ends':said}${t.moved?' · moved':''}</span>`:rel?'<span class="tag">used</span>':''}</div>`;}).join('');
+  put('r1',Y.top,`<div class="rule" data-n="where"><div class="rn">Theme grounding</div>${listed}</div>`);
+  for(const [k] of prevE)if(k!=='new')E.push(['p_'+k,'q3',k===taken?'on':'off','opt']);E.push(['q1','where','on']);E.push(['q3','where',uses.some(([t])=>s.also_uses.includes(t))?'on':'off']);
+  // call 3: MOD need
+  const tt=th[to],need=Object.entries(tt?.mods||{}).sort((a,b)=>b[1]-a[1]);
+  put('mods',Y.top,dec('mods','MOD need',`Which MODs does ${tl(to)} need?`,'mod_need',need.map(([k,p])=>opt('m_'+k,r.mods.find(m=>m.id==='m'+k)?.name||k,p,p>=.5)),{note:tt?.judged?`Judged on all of ${T(to)}’s words.`:`Not judged again: ${T(to)}’s words did not change.`}));
+  E.push(['where','mods','on']);
+  // rule: MODs shown; each shown MOD leads to its fill
+  const shown=r.mods.filter(m=>['came','stays'].includes(m.state)&&m.serves.includes(to));
+  const msRow=([k,p])=>{const m=r.mods.find(x=>x.id==='m'+k),on=shown.includes(m);
+    const why=on?(p<.5?'kept: still above .35':''):m?.state==='instead'?`same need as ${r.mods.find(x=>x.id===m.instead)?.name||''}`:p>=.5?'waits: .50 twice, or .85 once':'under .50';
+    return `<div class="ms${on?' cur':''}"${on?` data-n="ms_${k}"`:''}><span class="tn">${esc(m?.name||k)}</span>${why?`<span class="tag">${why}</span>`:''}</div>`;};
+  put('r2',Y.top,`<div class="rule" data-n="show"><div class="rn">MODs shown</div>${need.map(msRow).join('')}<ul class="laws"><li>A MOD appears once it scores .50 in two runs, or .85 in one, and stays until it falls under .35.</li><li>When two MODs would show the same thing, the one already shown stays.</li></ul></div>`);
+  E.push(['mods','show','on']);
+  // rule: the text response, from request type and theme grounding (the newest information sentence, and whether it is the one the text
+  // answers), at the moment of the run (still being said, a pause, asked)
+  const when=r.run.final?'asked':r.run.pause?'pause':'saying',st=r.text.state,ans=r.sentences.find(x=>x.id===r.text.answers);
+  const row=st==='kept'?'same':st==='not yet'?'missing':st==='writing'&&when==='saying'?'first':(st==='writing'||st==='dimmed')&&ans?'new':'none';
+  const K='Keep the text',F='Fade the earlier text',Wr='Write the new text',Rm='Remove the text',Wt='Write nothing yet';
+  const TB={none:{saying:F,pause:F,asked:Rm},same:{saying:K,pause:K,asked:K},first:{saying:Wr,pause:Wr,asked:Wr},new:{saying:F,pause:Wr,asked:Wr},missing:{saying:Wt,pause:Wt,asked:Wr}};
+  const RL={none:'Nothing has been asked to be answered.',same:'The newest question is the one the text already answers.',first:'A new question, and no text is shown yet.',
+    new:'A new question, while an earlier text is shown.',missing:'A new question that still lacks a fact it needs.'};
+  const cell=(rk,ck)=>`<td class="${rk===row&&ck===when?'cur':''}">${TB[rk][ck]}</td>`;
+  put('r2',Y.low,`<div class="rule" data-n="text"><div class="rn">Text response</div><table class="tb"><tr><th>The newest question</th><th>While the user is still speaking</th><th>When the user pauses</th><th>When the question is asked</th></tr>
+    ${Object.keys(RL).map(rk=>`<tr><th>${RL[rk]}</th>${['saying','pause','asked'].map(ck=>cell(rk,ck)).join('')}</tr>`).join('')}</table></div>`);
+  E.push(['type','text','on']);E.push(['where','text','on']);
+  // fill · write
+  const fills=[];
+  for(const m of shown){const f=r.fills.find(x=>x.mod===m.id);let b='';
+    if(!f||f.reused)b=`<div class="note" style="margin:0">nothing it reads changed: kept</div>`;
+    else for(const x of f.selectors.filter(x=>!/ · /.test(x.name))){const took=[].concat(x.chosen||[]);
+      const o=x.options.map(([l,p])=>({l:x.name==='entries_focus'?moment(l):/^entries_(from|to)$/.test(x.name)?day(l):l,p,on:took.includes(l)})).sort((a,b)=>b.on-a.on||(b.p??0)-(a.p??0)).slice(0,3);
+      if(!took.length)o.unshift({l:'nobody',p:null,on:true});
+      b+=`<div class="d"><div class="t">${esc(SEL[x.name]||x.name)}</div><div class="opts">${o.map(z=>opt('',z.l,z.p,z.on)).join('')}</div></div>`;}
+    fills.push(`<div class="fill mod" data-n="f_${m.id}" style="margin-bottom:12px;max-height:${Math.min(260,Math.floor((Y.low-Y.top-16)/Math.max(1,shown.length))-12)}px"><div class="nm">${esc(m.name)} fill${f&&!f.reused?`<span class="k">reads ${f.answers.map(T).join(', ')}</span>`:''}</div>${b}</div>`);
+    E.push(['ms_'+m.id.slice(1),'f_'+m.id,'on','opt']);
+    if(!isNew&&s.continuation)E.push(['q2a_c','f_'+m.id,'ctx','opt']);E.push(['q2b_c','f_'+m.id,'ctx','opt']);}
+  put('fill',Y.top,fills.join('')||ghost('no MOD shows this theme'));
+  put('fill',Y.low,r.text.title?`<div class="fill" data-n="write"><div class="nm">Text response written<span class="k">language model</span></div><div style="font-size:13px;font-weight:700">${esc(r.text.title)}</div></div>`:ghost('no text response written in this run'));
+  if(r.text.title){E.push(['text','write','on']);if(s.yesNo)E.push(['yesno_c','write','ctx','opt']);E.push(['q2b_c','write','ctx','opt']);}
+  else E.push(['text','sh_text','on']);   // not written anew: the rule's outcome (keep, dim, remove) is what shows
+  // shown
+  const its=r.parts.map(p=>{const [k,mid]=p.id.slice(1).split(':');return {n:'sh_'+p.id,l:`${r.mods.find(m=>m.id==='m'+mid)?.name||mid} · ${k}`,c:p.change,m:p.mod};});
+  put('shown',Y.top,`<div class="shown">${its.map(x=>`<div class="s${x.c==='kept'?' kept':''}" data-n="${x.n}">${esc(x.l)} <span style="color:var(--mute)">${esc(x.c)}</span></div>`).join('')}</div>`);
+  put('shown',Y.low,`<div class="shown"><div class="s${r.text.state==='writing'?'':' kept'}" data-n="sh_text">text response <span style="color:var(--mute)">${esc(r.text.state==='writing'?'written':r.text.state)}</span></div></div>`);
+  for(const x of its)if(x.m&&shown.some(m=>m.id===x.m))E.push(['f_'+x.m,x.n,x.c==='kept'?'off':'on']);
+  if(r.text.title)E.push(['write','sh_text','on']);
+  draw(items,E);
+}
+let calls=1;
+function draw(items,E){E=[...E];
+  const board=document.getElementById('board'),svg=board.querySelector('svg');
+  const labels=LABELS.map(([c,t])=>`<span class="lab" style="left:${X[c].x}px">${t}${c==='g1'?(calls===2?' · two calls: the continuation second':' · one call'):''}</span>`).join('');
+  const grp=`<div class="grp" data-n="call2" style="left:${X.g1.x-12}px;top:40px;width:${X.g2.x+X.g2.w-X.g1.x+24}px;height:${Y.low+180-40}px"></div>`;
+  board.innerHTML=labels+grp+items.join('')+`<svg class="edges"></svg>`;
+  board.style.width=X.width+'px';
+  const low=Math.max(...[...board.querySelectorAll('.item')].map(el=>el.offsetTop+el.offsetHeight)),bus=low+24;
+  board.style.height=(bus+56)+'px';board.querySelector('svg').setAttribute('width',X.width);board.querySelector('svg').setAttribute('height',bus+56);
+  const B=board.getBoundingClientRect();
+  // a line runs from a port on the right of a frame (or of an option, when only that answer leads on) to the port on the left of the
+  // frame it sets off; the ports sit PORT below a frame's top
+  const PORT=17,FR='.dec,.rule,.fill,.heard,.seen,.grp',frame=el=>el?.classList.contains('s')?el:el?.closest(FR)||el;
+  const K=view.k,box=el=>{const b=el.getBoundingClientRect();return {l:(b.left-B.left)/K,r:(b.right-B.left)/K,t:(b.top-B.top)/K,b:(b.bottom-B.top)/K,h:b.height/K};};
+  const q1y=(()=>{const q=board.querySelector('[data-n="q1"]');return q?box(q).t+PORT:Y.top+PORT;})();
+  const src=(n,opt)=>{const el=board.querySelector(`[data-n="${n}"]`);if(!el)return null;const f=frame(el),F=box(f),E=box(el);return {x:F.r,y:opt?E.t+E.h/2:(f.classList.contains('s')?F.t+F.h/2:F.t+PORT),f};};
+  const dst=n=>{const el=board.querySelector(`[data-n="${n}"]`);if(!el)return null;const f=frame(el),F=box(f);return {x:F.l,y:f.classList.contains('grp')?q1y:f.classList.contains('s')?F.t+F.h/2:F.t+PORT,f,F};};
+  const links=[],dots=[],R=22;let lane=0;
+  const col=x=>COLS.findLastIndex(([k])=>x>=X[k].x-GAP/2);   // the column a point is in (or leaves: a frame's right edge belongs to its own column)
+  const paths=E.map(([a,b,kind,opt])=>{const A=src(a,opt==='opt'),Bb=dst(b);if(!A||!Bb)return '';links.push([A.f,Bb.f,kind]);const li=links.length-1;
+    const ctx=kind==='ctx',on=kind==='on',ink=kind==='off'?'#c9c9ce':ctx?'#8a8a90':'#111',w=ctx?1.4:on?1.4:1,dash=ctx?' stroke-dasharray="0.1 4.2" stroke-linecap="round"':'';
+    if(ctx)dots.unshift(`<circle cx="${A.x}" cy="${A.y}" r="2.6" fill="#8a8a90"/>`,`<circle cx="${Bb.x}" cy="${Bb.y}" r="2.6" fill="#8a8a90"/>`);
+    else dots.push(`<circle cx="${A.x}" cy="${A.y}" r="${opt?2.6:3.2}" fill="${on?'#111':'#fff'}" stroke="${on?'#111':'#c9c9ce'}" stroke-width="1.2"/>`,`<circle cx="${Bb.x}" cy="${Bb.y}" r="3.2" fill="${on?'#111':'#fff'}" stroke="${on?'#111':'#c9c9ce'}" stroke-width="1.2"/>`);
+    if(col(Bb.x)-col(A.x-1)>1){   // it skips columns: along the top above the frames (both ends in the top row), else along the bottom
+      const top=A.y<Y.mid&&Bb.y<Y.mid,y=top?Y.top-10-(lane++%2)*5:bus+(lane++%5)*8,x1=A.x+GAP/2,x2=Bb.x-GAP/2,R2=top?Math.min(R,(A.y-y)/2,(Bb.y-y)/2):R;
+      if(top)return `<path data-l="${li}" d="M${A.x} ${A.y}H${x1-R2}Q${x1} ${A.y} ${x1} ${A.y-R2}V${y+R2}Q${x1} ${y} ${x1+R2} ${y}H${x2-R2}Q${x2} ${y} ${x2} ${y+R2}V${Bb.y-R2}Q${x2} ${Bb.y} ${x2+R2} ${Bb.y}H${Bb.x}" fill="none" stroke="${ink}" stroke-width="${w}"${dash}/>`;
+      return `<path data-l="${li}" d="M${A.x} ${A.y}H${x1-R}Q${x1} ${A.y} ${x1} ${A.y+R}V${y-R}Q${x1} ${y} ${x1+R} ${y}H${x2-R}Q${x2} ${y} ${x2} ${y-R}V${Bb.y+R}Q${x2} ${Bb.y} ${x2+R} ${Bb.y}H${Bb.x}" fill="none" stroke="${ink}" stroke-width="${w}"${dash}/>`;}
+    const m=(A.x+Bb.x)/2;return `<path data-l="${li}" d="M${A.x} ${A.y}C${m} ${A.y} ${m} ${Bb.y} ${Bb.x} ${Bb.y}" fill="none" stroke="${ink}" stroke-width="${w}"${dash}/>`;});
+  board.querySelector('svg').innerHTML=paths.join('')+dots.join('');
+  board._links=links;
+}
+// the flow is a canvas: the wheel pans it, a pinch (or ⌘/Ctrl and the wheel) zooms it around the pointer, a drag on it pans it
+const view={k:1,x:0,y:0},stage=document.getElementById('stage'),M=16,KMAX=2;
+const size=()=>{const b=document.getElementById('board'),R=stage.getBoundingClientRect();return {W:b.offsetWidth,H:b.offsetHeight,VW:R.width,VH:R.height};};
+const fitAll=()=>{const {W,H,VW,VH}=size();return Math.min((VW-2*M)/W,(VH-2*M)/H);};
+// fit height (the default): the whole flow's height in view, from its left
+const fitHeight=()=>{const {H,VH}=size();view.k=Math.min(KMAX,(VH-2*M)/H);view.x=M;view.y=M;place();};
+// the canvas ends where fit all ends: never zoomed out past it, never moved beyond the content's edges (centred when it is smaller)
+const clamp=()=>{const {W,H,VW,VH}=size(),w=W*view.k,h=H*view.k;
+  view.x=w<=VW-2*M?(VW-w)/2:Math.min(M,Math.max(VW-M-w,view.x));view.y=h<=VH-2*M?(VH-h)/2:Math.min(M,Math.max(VH-M-h,view.y));};
+const place=()=>{clamp();document.getElementById('board').style.transform=`translate(${view.x}px,${view.y}px) scale(${view.k})`;};
+const zoomAt=(k,mx,my)=>{k=Math.max(fitAll(),Math.min(KMAX,k));view.x=mx-(mx-view.x)*k/view.k;view.y=my-(my-view.y)*k/view.k;view.k=k;place();};
+stage.addEventListener('wheel',e=>{const inner=e.target.closest('.fill.mod');
+  if(!(e.ctrlKey||e.metaKey)&&inner&&inner.scrollHeight>inner.clientHeight)return;   // a fill scrolls inside itself
+  e.preventDefault();const R=stage.getBoundingClientRect();
+  if(e.ctrlKey||e.metaKey)zoomAt(view.k*Math.exp(-e.deltaY*.008),e.clientX-R.left,e.clientY-R.top);else{view.x-=e.deltaX;view.y-=e.deltaY;place();}},{passive:false});
+let drag=null,dragged=false;
+stage.addEventListener('pointerdown',e=>{if(e.target.closest('.zoom,.fill.mod'))return;drag={x:e.clientX,y:e.clientY,vx:view.x,vy:view.y};dragged=false;});
+addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4){dragged=true;stage.classList.add('drag');}
+  if(dragged){view.x=drag.vx+dx;view.y=drag.vy+dy;place();}});
+addEventListener('pointerup',()=>{drag=null;stage.classList.remove('drag');});
+stage.querySelector('.zoom').addEventListener('click',e=>{const z=e.target.closest('button')?.dataset.z,R=stage.getBoundingClientRect();if(!z)return;e.stopPropagation();
+  if(z==='all'){view.k=fitAll();view.x=M;view.y=M;place();}else fitHeight();});
+const PINK='#e0579a',FRAMES='.dec,.rule,.fill,.heard,.seen,.shown .s,.grp';
+document.getElementById('stage').addEventListener('click',e=>{if(dragged){dragged=false;return;}const board=document.getElementById('board'),f=e.target.closest(FRAMES);
+  board.querySelectorAll('.lit').forEach(x=>x.classList.remove('lit'));
+  board.querySelectorAll('path[data-l]').forEach(p=>{p.style.stroke='';p.style.strokeWidth='';});
+  if(!f)return;f.classList.add('lit');
+  (board._links||[]).forEach(([a,b,kind],i)=>{if(a!==f&&b!==f||kind==='off')return;(a===f?b:a).classList.add('lit');const p=board.querySelector(`path[data-l="${i}"]`);if(p){p.style.stroke=PINK;p.style.strokeWidth='2';}});});
+// the picker scrolls natively; the sentence picked is bold and black, and the further from it, the smaller and fainter
+const picker=document.getElementById('picker'),ROW=30;
+const listSentences=()=>{document.getElementById('list').innerHTML=D.sentences.map((t,i)=>`<div class="row" data-i="${i}">${esc(t)}</div>`).join('');};
+function shade(){const c=pick;picker.querySelectorAll('.row').forEach((el,i)=>{const d=Math.abs(i-c),k=Math.max(0,1-d);
+  el.style.fontSize=(14+6*k)+'px';el.style.fontWeight=d<.5?700:400;el.style.color=d<.5?'#000':'#111';const o=d<.5?1:Math.max(.06,.62-.17*d);el.style.opacity=o;el.style.setProperty('--o',o);});}
+// scrolling only scrolls the list; a click (or ↑ ↓) picks a sentence, brought to the middle
+const choose=i=>{pick=Math.max(0,Math.min(D.runs.length-1,i));picker.scrollTo({top:pick*ROW,behavior:'smooth'});render();};
+picker.addEventListener('click',e=>{const c=e.target.closest('.row');if(c)choose(+c.dataset.i);});
+let still=null;picker.addEventListener('scroll',()=>{picker.classList.add('moving');clearTimeout(still);still=setTimeout(()=>picker.classList.remove('moving'),700);});
+addEventListener('keydown',e=>{if(e.target.closest?.('textarea,input,select'))return;if(e.key==='ArrowDown')choose(pick+1);if(e.key==='ArrowUp')choose(pick-1);});
+addEventListener('resize',()=>{render();view.k=Math.max(view.k,fitAll());place();});
+// the editor's data: a question's runs, each with its decision record (modos/decisions.mjs) and where the user was and looked
+const P=new URLSearchParams(location.search),session=P.get('session')||'./spaces/demo/scenarios/demo/session.json';
+const api=(path,params={})=>{const u=new URL(path,location.href);u.searchParams.set('session',session);for(const [k,v] of Object.entries(params))u.searchParams.set(k,v);return fetch(u,{cache:'no-store'}).then(r=>r.json());};
+let qs=[],qid=P.get('q'),cid=P.get('conversation'),sig='';
+const parse=t=>{try{return JSON.parse(t);}catch{return null;}};
+function fromRuns(runs){
+  const recs=[];for(const r of runs){const dec=r.steps.find(x=>x.tool==='decisions'),v=r.steps.find(x=>x.tool==='view_context');const rec=dec&&parse(dec.text);if(rec){rec.at=r.at;rec.view=v?parse(v.text):null;recs.push(rec);}}
+  if(!recs.length)return {sentences:[],runs:[]};
+  const sentences=recs.at(-1).sentences.map(x=>x.text);
+  return {sentences,runs:sentences.map((_,i)=>[...recs].reverse().find(x=>x.sentences[i]?.routed)||recs.at(-1))};}
+// a question the page can show: one whose decision record is in the current form (its decisions named as the page reads them), or
+// one just begun (being asked, nothing run yet: its record is coming). A question run without a record (from before records were
+// kept, or a draft left unfinished then) is not shown.
+const current=x=>{const r=parse(x.text);return !!r?.sentences?.some(s=>s.judged?.request_type);};
+const recorded=q=>{const t=q.trace||[],d=t.filter(x=>x.tool==='decisions');return d.length?current(d.at(-1)):!t.length&&!['answered','failed'].includes(q.status);};
+async function loadQuestions(live=null){   // live: the question being asked, followed live, listed whatever its record
+  const list=await api('/api/agent/conversations');const convs=Array.isArray(list)?list:list.conversations||[];
+  qs=[];for(const c of convs.filter(c=>!c.gallery_example)){const full=await api('/api/agent/conversations/export',{conversation:c.id});for(const q of full.questions||[])if(recorded(q)||String(q.id)===String(live))qs.push({...q,conversation:c.id,cname:c.name});}
+  qs.sort((a,b)=>(b.created||0)-(a.created||0));
+  document.getElementById('qsel').innerHTML=qs.map(q=>`<option value="${q.id}">${esc(q.label||'q'+q.id)} · ${esc(String(q.text).slice(0,40))}</option>`).join('');
+  if(!qid||!qs.some(q=>String(q.id)===String(qid)))qid=(cid?qs.find(q=>q.conversation===cid):qs[0])?.id;
+  document.getElementById('qsel').value=qid;}
+async function loadRuns(first=false){
+  if(qid==null)return;const out=await api('/api/agent/questions/runs',{id:qid}),next=fromRuns(out.runs||[]),s2=JSON.stringify(next.runs.map(r=>r?.run?.rev));
+  const q=qs.find(x=>String(x.id)===String(qid));document.getElementById('qst').textContent=next.runs.length?`${q?.label||''} · ${q?.status||''}`:`${q?.label||''}: no decision record yet`;
+  if(s2===sig&&!first)return;sig=s2;const was=D.sentences.length;D=next;listSentences();
+  // a new question, or a sentence added: the newest sentence; otherwise the one picked stays
+  if(first||D.sentences.length!==was)pick=Math.max(0,D.sentences.length-1);pick=Math.min(pick,Math.max(0,D.sentences.length-1));
+  picker.scrollTop=pick*ROW;if(D.runs.length){render();if(first)fitHeight();}else document.getElementById('board').innerHTML='';}
+document.getElementById('qsel').addEventListener('change',e=>{qid=e.target.value;document.getElementById('live').checked=false;loadRuns(true);});
+const liveBox=document.getElementById('live');liveBox.checked=P.get('live')==='1';
+// live: the newest question of the conversation, its runs as they come
+setInterval(async()=>{if(!liveBox.checked)return;const newest=(await api('/api/agent/conversations/export',{conversation:cid||qs.find(q=>String(q.id)===String(qid))?.conversation})).questions?.at(-1);
+  if(newest&&(String(newest.id)!==String(qid)||!qs.some(q=>String(q.id)===String(newest.id)))){qid=newest.id;await loadQuestions(newest.id);document.getElementById('qsel').value=qid;await loadRuns(true);}else loadRuns(false);},1000);
+loadQuestions(liveBox.checked?qid:null).then(()=>loadRuns(true));
+// the peek: a decision double-clicked shows its prompt, as asked for the sentence picked, and its words to edit (modos/prompts.json,
+// through /api/modos/prompts; modos/prompts.mjs fills them in as the pipeline does). An edit keeps each placeholder: what is filled in
+// at run time. The bridge asks in the new words from the next question.
+const PEEK={
+  request_type:{title:'Request type',call:'call 1 · modos_request_type',fields:[['information','Information'],['action','Action'],['stop_prev','Stop_prev'],['none','None']],
+    tip:'Four questions, each scored 0 to 1 for the sentence; several may hold.'},
+  earlier_or_new:{title:'Earlier or new',call:'call 2 · modos_grounding',fields:[['question','Question'],['question_stop','Question, for a sentence that only stops a request'],['just_said','Option: a sentence just said'],['new','Option: new']],
+    tip:'One choice. Its other options are the earlier themes, each given as its words and what it is (not words of this prompt).'},
+  continuation:{title:'Continuation',call:'call 2 · modos_grounding',fields:[['question','Question, in one grounding call'],['question_two_calls','Question, in the second grounding call'],['earlier_theme','{earlier}, when it is an earlier theme'],['earlier_said','{earlier}, when it is a sentence just said'],['more','Option: more'],['detail','Option: detail'],['correct','Option: correct']],
+    tip:'One choice. In one grounding call it is asked of every sentence; in two calls (modos_continuation), only of a sentence that goes on with an earlier request, told which.'},
+  context_anchor:{title:'Context anchor',call:'call 2 · modos_grounding',fields:[['question','Question'],['referent','Option: the thing looked at'],['here','Option: the area here'],['place','Option: a place the words name (one per place)'],['user','Option: the user’s own'],['world','Option: outside data'],['other','Option: something else']],
+    tip:'One choice. An option is offered only when the space has it: a thing looked at, the area here, the other places.'},
+  also_uses:{title:'Also uses',call:'call 2 · modos_grounding',fields:[['question','Question, asked once per earlier theme']],tip:'Scored 0 to 1 for each earlier theme.'},
+  answer_form:{title:'Answer form',call:'call 2 · modos_grounding',fields:[['question','Question']],tip:'Scored 0 to 1, for a sentence that wants information.'},
+  mod_need:{title:'MOD need',call:'call 3 · modos_mod_need',fields:[['question','Question, asked once per MOD']],
+    tip:'Scored 0 to 1 for each MOD, on all the theme’s words. {mod}, {description} and {examples} are the MOD’s own, tailored in the editor’s MODs tab.'},
+};
+const SENTENCE=[['whole','The whole question, when it is one sentence'],['part','A sentence of it'],['after','Added: the sentence said before it'],['typing','Added: the last sentence, still being said']];
+const HOLE={sentence:'the sentence, named as below',text:'a sentence’s words',before:'the sentence said before it',theme:'an earlier theme: its words and what it is',earlier:'the earlier request it goes on with',
+  name:'the thing’s or the place’s name',names:'the places here',request:'the theme’s id (its words are given beside the questions)',mod:'the MOD’s name',description:'the MOD’s description',examples:'the MOD’s examples'};
+let PR=null,pk=null;const peek=document.getElementById('peek'),PM=import('./modos/prompts.mjs');
+const holesOf=t=>[...new Set([...String(t).matchAll(/\{(\w+)\}/g)].map(m=>m[1]))].sort();
+const groups=name=>PEEK[name].fields.some(([k])=>/\{sentence\}/.test(PR[name][k]))?[name,'sentence']:[name];
+// the text with what is known filled in, and every other placeholder as a token
+const asked=(t,v)=>esc(t).replace(/\{(\w+)\}/g,(m,k)=>Object.hasOwn(v,k)?esc(v[k]):`<span class="hole" title="${esc(HOLE[k]||k)}">${k}</span>`);
+async function openPeek(name,frame){
+  PR=PR||(await fetch('/api/modos/prompts',{cache:'no-store'}).then(r=>r.json())).prompts;
+  pk={name,edit:Object.fromEntries(groups(name).map(g=>[g,{...PR[g]}])),focus:[name,PEEK[name].fields[0][0]]};
+  const field=(g,k,l)=>`<div class="f" data-g="${g}" data-k="${k}"><label>${esc(l)}<span class="k">${g}.${k}</span></label><textarea rows="1" spellcheck="false">${esc(PR[g][k])}</textarea><div class="holes"></div></div>`;
+  const P=PEEK[name];
+  peek.innerHTML=`<div class="ph"><b>${esc(P.title)}</b><span class="k">${name} · ${esc(P.call)}</span><span class="sp"></span><span class="help" data-tip="${esc(P.tip+' Double-clicked here: edit its words. Each placeholder in braces is filled in when it is asked and must stay; the decision model is asked in the new words from the next question.')}">?</span><button class="x" aria-label="Close">×</button></div>
+    <div class="pb"><div class="stick"><div class="sec">As asked for the sentence picked</div><div class="as" id="pkas"></div></div><div class="sec">Its words</div>${P.fields.map(([k,l])=>field(name,k,l)).join('')}
+    ${pk.edit.sentence?`<details><summary>How a sentence is named ({sentence}), shared by every decision about a sentence</summary>${SENTENCE.map(([k,l])=>field('sentence',k,l)).join('')}</details>`:''}</div>
+    <div class="pf"><span class="msg" id="pkmsg"></span><button class="cancel">Cancel</button><button class="save" disabled>Save</button></div>`;
+  peek.hidden=false;peek.querySelectorAll('textarea').forEach(fit);await check();
+  // over the flow, under the decision (or above it when there is no room), inside the window
+  const b=frame.getBoundingClientRect(),h=peek.offsetHeight,w=peek.offsetWidth;
+  const top=b.bottom+8+h<=innerHeight-12?b.bottom+8:b.top-8-h>=12?b.top-8-h:Math.max(12,innerHeight-12-h);
+  peek.style.left=Math.max(16,Math.min(innerWidth-16-w,b.left))+'px';peek.style.top=top+'px';
+  peek.querySelector('textarea').focus();
+  peek.querySelector('details')?.addEventListener('toggle',()=>{peek.querySelectorAll('textarea').forEach(fit);keepIn();});
+}
+// grown (the sentence's naming opened), it moves up to stay inside the window
+const keepIn=()=>{const b=peek.getBoundingClientRect();if(b.bottom>innerHeight-12)peek.style.top=Math.max(12,innerHeight-12-b.height)+'px';};
+const fit=t=>{t.style.height='auto';t.style.height=t.scrollHeight+2+'px';};
+async function check(){
+  const {fill,sentenceName}=await PM,E=pk.edit;let bad=0,dirty=0;
+  peek.querySelectorAll('.f').forEach(f=>{const g=f.dataset.g,k=f.dataset.k,was=holesOf(PR[g][k]),now=holesOf(E[g][k]),empty=!E[g][k].trim();
+    if(E[g][k]!==PR[g][k])dirty++;f.classList.toggle('changed',E[g][k]!==PR[g][k]);if(empty||was.join()!==now.join())bad++;
+    f.querySelector('.holes').innerHTML=[...was.map(h=>`<span class="${now.includes(h)?'':'lost'}" title="${esc(HOLE[h]||h)}">{${h}}</span>`),...now.filter(h=>!was.includes(h)).map(h=>`<span class="extra">{${h}}</span>`)].join('')+(empty?'<span class="lost">words needed</span>':'');});
+  // the field in focus, as it is asked for the sentence picked (the sentence named as the pipeline names it)
+  const r=D.runs[pick],ss=r?r.sentences.map(x=>x.text):[],i=pick,[g,k]=pk.focus,typing=r?!r.run.final:false;
+  const named=sentenceName({...PR,sentence:E.sentence||PR.sentence},ss,i,typing);
+  // a sentence's naming is shown in the decision's first question about the sentence
+  const shown=g==='sentence'?PEEK[pk.name].fields.map(([x])=>E[pk.name][x]).find(t=>/\{sentence\}/.test(t)):E[g][k];
+  document.getElementById('pkas').innerHTML=asked(shown,{sentence:named});
+  peek.querySelector('.save').disabled=!dirty||bad>0;
+  const m=document.getElementById('pkmsg');if(bad){m.textContent='Keep every placeholder it had, and no other.';m.className='msg err';}else if(m.className.includes('err')){m.textContent='';m.className='msg';}
+}
+const closePeek=()=>{peek.hidden=true;pk=null;};
+peek.addEventListener('input',e=>{const f=e.target.closest('.f');if(!f||!pk)return;pk.edit[f.dataset.g][f.dataset.k]=e.target.value;pk.focus=[f.dataset.g,f.dataset.k];fit(e.target);document.getElementById('pkmsg').textContent='';check();});
+peek.addEventListener('focusin',e=>{const f=e.target.closest('.f');if(f&&pk){pk.focus=[f.dataset.g,f.dataset.k];check();}});
+peek.addEventListener('click',async e=>{
+  if(e.target.closest('.x,.cancel'))return closePeek();
+  if(!e.target.closest('.save')||!pk)return;
+  const change={};for(const [g,o] of Object.entries(pk.edit))for(const [k,t] of Object.entries(o))if(t!==PR[g][k])(change[g]=change[g]||{})[k]=t;
+  const out=await fetch('/api/modos/prompts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({change})}).then(r=>r.json()),m=document.getElementById('pkmsg');
+  if(out.error){m.textContent=out.error;m.className='msg err';return;}
+  PR=out.prompts;m.textContent='Saved. Asked in these words from the next question.';m.className='msg';check();});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!peek.hidden)closePeek();});
+// a press outside closes it, unless there are words not saved
+addEventListener('pointerdown',e=>{if(peek.hidden||peek.contains(e.target))return;if(!peek.querySelector('.f.changed'))closePeek();});
+stage.addEventListener('dblclick',e=>{const d=e.target.closest('.dec[data-d]');if(d&&PEEK[d.dataset.d])openPeek(d.dataset.d,d);});
+
+</script></body></html>

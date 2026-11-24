@@ -3,12 +3,15 @@
 // server and its bridge, and reports when each part shows and goes. A tool around the editor, not part of ModOS.
 //   node demos/live-replay.mjs atlas_rec_1 --text "where is my umbrella"     typed at RATE ms a letter, revisions as the editor sends them
 //   node demos/live-replay.mjs atlas_rec_1 --from <conversation>:<question>  a draft typed earlier, its revisions at their own times
+//   --source <recording>  where the --from conversation is (default: the recording typed into)
+// Logged: + a part shows, − it goes, ~ another part in its place, ↻ the text written again in its place, ◐ dimmed (it no longer answers
+// what is asked), ● it answers again.
 //   --at <s>  the recording's moment (default: the source question's, else 1 s); --enter  ask it at the end; --keep  keep the conversation
 // Needs the editor server (npm start) and agent-config.local.json (the server starts the scene's bridge).
 import {createBreaks} from '../src/live-input.mjs';
 
 const args=process.argv.slice(2),flag=k=>{const i=args.indexOf(k);return i<0?null:args.splice(i,2)[1];},has=k=>{const i=args.indexOf(k);if(i<0)return false;args.splice(i,1);return true;};
-const server=flag('--server')||'http://127.0.0.1:8766',text=flag('--text'),from=flag('--from'),atFlag=flag('--at'),enter=has('--enter'),keepIt=has('--keep');
+const server=flag('--server')||'http://127.0.0.1:8766',text=flag('--text'),from=flag('--from'),source=flag('--source'),atFlag=flag('--at'),enter=has('--enter'),keepIt=has('--keep');
 const RATE=Number(flag('--rate')||110);
 const recording=args[0];if(!recording||(!text&&!from)){console.error('usage: live-replay.mjs <recording> (--text "…" | --from conv:qid) [--at s] [--enter] [--keep]');process.exit(1);}
 const session=`./spaces/atlas/scenarios/${recording}/session.json`,sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -22,7 +25,8 @@ const frameAt=t=>{let i=0;for(let k=0;k<sm.frames.length;k++)if(sm.frames[k].t<=
 
 // what to type: revisions {at (s), text, pause}
 let revisions,at=Number(atFlag??1);
-if(from){const [cid,qid]=from.split(':');const c=await api(`/api/agent/conversations/export?conversation=${cid}`);const q=c.questions.find(x=>String(x.id)===qid);
+if(from){const [cid,qid]=from.split(':'),u=new URL('/api/agent/conversations/export',server);u.searchParams.set('session',source?`./spaces/atlas/scenarios/${source}/session.json`:session);u.searchParams.set('conversation',cid);
+  const c=await (await fetch(u)).json();if(!c.questions)throw Error(c.error||'No such conversation.');const q=c.questions.find(x=>String(x.id)===qid);
   if(!q?.revisions)throw Error('That question was not typed live.');revisions=q.revisions.filter(r=>!r.final);if(atFlag==null)at=q.t;}
 await api('/api/agent/bridge',{});
 const conv=await api('/api/agent/conversations',{name:'Live replay'});
@@ -40,6 +44,9 @@ const watch=(async()=>{let seen=new Map(),lastScores=null;
     if(step&&step.text!==lastScores){lastScores=step.text;const v=JSON.parse(step.text);log.push([now(),`  scores ${v.options.filter(([,x])=>x==='auto'||x>=.2).map(([n,x])=>`${n} ${x}`).join(', ')||'none ≥ .2'}`]);}
     for(const [k,r] of cur){const was=seen.get(k);if(!was)log.push([now(),`+ ${k}${r.findmy?` ${r.findmy.status}${r.findmy.label?' '+r.findmy.label:''}`:r.weather?` ${r.weather.forecast?.map(e=>e.date).filter((x,i,a)=>a.indexOf(x)===i).join(',')}`:r.highlight?` ${r.highlight.targets?.map(t=>t.label).join(',')}`:r.title?` "${r.title}"`:''}`]);
       else if(was.id!==r.id)log.push([now(),`~ ${k}${r.findmy?` ${r.findmy.status} ${r.findmy.label||''}`:r.weather?` ${r.weather.forecast?.map(e=>e.date).filter((x,i,a)=>a.indexOf(x)===i).join(',')}`:r.title?` "${r.title}"`:''}`]);}
+    for(const [k,r] of cur){const was=seen.get(k);if(was&&was.id===r.id&&r.part==='text'&&r.updated_at!==was.updated_at)log.push([now(),`↻ ${k} written again in its place`]);}
+    for(const [k,r] of cur){const was=seen.get(k);if(was&&!!r.stale_at!==!!was.stale_at)log.push([now(),`${r.stale_at?'◐':'●'} ${k} ${r.stale_at?'dimmed':'answers again'}`]);}
+    for(const [k,r] of cur){const was=seen.get(k);if(r.part==='text'&&r.title&&was&&was.title!==r.title&&r.stream?.status==='complete')log.push([now(),`  ${k} "${r.title}"`]);}
     for(const k of seen.keys())if(!cur.has(k))log.push([now(),`− ${k}`]);
     seen=cur;}})();
 

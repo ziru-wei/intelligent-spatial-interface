@@ -1,13 +1,16 @@
 // What people adjust in the editor that is not a MOD (modos-system-design.md 4.4, 5.4): the UI library's own parameters and the replay.
 // A MOD's choices (on/off, its representation, how long its text stays, whether the sky is locked) are MOD
 // settings, tailored in the MODs tab and carried by each part (`mod.settings`; read with modSetting); nothing here overrides them.
-//   text    Stability: how long text stays put before it moves to a better spot; Anchor dialogue bubble: the bubble fixed above
-//           its thing, turned to the user, instead of moving to where it fits
+//   text    Write on surfaces: Embedded Text where its MOD declares it and a surface scores well (surface.score ≥ 0.5), else every
+//           answer is Floating Text (the default); Stability: how long text stays put before it moves to a better spot; Anchor dialogue
+//           bubble: the bubble fixed above its thing, turned to the user, instead of moving to where it fits
 //   replay  Resume on first response: the replay goes on as soon as the first part of an answer shows
 // Text's lettering and writing stay in their own store (src/app.mjs textBehavior). No dependencies.
 
 export const SETTINGS={
-  text:{stability:{label:'Stability',kind:'range',default:0,min:0,max:1,step:.01,ends:['Moves freely','Stays put'],
+  text:{embed:{label:'Write on surfaces',kind:'bool',default:false,
+    help:'On: an answer is written onto a surface near it when its MOD declares Embedded Text and the surface scores well for writing (0.5 or more). Off: every answer is Floating Text, fixed in view above the question.'},
+    stability:{label:'Stability',kind:'range',default:0,min:0,max:1,step:.01,ends:['Moves freely','Stays put'],
     help:'How long text stays where it is before moving to a better spot when it is hidden or hard to read.'},
     bubbleAnchored:{label:'Anchor dialogue bubble',kind:'bool',default:false,
       help:'On: an Object-centric Dialogue bubble stays just above the thing that speaks and keeps turning to the user. Off: it moves to where it fits in view (onto the thing\'s side, or held at the view\'s edge).'}},
@@ -37,7 +40,7 @@ export function modSetting(r,kind,name){
 
 /** What placement and showing read for an answer: the library's stability and bubble anchoring, and whether its text goes after reading (its MOD's
  *  situated-text `duration: 5s`). */
-export const answerSettings=(settings,r)=>({stability:settings.text.stability,bubbleAnchored:settings.text.bubbleAnchored,autoHide:modSetting(r,'text','duration')==='5s'});
+export const answerSettings=(settings,r)=>({embed:settings.text.embed,stability:settings.text.stability,bubbleAnchored:settings.text.bubbleAnchored,autoHide:modSetting(r,'text','duration')==='5s'});
 
 /** Whether the replay goes on at an answer's first part. */
 export const resumeOnFirstResponse=settings=>!!settings.replay.resumeOnResponse;

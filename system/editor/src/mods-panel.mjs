@@ -50,7 +50,7 @@ export function createModsPanel({root,space}){
   }
 
   function render(){
-    root.innerHTML=`<section class="behavior twin mods"><div class="panel-head"><h2>MODs <button type="button" class="help" data-tip="Tailor each MOD in this space: say what it is for and what it answers, pick a representation, settle its settings, or duplicate it. Where it applies, what it knows and its parts stay the MOD author's." aria-label="About this">?</button></h2><button id="mods-refresh" title="Reload">↻</button></div>
+    root.innerHTML=`<section class="behavior twin mods"><div class="panel-head" style="justify-content:flex-end"><button id="mods-refresh" title="Reload">↻</button></div>
       
       ${status?`<p class="muted twin-status">${esc(status)}</p>`:''}<ul class="items mod-list">${mods.map(card).join('')}</ul></section>`;
     wire();

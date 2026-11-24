@@ -19,6 +19,8 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {setPose,frameAt} from './math.mjs';
 import {createWeatherSurfacePreview} from './weather-preview.mjs';
+import {keepInView} from './cluster-placement.mjs';
+import {createAttention} from './attention.mjs';
 import {createWeatherScene} from './weather-scene.mjs';
 import {createTwin} from './twin.mjs';
 import {createLayoutEditor,dropCenter} from './layout-editor.mjs';
@@ -31,7 +33,7 @@ import {createAlignPanel} from './align-panel.mjs';
 import {load as loadUiSettings,answerSettings,modSetting,resumeOnFirstResponse,settingsControls} from './ui-settings.mjs';
 import {createComponentHost} from './components.mjs';
 import {visionMode,createVisionPanel} from './vision-panel.mjs';
-import {createAgentLayer,READING,formatSpeed,stepsAt,setTextBehavior,TEXT_BEHAVIOR} from './agent.mjs';
+import {createAgentLayer,READING,formatSpeed,stepsAt,setTextBehavior,TEXT_BEHAVIOR,typedText} from './agent.mjs';
 import {questionClock} from './question-caption.mjs';
 import {readModel,modelBounds,fitScale,boxFromModel,swapHTML,wireSwap} from './model-fit.mjs';
 import {createDiorama} from './diorama.mjs';
@@ -41,6 +43,9 @@ import {loadCurrentMods,currentText} from './current-mods.mjs';
 addEventListener('modos-mods-changed',async()=>{if(!here[0])return;await loadCurrentMods(here[0]);agent?.refreshSettings();agent?.relayout?.();update();});
 import {partsToDraw} from '../modos/ui-rules.mjs';
 import {createDeviceCues} from './device-cues.mjs';
+import {isTyped,typedReplay} from './typed-replay.mjs';
+import {recomputeMarks,wordThemes} from './recompute-marks.mjs';
+import {createCueSet} from './spatial-ui/cue-set.mjs';
 import {createActionCues} from './action-cues.mjs';
 import * as cues from './spatial-ui/cues.mjs';
 import {renderPipeline,whereAt} from './pipeline-view.mjs';
@@ -185,9 +190,9 @@ function answerView(){const c=$('stage'),w=c.clientWidth||ARROW_VIEW,h=c.clientH
 // (text.apart: they do not overlap and there is room); its ends go back into the room, on the text's plane and on the face's plane.
 // Not drawn if any part would leave the view.
 const ARROW_VIEW=686;
-const textArrowScene=new THREE.Scene();let textArrows=[];
+const textArrowScene=new THREE.Scene(),textArrowSet=createCueSet(textArrowScene);
 function drawInfoArrows(arrows){
-  for(const p of textArrows){textArrowScene.remove(p.group);p.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose?.();});}textArrows=[];
+  const specs=[];   // one Text Arrow per answer, made again only when its ends moved (src/spatial-ui/cue-set.mjs)
   const c=$('stage'),W=c.offsetWidth,H=c.offsetHeight,w=ARROW_VIEW,h=ARROW_VIEW*H/Math.max(1,W);
   const toRef=p=>{const q=p.clone().project(camera);return q.z>1||q.z<-1?null:new THREE.Vector2((q.x+1)/2*w,(1-q.y)/2*h);};
   const inView=v=>v.x>=2&&v.y>=2&&v.x<=w-2&&v.y<=h-2;
@@ -200,13 +205,15 @@ function drawInfoArrows(arrows){
     if(ui&&!partsToDraw(ui,infoFacts(resp,!!r)).includes('textArrow'))continue;
     if(!r||![r.start,r.end,...r.barbs].every(inView))continue;
     const start=back(r.start,a.text),end=back(r.end,a.box);if(!start||!end)continue;
-    const part=cues.textArrow(start,end,{opacity:a.opacity});textArrowScene.add(part.group);textArrows.push(part);
+    const r3=v=>v.toArray().map(x=>+x.toFixed(3));specs.push({key:`arrow:${a.id}`,props:{start:r3(start),end:r3(end),opacity:+a.opacity.toFixed(2)},make:p=>cues.textArrow(p.start,p.end,{opacity:p.opacity})});
   }
+  textArrowSet.update(specs);
 }
-function renderTextArrows(renderer){if(!textArrows.length)return;for(const p of textArrows)p.update(performance.now(),camera);
+function renderTextArrows(renderer){const parts=textArrowSet.parts;if(!parts.length)return;for(const p of parts)p.update(performance.now(),camera);
   const auto=renderer.autoClear;renderer.autoClear=false;try{renderer.clearDepth();renderer.render(textArrowScene,camera);}finally{renderer.autoClear=auto;}}
 const highlightScene=createCueHost({getRooms:()=>layoutRooms,getLayout:()=>layoutSem}),devicePanel=createDeviceCues();devicePanel.attach($('stage'),()=>camera,()=>update());
 const actionCard=createActionCues();actionCard.attach($('stage'),()=>camera,()=>update());
+const attention=createAttention();   // how parts look by the user's focus (src/attention.mjs)
 window.modosUI={actionCard,devicePanel};   // a script can press an action card's Send through this
 const dioramaScene=createDiorama({loader,lighting:{environment:scene.environment,lights:scene.children.filter(o=>o.isLight).map(l=>l.clone())}});
 const handPerception=createHandPerception();
@@ -258,7 +265,7 @@ const currentAnswers=()=>agent?[...agent.widgets.values()].filter(w=>w.visible).
 const weatherScene=createWeatherScene({scene,getStability:()=>0,   // the sky is Weather's own effect: its MOD's lock setting decides, not the library
   getLock:()=>modSetting(weatherResponse(currentAnswers()),'weather','lock')==='lock',getCamera:()=>camera,getRoom:()=>roomParts?.userData.parts.space||room,getOccluders:()=>[roomParts?.userData.parts.space,roomParts?.userData.parts.recording].filter(Boolean),getDepthOccluder:c=>c===camera&&depths.has(index)?depthOccluder:null,getObjects:()=>components.instances.filter(i=>i.root.visible).map(i=>i.root),onAnimate:()=>update(),
   onLabel:info=>{const el=$('weather-status');el.hidden=!info;if(info){const e=info.entry,label=`${e.label} · ${e.summary} · ${e.temp_c} °C${info.total>1?` · ${info.index}/${info.total}`:''}${info.target?'':' · Look at a layout surface'}`;if(el.textContent!==label)el.textContent=label;}}});
-settingsControls({root:$('text-placement'),group:'text',settings:uiSettings,before:$('text-placement').querySelector('.placement-stability'),onChange:()=>{agent?.refreshSettings();update();}});
+settingsControls({root:$('text-placement'),group:'text',settings:uiSettings,before:$('text-placement').querySelector('.placement-stability'),onChange:(s,k)=>{if(k==='embed')agent?.relayout();else agent?.refreshSettings();update();}});   // the text form changed: placed again
 settingsControls({root:$('replay-settings'),group:'replay',settings:uiSettings});
 weatherScene.setEnabled(true);
 twin.setOverlay(weatherScene);twin.setPresentation({get group(){return agent?.group;},get controls(){return weatherSurfacePreview?.mesh;},render:(r,c)=>{agent?.renderAfter(r,c,weatherSurfacePreview?.mesh,index,false);}});
@@ -277,6 +284,9 @@ function paint(){exampleStill();
   const weatherDepth=depths.get(index)||null;
   if(map||weatherDepth){depthOccluder.material.uniforms.depthMap.value=map||weatherDepth;const e=camera.projectionMatrix.elements;depthOccluder.material.uniforms.proj.value.set(e[10],e[14]);}
   agent?.update(session?session.frames[index].t:0);if(session)agent?.adapt(index);
+  if(!playing&&!hold&&session)showTypedAt(session.frames[index].t);
+  document.body.classList.toggle('live-replay',!!typed);   // a typed or spoken question replayed: the halo as when it was asked
+  showReplayedWords();   // a typed or spoken question replayed: the ask row is its words as they were then
   showInfoVisuals();
   const responses=agent?[...agent.widgets.values()].filter(w=>w.visible):[];
   $('response-readability').hidden=!responses.some(w=>w.userData.placementHidden||w.userData.pose?.unreadable);
@@ -297,12 +307,22 @@ function paint(){exampleStill();
   devicePanel.setResponse(ctlAnswer||null,ctlQuestion?frameCamera(ctlQuestion.frame):camera,here[0]);if(devicePanel.active)requestAnimationFrame(update);   // live: a task's progress
   const latest=weatherResponse(currentResponses);
   weatherScene.setResponse(latest?.weather?latest:null);weatherScene.refresh();
+  // where the user's attention is (src/attention.mjs): a part whose theme is not the focus is drawn as background, easing between
+  const stateOf=(r,kind)=>r?.focus?.[kind]===false?'background':'focus',hl=currentResponses.find(r=>r.question_id===latestQuestion&&r.highlight)||found,at=performance.now();
+  attention.set(highlightScene.root,stateOf(hl,hl?.highlight?'highlight':'findmy'),at);attention.set(devicePanel.root,stateOf(ctlAnswer,'control'),at);
+  for(const root of actionCard.roots)attention.set(root,stateOf(actAnswer,'action'),at);
+  attention.set(weatherScene.group,stateOf(latest,'weather'),at);if(weatherSurfacePreview)attention.set(weatherSurfacePreview.mesh,stateOf(latest,'weather'),at);
+  for(const w of agent?.widgets.values()||[])attention.set(w,stateOf(w.userData.response,'text'),at);   // the text steps back with its theme too
+  if(attention.easing)requestAnimationFrame(update);
   agent?.orient(camera);
   const weatherWidget=latest?.weather?agent?.widgets.get(latest.id):null;
   // the view stack (src/cluster-placement.mjs): UI on no real thing in view stands fixed in view, above the answer's text, bottom to top
-  let stackTop=agent?.viewTop(camera)??null;
-  stackTop=weatherSurfacePreview?weatherSurfacePreview.update(weatherWidget?.userData.text?weatherWidget:null,camera,stackTop):stackTop;
-  devicePanel.place(camera,stackTop);
+  // the view stack: each part at its one size, lowered when it would leave the view (keepInView)
+  // what came later stands lower (nearest the text), what came earlier above it; a background part smaller (src/attention.mjs)
+  const stack=[{since:latest?.since?.weather,place:top=>weatherSurfacePreview?weatherSurfacePreview.update(weatherWidget?.userData.text?weatherWidget:null,camera,top,attention.scaleOf(weatherSurfacePreview.mesh)):top},
+    {since:ctlAnswer?.since?.control,place:top=>devicePanel.place(camera,top,attention.scaleOf(devicePanel.root))},
+    {since:actAnswer?.since?.action,place:top=>actionCard.place(camera,top,attention.scaleOf(actionCard.roots[0]))}].sort((a,b)=>(b.since??0)-(a.since??0));
+  keepInView(agent?.viewTop(camera)??null,bottom=>stack.reduce((top,s)=>s.place(top),bottom));
   // Hide only during the recorded-camera render, including its shadow pass.
   const hidden=components.instances.filter(i=>i.root.visible&&!visibleInVideo(i)).map(i=>i.root);
   for(const r of hidden)r.visible=false;
@@ -462,12 +482,46 @@ function playIcon(on){$('play').innerHTML=on?PAUSE:PLAY;$('play').setAttribute('
 // view stay in step.
 const AGENT_SPEED=Math.min(1,Math.max(.05,Number(params.get('agentSpeed'))||1));
 const SPEEDS=[1,.5,.25];let speed=.5,playT=0,lastNow=0,hold=null,held=new Set(),replayFrom=null;
-function pause(){playing=false;playbackGeneration++;preparingFrames.clear();endHold();playIcon(false);showSpeed();}
+// A typed question (Answer while typing) is not held: its line plays as it happened (src/typed-replay.mjs), the video moving as it moved
+// and its surface growing as it grew, on to its last part and reading time even when the video had stopped (at its end) meanwhile.
+// typed = {r, e} while it plays; stillTyped = where a paused one stopped (kept while the video stays on that frame).
+let typed=null,stillTyped=null;
+const typedOf=q=>typedReplay(q,[...(agent?.responses||[]),...(agent?.withdrawn||[])],{read_s:0,duration:session?.frames.at(-1).t??Infinity});   // no reading pause: the video goes on once it is answered
+function startTyped(q,e){q=agent?.questions.find(x=>x.id===q.id)||q;const r=typedOf(q);typed={r,q,e:Math.max(r.e0,e)};held.add(q.id);stillTyped=null;}
+// A spoken question's own voice (q.audio, kept in the space) plays with its line, in step: at e, its recording is at e − audio.at.
+// It is held whole in memory (a Blob): the server answers no byte ranges, and a media element cannot seek in what it cannot fetch by
+// range (every seek would fall back to its start).
+const voice=new Audio(),voices=new Map(),voiceURL=new Map();   // a recording (by what it is) → the promise of its object URL; → the URL once loaded
+// A recording is known by its file and when and how long it is (a file written again, a question's recording replaced, is not the one
+// held before).
+const voiceKey=a=>`${new URL(a.file,sessionURL).href}#${a.at}:${a.duration}`;
+function loadVoice(a){const key=voiceKey(a);
+  if(!voices.has(key))voices.set(key,fetch(new URL(a.file,sessionURL),{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(r.statusText);return r.blob();})
+    .then(b=>{const u=URL.createObjectURL(b);voiceURL.set(key,u);return u;},e=>{voices.delete(key);throw e;}));
+  return voices.get(key);}
+const voiceOf=a=>{const key=voiceKey(a);if(!voiceURL.has(key))loadVoice(a).catch(()=>{});return voiceURL.get(key)||null;};
+function syncVoice(){
+  const a=typed?.q.audio;if(!a){if(!voice.paused)voice.pause();return;}
+  const src=voiceOf(a),at=typed.e-a.at;if(!src)return;if(voice.src!==src){voice.src=src;}
+  if(at<0||voice.duration&&at>=voice.duration){if(!voice.paused)voice.pause();return;}
+  if(voice.paused){voice.currentTime=at;voice.play().catch(()=>{});}else if(Math.abs(voice.currentTime-at)>.1)voice.currentTime=at;   // kept within 0.1 s
+}
+// paused or scrubbed: inside a typed question's line, its surface at that moment; elsewhere none
+function showTypedAt(t){
+  if(stillTyped&&Math.abs(stillTyped.t-t)<1e-3){agent?.setTyping({id:stillTyped.id,e:stillTyped.e});return;}stillTyped=null;
+  const q=(agent?.questions||[]).filter(isTyped).map(typedOf).find(r=>r.t0<=t+1e-6&&t<r.t1-1e-6);
+  agent?.setTyping(q?{id:q.id,e:q.eAt(t)}:null);
+}
+function pause(){if(typed){stillTyped={id:typed.r.id,e:typed.e,t:playT};typed=null;}voice.pause();playing=false;playbackGeneration++;preparingFrames.clear();endHold();playIcon(false);showSpeed();}
 $('play').onclick=async()=>{if(playing){pause();return;}playing=true;playT=Number($('timeline').value);if(playT>=session.frames.at(-1).t){playT=0;try{await at(0);}catch(e){pause();fail(e);return;}if(!playing)return;}
   // Questions at or before the start are not held again, except the one a replay starts from.
   // (The slider rounds to 1 ms, so a replay starts exactly at its question's time.)
-  const from=replayFrom&&agent?.questions.find(q=>q.id===replayFrom);if(from)playT=from.t;
-  held=new Set((agent?.questions||[]).filter(q=>q.t<=playT+.002&&q.id!==replayFrom).map(q=>q.id));replayFrom=null;
+  const from=replayFrom&&agent?.questions.find(q=>q.id===replayFrom);if(from)playT=isTyped(from)?typedOf(from).t0:from.t;
+  // typed questions whose line starts here are played, not passed
+  held=new Set((agent?.questions||[]).filter(q=>q.t<=playT+.002&&q.id!==replayFrom&&!(isTyped(q)&&typedOf(q).t0>=playT-.002)).map(q=>q.id));replayFrom=null;
+  // a typed question replayed from its line's head, or picked up where it was paused or scrubbed to
+  const inLine=agent?.typing&&agent.questions.find(q=>q.id===agent.typing.id);
+  if(from&&isTyped(from))startTyped(from,typedOf(from).e0);else if(inLine&&isTyped(inLine))startTyped(inLine,agent.typing.e);
   lastNow=performance.now();playIcon(true);tick();};
 function showSpeed(){$('speed').textContent=formatSpeed(hold?0:speed);$('speed').classList.toggle('slowed',!!hold);}
 $('speed').onclick=()=>{speed=SPEEDS[(SPEEDS.indexOf(speed)+1)%SPEEDS.length];showSpeed();};showSpeed();
@@ -497,15 +551,23 @@ function holdStep(now){
   // Asked here (live): playback goes on as soon as the answer shows, whether the video was playing or paused when asking.
   // (Live, the frame's hands need not be ready: the user is waiting on the answer, not on the hand overlay.)
   if(hold.h>=0&&first&&(hold.live||currentHandData?.status==='ready'&&resumeOnFirstResponse(uiSettings))){endHold(true);return true;}
-  // A replay holds on until the answer is written (UI library › Text › Writing) as well.
+  // A replay holds on until the answer is written (Response › Writing) as well.
   if(hold.h>=end&&!agent.writing(q.id)){const resume=hold.resume||hold.live;endHold();return resume;}
   return true;
 }
 async function tick(){if(!playing)return;const now=performance.now();
   if(hold){const go=holdStep(now);lastNow=now;showSpeed();update();if(!go){pause();return;}requestAnimationFrame(tick);return;}
+  if(typed){typed.e+=(now-lastNow)/1000;lastNow=now;const {r}=typed;
+    if(typed.e>=r.e1){agent?.setTyping(null);typed=null;playT=Math.max(playT,r.t1);requestAnimationFrame(tick);return;}
+    syncVoice();
+    agent?.setTyping({id:r.id,e:typed.e});playT=r.tAt(typed.e);const epoch=playbackGeneration;
+    await at(Math.min(playT,session.frames.at(-1).t),{realtime:true});if(!playing||epoch!==playbackGeneration)return;update();requestAnimationFrame(tick);return;}
   const next=playT+(now-lastNow)/1000*speed;lastNow=now;
+  // Reaching a typed question's line plays it as it happened (no hold).
+  const line=(agent?.questions||[]).filter(q=>isTyped(q)&&!held.has(q.id)&&q.id!==again?.id).map(q=>[q,typedOf(q)]).filter(([,r])=>r.t0>=playT-1e-6&&r.t0<=next).sort((a,b)=>a[1].t0-b[1].t0)[0];
+  if(line){playT=line[1].t0;startTyped(line[0],line[1].e0);requestAnimationFrame(tick);return;}
   // Reaching an answered question's frame starts its hold.
-  const q=(agent?.questions||[]).filter(q=>q.status==='answered'&&!held.has(q.id)&&q.t>=playT-1e-6&&q.t<=next).sort((a,b)=>a.t-b.t)[0];
+  const q=(agent?.questions||[]).filter(q=>q.status==='answered'&&!isTyped(q)&&!held.has(q.id)&&q.t>=playT-1e-6&&q.t<=next).sort((a,b)=>a.t-b.t)[0];
   if(q){playT=q.t;const seek=at(q.t),epoch=playbackGeneration;await seek;if(!playing||epoch!==playbackGeneration)return;startHold(q);requestAnimationFrame(tick);return;}
   playT=next;await at(Math.min(playT,session.frames.at(-1).t),{realtime:true});if(playT>=session.duration){await at(session.frames.at(-1).t);if(playing&&playT>=session.duration)pause();return;}requestAnimationFrame(tick);}
 for(const key of ['trajectory','frustum','video','roomColors','spaceScan','recordingMesh'])$('debug-'+key).onchange=()=>twin.setDebug({[key]:$('debug-'+key).checked});
@@ -532,6 +594,21 @@ $('floor-split').onchange=()=>{const split=Number($('floor-split').value);if(Num
 // Full window of the recorded camera (not the computer's full screen): its column alone over the page, centred; the video as tall as fits
 // above its timeline and ask box; the digital twin, the side panel and the log are not shown (Esc leaves).
 const cameraCol=$('camera-col');
+// The User's view's size (its grip, under it): a scale of the largest it can be (the column's width; in the full window, the window),
+// kept centred. Remembered.
+let stageScale=(()=>{try{const v=+localStorage.getItem('modos:stage-scale');return v>=.3&&v<=1?v:1;}catch{return 1;}})();
+function applyStageScale(){const st=$('stage');
+  if(document.body.classList.contains('camera-full'))fitCameraFull();
+  else{st.style.width=stageScale<1?`${stageScale*100}%`:'';st.style.margin=stageScale<1?'0 auto':'';dispatchEvent(new Event('resize'));}}
+{const grip=$('stage-grip');let drag=null;
+  const fullH=()=>document.body.classList.contains('camera-full')?parseFloat(cameraCol.style.getPropertyValue('--camera-h'))||1:(()=>{const st=$('stage'),cs=getComputedStyle(cameraCol);return (cameraCol.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight))/((st.width/st.height)||16/9);})();
+  const set=s=>{stageScale=Math.max(.3,Math.min(1,s));try{localStorage.setItem('modos:stage-scale',String(stageScale));}catch{}applyStageScale();};
+  grip.addEventListener('pointerdown',e=>{if(e.button)return;grip.setPointerCapture(e.pointerId);drag={y:e.clientY,h:$('stage').getBoundingClientRect().height,max:fullH()};grip.classList.add('dragging');e.preventDefault();});
+  grip.addEventListener('pointermove',e=>{if(drag)set((drag.h+e.clientY-drag.y)/drag.max);});
+  const end=()=>{drag=null;grip.classList.remove('dragging');};grip.addEventListener('pointerup',end);grip.addEventListener('pointercancel',end);
+  grip.addEventListener('dblclick',()=>set(1));
+  grip.addEventListener('keydown',e=>{const d=e.key==='ArrowUp'?-.05:e.key==='ArrowDown'?.05:0;if(d){e.preventDefault();set(stageScale+d);}});
+  requestAnimationFrame(applyStageScale);}
 function fitCameraFull(){const full=document.body.classList.contains('camera-full'),stage=$('stage');
   if(!full){cameraCol.style.removeProperty('--camera-w');cameraCol.style.removeProperty('--camera-h');return;}
   const cs=getComputedStyle(cameraCol),padY=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom),padX=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight);
@@ -539,11 +616,13 @@ function fitCameraFull(){const full=document.body.classList.contains('camera-ful
   let others=0;for(const el of cameraCol.children){const m=getComputedStyle(el);if(el===stage||el.offsetParent===null||m.position==='absolute'||m.position==='fixed')continue;others+=el.getBoundingClientRect().height+parseFloat(m.marginTop)+parseFloat(m.marginBottom);}
   const aspect=stage.width/stage.height||16/9;let h=Math.max(120,innerHeight-padY-others-8*3),w=h*aspect;
   if(w>innerWidth-padX){w=innerWidth-padX;h=w/aspect;}
-  cameraCol.style.setProperty('--camera-w',w+'px');cameraCol.style.setProperty('--camera-h',h+'px');update();}
+  cameraCol.style.setProperty('--camera-w',w+'px');cameraCol.style.setProperty('--camera-h',h+'px');
+  cameraCol.style.setProperty('--stage-w',w*stageScale+'px');cameraCol.style.setProperty('--stage-h',h*stageScale+'px');update();}
 function setCameraFull(on){document.body.classList.toggle('camera-full',on);
   // the main page that frames the editor (its Demo) hides its own bottom switch meanwhile
   if(parent!==window)parent.postMessage({type:'modos-camera-full',on},'*');$('camera-full').setAttribute('aria-pressed',String(on));fitCameraFull();requestAnimationFrame(()=>{fitCameraFull();dispatchEvent(new Event('resize'));});}
 $('camera-full').onclick=()=>setCameraFull(!document.body.classList.contains('camera-full'));
+if(parent!==window)parent.postMessage({type:'modos-camera-full',on:false},'*');   // loaded (again): not full, so the main page's switch shows
 addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('camera-full')&&!e.target.closest?.('input,textarea'))setCameraFull(false);});
 addEventListener('resize',()=>{if(document.body.classList.contains('camera-full'))fitCameraFull();});
 $('timeline').oninput=()=>{pause();at(Number($('timeline').value)).catch(fail);};
@@ -677,7 +756,28 @@ function ndcOf(e){const r=e.target.getBoundingClientRect();return new THREE.Vect
 function hoverResponse(e,cam){const r=agent?.pick(ndcOf(e),cam),tip=$('tooltip');e.target.style.cursor=r?'pointer':'';if(!r){tip.hidden=true;return null;}
   tip.textContent=`${r.question||'(asked in the terminal)'} · ${r.t.toFixed(2)} s`;tip.hidden=false;tip.style.left=e.clientX+14+'px';tip.style.top=e.clientY+14+'px';return r;}
 // Replay a question: back to the frame it was asked at, then play through thinking, answer and reading time.
-function replayQuestion(q){pause();$('tooltip').hidden=true;setFrame(q.frame).then(()=>{replayFrom=q.id;$('play').click();}).catch(fail);}
+// Rerun (a spoken question's line, picked on the timeline): its recording is heard again by speech recognition and answered by the
+// pipeline as it is now, from where it began, as if spoken again there, with Answer while typing on; once it has played, what was
+// recognized is asked, and the new question takes the place of the one it came from (that one is deleted; not replayed meanwhile:
+// `again`). Its line runs over the recording, as the original ran from Space down to Space up. The old question is deleted only once the
+// new one is answered (replacing: new id → old id); if nothing is recognized or the new one fails, the old one stays.
+let again=null;const replacing=new Map();
+async function rerun(q){
+  pause();stillTyped=null;$('tooltip').hidden=true;await at(typedOf(q).t0);
+  again={id:q.id,wasLive:liveMode,mark:{t:session.frames[index].t,at:Date.now()}};liveMode=true;showLive();spoken={text:'',at:0,definite:0};$('ask-input').value='';showMic(true);$('play').click();
+  const done=async()=>{if(!again)return;const was=again;again=null;was.mark.end={t:session.frames[index].t,at:Date.now(),rate:playing?speed:0};showMic(false);
+    const text=(await speech.stop()).trim(),recording=speech.recording;liveMode=was.wasLive;showLive();$('ask-input').value='';
+    if(!text){dropDraft();return;}
+    const nq=await askSpoken(text,recording,was.mark);if(nq)replacing.set(nq.id,was.id);};   // the old one goes once the new one is answered
+  try{await speech.start({from:new URL(q.audio.file,sessionURL).href,onEnded:done});}
+  catch(e){const was=again;again=null;showMic(false);if(was){liveMode=was.wasLive;showLive();}$('ask-status').textContent='Speech: '+e.message;}
+}
+// The keyboard button (left of play) opens the typing row (the ask box and Answer while typing); closed, only the words said show.
+function showTyping(on){document.body.classList.toggle('typing-open',on);$('ask-open').setAttribute('aria-pressed',String(on));keep('typing-open',on?'on':'off');if(on)setTimeout(()=>$('ask-input').focus(),0);dispatchEvent(new Event('resize'));}
+$('ask-open').onclick=()=>showTyping(!document.body.classList.contains('typing-open'));document.body.classList.toggle('typing-open',pref('typing-open','off')==='on');$('ask-open').setAttribute('aria-pressed',String(document.body.classList.contains('typing-open')));
+$('show-caption').checked=pref('show-caption','on')==='on';$('show-caption').onchange=()=>{keep('show-caption',$('show-caption').checked?'on':'off');agent?.setCaption($('show-caption').checked);update();};
+function replayQuestion(q){q=agent?.questions.find(x=>x.id===q.id)||q;   // as it is now (the marker may hold it from before its recording came)
+  pause();stillTyped=null;$('tooltip').hidden=true;Promise.all([isTyped(q)?at(typedOf(q).t0):setFrame(q.frame),q.audio&&loadVoice(q.audio).catch(()=>{})]).then(()=>{replayFrom=q.id;$('play').click();}).catch(fail);}   // its voice loaded first   // a typed one from its line's head
 function goToResponse(r){const q=agent?.questions.find(q=>q.id===r.question_id);if(q)replayQuestion(q);else{pause();$('tooltip').hidden=true;setFrame(r.frame).catch(fail);}}
 $('stage').onpointermove=e=>hoverResponse(e,camera);$('stage').onpointerleave=()=>$('tooltip').hidden=true;
 $('twin').addEventListener('pointermove',e=>hoverResponse(e,twin.camera));$('twin').addEventListener('pointerleave',()=>$('tooltip').hidden=true);
@@ -693,7 +793,7 @@ $('stage').onclick=async e=>{if(fine)return;pause();const hitResponse=agent?.pic
 // Space: play/pause. Left/Right: one frame. Shift+Left/Right: one second. Ignored while typing in a field.
 document.addEventListener('keydown',e=>{
   if(!session||e.metaKey||e.ctrlKey||e.altKey||e.target.matches('input[type=number],input[type=text],select,textarea'))return;
-  if(e.code==='Space'){e.preventDefault();document.activeElement?.blur();$('play').click();}
+  if(e.code==='Space'){e.preventDefault();if(e.repeat||spaceHold)return;document.activeElement?.blur();spaceHold={wasLive:liveMode,speaking:false,timer:setTimeout(holdingSpace,HOLD_MS)};listenWithSpace(spaceHold);}
   else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();pause();const dir=e.key==='ArrowLeft'?-1:1;(e.shiftKey?at(Math.max(0,session.frames[index].t+dir)):setFrame(Math.max(0,Math.min(session.frames.length-1,index+dir)))).catch(fail);}
 });
 function setRoom(next,name,encoded){if(room)scene.remove(room);room=next;room?.traverse(o=>{if(o.isMesh&&!o.geometry.boundsTree)o.geometry.computeBoundsTree();});roomName=name;roomData=encoded;scene.add(room);rebuildCatchers();occlusion();}
@@ -1182,7 +1282,7 @@ loadSpaces();
 // The ModOS agent (scripts/agent-bridge.mjs runs the pipeline); only when served by scripts/server.py.
 // Questions and answers belong to a session of this scene (agent conversations, scripts/agent_store.py); each starts with an empty timeline.
 // Side panel, one tab at a time: Scene (scan, layout, objects, recordings), Agent (setup, session, replay), Input (info selection,
-// hands: what a request starts from), Twin, MODs (tailoring), UI library (what can be adjusted in the shared text forms and cues).
+// hands: what a request starts from), Twin, MODs (tailoring), Response (how answer text is sized, written and placed).
 // The Space tab's two panes: Scene (its scan and recordings) and Entities (the twin's entities and the objects placed in this recording).
 const paneStore={get:k=>{try{return localStorage.getItem(k);}catch{return null;}},set:(k,v)=>{try{localStorage.setItem(k,v);}catch{}}};
 let spacePane=paneStore.get('spatialTake.spacePane')==='entities'?'entities':'scene';
@@ -1206,7 +1306,7 @@ const vision=visionMode()&&here[0]?createVisionPanel({space:here[0],$,onTune:()=
 if(vision){document.body.classList.add('vision');document.querySelector('[data-tab=vision]').hidden=false;vision.start();}
 for(const b of document.querySelectorAll('[data-tab]'))b.onclick=()=>showTab(b.dataset.tab);
 const convKey='spatialTake.conversation:'+sessionURL.pathname,store={get:k=>{try{return localStorage.getItem(k);}catch{return null;}},set:(k,v)=>{try{localStorage.setItem(k,v);}catch{}}};
-// UI library › Text: lettering, writing, placement and Text Arrow (src/agent.mjs setTextBehavior), remembered in this browser; a change letters and places the answers again.
+// Response tab: lettering, writing, placement and Text Arrow (src/agent.mjs setTextBehavior), remembered in this browser; a change letters and places the answers again.
 let textBehavior={...TEXT_BEHAVIOR};try{textBehavior={...TEXT_BEHAVIOR,...JSON.parse(store.get('spatialTake.textBehavior')||'{}')};}catch{}
 let textRelayout=null;
 function showTextBehavior(){$('text-body-size').value=textBehavior.bodySize;$('text-body-size-value').textContent=`${(+textBehavior.bodySize).toFixed(2)}×`;
@@ -1277,12 +1377,13 @@ async function startAgent(){
   agent=createAgentLayer({scene,getStyleRevision:()=>weatherScene.playback.state.entry?.id,getSettings:forResponse,frames:session.frames,sessionPath:sessionURL.pathname,intrinsics:session.intrinsics,frameCamera,viewport:answerView,
     visible:(i,pts,options)=>visibleIn(i,pts,{...options,text:true}),getStaticSurfaces:()=>textSurfaces,relationAt,entityBox,sceneBoxes,infoTarget,onPlacement:logPlacement,getSurfaceQuality:placementQuality,frameImage:async i=>(await texture(i)).image,
     onChange:()=>update(),onAnimate:()=>update(),onStatus:showAgentStatus});
+  agent.setCaption($('show-caption').checked);
   if(here[0]){
     twinPanel=createTwinPanel({addRoot:$('space-add'),space:here[0],session:sessionURL.pathname,onLoad:showOutline,onDetail:showEntityDetail});twinPanel.load();
     const mt=document.querySelector('[data-tab=mods]');mt.disabled=false;mt.title='';createModsPanel({root:$('tab-mods'),space:here[0]}).load();}
   $('agent-panel').hidden=false;$('ask').hidden=false;agentTab.disabled=false;agentTab.title='';showTab(store.get('spatialTake.sideTab')||'scene');
   let id=await showConversations(params.get('conversation')||store.get(convKey));if(!id)id=await showConversations((await agentApi('/api/agent/conversations',{})).id);
-  await openConversation(id);agent.start();loadPipelineSkeleton();
+  await openConversation(id);agent.start();
   if(EXAMPLE)exampleOpened();
   $('agent-copy').onclick=async()=>{await navigator.clipboard.writeText(command);const label=$('agent-copy').querySelector('span');label.textContent='Copied';setTimeout(()=>label.textContent='Copy command',1500);};
   $('conv').onchange=()=>openConversation($('conv').value).catch(fail);
@@ -1309,32 +1410,37 @@ async function startAgent(){
 // it: showPicked).
 let markersKey='';
 function showAgentStatus({connected:c,questions,responses}){
-  connected=c;$('ask-input').disabled=!c;$('ask-send').disabled=!c;
+  if(c&&!connected){speech.warm();speech.prime();}   // the relay and the microphone ready before the first Space
+  connected=c;$('ask-input').disabled=!c;readMarks();
+  for(const q of questions)if(q.audio)loadVoice(q.audio).catch(()=>{});
+  for(const [nid,oid] of replacing){const nq=questions.find(x=>x.id===nid);if(!nq||nq.status==='failed'){replacing.delete(nid);continue;}
+    if(nq.status==='answered'){replacing.delete(nid);if(questions.some(x=>x.id===oid))agent.deleteQuestion(oid).catch(fail);}}   // ready before playback reaches its line (not fetched only then)
   $('ask-input').placeholder=c?'Ask the assistant at this moment…':'Copy the agent command (Agent panel) and run it in a terminal to connect';
   const q=questions.at(-1);
   if(!hold)setAskStatus(q?.status==='queued'?'Waiting for the agent…':q?.status==='running'&&q.parts?.text?.status==='streaming'?'Writing answer…':'');showTrace();
-  const key=JSON.stringify(questions.map(q=>[q.id,q.status,q.t,spanOf(q)[0]])),duration=session.frames.at(-1).t||1;if(key===markersKey)return;markersKey=key;
+  const key=JSON.stringify(questions.map(q=>[q.id,q.status,q.t,...spanOf(q)])),duration=session.frames.at(-1).t||1;if(key===markersKey)return;markersKey=key;
   const byQuestion=new Map();for(const r of responses)if(r.part!=='ui'||!byQuestion.has(r.question_id))byQuestion.set(r.question_id,r);$('markers').innerHTML='';
   for(const q of questions){
     // a question typed while the video played is a line, from where typing began to where it was asked
     const m=document.createElement('button'),r=byQuestion.get(q.id),[t0,t1]=spanOf(q);m.className='marker'+(t1-t0>.05?' span':'');m.type='button';m.dataset.status=q.status;
     m.style.left=`${t0/duration*100}%`;if(t1-t0>.05)m.style.width=`${(t1-t0)/duration*100}%`;
     m.setAttribute('aria-label',`Question at ${q.t.toFixed(2)} s: ${q.text}`);
-    m.onmouseenter=e=>{const tip=$('tooltip'),b=m.getBoundingClientRect();tip.textContent=`${q.text}${r?` → ${r.title}`:q.status==='failed'?' (no response)':' …'} · ${q.t.toFixed(2)} s`;tip.hidden=false;tip.style.left=b.left+'px';tip.style.top=b.bottom+8+'px';};
+    if(!(t1-t0>.05))m.onmouseenter=e=>{const tip=$('tooltip'),b=m.getBoundingClientRect();tip.textContent=`${q.text}${r?` → ${r.title}`:q.status==='failed'?' (no response)':' …'} · ${q.t.toFixed(2)} s`;tip.hidden=false;tip.style.left=b.left+'px';tip.style.top=b.bottom+8+'px';};
     m.onmouseleave=()=>$('tooltip').hidden=true;
     // Replay lands where the answer appeared (after the agent's latency for live questions). Picked, it shows what can be done with
     // it; shift-click picks the questions from the one picked first to this one (one after another).
     m.dataset.id=q.id;
     m.onclick=e=>{e.stopPropagation();if(EXAMPLE&&!EXAMPLE_ASK){replayQuestion(q);return;}const order=questions.map(x=>x.id);
       if(e.shiftKey&&picked.from!=null&&order.includes(picked.from)){const a=order.indexOf(picked.from),b=order.indexOf(q.id);picked.ids=order.slice(Math.min(a,b),Math.max(a,b)+1);}
-      else{picked={from:q.id,ids:[q.id],added:null};replayQuestion(q);}
+      else{picked={from:q.id,ids:[q.id],added:null};if(!isTyped(q))replayQuestion(q);}   // a line (typed or spoken) offers Replay and Rerun
       picked.added=null;showPicked(questions);};
     $('markers').append(m);
   }
   picked.ids=picked.ids.filter(id=>questions.some(q=>q.id===id));showPicked(questions);
 }
-// Where a question sits on the timeline: [start, end] in seconds; a typed one from its first revision to its moment.
-const spanOf=q=>[Math.min(q.t,q.revisions?.[0]?.t??q.t),q.t];
+// Where a question sits on the timeline: [start, end] in seconds; a typed one from its first revision to its moment, a spoken one from
+// where Space went down to where it was let go.
+const spanOf=q=>{const v=q.audio?.video;return v?.t_end!=null?[v.t,Math.max(v.t,v.t_end)]:[Math.min(q.t,v?.t??Infinity,q.revisions?.[0]?.t??q.t),q.t];};
 // The picked questions (src/app.mjs markers): one shows × (delete it and its answer) and ★ (add it to the Gallery); several in a row
 // show ★ alone (they become one example, under the first one's MOD: scripts/gallery.py add). Escape or a click elsewhere (the
 // user's, not the replay's own Play) lets go.
@@ -1348,6 +1454,11 @@ function showPicked(questions=agent?.questions||[]){
   if(qs.length>1||x1-x0>.01)root.append(Object.assign(document.createElement('div'),{className:'marker-range',style:`left:${x0}%;width:${x1-x0}%`}));
   const box=Object.assign(document.createElement('div'),{className:'marker-actions'});box.style.left=`${(x0+x1)/2}%`;root.append(box);
   const button=(html,label,run)=>{const b=Object.assign(document.createElement('button'),{type:'button',innerHTML:html,title:label});b.setAttribute('aria-label',label);b.onclick=e=>{e.stopPropagation();run(b);};box.append(b);return b;};
+  // a typed or spoken question's line: Replay it as it happened; Rerun a spoken one (its recording through speech recognition and the
+  // pipeline as they are now, in its place)
+  if(qs.length===1&&isTyped(qs[0])){
+    button('<svg viewBox="0 0 10 10"><path class="fill" d="M3 2l5 3-5 3z"/></svg>','Replay',()=>replayQuestion(qs[0]));
+    if(qs[0].audio)button('<svg viewBox="0 0 10 10"><path d="M8 5a3 3 0 1 1-1-2.2M7.6 1.2l-.5 1.7 1.7.4"/></svg>','Rerun: hear it again with the pipeline as it is now, in its place',()=>{picked={from:null,ids:[],added:null};showPicked();rerun(qs[0]).catch(fail);});}
   if(qs.length===1)button('<svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg>','Delete this question and its answer',()=>{$('tooltip').hidden=true;picked={from:null,ids:[],added:null};agent.deleteQuestion(qs[0].id).catch(fail);});
   const ready=qs.every(q=>q.status==='answered');
   const star=button(STAR,picked.added?`In the Gallery: ${picked.added}`:qs.length>1?`Add these ${qs.length} questions to the Gallery as one example`:'Add to the Gallery',async b=>{
@@ -1378,6 +1489,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&picked.ids.length&&
   handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);
   handle.addEventListener('keydown',e=>{const d=e.key==='ArrowLeft'?-.02:e.key==='ArrowRight'?.02:0;if(!d)return;e.preventDefault();split=set(split+d);save();});
   handle.addEventListener('dblclick',()=>{split=set(.62);save();});}
+// The side panel's width: the line between it and the views is dragged (it keeps at least SIDE_MIN, at most half the window).
+{const main=document.querySelector('main'),handle=$('side-splitter'),KEY='modos:side-width',SIDE_MIN=260,SIDE_W=280;
+  const set=w=>{w=Math.round(Math.min(Math.max(SIDE_MIN,innerWidth*.5),Math.max(SIDE_MIN,w)));main.style.setProperty('--side-w',w+'px');handle.setAttribute('aria-valuenow',String(w));dispatchEvent(new Event('resize'));return w;};
+  let width=SIDE_W;try{width=+localStorage.getItem(KEY)||SIDE_W;}catch{}width=set(width);
+  const save=()=>{try{localStorage.setItem(KEY,String(width));}catch{}};
+  handle.addEventListener('pointerdown',e=>{handle.setPointerCapture(e.pointerId);handle.classList.add('dragging');e.preventDefault();});
+  handle.addEventListener('pointermove',e=>{if(!handle.hasPointerCapture(e.pointerId))return;width=set(innerWidth-e.clientX-6);});
+  const end=e=>{if(handle.hasPointerCapture?.(e.pointerId))handle.releasePointerCapture(e.pointerId);handle.classList.remove('dragging');save();};
+  handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);
+  handle.addEventListener('keydown',e=>{const d=e.key==='ArrowLeft'?20:e.key==='ArrowRight'?-20:0;if(!d)return;e.preventDefault();width=set(width+d);save();});
+  handle.addEventListener('dblclick',()=>{width=set(SIDE_W);save();});}
 let traceKey='';let traceMode=params.get('present')?'pipeline':(()=>{try{return localStorage.getItem('spatial-take:trace-mode')||'pipeline';}catch{return 'pipeline';}})();
 if(params.get('present'))document.body.classList.add('present');
 // The agent log (Log | Pipeline): under the digital twin by default, or under the recorded camera; its grip drags it from one to the
@@ -1416,27 +1538,40 @@ if(params.get('present'))document.body.classList.add('present');
 if(params.get('pipeline')==='bottom')document.body.classList.add('pipeline-bottom');   // the Pipeline view's layout (src/pipeline-view.css)
 for(const b of document.querySelectorAll('[data-trace]')){b.setAttribute('aria-pressed',b.dataset.trace===traceMode);
   b.onclick=()=>{traceMode=b.dataset.trace;try{localStorage.setItem('spatial-take:trace-mode',traceMode);}catch{}for(const x of document.querySelectorAll('[data-trace]'))x.setAttribute('aria-pressed',x===b);traceKey='';showTrace();};}
-// The where-overlay sits in the camera view's top-right corner, whatever the layout around the view.
-function placeWhere(){const w=$('where');if(w.hidden)return;const c=cameraCol.getBoundingClientRect(),r=$('stage').getBoundingClientRect();
-  w.style.top=`${r.top-c.top+12}px`;w.style.left='auto';w.style.right=`${c.right-r.right+12}px`;}
+// Where the user is and looks: small, over the Digital Twin's top-right corner, shown as its display options say (Where the user is).
+// Presented (body.present), over the camera view (its own layout, src/pipeline-view.css).
+const whereHost=()=>document.body.classList.contains('present')?{col:cameraCol,view:$('stage')}:{col:$('twin-col'),view:$('twin')};
+function placeWhere(){const w=$('where'),{col,view}=whereHost();if(w.parentElement!==col)col.append(w);if(w.hidden)return;
+  const c=col.getBoundingClientRect(),r=view.getBoundingClientRect();w.style.top=`${r.top-c.top+10}px`;w.style.left='auto';w.style.right=`${c.right-r.right+10}px`;}
+$('show-where').checked=pref('show-where','on')==='on';$('show-where').onchange=()=>{keep('show-where',$('show-where').checked?'on':'off');traceKey='';showTrace();};
 addEventListener('resize',()=>placeWhere());
 // What the pipeline view lists before any question: the space's MODs and memory (the options the stages choose among).
-let pipelineSkeleton=null;
-async function loadPipelineSkeleton(){try{const m=await agentApi('/api/modos/context');pipelineSkeleton={mods:m.mods,items:m.items};traceKey='';showTrace();}catch{}}
+// A typed question replayed (or scrubbed to): the pipeline of the revision being answered at that moment, as far as it had gone
+// (its runs: GET /api/agent/questions/runs, loaded once per question and revision count).
+const runsCache=new Map();
+function runsOf(q){const k=`${q.id}@${q.rev}@${q.status}`,c=runsCache.get(q.id);if(c?.k===k)return c.runs;
+  runsCache.set(q.id,{k,runs:c?.runs||null});agent.runs(q.id).then(runs=>{if(runsCache.get(q.id)?.k===k){runsCache.set(q.id,{k,runs});traceKey='';showTrace();}}).catch(()=>{});return c?.runs||null;}
+function typedTrace(){
+  const ty=agent?.typing,q=ty&&agent.questions.find(x=>x.id===ty.id);if(!q)return null;
+  const run=[...(runsOf(q)||[])].reverse().find(r=>r.at<=ty.e+1e-6);
+  return {q:{...q,text:typedText(q,ty.e)},steps:run?run.steps.filter(s=>s.at/1000<=ty.e-run.at+1e-6):[]};
+}
 function showTrace(){
   // Only once the video has reached the question (or it is being asked / replayed now): before that the view shows the options only.
   // After it, it stays on the latest question asked by now until the next one (the video plays on past its moment).
-  const now=session?session.frames[index].t:0,focused=agent&&session?agent.focus():null;
-  const q=focused&&(hold?.id===focused.id||now>=focused.t-.002)?focused:agent?[...agent.questions].filter(x=>x.t<=now+.002).sort((a,b)=>a.t-b.t).at(-1)||null:null;
+  const now=session?session.frames[index].t:0,focused=agent&&session?agent.focus():null,tt=typedTrace();
+  const q=tt?tt.q:focused&&(hold?.id===focused.id||now>=focused.t-.002)?focused:agent?[...agent.questions].filter(x=>x.t<=now+.002).sort((a,b)=>a.t-b.t).at(-1)||null:null;
   const clock=hold||agent?.delivery;
-  const replaying=!!hold&&!hold.live,steps=q?stepsAt(q,clock?.id===q.id?clock.h:Infinity):[];
-  const tail=!q?'':replaying?(hold.h<0?'Typing question…':hold.h<(q.latency||0)?`Processing… ${Math.floor(hold.h)} s`:''):q.status==='running'?`thinking… ${Math.max(0,Math.round(Date.now()/1000-q.started))} s`:q.status==='failed'?`no response: ${q.message||''}`:q.duration!=null?`${q.duration.toFixed(1)} s`:'';
+  const replaying=!!hold&&!hold.live,steps=tt?tt.steps:q?stepsAt(q,clock?.id===q.id?clock.h:Infinity):[];
+  const tail=!q||tt?'':replaying?(hold.h<0?'Typing question…':hold.h<(q.latency||0)?`Processing… ${Math.floor(hold.h)} s`:''):q.status==='running'?`thinking… ${Math.max(0,Math.round(Date.now()/1000-q.started))} s`:q.status==='failed'?`no response: ${q.message||''}`:q.duration!=null?`${q.duration.toFixed(1)} s`:'';
   // The pipeline view (the log's other mode): its question types as the caption does during a replay.
-  const typed=q&&replaying?questionCaption(q,{clock:hold}).text:q?.text;
-  const key=JSON.stringify([q?.id,steps.length,q?.status,tail,typed,traceMode,!!pipelineSkeleton]);if(key===traceKey)return;traceKey=key;
+  const typed=q&&replaying&&!tt?questionCaption(q,{clock:hold}).text:q?.text;
+  const key=JSON.stringify([q?.id,q?.label,steps.length,q?.status,tail,typed,traceMode]);if(key===traceKey)return;traceKey=key;
   $('trace').hidden=traceMode!=='log';$('pipeline').hidden=traceMode!=='pipeline';
-  if(traceMode==='pipeline')renderPipeline($('pipeline'),q,steps,{skeleton:pipelineSkeleton,slowed:AGENT_SPEED<1?AGENT_SPEED:null});
-  const where=q?whereAt(steps):null,w=$('where');w.hidden=!where||!(where.in||where.looking);
+  if(traceMode==='pipeline')renderPipeline($('pipeline'),q,steps,{slowed:AGENT_SPEED<1?AGENT_SPEED:null,
+    // the pipeline page: every decision of this question as a tree, following the newest question live
+    open:q?`pipeline.html?${new URLSearchParams({session:params.get('session')||'./spaces/demo/scenarios/demo/session.json',conversation:agent?.conversation||'',q:q.id,live:'1'})}`:null});
+  const where=q?whereAt(steps):null,w=$('where');w.hidden=!where||!(where.in||where.looking)||!$('show-where').checked&&!document.body.classList.contains('present');
   placeWhere();
   if(where)w.innerHTML=[where.in?`<span>In</span><b>${where.in.replace(/[<&]/g,'')}</b>`:'',where.looking?`<span>Looking at</span><b>${where.looking.replace(/[<&]/g,'')}</b>`:''].join('');placeWhere();
   $('trace').replaceChildren(...(q?[...steps.map(s=>{const line=document.createElement('div');line.className='trace-'+s.kind;
@@ -1453,7 +1588,9 @@ $('ask').onsubmit=async e=>{e.preventDefault();const text=$('ask-input').value.t
   try{const sel=computeSelection()?.selected||null;let q;
     if(liveDraft.id!=null||liveDraft.chain){await liveDraft.chain;q=liveDraft.id!=null?await agent.askDraft(liveDraft.id,text,{read_s:READ_S}):null;}   // the draft, asked as typed
     q||=await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},{selection:sel,selection_mode:selectionMode});
-    endDraft();$('ask-input').value='';askReady();if(EXAMPLE)askedHere.add(q.id);startHold(q,{resume:wasPlaying,live:true});
+    endDraft();$('ask-input').value='';if(EXAMPLE)askedHere.add(q.id);startHold(q,{resume:wasPlaying,live:true});
+    // a spoken question keeps what was said (its recording, in the space only)
+    if(spokenAudio){const a=spokenAudio;spokenAudio=null;agent.setAudio(q.id,a.wav,a.started).catch(err=>{$('ask-status').textContent='Recording not kept: '+err.message;});}
   }catch(err){$('ask-status').textContent='Error: '+err.message;}};
 // Answer while typing (the button beside the box; design doc 12): each revision the break detector sends (a finished word, a pause in
 // the user's own rhythm: src/live-input.mjs) is a revision of one draft question, answered as it comes; Enter asks it, clearing the box
@@ -1468,30 +1605,98 @@ const breaks=createBreaks({onRevision:revise});
 // is recognised. With Answer while typing on, the spoken words are revisions like typed ones: the text whenever it has grown (at most
 // every SPEECH_GAP ms), a pause each time a sentence becomes final (the speaker stopped), and pressed again it stops and asks it.
 // Without that mode the microphone only writes into the box: nothing is sent until the user asks (Enter or the Ask button).
-const SPEECH_GAP=300;let spoken={text:'',at:0,definite:0};
+const SPEECH_GAP=300;let spoken={text:'',at:0,definite:0},spokenAudio=null;
 const speech=createSpeech({
-  onText({text,utterances}){$('ask-input').value=text;askReady();if(!liveMode||!text.trim())return;
+  onText({text,utterances}){$('ask-input').value=text;drawSpeech();if(!liveMode||!text.trim())return;
     const definite=utterances.filter(u=>u.definite).length,now=performance.now(),paused=definite>spoken.definite;
-    if(text!==spoken.text&&(paused||now-spoken.at>=SPEECH_GAP)){spoken={text,at:now,definite};revise(text.trim(),paused);}},
+    // a sentence that became final is a pause even when its words did not change (the draft and the text are written on a pause)
+    if(paused||text!==spoken.text&&now-spoken.at>=SPEECH_GAP){spoken={text,at:now,definite};revise(text.trim(),paused);}},
   onError(m){$('ask-status').textContent='Speech: '+m;}});
 function showMic(on){$('ask-mic').setAttribute('aria-pressed',String(on));$('ask-mic').title=on?(liveMode?'Stop and ask':'Stop: the words stay in the box'):'Speak the question';}
 $('ask-mic').onclick=async()=>{
-  if(speech.active){showMic(false);const text=(await speech.stop()).trim();$('ask-input').value=text;askReady();if(text&&liveMode)$('ask').requestSubmit();else $('ask-input').focus();return;}
+  if(speech.active){showMic(false);const text=(await speech.stop()).trim();$('ask-input').value=text;spokenAudio=text?speech.recording:null;if(text&&liveMode)$('ask').requestSubmit();else $('ask-input').focus();return;}
   try{spoken={text:'',at:0,definite:0};$('ask-status').textContent='';showMic(true);await speech.start();}
   catch(e){showMic(false);await speech.stop().catch(()=>{});$('ask-status').textContent='Speech: '+e.message;}};
+// Space: a tap plays or pauses; held, it speaks a question with Answer while typing on. What is heard is kept from the moment it goes
+// down (a tap is then dropped); held HOLD_MS, the ask row becomes the words as they are said, marked where ModOS computed again. Let go,
+// the question is finished there (no send step: the video goes on), with its recording; the row is the ask box again, empty.
+const HOLD_MS=250,TAIL_MS=800;let spaceHold=null;   // TAIL_MS: heard on after Space is let go (the last word is often still being said)
+// the microphone is open only while the editor is in view
+document.addEventListener('visibilitychange',()=>{if(document.hidden)speech.release();else if(connected)speech.prime();});
+function listenWithSpace(h){if(!agent||!connected||speech.active)return;   // still hearing the last one's end: this press is a tap
+  h.listening=true;h.mark={t:session.frames[index].t,at:Date.now()};liveMode=true;spoken={text:'',at:0,definite:0};$('ask-input').value='';
+  speech.start().catch(async e=>{if(spaceHold!==h)return;$('ask-status').textContent='Speech: '+e.message;});}
+function holdingSpace(){const h=spaceHold;if(!h?.listening)return;h.speaking=true;$('ask-status').textContent='';showLive();showMic(true);showSpeaking(true);}
+document.addEventListener('keyup',async e=>{
+  if(e.code!=='Space'||!spaceHold)return;e.preventDefault();const h=spaceHold;spaceHold=null;clearTimeout(h.timer);
+  if(h.mark)h.mark.end={t:session.frames[index].t,at:Date.now(),rate:playing?speed:0};   // let go: where the line ends, and how the video went on
+  if(!h.speaking){if(h.listening){await speech.stop().catch(()=>{});liveMode=h.wasLive;dropDraft();$('ask-input').value='';}$('play').click();return;}
+  await new Promise(r=>setTimeout(r,TAIL_MS));
+  showSpeaking(false);showMic(false);const text=(await speech.stop()).trim(),recording=speech.recording;liveMode=h.wasLive;showLive();
+  $('ask-input').value='';if(text)askSpoken(text,recording,h.mark);else dropDraft();});
+// A spoken question finished as said: the draft asked (or asked anew if no revision went), its recording kept; nothing held or shown.
+async function askSpoken(text,recording,mark=null){
+  try{await liveDraft.chain;const q=liveDraft.id!=null?await agent.askDraft(liveDraft.id,text,{read_s:READ_S})
+      :await agent.ask(index,session.frames[index].t,text,{read_s:READ_S},{selection:computeSelection()?.selected||null,selection_mode:selectionMode});
+    endDraft();if(EXAMPLE)askedHere.add(q.id);if(recording)await agent.setAudio(q.id,recording.wav,recording.started,mark);return q;}
+  catch(err){$('ask-status').textContent='Error: '+err.message;return null;}}
+// The words being said, their end in view, with the marks (src/recompute-marks.mjs) from the draft's runs, read again as it is revised.
+let speechMarks=[],speechThemes=[],marksTimer=null;
+// The same row replays with a typed or spoken question's line: its words and marks as they were at that moment (showReplayedWords).
+let speaking=false,rowKey='';
+function showSpeaking(on){speaking=on;speechMarks=[];speechThemes=[];showRow(on);if(on)drawSpeech();}
+function showRow(on){document.body.classList.toggle('speaking',on);$('ask-speech').hidden=!on;if(!on)rowKey='';}
+function drawSpeech(){if(speaking)drawWords($('ask-input').value,speechMarks,speechThemes);}
+// Where ModOS computed again, as Lucide icons (lucide-static 1.77.0) in dark grey circles: a MOD came (layout-grid-plus, light pink;
+// the words after it begin a new line) or went (the grid with a minus), a part of a MOD that stays got new data (braces, light
+// orange), the text or a draft was written again (pencil-sparkles, light green).
+const lucide=paths=>`<svg viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+const MARK={
+  mods:{title:'a MOD came',icon:lucide('<path d="M15 18h6"/><path d="M18 15v6"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="3" y="3" width="7" height="7" rx="1"/>')},
+  gone:{title:'a MOD went',icon:lucide('<path d="M15 18h6"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="3" y="3" width="7" height="7" rx="1"/>')},
+  ui:{title:'a part of a MOD got new data',icon:lucide('<path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/>')},
+  text:{title:'text written again',icon:lucide('<path d="M10 3H8"/><path d="m15.007 5.008 3.987 3.986"/><path d="M20 15v4"/><path d="M21.174 6.813a2.82 2.82 0 0 0-3.986-3.987L3.842 16.175a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="M22 17h-4"/><path d="M4 5v4"/><path d="M6 7H2"/><path d="M9 2v2"/>')}};
+// The words of one theme are shaded alike (its colour, no label); where the theme changes, or after a MOD came, the words go on on a
+// new line.
+function drawWords(text,marks,themes=[]){
+  const key=JSON.stringify([text,marks,themes]);if(key===rowKey)return;rowKey=key;
+  const el=$('ask-speech'),parts=[],len=text.length,segs=themes.filter(t=>t.from<len).map(t=>({...t,to:Math.min(t.to,len)}));
+  const cuts=[...new Set([0,len,...marks.map(m=>Math.min(m.at,len)),...segs.flatMap(t=>[t.from,t.to])])].sort((a,b)=>a-b);
+  let lastTheme=null,broke=true;const br=()=>{if(!broke){parts.push(document.createElement('br'));broke=true;}};
+  for(let i=0;i<cuts.length;i++){const a=cuts[i],b=cuts[i+1];
+    for(const m of marks.filter(m=>Math.min(m.at,len)===a))for(const k of m.kinds){const s=Object.assign(document.createElement('span'),{className:'mk '+k,title:MARK[k].title,innerHTML:MARK[k].icon});s.setAttribute('aria-label',MARK[k].title);parts.push(s);broke=false;if(k==='mods')br();}
+    if(b==null)break;
+    const seg=segs.find(t=>t.from<=a&&a<t.to),themeKey=seg?seg.themes.join():null;
+    if(seg&&a===seg.from&&lastTheme!=null&&themeKey!==lastTheme)br();
+    let words=text.slice(a,b);if(broke)words=words.replace(/^\s+/,'');if(!words)continue;
+    if(seg){const s=Object.assign(document.createElement('span'),{className:`th th${(seg.themes[0]-1)%6}`,textContent:words});s.title=`theme ${seg.themes.join(', ')}${seg.mods.length?': '+seg.mods.join(', '):''}`;parts.push(s);
+      lastTheme=themeKey;}
+    else parts.push(document.createTextNode(words));
+    broke=false;}
+  el.replaceChildren(...parts);
+  // left-aligned and wrapped, growing to five lines; longer, its end is kept in view (the lines above fade out)
+  el.classList.toggle('over',el.scrollHeight>el.clientHeight+1);el.scrollTop=el.scrollHeight;}
+function showReplayedWords(){
+  if(speaking)return;const ty=agent?.typing,q=ty&&agent.questions.find(x=>x.id===ty.id);
+  if(!q){if(!$('ask-speech').hidden)showRow(false);return;}
+  if($('ask-speech').hidden)showRow(true);
+  const runs=(runsOf(q)||[]).filter(r=>r.at<=ty.e+1e-6).map(r=>({...r,steps:r.steps.filter(s=>s.at/1000<=ty.e-r.at+1e-6)}));
+  drawWords(typedText(q,ty.e),recomputeMarks(runs,(q.revisions||[]).filter(r=>r.at<=ty.e+1e-6)),wordThemes(runs));}
+function readMarks(){if(!speaking||liveDraft.id==null||marksTimer)return;   // at most every 300 ms
+  marksTimer=setTimeout(async()=>{marksTimer=null;const q=agent.questions.find(x=>x.id===liveDraft.id);if(!q)return;try{const runs=await agent.runs(q.id);speechMarks=recomputeMarks(runs,q.revisions||[]);speechThemes=wordThemes(runs);drawSpeech();}catch{}},300);}
 function endDraft(){breaks.reset();liveDraft.id=null;liveDraft.chain=null;}
 async function dropDraft(){const id=(await liveDraft.chain?.catch(()=>{}),liveDraft.id);endDraft();if(id!=null)agent?.cancelDraft(id).catch(fail);}
 function showLive(){$('ask-live').setAttribute('aria-pressed',String(liveMode));document.body.classList.toggle('live-on',liveMode);fitHalo();}
 // the halo stands behind the recorded camera, its size and place (src/../index.html #live-halo)
-function fitHalo(){const h=$('live-halo'),st=$('stage'),c=$('camera-col').getBoundingClientRect(),r=st.getBoundingClientRect();
-  Object.assign(h.style,{left:`${r.left-c.left}px`,top:`${r.top-c.top}px`,width:`${r.width}px`,height:`${r.height}px`});}
+// it is the whole left column's edge, glowing in from it (the column is the user's view: camera, timeline, ask box)
+function fitHalo(){const h=$('live-halo'),full=document.body.classList.contains('camera-full');   // to the line beside it (half the handle's width)
+  Object.assign(h.style,full?{left:'4px',top:'4px',width:'calc(100% - 8px)',height:'calc(100% - 8px)'}:{left:'0',top:'0',width:'calc(100% + 6px)',height:'100%'});}   // full: inside the window's frame (3 px in, 1 px line)
 new ResizeObserver(fitHalo).observe($('stage'));addEventListener('resize',fitHalo);showLive();
-const askReady=()=>$('ask-send').classList.toggle('ready',!!$('ask-input').value.trim());$('ask-input').addEventListener('input',askReady);
 // leaving the mode with a question typed asks it (kept, as Enter would); with the box empty there is nothing to keep
 $('ask-live').onclick=()=>{liveMode=!liveMode;keep('ask-live',liveMode?'on':'off');showLive();
   if(!liveMode){if((liveDraft.id!=null||liveDraft.chain)&&$('ask-input').value.trim())$('ask').requestSubmit();else dropDraft();}
   else if($('ask-input').value.trim())breaks.feed($('ask-input').value);$('ask-input').focus();};
-$('ask-input').addEventListener('input',()=>{if(!liveMode)return;const v=$('ask-input').value;if(!v.trim()){dropDraft();return;}breaks.feed(v);});
+$('ask-input').addEventListener('input',()=>{const v=$('ask-input').value;if(!v.trim())spokenAudio=null;if(!liveMode)return;if(!v.trim()){dropDraft();return;}breaks.feed(v);});
 function fail(e){$('status').textContent='Error: '+e.message;console.error(e);}
 async function sessionLoadError(status){
   if(status!==404)return Error(`Could not load recording (HTTP ${status}). Try reloading the page.`);

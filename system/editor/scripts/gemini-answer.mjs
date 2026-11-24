@@ -1,4 +1,4 @@
-import {answerSchema,answerInstruction,answerInput,parseAnswer} from './answer-contract.mjs';
+import {schemaFor,answerInstruction,answerInput,parseAnswer} from './answer-contract.mjs';
 import {GEMINI_MODEL} from './answer-settings.mjs';
 import {sseEvents,partialAnswerText} from './gemini-stream.mjs';
 const endpoint='https://generativelanguage.googleapis.com/v1beta/interactions';
@@ -14,7 +14,7 @@ export async function geminiAnswer(question,context,{apiKey=process.env.GEMINI_A
     response=await fetchImpl(endpoint,{method:'POST',headers:{'x-goog-api-key':apiKey.trim(),'Content-Type':'application/json'},
       body:JSON.stringify({model,input:files.length?[{type:'text',text:answerInput(question,context)},...files.map(f=>({type:f.mime_type.startsWith('image/')?'image':'document',data:f.data,mime_type:f.mime_type}))]:answerInput(question,context),
         ...(previousInteractionId?{previous_interaction_id:previousInteractionId}:{}),system_instruction:instruction,store:!!(store||previousInteractionId),stream:true,
-        generation_config:{thinking_level:effort,max_output_tokens:1024},response_format:{type:'text',mime_type:'application/json',schema:answerSchema}}),signal:AbortSignal.timeout(20000)});
+        generation_config:{thinking_level:effort,max_output_tokens:1024},response_format:{type:'text',mime_type:'application/json',schema:schemaFor(context)}}),signal:AbortSignal.timeout(20000)});
   }catch(e){throw Error(e.name==='TimeoutError'||e.name==='AbortError'?'Gemini timed out after 20 seconds.':'Gemini request failed; check the connection.');}
   if(!response.ok){
     const help=response.status===429?'Project quota reached; check AI Studio Rate limits.':response.status===401||response.status===403?'Check the Gemini key and project access.':response.status===404?'Model unavailable for this project; check AI Studio.':'Request failed.';

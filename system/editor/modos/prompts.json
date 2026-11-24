@@ -1,0 +1,47 @@
+{
+  "sentence": {
+    "whole": "user_question",
+    "part": "this sentence of user_question: \"{text}\"",
+    "after": " (said right after: \"{before}\")",
+    "typing": " (still being said: it may stop mid-sentence; judge what its words already show)"
+  },
+  "request_type": {
+    "information": "Does {sentence} want to be told something (information, an answer, advice)? Judge the meaning: it may be spoken, broken, or lack question marks.",
+    "action": "Does {sentence} ask for something to be done (sending a message, turning or setting something, a reminder)? Judge the meaning: it may be spoken, broken, or lack question marks.",
+    "stop_prev": "Does {sentence} tell to stop or forget something the user was talking about, altogether (not correct a detail of it)?",
+    "none": "Is {sentence} only a filler, a remark, or a repeat of what was already said: it asks, requests and tells nothing?"
+  },
+  "earlier_or_new": {
+    "question": "Is {sentence} about one of the user's earlier requests (it asks more about it, adds a detail to it, or corrects one), or about something new?",
+    "question_stop": "Which earlier request of the user does {sentence} tell to stop?",
+    "just_said": "\"{text}\" (just said)",
+    "new": "new: none of these"
+  },
+  "continuation": {
+    "question": "If {sentence} goes on with an earlier request of the user, how?",
+    "question_two_calls": "How does {sentence} go on with {earlier}?",
+    "earlier_theme": "this earlier request of the user: {theme}",
+    "earlier_said": "the request just said: \"{text}\"",
+    "more": "it asks more about the same thing",
+    "detail": "it adds a detail to it",
+    "correct": "it corrects a detail of it (says it differently)"
+  },
+  "context_anchor": {
+    "question": "What in the world is {sentence} about?",
+    "referent": "the thing the user is looking at or pointing at: \"{name}\"",
+    "here": "where the user is now: {names} (its people, work, rules or things in it), when the words do not name another place",
+    "place": "a place the words name, not where the user is: \"{name}\" (its people, work or things in it)",
+    "user": "the user themself: their schedule, plans, belongings, preferences or body",
+    "world": "the world outside: weather or other outside data",
+    "other": "something else named in it, another place, or general knowledge"
+  },
+  "also_uses": {
+    "question": "Does {sentence} also use or mention this earlier request of the user: {theme}?"
+  },
+  "answer_form": {
+    "question": "Is {sentence} a question answered by yes or no (\"should I bring my umbrella\", \"is it free\", \"do I need a jacket\")? Judge the meaning: a request put politely as a question (\"can you send…\", \"could you show me…\") is not one; \"can you tell me whether…\" asks what follows."
+  },
+  "mod_need": {
+    "question": "Does the user's request {request} (requests.{request}) need the capability \"{mod}\": {description} Examples: {examples}. Yes only when what it shows is part of what is asked."
+  }
+}

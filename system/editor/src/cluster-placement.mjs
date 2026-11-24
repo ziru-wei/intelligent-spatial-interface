@@ -1,10 +1,20 @@
 // The view stack (modos-system-design.md 4.5): what stands fixed in the user's view, bottom to top, centred and never overlapping:
 // the question's caption, Floating Text, then UI that is not on a real thing in view: UI of no physical thing (Weather's Date Picker
 // and Playback: the weather is not a thing in the room), and the controls of a thing that was out of view when the question was asked
-// (they stay in view for that answer). Heights are in the view's -1..1 range; each part follows the camera every frame.
+// (they stay in view for that answer). Heights are in the view's -1..1 range; each part follows the camera every frame. Every part has
+// one fixed size (STACK.scale), whatever else stands; a stack that would run past the view's top (STACK.top) is lowered until it fits
+// (keepInView).
 import * as THREE from 'three';
 
-export const STACK={gap:.03,base:-.9,distance:.7};
+export const STACK={gap:.03,base:-.9,top:.94,distance:.7,scale:.78};
+
+/** Places the view stack: place(bottom) places every part of it, bottom to top, from `bottom`, and returns its top. From `base` (the
+ *  top of what stands below: the text, or the caption band); when that would run past the view's top, from as much lower as it needs
+ *  (its parts keep their size). Returns the stack's top. */
+export function keepInView(base,place,{top=STACK.top}={}){
+  const at=place(base);if(at==null||at<=top)return at;
+  return place((base??STACK.base)-(at-top));
+}
 
 /** Where a part of the stack stands: its bottom edge's centre at view height `bottom`, STACK.distance along the view, flat and facing
  *  the user. Returns {point (world), quaternion, up (world), top(heightWorld): the view height of its top edge}. */

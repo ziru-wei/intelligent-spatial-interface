@@ -26,6 +26,16 @@ test('a broken stream replaces its partial answer with an error',async()=>{
   assert.equal(parts.at(-1).stream.status,'failed');assert.equal(parts.at(-1).title,'Answer unavailable');
 });
 
+test('a yes/no answer shows nothing until its heading is Yes, No or Not sure: the heading first, never its words without it',async()=>{
+  const parts=[],publish=async p=>{if(!p.title&&!p.body)throw Error('A response needs a title, body or items.');parts.push(p);};
+  await streamAnswer({question:{id:44,text:'am I supposed to bring my umbrella?'},context:{title_form:'yes_no'},publish,
+    answer:async(q,ctx,{onPartial})=>{await onPartial({title:'Weekend Weather'});await onPartial({title:'Weekend Weather',body:'Rain on'});return {title:'Yes, bring it',body:'Rain on Saturday.'};}});
+  assert.deepEqual(parts.map(p=>[p.title,p.body,p.stream?.status]),[['Yes','Rain on Saturday.',undefined]]);   // the heading came only at the end: shown whole then
+  const streamed=[];await streamAnswer({question:{id:45,text:'is it free?'},context:{title_form:'yes_no'},publish:async p=>streamed.push(p),
+    answer:async(q,ctx,{onPartial})=>{await onPartial({title:'Ye'});await onPartial({title:'Yes',body:'It is'});return {title:'Yes',body:'It is free.'};}});
+  assert.deepEqual(streamed.map(p=>[p.title,p.body,p.stream?.status]),[['Yes','It is','streaming'],['Yes','It is free.','complete']]);
+});
+
 test('only known IDs from items actually referenced are recorded',()=>{
   const book={item_id:'to-the-lighthouse',label:'To the Lighthouse'};
   const context={preferences:{reading:{current_book:{title:book.label,stored_item_id:book.item_id}}}};

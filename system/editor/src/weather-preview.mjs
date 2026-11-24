@@ -20,32 +20,34 @@ export function createWeatherPlayback(){
 // view stack (src/cluster-placement.mjs, design doc 4.5): fixed in the user's view, above the answer's text, never over it. Pressed by a
 // ray from the pointer (desktop or XR).
 export async function createWeatherSurfacePreview(scene,playback,invalidate){
- const THREE=await import('three'),cues=await import('./spatial-ui/cues.mjs'),{viewAnchor,STACK}=await import('./cluster-placement.mjs');
+ const THREE=await import('three'),cues=await import('./spatial-ui/cues.mjs'),{viewAnchor,STACK}=await import('./cluster-placement.mjs'),{createCueSet}=await import('./spatial-ui/cue-set.mjs');
  // an invisible carrier (the agent renderer tints it like the answer); placed on its own, not inside the answer
  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1e-4,1e-4),new THREE.MeshBasicMaterial({visible:false}));mesh.name='weather-preview-component';mesh.visible=false;scene.add(mesh);
- const content=new THREE.Group();mesh.add(content);
+ const content=new THREE.Group();mesh.add(content);const set=createCueSet(content);
  const ORIGIN={center:[0,0,0],size:[0,0,0],yaw:0},EYE=new THREE.Vector3(0,0,1);
- let key='',local=[],dayChoices=[],parts=[],hits=[],rail=null,height=0,natural={w:.8,h:.2};
+ let key='',local=[],dayChoices=[],hits=[],rail=null,height=0,natural={w:.8,h:.2};
+ // Date Picker and Playback, each kept while its own data is the same (a step of the playback leaves the date picker as it is)
  function build(s){
-  content.clear();parts=[];hits=[];rail=null;
-  if(s.component==='weather-day-buttons'&&dayChoices.length>1)parts.push(cues.datePicker(ORIGIN,EYE,{dates:dayChoices,value:s.entry.date,y:.1}));
-  if(local.length>1){const p=cues.playback(ORIGIN,EYE,{stops:local.map(v=>v.e.local_time||v.e.period),index:Math.max(0,local.findIndex(v=>v.index===s.index)),playing:s.playing,y:-.04});parts.push(p);rail=p.group;}
-  for(const p of parts)content.add(p.group);
+  const specs=[];
+  if(s.component==='weather-day-buttons'&&dayChoices.length>1)specs.push({key:'datePicker',props:{dates:dayChoices,value:s.entry.date,y:.1},make:p=>cues.datePicker(ORIGIN,EYE,p)});
+  if(local.length>1)specs.push({key:'playback',props:{stops:local.map(v=>v.e.local_time||v.e.period),index:Math.max(0,local.findIndex(v=>v.index===s.index)),playing:s.playing,y:-.04},make:p=>cues.playback(ORIGIN,EYE,p)});
+  set.update(specs);rail=set.get('playback')?.group||null;
   // measured on its own (not where the carrier stands)
   mesh.remove(content);content.position.set(0,0,0);content.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(content);mesh.add(content);const size=b.getSize(new THREE.Vector3());natural={w:Math.max(.2,size.x),h:Math.max(.05,size.y)};
   content.position.set(-(b.min.x+b.max.x)/2,-(b.min.y+b.max.y)/2,0);
-  content.traverse(o=>{if(o.userData.action)hits.push(o);});
+  hits=[];content.traverse(o=>{if(o.userData.action)hits.push(o);});
  }
- /** Shown and placed for this frame; `bottom`: the top of what stands in view below it. Returns the view stack's new top. */
- function update(widget,camera,bottom=null){const s=playback.state;mesh.visible=!!widget?.visible&&s.total>1&&s.component!=='weather-single';if(!mesh.visible)return bottom;
+ /** Shown and placed for this frame; `bottom`: the top of what stands in view below it. Returns the view
+  *  stack's new top. */
+ function update(widget,camera,bottom=null,scale=1){const s=playback.state;mesh.visible=!!widget?.visible&&s.total>1&&s.component!=='weather-single';if(!mesh.visible)return bottom;
   local=s.entries.map((e,index)=>({e,index})).filter(({e})=>s.component!=='weather-day-buttons'||e.date===s.entry.date);
   const day=s.dates.indexOf(s.entry.date),start=Math.max(0,Math.min(s.dates.length-3,day-1));dayChoices=s.component==='weather-day-buttons'?s.dates.slice(start,start+3):[];
   const k=[s.component,dayChoices.join(),s.entry.date,s.index,s.playing].join('|');if(k!==key){key=k;build(s);}
   // on the view stack: its bottom just above `bottom` (what already stands in view), centred, following the camera every frame
-  let top=bottom;if(camera){const a=viewAnchor(camera,(bottom??STACK.base)+STACK.gap),k=STACK.distance;height=natural.h*k;
+  let top=bottom;if(camera){const a=viewAnchor(camera,(bottom??STACK.base)+STACK.gap),k=STACK.distance*STACK.scale*scale;height=natural.h*k;
     mesh.quaternion.copy(a.quaternion);mesh.scale.setScalar(k);mesh.position.copy(a.point).addScaledVector(a.up,height/2);top=a.top(height);}
   delete mesh.userData.responseOffset;mesh.userData.owner=widget;mesh.userData.height=height;mesh.userData.placement={kind:'view-stack'};
-  for(const p of parts)p.update(performance.now());mesh.updateMatrixWorld(true);return top;
+  for(const p of set.parts)p.update(performance.now());mesh.updateMatrixWorld(true);return top;
  }
  function act(h,drag=false){const a=drag?{kind:'scrub'}:h.object.userData.action;if(!a)return;
   if(a.kind==='date')playback.day(a.value);else if(a.kind==='play'||a.kind==='pause')playback.toggle();

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {createCueSet} from './spatial-ui/cue-set.mjs';
 import * as cues from './spatial-ui/cues.mjs';
 import {partsToDraw} from '../modos/ui-rules.mjs';
 import {currentText} from './current-mods.mjs';
@@ -57,31 +58,31 @@ export const infoFacts=(response,apart=false)=>({'target.has_content':!!response
 
 export function createInfoVisual({onAnimate=()=>{}}={}){
   const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));
-  const items=new Map();   // response id → {marks: [part], key, started}
-  function dispose(id){const it=items.get(id);for(const m of it.marks){scene.remove(m.group);m.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose?.();});}items.delete(id);}
+  // each answer's Mark, kept by answer while its mark and box are the same (src/spatial-ui/cue-set.mjs); when it first showed, for the
+  // Text Arrow's fade-in
+  const set=createCueSet(scene),started=new Map();
   /** answers: [{id, box, response, panel: {center, right, up, width, height} (world: the text's ink), fixed}] for the info answers shown
    *  now; eye: the viewer. Draws each one's declared Mark; returns the Text Arrows' anchors for the answers fixed in the room:
    *  [{id, text, box (world corners), aim, opacity}]. Others are removed. */
   function update(answers,eye){
-    const now=performance.now(),ids=new Set(answers.map(a=>a.id));
-    for(const id of [...items.keys()])if(!ids.has(id))dispose(id);
-    let animating=false;const arrows=[];
+    const now=performance.now(),specs=[];let animating=false;const arrows=[];
+    for(const id of [...started.keys()])if(!answers.some(a=>a.id===id))started.delete(id);
     for(const a of answers){
       const parts=partsToDraw(currentText(a.response).text_ui||{},infoFacts(a.response)),mark=['cornerBrackets','breathingBox'].find(c=>parts.includes(c))||null;
-      const key=JSON.stringify([mark,a.box.center,a.box.size,a.box.yaw]);
-      let it=items.get(a.id);
-      if(!it||it.key!==key){const started=it?.started??now;if(it)dispose(a.id);it={marks:mark?[cues[mark](a.box)]:[],key,started};for(const m of it.marks)scene.add(m.group);items.set(a.id,it);}
-      const k=Math.min(1,(now-it.started)/1000/APPEAR),ease=k*k*(3-2*k);if(k<1)animating=true;
+      if(mark)specs.push({key:`${a.id}`,props:{mark,box:[a.box.center,a.box.size,a.box.yaw]},make:p=>cues[p.mark](a.box)});
+      if(!started.has(a.id))started.set(a.id,now);
+      const k=Math.min(1,(now-started.get(a.id))/1000/APPEAR),ease=k*k*(3-2*k);if(k<1)animating=true;
       if(a.fixed){const p=a.panel,corner=(sx,sy)=>p.center.clone().addScaledVector(p.right,sx*p.width/2).addScaledVector(p.up,sy*p.height/2);
         const f=faceToward(a.box,eye),fc=(sa,sb)=>f.center.clone().addScaledVector(f.a,sa*f.ha).addScaledVector(f.b,sb*f.hb);
         arrows.push({id:a.id,text:[corner(-1,-1),corner(1,-1),corner(1,1),corner(-1,1)],box:[fc(-1,-1),fc(1,-1),fc(1,1),fc(-1,1)],aim:f.center.clone(),opacity:ease});}
     }
+    set.update(specs);
     if(animating)onAnimate();
     return arrows;
   }
   function render(renderer,camera,now=performance.now()){
-    if(!items.size)return;for(const it of items.values())for(const m of it.marks)m.update(now,camera);
+    const parts=set.parts;if(!parts.length)return;for(const m of parts)m.update(now,camera);
     const auto=renderer.autoClear;renderer.autoClear=false;try{renderer.clearDepth();renderer.render(scene,camera);}finally{renderer.autoClear=auto;}
   }
-  return {update,render,get active(){return [...items.values()].some(it=>it.marks.length);},get count(){return items.size;}};
+  return {update,render,root:scene,get active(){return set.parts.length>0;},get count(){return started.size;}};
 }

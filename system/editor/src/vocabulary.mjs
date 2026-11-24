@@ -166,7 +166,7 @@ function createTile(id,onChange=()=>{}){
     room.screen.material.color.setHex(INPUT_COLOR[state.input]||0x23476b);room.screen.material.emissive.setHex(INPUT_COLOR[state.input]||0x23476b);
     mixer?.update(Math.min(.1,clock.getDelta()));
     // the view stack: camera-fixed parts stand centred, from the bottom of the view up
-    let bottom=null;for(const p of parts)if(p.view){const a=viewAnchor(camera,(bottom??STACK.base)+STACK.gap),k=STACK.distance;
+    let bottom=null;for(const p of parts)if(p.view){const a=viewAnchor(camera,(bottom??STACK.base)+STACK.gap),k=STACK.distance*STACK.scale;
       p.group.quaternion.copy(a.quaternion);p.group.scale.setScalar(k);p.group.position.copy(a.point).addScaledVector(a.up,p.view.natural*k/2);bottom=a.top(p.view.natural*k);}
     for(const p of parts)p.update(now,camera);
   };

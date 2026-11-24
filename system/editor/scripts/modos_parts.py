@@ -154,8 +154,8 @@ def resolve_action(d, value):
     if capture not in ('thing', 'photo', 'none'): raise ValueError('Bad capture.')
     # who it goes to: one person or several (pick: 'one' | 'many', the MOD's selector kind; the Choice is single or multi-select)
     space = _space(d); book = _contacts(space); ids = value.get('to') if isinstance(value.get('to'), list) else [value.get('to')]
-    people = [book.get(i) for i in ids[:12]]
-    if not people or not all(people): raise ValueError('Unknown contact.')
+    people = [book.get(i) for i in ids[:12] if i is not None]   # none yet: the user picks in the message's Choice (Send waits)
+    if not all(people): raise ValueError('Unknown contact.')
     out = dict(version=1, kind='send', to=[dict(id=p['id'], name=p['name'], email=p['email']) for p in people], pick='many' if value.get('pick') == 'many' else 'one',
                status='draft', capture=capture, **({'draft': dict(body=draft['body'].strip())} if draft else {}))
     # who else it could go to: the Choice of recipients (the chosen one first)

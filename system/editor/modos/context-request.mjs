@@ -4,7 +4,7 @@
 //   {ref: "about:<entity>"}                           what is attached to that entity (LabInfo: the lab)
 //   {ref: "referent"}                                 what is attached to what the user points at, then to what it is in, up to its place
 //   {type: "schedule"} (no ref)                       items of that type around what its questions are about (the thing, the place
-//                                                     here, the user)
+//                                                     here, another place they name, the user)
 // With no MOD chosen, the answer's context comes the same way from what the questions are about (fallback). At most MAX items each.
 export const MAX_CONTEXT_ITEMS=6;
 
@@ -23,11 +23,20 @@ const about=(view,ids,types)=>{
     .sort((a,b)=>Math.min(...a.about.map(x=>ids.indexOf(x)).filter(x=>x>=0))-Math.min(...b.about.map(x=>ids.indexOf(x)).filter(x=>x>=0)));
 };
 
+/** The places the user is in: those in view, with the places that carry the same information as one of them (one area). */
+export function hereArea(view){
+  const infos=new Set(view.places.map(id=>view.entities.get(id)?.info).filter(Boolean));
+  return [...new Set([...view.places,...[...view.entities.values()].filter(e=>e.kind==='place'&&e.info&&infos.has(e.info)).map(e=>e.id)])];
+}
+
 /** The nodes a question about `kind` starts from. */
 export function anchorNodes(view,kind,referent){
   if(kind==='referent')return upChain(view,referent?.entity||view.candidate);
-  // here: the places, and what is in them (a status or a device belongs to a thing in the room, not to the room)
-  if(kind==='here')return [...view.places,...[...view.entities.values()].filter(e=>view.places.includes(e.place)&&e.id!==e.place).map(e=>e.id)];
+  // here: the area the user is in, and what is in it (a status or a device belongs to a thing in the room, not to the room). An area
+  // may be several places that carry the same information (the lab and its corridor, both the Programmable Reality Lab): all of it.
+  if(kind==='here'){const area=hereArea(view);return [...area,...[...view.entities.values()].filter(e=>area.includes(e.place)&&e.id!==e.place).map(e=>e.id)];}
+  // another place it names: that place, and what is in it
+  if(kind?.startsWith('place:')){const id=kind.slice(6);return [id,...[...view.entities.values()].filter(e=>e.place===id&&e.id!==id).map(e=>e.id)];}
   if(kind==='user')return ['user:me'];
   if(kind==='world')return view.snap.items.filter(i=>i.id.startsWith('feed:')).flatMap(i=>i.about);
   return [];

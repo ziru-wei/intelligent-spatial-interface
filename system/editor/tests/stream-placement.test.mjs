@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {createResponseWidget,updateResponseWidget} from '../src/agent.mjs';
 // A measuring canvas exercises real widget geometry/texture updates without needing WebGL.
-const canvas=()=>{const image={width:0,height:0,calls:[]};const ctx={font:'500 46px sans-serif',measureText(text){const size=Number(this.font.match(/(\d+)px/)[1]);return {width:text.length*size*.5,actualBoundingBoxAscent:size*.55,actualBoundingBoxDescent:0};},fillText(...args){image.calls.push(args);}};image.getContext=()=>ctx;return image;};
+const canvas=()=>{const image={width:0,height:0,calls:[]};const ctx={font:'500 46px sans-serif',measureText(text){const size=Number(this.font.match(/(\d+)px/)[1]);return {width:text.length*size*.5,actualBoundingBoxAscent:size*.55,actualBoundingBoxDescent:0};},fillText(...args){image.calls.push(args);},beginPath(){},moveTo(){},lineTo(){},stroke(){}};image.getContext=()=>ctx;return image;};
 test('streaming preserves surface pose, glyph scale and geometry across partial/final text (no controls footer)',async()=>{
  const previous=globalThis.document;globalThis.document={createElement:canvas};
  try{

@@ -156,7 +156,10 @@ export function edgeBar(box,eye,{value=20,min=0,max=100,name='volume',unit='',fr
   let t=null,shown=null;const S=K;const set=v=>{const k=Math.min(1,Math.max(0,kOf(v)));fill.scale.y=Math.max(.001,len*k);fill.position.y=-len/2+len*k/2;knob.position.y=-len/2+len*k;
     const txt=`${name} ${Math.round(v)}${unit}`;if(txt!==shown){shown=txt;if(t)g.remove(t);t=tag(txt,{size:.03,scale:S});t.position.set(0,len/2+.04,0);g.add(t);}};
   set(from??value);g.position.copy(at(f,{x:f.w/2+.06,z:f.d/2}));facing(g,f);
-  return {group:g,update(now){if(live!==null)return set(live);if(from===null||!changeAt)return set(value);const u=Math.min(1,Math.max(0,(now-changeAt)/700)),e=u*u*(3-2*u);set(from+(value-from)*e);}};
+  const range=JSON.stringify([min,max,name,unit]);
+  return {group:g,update(now){if(live!==null)return set(live);if(from===null||!changeAt)return set(value);const u=Math.min(1,Math.max(0,(now-changeAt)/700)),e=u*u*(3-2*u);set(from+(value-from)*e);},
+    // a new value in place (the device's state after a change, a revision): the same bar; changeAt>0 eases to it (what an answer changed)
+    set(p){if(JSON.stringify([p.min??0,p.max??100,p.name??'volume',p.unit??''])!==range)return false;from=p.from??null;changeAt=p.changeAt||0;value=p.value;live=null;return true;}};
 }
 // An icon button: the icon and what pressing it does, side by side (toggles and commands: power, cancel, pause, send).
 // icon: a preset's icon (modos/buttons.json); null for a text-only button the system wrote when no preset fits.
@@ -287,19 +290,36 @@ export function playback(box,eye,{stops=[],index=0,playing=true,y=null}={}){
 // a reply). They are laid out by the caller (a column beside the thing); each is built at the origin, facing +z. ———
 /** Text Input: when the user may change what will be said (a drafted message, a note), to show the text in a field they can edit.
  *  A rounded field (clickable, so its corners are round), the text wrapped inside, a caret while editing. */
-export function textInput({title='',body='',width=.36,editing=false,placeholder='Write a message…',onEdit=null}={}){
-  const g=new THREE.Group(),size=.019,pad=.018,lines=[...(title?[[title,700]]:[]),...wrapLines(body||placeholder,size,width-2*pad).map(l=>[l,450])].slice(0,9);
-  const lh=size*1.5,h=Math.max(.06,lines.length*lh+2*pad),r=.022,sh=new THREE.Shape();
-  sh.moveTo(-width/2+r,-h/2);sh.lineTo(width/2-r,-h/2);sh.absarc(width/2-r,-h/2+r,r,-Math.PI/2,0);sh.lineTo(width/2,h/2-r);sh.absarc(width/2-r,h/2-r,r,0,Math.PI/2);
-  sh.lineTo(-width/2+r,h/2);sh.absarc(-width/2+r,h/2-r,r,Math.PI/2,Math.PI);sh.lineTo(-width/2,-h/2+r);sh.absarc(-width/2+r,-h/2+r,r,Math.PI,Math.PI*1.5);
-  const field=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:.006,bevelEnabled:false,curveSegments:10}),new THREE.MeshBasicMaterial({color:0x14171c,transparent:true,opacity:.82,toneMapped:false}));
-  if(onEdit)field.userData.onHit=onEdit;g.add(field);
-  const pts=sh.getPoints(8).map(p=>new THREE.Vector3(p.x,p.y,.007)),border=tubes(pts.flatMap((p,i)=>[p,pts[(i+1)%pts.length]]),editing?.0022:.0012,glow(CYAN,editing?.95:.45));g.add(border);
-  let y=h/2-pad-size*.6,last=null;
-  for(const [text,weight] of lines){const t=label(text,{size,weight,color:body||title?'#ffffff':'#8b949e',maxWidth:width});t.position.set(-width/2+pad,y,.008);g.add(t);last=t;y-=lh;}
-  const caret=new THREE.Mesh(new THREE.PlaneGeometry(.0025,size*1.2),glow(CYAN,1));caret.visible=editing;
-  if(last)caret.position.set(-width/2+pad+last.userData.width+.004,last.position.y,.009);g.add(caret);
-  return {group:g,width,height:h,update(now){caret.material.opacity=editing&&Math.floor(now/530)%2===0?1:0;}};
+export function textInput({title='',body='',width=.36,rows=6,editing=false,placeholder='Write a message…',onEdit=null}={}){
+  // Takes new text in place (set): the words it has in common with what it shows stay, the rest is written in (WRITE characters a
+  // second), so a message redrafted while the user speaks on changes where it changed. Its height is fixed (rows lines), whatever its
+  // text: what is around it never moves as the text changes. A longer text shows its end while it is written or edited, else its
+  // beginning, ending in …
+  const g=new THREE.Group(),size=.019,pad=.018,lh=size*1.5,r=.022,WRITE=90;
+  let target={title,body,editing},shown=body.length,writing=null,last=null,caret=null,drawnKey='';const part={group:g,width,height:.06};
+  function draw(){
+    const text=target.body.slice(0,Math.floor(shown)),key=JSON.stringify([target.title,text,target.editing,!!writing]);if(key===drawnKey)return;drawnKey=key;
+    for(const c of [...g.children]){g.remove(c);c.geometry?.dispose();c.material?.map?.dispose?.();c.material?.dispose?.();}
+    let lines=[...(target.title?[[target.title,700]]:[]),...wrapLines(text||(target.body?'':placeholder),size,width-2*pad).map(l=>[l,450])];
+    if(lines.length>rows)lines=target.editing||writing||shown<target.body.length?lines.slice(-rows):[...lines.slice(0,rows-1),[lines[rows-1][0].replace(/\s*\S{0,3}$/,'')+'…',lines[rows-1][1]]];
+    const h=rows*lh+2*pad,sh=new THREE.Shape();part.height=h;
+    sh.moveTo(-width/2+r,-h/2);sh.lineTo(width/2-r,-h/2);sh.absarc(width/2-r,-h/2+r,r,-Math.PI/2,0);sh.lineTo(width/2,h/2-r);sh.absarc(width/2-r,h/2-r,r,0,Math.PI/2);
+    sh.lineTo(-width/2+r,h/2);sh.absarc(-width/2+r,h/2-r,r,Math.PI/2,Math.PI);sh.lineTo(-width/2,-h/2+r);sh.absarc(-width/2+r,-h/2+r,r,Math.PI,Math.PI*1.5);
+    const field=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:.006,bevelEnabled:false,curveSegments:10}),new THREE.MeshBasicMaterial({color:0x14171c,transparent:true,opacity:.82,toneMapped:false}));
+    if(onEdit)field.userData.onHit=onEdit;g.add(field);
+    const pts=sh.getPoints(8).map(p=>new THREE.Vector3(p.x,p.y,.007));g.add(tubes(pts.flatMap((p,i)=>[p,pts[(i+1)%pts.length]]),target.editing?.0022:.0012,glow(CYAN,target.editing?.95:.45)));
+    let y=h/2-pad-size*.6;last=null;
+    for(const [t,weight] of lines){const m=label(t,{size,weight,color:text||target.title?'#ffffff':'#8b949e',maxWidth:width});m.position.set(-width/2+pad,y,.008);g.add(m);last=m;y-=lh;}
+    caret=new THREE.Mesh(new THREE.PlaneGeometry(.0025,size*1.2),glow(CYAN,1));if(last)caret.position.set(-width/2+pad+last.userData.width+.004,last.position.y,.009);g.add(caret);
+  }
+  draw();
+  part.set=({title:t='',body:b='',editing:e=false}={})=>{
+    let common=0;while(common<Math.min(b.length,target.body.length)&&b[common]===target.body[common])common++;
+    target={title:t,body:b,editing:e};shown=e?b.length:Math.min(shown,common);writing=shown<b.length?{at:performance.now(),from:shown}:null;draw();return true;};   // the user's own typing shows at once
+  part.update=now=>{
+    if(writing){shown=Math.min(target.body.length,writing.from+(now-writing.at)/1000*WRITE);if(shown>=target.body.length)writing=null;draw();}
+    if(caret)caret.material.opacity=(target.editing||writing)&&Math.floor(now/530)%2===0?1:0;};
+  return part;
 }
 /** AR Photo: when what is sent is a photo of the thing, to show the photo about to be sent (the camera frame cropped to the thing). */
 export function arPhoto(canvas,{width=.16,label:text=''}={}){

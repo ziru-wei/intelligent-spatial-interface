@@ -1,14 +1,20 @@
 // A message the user sends through a MOD (Send's card slot), composed from the library as the MOD declared it (modos-system-design.md
 // 4.4): a Choice of who it goes to (the best match chosen; the other contacts in its dropdown), the drafted message in a Text Input the
 // user can edit (the MOD's text slot, streaming in), an AR Photo when a photo of the thing goes with it, and the Send preset button. They
-// stand as one column beside the thing, where all of it is in view, turned to the user; with nothing attached, in front of the user. The
+// stand as one column beside the thing, where all of it is in view, turned to the user. With no thing in view to stand by (nothing
+// attached, or the thing out of view when asked) the column is on the view stack (src/cluster-placement.mjs): fixed in the user's view,
+// above the answer's text and the other UI there, for the whole answer. The
 // thing that goes with the message is marked with the library's Mark (Corner Brackets on something with content, else Breathing Box).
-// Nothing is sent until Send is pressed (POST /api/modos/actions, mock: the space's outbox).
+// Nothing is sent until Send is pressed (POST /api/modos/actions, mock: the space's outbox). The message is one answer's: new data for
+// it (a revision while typing: a new draft, other recipients) updates the cues that changed (src/spatial-ui/cue-set.mjs); the draft is
+// written into its Text Input from where it differs.
 import * as THREE from 'three';
 import * as cues from './spatial-ui/cues.mjs';
 import {currentMeta} from './current-mods.mjs';
 import {besidePlacement} from './beside.mjs';
+import {viewAnchor,STACK} from './cluster-placement.mjs';
 import {partsToDraw} from '../modos/ui-rules.mjs';
+import {createCueSet} from './spatial-ui/cue-set.mjs';
 
 let SEND={icon:'➤',label:'Send'};
 fetch(new URL('../modos/buttons.json',import.meta.url)).then(r=>r.json()).then(j=>{SEND=j.presets.find(p=>p.id==='send')||SEND;}).catch(()=>{});
@@ -27,11 +33,16 @@ function cropDrawn(canvas,box,camera){
 }
 
 export function createActionCues(){
-  const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));{const l=new THREE.DirectionalLight(0xffffff,1.6);l.position.set(.4,1,1.2);scene.add(l);}
-  let a=null,key=null,space=null,cam=null,eye=null,front=null,parts=[],facts={},draft={title:'',body:''},edited=null,status='draft',editing=false,photo=null,photoDue=false,pickOpen=false;
-  const marks=new THREE.Scene();marks.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));
-  let drawn=[],hits=[],builtFor='',onChange=()=>{},input=null;
-  const message=()=>edited||draft;
+  const lights=s=>{s.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));return s;};
+  const scene=lights(new THREE.Scene());{const l=new THREE.DirectionalLight(0xffffff,1.6);l.position.set(.4,1,1.2);scene.add(l);}
+  const marks=lights(new THREE.Scene()),col=new THREE.Group();scene.add(col);
+  const colSet=createCueSet(col),markSet=createCueSet(marks);
+  let a=null,key=null,space=null,cam=null,eye=null,front=null,parts=[],facts={},draft={title:'',body:''},edited=null,status='draft',editing=false,
+    photo=null,photoN=0,photoDue=false,pickOpen=false,picked=false,builtFor='',source=null,onChange=()=>{},input=null,fixed=false,natural=null,placedFor=null;
+  const inView=(camera,p)=>{const v=new THREE.Vector3(...p).project(camera);return v.z<1&&Math.abs(v.x)<=1&&Math.abs(v.y)<=1;};
+  const message=()=>edited||draft,thingOf=()=>a.attachment?.center&&a.capture!=='none'?a.attachment:null;
+  // a cue's own size, measured when made (before it is in the column)
+  const sized=part=>{const b=new THREE.Box3().setFromObject(part.group).getSize(new THREE.Vector3());part.w??=b.x;part.h0=b.y;return part;};
   async function confirm(){
     if(!a||status!=='draft')return;status='sending';stopEditing();build();onChange();
     const body={space,action:a,message:{...message(),...(photo?{photo:photo.toDataURL('image/jpeg',.85)}:{})}};
@@ -48,60 +59,81 @@ export function createActionCues(){
     input.value=message().body;input.focus();build();onChange();
   }
   function stopEditing(){if(editing){editing=false;input?.blur();}}
+  // What should stand now: the column (who, the photo, the message, Send) and the thing's Mark; each kept unless its data changed.
   function build(){
-    scene.clear();scene.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));marks.clear();marks.add(new THREE.HemisphereLight(0xffffff,0x4a4d55,2.2));drawn=[];hits=[];
-    const thing=a.attachment?.center&&a.capture!=='none'?a.attachment:null,anchor=thing||front;
-    const d=eye.distanceTo(new THREE.Vector3(...anchor.center)),k=Math.min(2.4,Math.max(1,d/1.1));cues.setScale(1);
-    // the column, built at the origin: who, the photo, the message, Send
-    const col=new THREE.Group(),items=[],sent=status==='sent',msg=message();
+    const thing=thingOf(),sent=status==='sent',msg=message(),none=!a.to.length,specs=[];cues.setScale(1);
     // who it goes to: a Choice over the contacts, multi-select when the MOD picks several (its selector is pick-many)
-    if(parts.includes('choice')){const book=a.contacts?.length?a.contacts:a.to,people=book.map(p=>({value:p.id,label:p.name,initials:initials(p.name)})),many=a.pick==='many';
-      items.push(cues.choice(null,null,{options:people,multiple:many,value:many?a.to.map(p=>p.id):a.to[0]?.id,open:pickOpen,onToggle:v=>{pickOpen=v;build();onChange();},
-        onPick:sent?null:v=>{const ids=many?v:[v];a={...a,to:book.filter(p=>ids.includes(p.id))};if(!many)pickOpen=false;build();onChange();}}));}
-    if(parts.includes('arPhoto')&&photo)items.push(cues.arPhoto(photo,{width:.2,label:`photo of ${a.attachment.label}`}));
-    if(parts.includes('textInput'))items.push(cues.textInput({title:msg.title,body:msg.body,width:.36,editing,placeholder:'writing…',onEdit:sent?null:startEditing}));
-    const none=!a.to.length;   // nobody chosen: Send waits
-    items.push(cues.iconButton({center:[0,0,0],size:[0,0,0],yaw:0},new THREE.Vector3(0,0,1),{icon:sent?'✓':SEND.icon,text:sent?'Sent':status==='sending'?'Sending…':SEND.label,
-      on:!sent&&status!=='sending'&&!none,onPress:sent||none?null:confirm}));
-    const send=items.at(-1);send.group.position.set(0,0,0);send.group.rotation.set(0,0,0);
-    let y=0;const gap=.018;
-    for(const it of items){const h=it.height??new THREE.Box3().setFromObject(it.group).getSize(new THREE.Vector3()).y;it.group.position.y=y-h/2;
-      // chips and the button line up on the left edge of the field
-      const w=it.width??new THREE.Box3().setFromObject(it.group).getSize(new THREE.Vector3()).x;it.group.position.x=-.18+w/2;y-=h+gap;col.add(it.group);drawn.push(it);}
-    const height=-y,place=thing?besidePlacement(cam,thing,{width:.4*k,height:height*k}):{position:new THREE.Vector3(...front.center),yaw:Math.atan2(eye.x-front.center[0],eye.z-front.center[2])};
-    col.position.copy(place.position).add(new THREE.Vector3(0,height*k/2,0));col.rotation.set(0,place.yaw,0);col.scale.setScalar(k);scene.add(col);
+    if(parts.includes('choice')){const book=a.contacts?.length?a.contacts:a.to,many=a.pick==='many';
+      specs.push({key:'choice',props:{options:book.map(p=>({value:p.id,label:p.name,initials:initials(p.name)})),multiple:many,value:many?a.to.map(p=>p.id):a.to[0]?.id??null,open:pickOpen,sent},
+        make:p=>sized(cues.choice(null,null,{...p,onToggle:v=>{pickOpen=v;build();onChange();},
+          onPick:p.sent?null:v=>{const ids=many?v:[v];a={...a,to:book.filter(x=>ids.includes(x.id))};picked=true;if(!many)pickOpen=false;build();onChange();}}))});}
+    if(parts.includes('arPhoto')&&photo)specs.push({key:'photo',props:{photo:photoN,label:`photo of ${a.attachment.label}`},make:p=>cues.arPhoto(photo,{width:.2,label:p.label})});
+    if(parts.includes('textInput'))specs.push({key:sent?'text:sent':'text',props:{title:msg.title,body:msg.body,editing},
+      make:p=>cues.textInput({...p,width:.36,placeholder:'writing…',onEdit:sent?null:startEditing})});
+    specs.push({key:'send',props:{icon:sent?'✓':SEND.icon,text:sent?'Sent':status==='sending'?'Sending…':SEND.label,on:!sent&&status!=='sending'&&!none},   // nobody chosen: Send waits
+      make:p=>{const b=sized(cues.iconButton({center:[0,0,0],size:[0,0,0],yaw:0},new THREE.Vector3(0,0,1),{...p,onPress:p.on?confirm:null}));b.group.rotation.set(0,0,0);return b;}});
+    colSet.update(specs);
+    // what goes with it: the thing marked (the library's Mark, as declared)
+    markSet.update(['cornerBrackets','breathingBox'].filter(m=>thing&&parts.includes(m)).map(m=>({key:m,props:{box:[thing.center,thing.size,thing.yaw]},make:()=>cues[m](thing)})));
+  }
+  // The column, stacked every frame (a message being written in grows), and placed: beside the thing, or on the view stack (place).
+  function layout(){
+    let y=0,x1=-.18;const gap=.018;
+    for(const it of colSet.parts){const h=it.height??it.h0,w=it.width??it.w;it.group.position.set(-.18+w/2,y-h/2,it.group.position.z);y-=h+gap;x1=Math.max(x1,-.18+w);}
+    const height=-y;natural={x:(x1-.18)/2,y:-height,h:height};
+    if(fixed||placedFor!=null&&Math.abs(placedFor-height)<.03)return;placedFor=height;
+    const thing=thingOf(),d=eye.distanceTo(new THREE.Vector3(...thing.center)),k=Math.min(2.4,Math.max(1,d/1.1)),place=besidePlacement(cam,thing,{width:.4*k,height:height*k});
+    col.position.copy(place.position).add(new THREE.Vector3(0,height*k/2,0));col.rotation.set(0,place.yaw,0);col.scale.setScalar(k);
     // its top (who it goes to) stays in view: lowered while it projects above the view's top (the placement module will own this, §4.5)
     for(let i=0;i<40;i++){col.updateMatrixWorld(true);const top=new THREE.Vector3(0,.04,0).applyMatrix4(col.matrixWorld).project(cam);if(top.y<.78)break;col.position.y-=.02;}
-    // what goes with it: the thing marked (the library's Mark, as declared)
-    for(const mark of ['cornerBrackets','breathingBox'])if(thing&&parts.includes(mark)){const m=cues[mark](thing);marks.add(m.group);drawn.push(m);}
-    scene.traverse(o=>{if(o.userData.onHit)hits.push(o);});
   }
   return {
+    /** What it draws: the column and the marks (src/attention.mjs). */
+    get roots(){return [scene,marks];},
     get active(){return !!a;},confirm,
-    /** r: the answer with an action part (its message: action.draft.body); camera: where its question was asked; spaceName: the space. */
+    /** For measuring: how often its cues were made, taken new data in place, or kept. */
+    get stats(){return {column:colSet.stats,marks:markSet.stats};},
+    /** r: the answer with an action part (its message: action.draft.body); camera: where its question was asked; spaceName: the space.
+     *  The same answer with new data (its id stays) updates the message; another answer starts a new one. */
     setResponse(r,camera,spaceName){
-      const k=r?.action?`${r.id}@${r.created}`:null;
-      if(k!==key){key=k;a=r?.action||null;edited=null;status='draft';editing=false;space=spaceName;builtFor='';photo=null;photoDue=false;pickOpen=false;
-        if(!a){scene.clear();marks.clear();drawn=[];hits=[];return;}
-        const m=currentMeta(r.mods?.action||r.mod),slot=Object.values(m?.ui||{}).find(s=>s.use==='action-card');
-        facts={...(m?.facts||{}),'attachment.kind':a.capture||(a.attachment?'thing':'none'),'target.has_content':!!a.attachment?.has_content};parts=partsToDraw(slot?.ui||DEFAULT_UI,facts);
+      const id=r?.action?r.id:null;
+      if(id!==key){key=id;a=r?.action||null;edited=null;status='draft';editing=false;space=spaceName;builtFor='';photo=null;photoDue=false;pickOpen=false;picked=false;placedFor=null;
+        colSet.clear();markSet.clear();if(!a)return;
         camera.updateMatrixWorld(true);cam=camera.clone();eye=camera.position.clone();
-        const f=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);f.y=0;f.normalize();const p=eye.clone().addScaledVector(f,.8);
-        front={center:p.toArray(),size:[.01,.01,.01],yaw:0};
-        photoDue=parts.includes('arPhoto')&&!!a.attachment?.center;}   // taken at the first draw, from the frame with its mark
+        const f=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);f.y=0;f.normalize();
+        front={center:eye.clone().addScaledVector(f,.8).toArray(),size:[.01,.01,.01],yaw:0};
+        const thing=thingOf();fixed=!thing||!inView(cam,thing.center);   // stays for this answer
+        col.position.set(0,0,0);col.quaternion.identity();col.scale.setScalar(1);}
+      else if(a&&r.action!==source)a={...r.action,...(picked?{to:a.to}:{})};   // new data; who the user picked stays theirs
+      if(!a)return;source=r.action;
+      const m=currentMeta(r.mods?.action||r.mod),slot=Object.values(m?.ui||{}).find(s=>s.use==='action-card');
+      facts={...(m?.facts||{}),'attachment.kind':a.capture||(a.attachment?'thing':'none'),'target.has_content':!!a.attachment?.has_content};parts=partsToDraw(slot?.ui||DEFAULT_UI,facts);
+      if(parts.includes('arPhoto')&&a.attachment?.center&&!photo)photoDue=true;   // taken at the next draw, from the frame with its mark
       // the message is the action's own (modos/text.mjs writeDraft), no heading; the question's text answer, if any, stands apart
-      if(a){draft={title:'',body:a.draft?.body||''};const b=JSON.stringify([draft.title,draft.body]);if(b!==builtFor){builtFor=b;build();}}
+      draft={title:'',body:a.draft?.body||''};
+      const want=JSON.stringify([a.to,a.contacts,a.capture,draft,parts]);if(want!==builtFor){builtFor=want;build();}
+    },
+    /** Whether the message is on the view stack (no thing in view to stand by when asked). */
+    get fixed(){return !!a&&fixed;},
+    /** On the view stack: placed for this frame just above `bottom` (the top of what stands in view), at `scale` (its attention:
+     *  src/attention.mjs); returns the stack's new top. */
+    place(camera,bottom=null,scale=1){
+      if(!a||!fixed||!natural)return bottom;const k=STACK.distance/1.1*STACK.scale*scale,v=viewAnchor(camera,(bottom??STACK.base)+STACK.gap);
+      col.quaternion.copy(v.quaternion);col.scale.setScalar(k);col.position.copy(v.point).sub(new THREE.Vector3(natural.x,natural.y,0).multiplyScalar(k).applyQuaternion(v.quaternion));
+      col.updateMatrixWorld(true);return v.top(natural.h*k);
     },
     render(renderer,camera,now=performance.now()){
-      if(!a)return;for(const p of drawn)p.update(now,camera);
+      if(!a)return;const drawn=[...colSet.parts,...markSet.parts];for(const p of drawn)p.update(now,camera);layout();
       const auto=renderer.autoClear;renderer.autoClear=false;
       try{renderer.clearDepth();renderer.render(marks,camera);
-        if(photoDue){photoDue=false;photo=cropDrawn(renderer.domElement,a.attachment,camera);if(photo){build();for(const p of drawn)p.update(now,camera);}}
+        if(photoDue){photoDue=false;photo=cropDrawn(renderer.domElement,a.attachment,camera);if(photo){photoN++;build();layout();}}
         renderer.clearDepth();renderer.render(scene,camera);}finally{renderer.autoClear=auto;}
     },
     attach(element,getCamera,changed=()=>{}){
       onChange=changed;
-      const hit=e=>{if(!a||!hits.length)return null;const b=element.getBoundingClientRect(),ray=new THREE.Raycaster();
+      // what can be pressed, found when pressed (a cue updated in place may have new meshes)
+      const hit=e=>{if(!a)return null;const hits=[];scene.traverse(o=>{if(o.userData.onHit)hits.push(o);});if(!hits.length)return null;
+        const b=element.getBoundingClientRect(),ray=new THREE.Raycaster();
         ray.setFromCamera(new THREE.Vector2((e.clientX-b.left)/b.width*2-1,1-(e.clientY-b.top)/b.height*2),getCamera());scene.updateMatrixWorld(true);return ray.intersectObjects(hits,false)[0]||null;};
       // a press a control takes is the control's to the end: the click that follows is swallowed too, even when the press rebuilt what was
       // under the pointer (else it falls through to the editor, which picks the thing behind and replays the question)

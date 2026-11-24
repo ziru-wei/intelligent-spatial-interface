@@ -3,6 +3,7 @@
 
 GET  /api/spaces                 spaces with their scan and scenarios, raw recordings in private/<scene>/recordings/, whether the mesh environment exists
 POST /api/spaces {name}          create an empty space
+GET  /api/modos/prompts          the prompts the decision model is asked (modos/prompts.json); POST {change: {decision: {prompt: words}}} edits their words
 POST /api/scenarios {space,take} add a recording as a scenario: import, its own mesh, alignment to the scan (mesh and alignment run
                                  in .venv-mesh; open3d needs numpy < 2)
 GET  /api/components?space=       the component library (components/<id>/, spaces/<space>/components/<id>/)
@@ -34,7 +35,9 @@ GET  /api/gallery                                    the Gallery's examples (scr
 POST /api/gallery/still {session,conversation,image}  a still of an example's answer; POST /api/gallery/replace {name,keep}: drop older examples of that name
 POST /api/gallery/add {session,conversation,ids}      a new example from answered questions (one, or several in a row)
 POST /api/asr/relay                                 speech to text: starts scripts/asr-relay.mjs (Doubao) if needed; {url}
-POST /api/agent/drafts {session,conversation,id?,frame,t,text,pause?,selection?}   answer while typing: a draft's revision (…/drafts/ask {id,text}, …/drafts/cancel {id}); GET /api/agent/questions/rev?id=; POST /api/agent/responses/retract {question_id,keys,rev}
+POST /api/agent/drafts {session,conversation,id?,frame,t,text,pause?,selection?}   answer while typing: a draft's revision (…/drafts/ask {id,text}, …/drafts/cancel {id}); POST /api/agent/questions/audio?session=&id=&started= (body: WAV) a spoken question's recording; GET /api/agent/questions/runs?id= (a typed question's trace per revision); GET /api/agent/questions/rev?id=; POST /api/agent/responses/retract {question_id,keys,rev}
+GET  /api/agent/themes?session=&id=   the theme book of a question's conversation (modos/themes.mjs); POST /api/agent/themes {session,question_id,themes}
+POST /api/agent/responses/retract {session,question_id,keys,rev}   a draft's parts withdrawn (by part_key); …/responses/stale {…,stale}: left in view, dimmed; …/responses/writing {…,writing}: being written anew
 POST /api/agent/questions {session,conversation,frame,t,text,live?,selection?,selection_mode?}   ask at a frame (live = asked during playback); POST /api/agent/questions/delete
 GET  /api/agent/status?session=&conversation=       bridge connected + the conversation's questions and responses
 GET  /api/agent/questions/next?session=            bridge long-poll (≤25 s); POST /api/agent/questions/trace {session,id,step}, …/done {session,id,message,duration}
@@ -57,7 +60,7 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
-import agent_store as store, gallery, spaces, composition, weather, findmy, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts
+import agent_store as store, gallery, spaces, composition, weather, findmy, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts, modos_prompts
 busy = threading.Lock()
 MOCK_CONTEXT = ROOT/'agent'/'mock-context.json'
 
@@ -153,7 +156,8 @@ def next_question(session):
             q = store.take_next(d)
             if q: return q
             if time.time() >= deadline: return {}
-            store.lock.wait(deadline-time.time())
+            soon = store.next_draft_in(d)   # a revision waiting for its turn (RECOMPUTE_S) is taken when it comes
+            store.lock.wait(max(.01, min(deadline-time.time(), soon if soon is not None else 1e9)))
 
 def live_pose(value):
     """A head pose sent by a headset asking live: {position: [x, y, z], quaternion: [x, y, z, w]} in scene coordinates, with its forward."""
@@ -186,6 +190,8 @@ def agent_get(path, session, q):
         store._prepare(d)
         if path == '/api/agent/conversations': return store.listing(d)
         if path == '/api/agent/questions/rev': return store.revision(d, q.get('id', [''])[0])
+        if path == '/api/agent/questions/runs': return store.runs(d, q.get('id', [''])[0])
+        if path == '/api/agent/themes': return store.themes(d, q.get('id', [''])[0])
         if path == '/api/agent/conversations/export': return store.read(d, cid)
         if path == '/api/agent/status': return store.status(d, cid)
     if path == '/api/agent/info':
@@ -216,6 +222,10 @@ def agent_post(path, body):
         if path == '/api/agent/drafts/ask': return store.finalize(d, cid, body.get('id'), body.get('text'), body.get('live'))
         if path == '/api/agent/drafts/cancel': return store.delete_question(d, cid, body.get('id'))
         if path == '/api/agent/responses/retract': return store.retract(d, body.get('question_id'), body.get('keys'), body.get('rev'))
+        if path == '/api/agent/themes': return store.set_themes(d, body.get('question_id'), body.get('themes'))
+        if path == '/api/agent/responses/focus': return store.mark_focus(d, body.get('question_id'), body.get('keys'), body.get('focus') is not False, body.get('rev'))
+        if path == '/api/agent/responses/writing': return store.mark_writing(d, body.get('question_id'), body.get('keys'), body.get('writing', True) is not False, body.get('rev'))
+        if path == '/api/agent/responses/stale': return store.mark_stale(d, body.get('question_id'), body.get('keys'), body.get('stale', True) is not False, body.get('rev'))
     raise KeyError(path)
 
 class Server(ThreadingHTTPServer):
@@ -225,6 +235,8 @@ class Server(ThreadingHTTPServer):
     daemon_threads = True
 
 class Handler(SimpleHTTPRequestHandler):
+    server_version = 'modos-system'   # its name (the speech relay beside it is modos-speech, the agent bridge modos-agent)
+    sys_version = ''
     extensions_map = {**SimpleHTTPRequestHandler.extensions_map, '.cjs': 'text/javascript', '.wasm': 'application/wasm'}
     # Keep-alive: one connection carries many requests instead of a new one per frame.
     protocol_version = 'HTTP/1.1'
@@ -302,6 +314,9 @@ class Handler(SimpleHTTPRequestHandler):
             try:
                 with store.lock: return self.reply(200, dict(examples=gallery.rebuild()))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if url.path == '/api/modos/prompts':
+            # The prompts the decision model is asked (scripts/modos_prompts.py), for the pipeline page.
+            return self.reply(200, dict(prompts=modos_prompts.load()))
         if url.path == '/api/modos/installed':
             # The space's installed MODs as the pipeline reads them (effective: active variant, settled settings, declarations); the
             # editor draws every part with these (src/current-mods.mjs).
@@ -370,6 +385,12 @@ class Handler(SimpleHTTPRequestHandler):
             body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
             try: return self.reply(200, dict(device=modos_parts.apply_action(spaces.space_dir(body.get('space')), body.get('id'), body.get('key'), body.get('op', 'set'), body.get('value'))))
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if path == '/api/modos/prompts':
+            # Edit the prompts' words {change: {decision: {prompt: words}}}: each keeps its placeholders (scripts/modos_prompts.py).
+            body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
+            try:
+                with store.lock: return self.reply(200, dict(prompts=modos_prompts.save(body.get('change'))))
+            except ValueError as e: return self.reply(400, dict(error=str(e)))
         if path == '/api/modos/mods':
             # Tailor a MOD: op customize {mod, change}, reset {mod}, fork {mod, id, name, description?}, remove {mod} (a fork),
             # install / uninstall {mod}. Every change is validated by resolving the MOD before it is saved.
@@ -394,6 +415,14 @@ class Handler(SimpleHTTPRequestHandler):
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if path == '/api/agent/bridge':
             try: return self.reply(200, start_bridge(json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}').get('session'), self.headers.get('Host', '127.0.0.1:8766')))
+            except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
+        if path == '/api/agent/questions/audio':
+            # a spoken question's own recording (16 kHz WAV), kept in its recording's folder only (spaces/ is local): raw bytes, not JSON
+            q = parse_qs(urlsplit(self.path).query); data = self.rfile.read(int(self.headers.get('Content-Length', 0)))
+            v = lambda k: float(q[k][0]) if q.get(k, [''])[0] not in ('', None) else None
+            try:
+                with store.lock: kept = store.set_audio(session_dir(q.get('session', [''])[0]), q.get('id', [''])[0], data, float(q.get('started', ['0'])[0]), v('t'), v('t_at'), v('t_end'), v('t_end_at'), v('rate'))
+                return self.reply(200, kept)
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if path.startswith('/api/agent/'):
             try: return self.reply(200, agent_post(path, json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')))
@@ -449,7 +478,8 @@ if __name__ == '__main__':
     port = int(args[0]) if args else 8766
     if lan: LAN_TOKEN = lan_token()
     http = Server(('0.0.0.0' if lan else '127.0.0.1', port), partial(Handler, directory=str(ROOT)))
-    print(f'http://127.0.0.1:{http.server_port}'+(' (also on the local network: agent API only, token in agent-config.local.json visionToken)' if lan else ''), flush=True); 
+    if sys.stdout.isatty(): sys.stdout.write('\x1b]0;modos-system\x07')   # its terminal's title (the agent bridge's is modos-agent)
+    print(f'modos-system: http://127.0.0.1:{http.server_port}'+(' (also on the local network: agent API only, token in agent-config.local.json visionToken)' if lan else ''), flush=True); 
     import atexit, signal; atexit.register(stop_bridges)
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))   # stopped (kill): the bridges it started stop with it
     try: http.serve_forever()

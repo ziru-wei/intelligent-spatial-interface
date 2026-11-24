@@ -49,7 +49,7 @@ body.pipeline-bottom .pv-opts li{grid-template-columns:minmax(0,1fr) 34px 26px}
 body.pipeline-bottom .pv-opts li:nth-child(n+7){display:none}
 
 /* In / Looking at, in the camera view's top-right corner (placed by app.mjs placeWhere) */
-.where{position:absolute;z-index:3;pointer-events:none;display:grid;grid-template-columns:auto auto;gap:2px 8px;padding:7px 10px;border-radius:9px;background:rgba(12,13,15,.62);backdrop-filter:blur(6px);font:11px/1.3 system-ui;color:#fff}
+.where{position:absolute;z-index:3;pointer-events:none;display:grid;grid-template-columns:auto auto;gap:0 6px;padding:3px 8px;border-radius:7px;background:rgba(12,13,15,.62);backdrop-filter:blur(6px);font:9.5px/1.25 system-ui;color:#fff}
 .where span{color:#a9adb4}.where b{font-weight:600}
 
 /* presentation mode */
@@ -74,6 +74,13 @@ body.present.pipeline-bottom #camera-col #pipeline{grid-column:1;grid-row:2;widt
 
 /* Request: each question and what it is about; Context info: where each MOD took its info from */
 .pv-qs{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:3px}.pv-qs li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;font-size:11.5px;color:#e8e9eb}
+.pv-qs li.focus .pv-qt{color:#fff}.pv-qs li.focus .pv-qt::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#3ff0ff;margin:0 6px 1px 0;vertical-align:middle}
+.pv-themes li{color:#6e7178}.pv-themes li.on .pv-qt{color:#fff;font-weight:700}.pv-themes li.rel .pv-qt{color:#a9adb4;font-weight:700}
+.pv-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.pv-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px 0;font-size:11px;color:#9a9da4}
+.pv-open{width:24px;height:24px;border-radius:50%;border:1px solid #3a3c42;display:grid;place-items:center;color:#c9cbd0}
+.pv-open:hover{border-color:#8a8d94;color:#fff}
+.pv-open svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .pv-qs li.wait{color:#5f6268}.pv-qt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pv-qa{color:#9a9da4}.pv-qa b{color:#fff;font-weight:600}
 .pv-from{font-size:10.5px;color:#8a8d94;margin:-2px 0 4px}.pv-chips{display:flex;flex-wrap:wrap;gap:4px}
 body.present .pv-qs li{font-size:13px}body.present .pv-from{font-size:12px}
@@ -87,7 +94,7 @@ body.example #camera-col{grid-template-rows:minmax(0,1fr) auto auto;align-items:
 body.example #camera-col>#stage{grid-row:1;height:min(calc(100vh - 104px),calc(64vw * .75))!important;align-self:center}
 body.example #camera-col>.player{display:flex!important;grid-column:1;grid-row:2;align-items:center;gap:8px;padding:0 14px}
 body.example.asking #camera-col>#ask{display:flex!important;grid-column:1;grid-row:3;gap:6px;margin:0 14px}
-body.example.asking #camera-col>#ask #ask-input{flex:1}
+body.example.asking #camera-col>#ask .ask-box{flex:1}
 body.example.asking #ask-delete{display:inline-flex;align-items:center;padding:0 12px}
 body.example #camera-col #pipeline{grid-row:1 / span 3}
 body.example:not(.asking) #camera-col>#ask{display:none!important}

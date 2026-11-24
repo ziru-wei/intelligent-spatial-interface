@@ -27,20 +27,39 @@ function timeseries(name,sel,body){
   const questions={};
   // a date as people say it: its weekday and how far from today (a model does not work out that 2026-11-21 is this Saturday)
   const WEEKDAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const said=date=>{const off=rows.find(e=>e.date===date)?.day_offset,wd=WEEKDAYS[new Date(date+'T12:00:00Z').getUTCDay()];
-    const rel=off==null?'':off===0?', today':off===1?', tomorrow':off===-1?', yesterday':off>1?`, in ${off} days`:`, ${-off} days ago`;return `${wd} ${date}${rel}`;};
-  dates.forEach((date,i)=>questions[`${name}_date_${i}`]=score(`Does user_question ask about ${said(date)}, directly or for a related calendar event? Resolve relative dates using time.date. Next week means the next seven days; this weekend means the coming Saturday and Sunday, not the days before them. Only when user_question names no day or time span at all does it ask about today. Do not substitute an available date for an unavailable requested date.`));
+  // and which week it is in, in the words people use for it (this week runs to Sunday; the weekend is its Saturday and Sunday)
+  const todayDow=(()=>{const d=rows.find(e=>e.day_offset===0)?.date;return d?new Date(d+'T12:00:00Z').getUTCDay():null;})(),toSun=todayDow==null?null:(7-todayDow)%7;
+  const said=date=>{const off=rows.find(e=>e.date===date)?.day_offset,dw=new Date(date+'T12:00:00Z').getUTCDay(),wd=WEEKDAYS[dw];
+    const rel=off==null?'':off===0?', today':off===1?', tomorrow':off===-1?', yesterday':off>1?`, in ${off} days`:`, ${-off} days ago`;
+    const week=toSun==null||off==null||off<0?'':off<=toSun?`, this week${[6,0].includes(dw)?', this weekend':''}${off===toSun?', the last day of this week':''}`:off<=toSun+7?', next week':'';
+    return `${wd} ${date}${rel}${week}`;};
+  dates.forEach((date,i)=>questions[`${name}_date_${i}`]=score(`Does user_question ask about ${said(date)}, directly or for a related calendar event? Resolve relative dates using time.date. Each day carries its week in words (this week, this weekend, next week); this weekend means the coming Saturday and Sunday, not the days before them. Only when user_question names no day or time span at all does it ask about today. Do not substitute an available date for an unavailable requested date.`));
+  // Days asked as a stretch ("this week", "the weekend", "the next three days", "Monday to Wednesday") are one choice of its first and
+  // last day, not each day judged on its own (each day of "this week" alone scores under .5); days apart ("today or Saturday?") are
+  // judged one by one (the scores above). The days as people say them (said).
+  const DAYS='Resolve relative dates using time.date and the words each day carries (this week, this weekend, the last day of this week, next week); only when it names no day at all does it ask about today.';
+  const dayOptions=Object.fromEntries(dates.map((d,i)=>[`d${i}`,said(d)]));
+  if(dates.length>1){
+    questions[`${name}_span`]=choose('How does user_question name the days it asks about?',{stretch:'one day, or consecutive days (a weekend, a week, the next few days, from one day to another)',apart:'days apart from each other ("today or Saturday?")'});
+    questions[`${name}_from`]=choose(`Which is the first day user_question asks about? ${DAYS}`,dayOptions);
+    questions[`${name}_to`]=choose(`Which is the last day user_question asks about (the same as the first for one day)? ${DAYS}`,dayOptions);}
   slots.forEach((t,i)=>questions[`${name}_slot_${i}`]=score(`Is ${t} within the time of day user_question asks about? Morning=before 12:00, afternoon=12:00-17:59, evening/tonight=18:00 onward. Whole days include every time. An exact time selects the nearest available one; a bounded range includes only times within it. Available times: ${slots.join(', ')}.`));
-  // the focus: the one entry that answers the question (when asked whether something happens, the entry where it happens); the selected
-  // entries then open there instead of at their start. A choice among the entries as the model sees them (data below), in the same
-  // call whatever is selected; within an entry, its moment of the same summary (else its first). Not asked over more entries than a
-  // choice holds.
-  const focus=`${name}_focus`,line=e=>[said(e.date),e.period||TIME(e),e.summary].filter(Boolean).join(' · ');
-  if(rows.length>1&&rows.length<255)questions[focus]=choose('Which one entry answers user_question most directly: where what it asks about happens, or the time it names? Choose none when no single entry answers it better than the others.',
-    {none:'no single entry',...Object.fromEntries(rows.map((e,i)=>[`e${i}`,line(e)]))});
+  // the focus: the one moment that answers the question (when asked whether something happens or whether to prepare for it, the
+  // first moment it happens from now on); the selected entries then open there instead of at their start. Chosen as an entry, shown
+  // with its moments (an entry's own summary hides them: a clear morning with thunder showers at 11:00), and the time of day within
+  // it, in the same call whatever is selected (the moments themselves are more than a choice holds). Not asked over more entries
+  // than a choice holds.
+  const focus=`${name}_focus`,focusTime=`${name}_focus_time`,moments=e=>e.samples?.length?e.samples:[e];
+  const line=e=>[said(e.date),e.period||TIME(e),e.summary,e.samples?.length?`(${e.samples.map(m=>[TIME(m),m.summary].filter(Boolean).join(' ')).join(', ')})`:''].filter(Boolean).join(' · ');
+  if(rows.length>1&&rows.length<255){
+    questions[focus]=choose('Which one entry answers user_question most directly: where what it asks about happens (when it asks whether something happens or whether to prepare for it, the first such entry from time.local on), or the time it names? Choose none when no single entry answers it better than the others.',
+      {none:'no single entry',...Object.fromEntries(rows.map((e,i)=>[`e${i}`,line(e)]))});
+    if(slots.length>1)questions[focusTime]=choose('In that entry, at which time does what user_question asks about happen first (from time.local on), or which time does it name? Choose none when no time answers it better than the others.',
+      {none:'no single time',...Object.fromEntries(slots.map((t,i)=>[`t${i}`,t]))});}
   const data={forecast:rows.map(({samples,...e})=>({id:e.id,date:e.date,day:said(e.date),period:e.period,time:e.time,summary:e.summary,temp_c:e.temp_c}))};
   return {questions,data,interpret(a){
-    const selDates=stretches(dates,i=>a[`${name}_date_${i}`].score),selSlots=new Set(slots.filter((_,i)=>a[`${name}_slot_${i}`].score>=.5));
+    const day=k=>{const m=a[k]?.choice?.match(/^d(\d+)$/);return m?Number(m[1]):null;},from=day(`${name}_from`),to=day(`${name}_to`);
+    const selDates=a[`${name}_span`]?.choice==='stretch'&&from!=null?new Set(dates.slice(Math.min(from,to??from),Math.max(from,to??from)+1)):stretches(dates,i=>a[`${name}_date_${i}`].score),selSlots=new Set(slots.filter((_,i)=>a[`${name}_slot_${i}`].score>=.5));
     const ids=[];
     for(const row of rows){
       if(!selDates.has(row.date))continue;
@@ -50,9 +69,11 @@ function timeseries(name,sel,body){
     if(!ids.length)return null;
     // derived (primitives.json data-widget.layout): the rule, not a model, picks the layout from what was selected.
     const layout=selDates.size>1?'weather-day-buttons':selSlots.size===1?'weather-single':'weather-timeline';
-    // the focus counts only when it is one of the selected moments
-    const n=a[focus]?.choice?.match(/^e(\d+)$/),row=n&&rows[Number(n[1])],moments=row?(row.samples?.length?row.samples:[row]):[];
-    const pool=row&&ids.includes(row.id)?moments:moments.filter(m=>ids.includes(m.id)),f=pool.find(m=>m.summary&&m.summary===row.summary)||pool[0],inside=!!f;
+    // the focus counts only when it is one of the selected moments: the chosen entry's moment at the chosen time, else its moment of
+    // the same summary, else its first
+    const n=a[focus]?.choice?.match(/^e(\d+)$/),row=n&&rows[Number(n[1])],tn=a[focusTime]?.choice?.match(/^t(\d+)$/),at=tn&&slots[Number(tn[1])];
+    const pool=row?moments(row).filter(m=>ids.includes(row.id)||ids.includes(m.id)):[];
+    const f=pool.find(m=>at&&TIME(m)===at)||pool.find(m=>m.summary&&m.summary===row.summary)||pool[0],inside=!!f;
     return {kind:'timeseries',ids,layout,dates:[...selDates],times:[...selSlots],...(inside?{focus:f.id}:{})};
   }};
 }
@@ -146,12 +167,14 @@ export function stateText(item){
 // those meant but not named ("my advisor"): everyone at .5 or above; with no one named or scored that high, the best one at .3 or above.
 const named=(p,q)=>[p.name,String(p.name).split(/\s+/)[0]].some(n=>n&&n.length>1&&new RegExp(`\\b${n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'i').test(q));
 function contacts(name,body,question=''){
-  const people=body.data,questions=Object.fromEntries(people.map((p,i)=>[`${name}_${i}`,score(`Does user_question want to send or share it with ${p.name} (${p.role})?`)]));
+  const people=body.data,said=people.filter(p=>named(p,question)).map(p=>p.id),questions=Object.fromEntries(people.map((p,i)=>[`${name}_${i}`,{...score(`Does user_question want to send or share it with ${p.name} (${p.role})?`),label:p.name}]));
   return {questions,data:null,interpret(a){const s=people.map((p,i)=>[p,a[`${name}_${i}`]?.score??0]);let on=s.filter(([,v])=>v>=.5);
     on=[...new Set([...people.filter(p=>named(p,question)).map(p=>s.find(([x])=>x===p)),...on])];
     if(!on.length){const best=[...s].sort((x,y)=>y[1]-x[1])[0];if(best&&best[1]>=.3)on=[best];}
     on.sort((x,y)=>people.indexOf(x[0])-people.indexOf(y[0]));
-    return on.length?{kind:'contacts',people:on.map(([p])=>({id:p.id,name:p.name,email:p.email}))}:null;}};
+    return on.length?{kind:'contacts',people:on.map(([p])=>({id:p.id,name:p.name,email:p.email}))}:null;},
+    // what it rests on: the names said, when any (more words about the message do not ask again whom it goes to)
+    evidence:said.length?JSON.stringify(['named',said]):null};
 }
 function contact(name,body){
   const people=body.data,options={nobody:'Nobody named or meant'};people.forEach((p,i)=>options[`c${i}`]=`${p.name} (${p.role})`);
@@ -170,6 +193,8 @@ function place(name,sel,ctx){
 
 /** For one MOD: {questions, data, interpret(answers) → {selector: selection}}. Only data is chosen here, never how it is shown. bodies: {itemId: body} of the items
  *  selectors read. No questions means no decision call. */
+// Each selector also says what its answer rests on (`evidence`), so a revision of a question typed live asks again only the selectors
+// whose evidence changed (src: modos/fill.mjs). By default: the MOD's own questions, the referent and what is pointed at.
 export function selectorQuestions(mod,bodies,ctx){
   const parts=activeSelectors(mod).map(([name,sel])=>{
     if(sel.kind==='enum')return [name,enumerated(name,sel)];
@@ -184,7 +209,9 @@ export function selectorQuestions(mod,bodies,ctx){
     if(Array.isArray(body.data)&&body.data[0]?.email&&sel.kind==='pick-many')return [name,contacts(name,body,ctx.question)];
     throw Error(`MOD ${mod.id}: selector ${name} (${sel.kind} over ${body.type}) is not supported yet.`);
   });
+  const evidence=JSON.stringify([ctx.about??ctx.question??'',ctx.reference?.referent?.entity??ctx.reference?.status??null,ctx.view?.candidate??null]);
   return {
+    selectors:parts.map(([n,p])=>({name:n,keys:Object.keys(p.questions),evidence:p.evidence||evidence})),
     questions:Object.assign({},...parts.map(([,p])=>p.questions)),
     data:Object.fromEntries(parts.filter(([,p])=>p.data).map(([n,p])=>[n,p.data])),
     interpret:a=>Object.fromEntries(parts.map(([n,p])=>[n,p.interpret(a)]))

@@ -28,6 +28,12 @@ test('screen-readable text goes on the surface the person relates to, with only 
  const pose=await place({frame:0,aspect:.4,textMetrics:metrics},surfaceContext());
  assert.equal(pose.unreadable,undefined);assert.equal(pose.kind,'plane');assert.equal(pose.surfaceId,'wall:front');assert.equal(pose.relation,'B');assert.ok(Math.abs(pose.position.z+2)<=.04);assert.ok(pose.viewMetrics.minPx>=TEXT_VIEW.minPx&&pose.viewMetrics.maxPx<=TEXT_VIEW.maxPx);
 });
+test('Write on surfaces off (the UI library default): the default text form floats even before a good surface; embedded-only still waits',async()=>{
+ const off={...surfaceContext(),getSettings:()=>({embed:false})},DECLARED={fixed:['floatingText'],flexible:[{cue:'embeddedText',when:'surface.score>=0.5',instead_of:'floatingText'}]};
+ const on=await placeText({frame:0,aspect:.4,textMetrics:metrics,text_ui:DECLARED},{...surfaceContext(),getSettings:()=>({embed:true})});assert.equal(on.kind,'plane');
+ const float=await placeText({frame:0,aspect:.4,textMetrics:metrics,text_ui:DECLARED},off);assert.equal(float.kind,'view-float');assert.equal(float.viewFixed,true);
+ assert.equal((await place({frame:0,aspect:.4,textMetrics:metrics},off)).kind,'plane');
+});
 test('no relation: no surface pose for embedded-only text; the default text form floats instead',async()=>{
  const ctx=surfaceContext();ctx.relationSurface=null;
  const pose=await place({frame:0,aspect:.4,textMetrics:metrics},ctx);assert.equal(pose.unreadable,true);assert.equal(pose.kind,'unavailable');

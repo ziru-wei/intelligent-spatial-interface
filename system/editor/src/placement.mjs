@@ -204,7 +204,7 @@ function bubblePlacement(response,ctx){
   const center=new THREE.Vector3(...t.center),top=center.clone().setY(t.center[1]+t.size[1]/2),yaw=Math.atan2(eye.x-center.x,eye.z-center.z);
   const quaternion=new THREE.Quaternion().setFromAxisAngle(UP,yaw),inView=pose=>textViewMetrics(centeredPose(pose,aspect),camera,viewport,response.textMetrics);
   const previous=response.previousPose,settings=ctx.getSettings?.(response)||{},stability=settings.stability??0,state=response.anchorState||{};
-  // Anchored (UI library: Anchor dialogue bubble): always just above the thing, sized once for the view where it was asked; it does not
+  // Anchored (Response: Anchor dialogue bubble): always just above the thing, sized once for the view where it was asked; it does not
   // move to fit the view, and it turns to the user every frame (src/agent.mjs orient).
   if(settings.bubbleAnchored){
     if(previous?.kind==='bubble'&&previous.anchored&&previous.objectId===response.dialogue.speaker)
@@ -311,7 +311,7 @@ async function infoPlacement(response,ctx){
   const pose=ranked[0]?.p&&{...ranked[0].p,infoShortlist:ranked.map(({p,s})=>({surface:p.surfaceId,at:p.surfaceAnchor.toArray().map(v=>+v.toFixed(2)),layout:p.layout,...s}))},spot=ranked[0]?.s;   // infoShortlist: for inspection
   // Embedded Text when the declared text form holds for this surface score (response.text_ui, or the library default).
   const score=pose?surfaceScore(pose,camera,viewport.width/viewport.height):0;
-  if(pose&&embedsText(response.text_ui||DEFAULT_TEXT_UI,score))return {...pose,infoBox:t.id,infoSettled:true,infoSpot:spot,surfaceScore:score};
+  if(pose&&writesOnSurfaces(ctx,response)&&embedsText(response.text_ui||DEFAULT_TEXT_UI,score))return {...pose,infoBox:t.id,infoSettled:true,infoSpot:spot,surfaceScore:score};
   // A float stays where it was put, unless it did not fit the view then: it keeps looking, and moves only to a spot that fits and is
   // not well above the eye (INFO_FLOAT.moveAbove; looking up, nearly all that fits is above the eye, and text high above the line of
   // sight is worse than text a little past the edge of the view). Once in view it stays.
@@ -369,6 +369,9 @@ export function surfaceScore(pose,camera,aspect=1){
 }
 /** Whether the declared text form for this spot is Embedded Text (no declaration: the earlier behaviour, decided by the caller). */
 export const embedsText=(ui,score)=>partsToDraw(ui,{'surface.score':score}).includes('embeddedText');
+// The Response tab's Write on surfaces (src/ui-settings.mjs text.embed): off, no answer is Embedded Text. Not given (no settings), the
+// declared rule alone decides.
+const writesOnSurfaces=(ctx,response)=>ctx.getSettings?.(response)?.embed!==false;
 
 // Floating Text (the text form when no surface scores well enough): fixed to the camera, not to the room. Centred, its bottom edge just
 // above the question's caption (FLOAT_VIEW.gap above the caption's top, ctx.captionTop, in the view's -1..1 height; with no caption,
@@ -415,6 +418,8 @@ export async function place(response,ctx){
   // the form stays: a float stays a float (fixed to the camera, placed again every frame); text on a surface stays while it scores 0.4
   // or more there (no flicker at 0.5).
   if(response.previousPose?.declaredFloat)return floatInView(response,ctx,'declared floating');
+  // Write on surfaces off: Floating Text, wherever the declaration has it (one without it still waits for a surface)
+  if(!writesOnSurfaces(ctx,response)&&partsToDraw(response.text_ui,{'surface.score':0}).includes('floatingText'))return floatInView(response,ctx,'floating (Write on surfaces off)');
   const surface=await surfacePlacement(response,ctx);
   const camera=ctx.frameCamera(response.frame),viewport=ctx.viewport(),score=surfaceScore(surface,camera,viewport.width/viewport.height);
   const held=surface.reusedSurface&&score>=.4;

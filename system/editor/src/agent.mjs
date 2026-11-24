@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {responseReady,responseSlot,presentationResponses,latestPresentation} from './response-parts.mjs';
+import {responseReady,responseSlot,presentationResponses,latestPresentation,FRAME_EPS} from './response-parts.mjs';
 import {place,readableSurfaceBasis} from './placement.mjs';
 import {pickStyle} from './legibility.mjs';
 import {createLegibilityTracker} from './legibility-temporal.mjs';
@@ -16,7 +16,7 @@ const PX=1024,PAD=64,FONT='system-ui,-apple-system,"PingFang SC","Hiragino Sans 
 // their first texture is drawn.
 const INFO_FONT=`Mansalva,${FONT}`;let infoFont=null;
 const fontFor=r=>r.info?.key?INFO_FONT:FONT;
-// How answer text is set (UI library › Text, src/app.mjs; setTextBehavior): bodySize scales the whole answer in the room (the body's x-height
+// How answer text is set (Response tab, src/app.mjs; setTextBehavior): bodySize scales the whole answer in the room (the body's x-height
 // on screen, src/text-view.mjs), headingSize the heading against the body, showHeading shows or hides the title and markdown headings
 // ("# …", "## …" lines) in the body. writing: an answer that appears while the user waits for it (asked, or replayed) is written
 // character by character at writingSpeed characters per second, writingStrokes drawing each with a pen (src/text-writing.mjs).
@@ -55,6 +55,44 @@ const TITLE_LEAD=1.08,BODY_LEAD=1.22,TITLE_GAP=6;
 const GLASS_FEATHER=26;
 /** An answer's text as ModOS draws it (a canvas texture; image.box: its ink), for views outside the agent layer (the Vocabulary). */
 export const answerTexture=(r,{dark=false,fit=false,columns=null}={})=>glowTexture(r,dark,fit||columns?{fit,columns}:null);
+const YES_NO_MARK={Yes:{color:'#3ddc84',shape:'check'},No:{color:'#ff5d5d',shape:'cross'}};
+// The mark and its word, in the mark's colour, at the heading line's place (x: the line's left, y: its top).
+function drawMark(ctx,l,font,x,y){
+  const s=l.size,{color,shape}=l.mark,cx=x+s*.42,cy=y+s*.52,k=s*.3;
+  ctx.shadowBlur=10;ctx.shadowColor='rgba(0,0,0,.35)';ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=s*.13;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
+  if(shape==='check'){ctx.moveTo(cx-k,cy);ctx.lineTo(cx-k*.25,cy+k*.75);ctx.lineTo(cx+k*1.05,cy-k*.8);}
+  else{ctx.moveTo(cx-k*.8,cy-k*.8);ctx.lineTo(cx+k*.8,cy+k*.8);ctx.moveTo(cx+k*.8,cy-k*.8);ctx.lineTo(cx-k*.8,cy+k*.8);}
+  ctx.stroke();ctx.font=font;ctx.textBaseline='top';ctx.fillText(l.text,x+l.indentPx,y);
+}
+// The writing ball: while the language model writes the text anew (or for the first time), a white ball breathes at its left, at
+// full brightness even while the text it replaces is dimmed (text_writing). Its look is the question's waiting dot's.
+const WRITING_BREATH_MS=1600,WRITING_SIZE=2.2;   // the ball's square, in first lines (its core is about a third of it)
+const writingBall=()=>new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.ShaderMaterial({transparent:true,toneMapped:false,depthWrite:false,
+  uniforms:{opacity:{value:0}},
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:`uniform float opacity;varying vec2 vUv;
+    void main(){float r=length(vUv-.5);
+      float core=1.-smoothstep(.13,.19,r),halo=.25*(1.-smoothstep(.16,.5,r));
+      gl_FragColor=vec4(mix(vec3(.8,.9,1.),vec3(1.),core),max(core,halo)*opacity);
+      #include <colorspace_fragment>
+    }`}));
+/** The ball's state this frame: o, how visible the answer is (before a stale text's dimming); breathing while it shows. */
+function syncWriting(w,o,now){
+  const d=w.userData,on=o>0&&!!d.response.text_writing,img=d.text.material.map?.image;
+  if(!on||!img?.writingAt){if(d.writing)d.writing.visible=false;return false;}
+  if(!d.writing){d.writing=writingBall();d.writing.renderOrder=5;w.add(d.writing);}
+  const b=.5+.5*Math.sin(now/WRITING_BREATH_MS*2*Math.PI),u=d.width/img.width,s=WRITING_SIZE*img.writingAt.size*u*(.85+.2*b);
+  d.writing.scale.set(s,s,1);d.writing.position.set((img.writingAt.x/img.width-.5)*d.width,(.5-img.writingAt.y/img.height)*d.height,.001);
+  d.writing.material.uniforms.opacity.value=o*(.45+.55*b);d.writing.visible=true;return true;
+}
+// A yes-or-no heading's mark on its own layer over the text (not tinted with it), as bright as the text.
+function syncMark(w,o){
+  const d=w.userData,src=d.text.material.map,img=src?.image;
+  if(!img?.mark){if(d.mark)d.mark.visible=false;return;}
+  if(!d.mark){d.mark=new THREE.Mesh(d.text.geometry,new THREE.MeshBasicMaterial({transparent:true,toneMapped:false,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-10}));d.mark.renderOrder=4;d.text.add(d.mark);}
+  if(d.mark.userData.src!==src){d.mark.material.map?.dispose();const t=new THREE.CanvasTexture(img.mark);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;d.mark.material.map=t;d.mark.material.needsUpdate=true;d.mark.userData.src=src;}
+  d.mark.visible=o>0;d.mark.material.opacity=o;
+}
 function glowTexture(r,dark=false,previousBudget=null){
   // fit (Floating Text, placed again every frame): the box is the text as it is, with no room kept for a streaming answer to grow into.
   const FONT=fontFor(r),ego=!!r.dialogue,fit=!!previousBudget?.fit,COLS=previousBudget?.columns||(ego?DIALOGUE_COLUMNS:PX),reserve=r.reserve_text&&!ego&&!fit;let W=COLS;
@@ -64,7 +102,10 @@ function glowTexture(r,dark=false,previousBudget=null){
   if(r.findmy?.status==='ambiguous')add('Which item do you mean?',600,46,0);
   const {headingSize:hs,showHeading,bodySize}=textBehavior,heading=72*hs;
   // Object-centric Dialogue is the thing talking: no heading, only what it says.
-  const titleStart=lines.length;if(r.title&&showHeading&&!ego)add(r.title,700,heading,0);
+  // A yes-or-no heading (the text's title form, modos/text.mjs) carries its mark: Yes a green check, No a red cross (Not sure plain),
+  // drawn on a layer of its own (`canvas.mark`) so the text's tint (legibility.mjs) does not change its colour.
+  const mark=r.title&&showHeading&&!ego?YES_NO_MARK[String(r.title).trim()]:null,markW=mark?Math.round(heading*1.05):0;
+  const titleStart=lines.length;if(r.title&&showHeading&&!ego){add(r.title,700,heading,0);if(mark)Object.assign(lines[titleStart],{mark,indentPx:markW});}
   const titleCount=lines.length-titleStart,titleLines=reserve&&showHeading?Math.max(2,titleCount,previousBudget?.titleLines||0):titleCount;   // no room kept for a hidden heading
   for(let i=titleCount;i<titleLines;i++)lines.push({text:'',weight:700,size:heading,gap:i?6:0,lead:TITLE_LEAD});
   // The body, paragraph by paragraph; a markdown heading line ("# …": the heading size, "## …" and deeper: a little smaller) unless
@@ -83,20 +124,25 @@ function glowTexture(r,dark=false,previousBudget=null){
   canvas.width=W;canvas.height=Math.ceil(PAD*2+lines.reduce((h,l)=>h+l.gap+l.size*(l.lead||BODY_LEAD),0)+footer);canvas.weatherFooter=footer;
   canvas.layoutBudget={titleLines,bodyLines,footer,columns:COLS,fit};
   // The ink's box in canvas pixels (the glass backs exactly this): widest line, first line's top to last line's baseline area.
-  let right=PAD,bottom=PAD;{let y=PAD;for(const l of lines){y+=l.gap;ctx.font=`${l.weight} ${l.size}px ${FONT}`;right=Math.max(right,PAD+(l.indent?48:0)+ctx.measureText(l.text).width);bottom=y+l.size*(ego?1.22:1);y+=l.size*(l.lead||BODY_LEAD);}}
+  let right=PAD,bottom=PAD;{let y=PAD;for(const l of lines){y+=l.gap;ctx.font=`${l.weight} ${l.size}px ${FONT}`;right=Math.max(right,PAD+(l.indent?48:0)+(l.indentPx||0)+ctx.measureText(l.text).width);bottom=y+l.size*(ego?1.22:1);y+=l.size*(l.lead||BODY_LEAD);}}
   const box={x0:PAD,x1:footer||reserve?W-PAD:right,y0:PAD,y1:footer||reserve?canvas.height-32:bottom};
   ctx.textBaseline='top';
   // White: the material's colour tints text and glow alike (one glowing colour, picked per answer in legibility.mjs).
   // Dark text: the halo is a faint soft shadow; a full glow would read as a grey haze around the letters.
   const glow=dark?[[10,'rgba(255,255,255,.25)']]:[[28,'rgba(255,255,255,.8)'],[8,'rgba(255,255,255,.9)']],ink=[];
-  {let y=PAD;for(const l of lines){y+=l.gap;if(l.text&&!l.placeholder)ink.push({text:l.text,font:`${l.weight} ${l.size}px ${FONT}`,size:l.size,x:PAD+(l.indent?48:0),y,bullet:l.bullet,bulletX:PAD+8});y+=l.size*(l.lead||BODY_LEAD);}}
+  let markCanvas=null;
+  {let y=PAD;for(const l of lines){y+=l.gap;
+    if(l.mark){markCanvas=document.createElement('canvas');markCanvas.width=canvas.width;markCanvas.height=canvas.height;drawMark(markCanvas.getContext('2d'),l,`${l.weight} ${l.size}px ${FONT}`,PAD,y);}
+    else if(l.text&&!l.placeholder)ink.push({text:l.text,font:`${l.weight} ${l.size}px ${FONT}`,size:l.size,x:PAD+(l.indent?48:0),y,bullet:l.bullet,bulletX:PAD+8});y+=l.size*(l.lead||BODY_LEAD);}}
   for(const [blur,color] of glow){
     ctx.shadowBlur=blur;ctx.shadowColor=color;ctx.fillStyle='#ffffff';
     for(const l of ink){ctx.font=l.font;if(l.bullet)ctx.fillText('·',l.bulletX,l.y);ctx.fillText(l.text,l.x,l.y);}
   }
   canvas.ink={lines:ink,glow};   // for the writing effect (src/text-writing.mjs)
+  if(markCanvas)canvas.mark=markCanvas;
   {let y=PAD;for(const l of lines){y+=l.gap;if(l.placeholder){ctx.shadowBlur=0;ctx.font=`${l.weight} ${l.size}px ${FONT}`;ctx.fillStyle='rgba(255,255,255,.75)';ctx.fillText(l.text,PAD,y);}y+=l.size*(l.lead||BODY_LEAD);}}
   canvas.box=box;
+  canvas.writingAt=(sz=>({x:box.x0-sz*.95,y:box.y0+sz*.55,size:sz}))(lines[0]?.size??46);   // the writing ball: left of the text, at its first line
   const xHeights=lines.map(l=>{ctx.font=`${l.weight} ${l.size}px ${FONT}`;const m=ctx.measureText('x');return m.actualBoundingBoxAscent+m.actualBoundingBoxDescent;});
   canvas.textMetrics={scale:bodySize,xHeightRatio:(xHeights.length?Math.min(...xHeights):bodyXHeight(ctx,FONT))/W,box:{x0:box.x0/W,x1:box.x1/W,y0:box.y0/canvas.height,y1:box.y1/canvas.height}};
   const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=8;return map;
@@ -308,10 +354,18 @@ export function focusQuestion(questions,t,heldId=null){
   if(heldId!=null)return questions.find(q=>q.id===heldId)||null;
   return questions.find(q=>q.status==='running'||q.status==='drafting')||[...questions].reverse().find(q=>Math.abs(t-q.t)<.06)||null;
 }
+/** What a typed question said e seconds after it began: its latest revision by then. */
+export function typedText(q,e){return (q.revisions||[]).filter(r=>r.at<=e+1e-6).at(-1)?.text||'';}
+// The caption's canvas height for two lines (captionTexture: 44 px type, 1.3 line height, 40 px padding), the band it always has.
+// How bright a text left in view is while it no longer answers what is asked (a draft revised, nothing new written yet).
+const TEXT_STALE=.4;
+const TEXT_FADE_MS=300;   // a text written anew: the old one fades out in place meanwhile
+const CAPTION_BAND_PX=Math.ceil(2*44*1.3+40);
 // Caption of the user's question, drawn in screen space at the bottom of the video (not anchored in the room).
-function captionTexture(text,shown=text){
+// tail: the last two lines (a long question being typed or spoken shows its newest words)
+function captionTexture(text,shown=text,{tail=false}={}){
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),W=1600,size=44,font=`500 ${size}px ${FONT}`;ctx.font=font;
-  const lines=wrap(ctx,text,W-120).slice(0,2);canvas.width=W;canvas.height=Math.ceil(Math.max(1,lines.length)*size*1.3+40);
+  const all=wrap(ctx,text,W-120),lines=tail?all.slice(-2):all.slice(0,2);canvas.width=W;canvas.height=Math.ceil(Math.max(1,lines.length)*size*1.3+40);
   ctx.font=font;ctx.textAlign='left';ctx.textBaseline='top';ctx.fillStyle='rgba(255,255,255,.92)';ctx.shadowColor='rgba(0,0,0,.85)';ctx.shadowBlur=10;
   // Reserve the complete question's layout so partial words cannot re-centre or move lines.
   let cursor=0;lines.forEach((l,i)=>{const at=text.indexOf(l,cursor),start=at<0?cursor:at;cursor=start+l.length;
@@ -323,8 +377,11 @@ function captionTexture(text,shown=text){
 export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onAnimate,...ctx}){
   ctx.frames=frames;modelOf=id=>ctx.entityBox?.(id)?.model||null;
   const group=new THREE.Group();group.name='agent-responses';scene.add(group);
-  const widgets=new Map(),thoughts=new Map();let hold=null,conversation=null,generation=0,time=0,timer=null,reportTimer=null,pending=null,syncing=null,questions=[],lastQuestionsKey='';
-  let sourceResponses=[],reconciling=false;
+  const widgets=new Map(),thoughts=new Map(),ghosts=new Set();let hold=null,conversation=null,generation=0,time=0,timer=null,reportTimer=null,pending=null,syncing=null,questions=[],lastQuestionsKey='';
+  // withdrawnParts: a typed question's parts that left its surface while it was typed (scripts/agent_store.py _withdraw), shown only
+  // while its typing is replayed (typing: {id, e}, e = seconds since the question began; src/response-parts.mjs typedReady)
+  let sourceResponses=[],withdrawnParts=[],typing=null,reconciling=false;
+  const sources=()=>[...sourceResponses,...withdrawnParts];
   // Delivery continues on a real-time clock after an early playback resume.
   const deliveries=new Map();
   const deliveryClocks=()=>new Map([...deliveries].map(([id,c])=>[id,{...c,h:c.h+(performance.now()-c.start)/1000}]));
@@ -342,8 +399,12 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
       }`}));
   caption.visible=waitingDot.visible=false;waitingDot.renderOrder=1;hudScene.add(caption,waitingDot);
   // The caption's top edge in the view's -1..1 height (null while none shows): Floating Text stands just above it (src/placement.mjs).
-  ctx.captionTop=()=>caption.visible?caption.position.y+caption.scale.y/2:null;
+  // The caption's band: room for two lines at the bottom of the view, kept whether or not a caption shows or how many lines it has, so
+  // what stands above it (Floating Text, the view stack) does not move as a question's words come, change or go. Its top, in the view's
+  // -1..1 height (set each frame with the view's aspect, renderHud).
+  let captionBand=null,showCaption=true;ctx.captionTop=()=>captionBand;   // showCaption: Input › Caption (off: no caption, and no band kept for it)
   let captionText='',captionKey='',captionId=null,captionStart=0,captionOwner=null,dismissedCaption=null;
+  let stackBase=null;   // the view stack's base while an answer stands (viewTop)
   function clearCaption(){caption.visible=waitingDot.visible=false;captionText='';captionId=null;captionKey='';}
   const url=p=>{const u=new URL(p,location.href);u.searchParams.set('session',sessionPath);if(conversation)u.searchParams.set('conversation',conversation);return u;};
   const post=(p,body)=>fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:sessionPath,conversation,...body})}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;});
@@ -361,7 +422,8 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
       if(!textBehavior.writing){wr.n=Infinity;drawWritten(canvas,Infinity);d.text.material.map.needsUpdate=true;continue;}
       if(!w.visible){wr.last=now;continue;}
       const total=writtenLength(canvas),streaming=d.response.stream?.status==='streaming';
-      if(!total&&d.response.reserve_text){wr.last=now;continue;}   // words still to come: nothing to write yet
+      // words still to come: nothing to write yet; with the question answered and no words (Send alone: its message is in its card), none will come
+      if(!total&&d.response.reserve_text){if(questions.find(q=>q.id===d.response.question_id)?.status==='answered'&&!d.response.stream)wr.n=Infinity;else wr.last=now;continue;}
       wr.n=Math.min(total,wr.n+(now-wr.last)/1000*textBehavior.writingSpeed);wr.last=now;
       if(wr.n>=total&&!streaming)wr.n=Infinity;
       const key=`${wr.n}|${textBehavior.writingStrokes}|${outlinesReady()}`;
@@ -371,7 +433,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     if(active)onAnimate?.();
     return active;
   }
-  function removeAll(){deliveries.clear();writers.clear();sourceResponses=[];for(const w of [...widgets.values(),...thoughts.values()]){group.remove(w);dispose(w);}widgets.clear();thoughts.clear();}
+  function removeAll(){deliveries.clear();writers.clear();sourceResponses=[];withdrawnParts=[];for(const w of [...widgets.values(),...thoughts.values(),...[...ghosts].map(g=>g.w)]){group.remove(w);dispose(w);}widgets.clear();thoughts.clear();ghosts.clear();}
   // One poll returns the conversation's questions and responses; widgets follow the responses.
   async function sync(){
     if(!conversation)return null;const gen=generation;
@@ -380,7 +442,7 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     // New or changed questions change the caption: redraw.
     const questionsKey=JSON.stringify(status.questions.map(q=>[q.id,q.status,q.trace?.length||0]));questions=status.questions;
     if(questionsKey!==lastQuestionsKey){lastQuestionsKey=questionsKey;apply();onAnimate?.();}
-    sourceResponses=status.responses;await reconcileWidgets();
+    sourceResponses=status.responses;withdrawnParts=(status.withdrawn||[]).map(r=>({...r,withdrawn:true}));await reconcileWidgets();
     onStatus?.(status);return status;
   }
   // Bumped when the surfaces text is placed on change (relayout): widgets placed against the old ones are not kept.
@@ -388,22 +450,25 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
   async function reconcileWidgets(){
     if(reconciling)return;reconciling=true;const gen=generation,epoch=placementEpoch;let changed=false;
     try{
-      const list=presentationResponses(sourceResponses,questions,hold,deliveryClocks()),ids=new Set(list.map(r=>r.id));
+      const list=presentationResponses(sources(),questions,hold,deliveryClocks(),typing),ids=new Set(list.map(r=>r.id));
       for(const [id,w] of widgets)if(!ids.has(id)){group.remove(w);dispose(w);widgets.delete(id);changed=true;}
       for(const r of list){
         const old=widgets.get(r.id);
         if(old&&old.userData.response.component_key===r.component_key)continue;
         // Streamed text updates in place; an object mod part that arrives meanwhile (or changes) places the answer again, on its object.
-        if(old&&r.reserve_text&&(old.userData.response.dialogue?.speaker||null)===(r.dialogue?.speaker||null)&&updateResponseWidget(old,r)){changed=true;continue;}
+        // A text written anew (it answers a newer question) is not: the new one is made, and the old fades out where it stood.
+        const rewritten=!!old&&old.userData.response.text_version!=null&&r.text_version!==old.userData.response.text_version;
+        if(old&&!rewritten&&r.reserve_text&&(old.userData.response.dialogue?.speaker||null)===(r.dialogue?.speaker||null)&&updateResponseWidget(old,r)){changed=true;continue;}
         const q=questions.find(q=>q.id===r.question_id),frame=q?.frame??r.frame;
         const w=await createResponseWidget(r,ctx,list.filter(o=>o.id<r.id&&o.frame===r.frame).length,frame,old);
-        const current=presentationResponses(sourceResponses,questions,hold,deliveryClocks()).find(p=>p.id===r.id);
+        const current=presentationResponses(sources(),questions,hold,deliveryClocks(),typing).find(p=>p.id===r.id);
         if(gen!==generation||epoch!==placementEpoch||!current||(current.component_key!==r.component_key&&((current.dialogue?.speaker||null)!==(r.dialogue?.speaker||null)||!updateResponseWidget(w,current)))){dispose(w);continue;}
         // A bubble that grows as its words stream in is the same bubble: it takes the old one's look and settled state at once, so it never
         // blinks out or shows a moment of glass while it is set again.
         if(isBubble(w))bubbleStyle(w);   // a bubble has its own fixed look from its first frame (no glass)
         if(old&&isBubble(old)&&isBubble(w)){for(const k of ['rating','compositeInitialized','adaptedFrame','adaptedView','adaptedStability','placementDecision','replay','compositePass','legibility','style'])w.userData[k]=old.userData[k];}
-        if(old){group.remove(old);dispose(old);}
+        if(old&&rewritten)ghosts.add({w:old,at:performance.now(),o:old.userData.text.material.opacity});
+        else if(old){group.remove(old);dispose(old);}
         widgets.set(r.id,w);group.add(w);changed=true;
       }
     }finally{reconciling=false;}
@@ -418,19 +483,36 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
   function apply(){
     void reconcileWidgets().catch(e=>console.warn('response container',e));
     const now=performance.now(),clocks=deliveryClocks();
-    const latest=latestPresentation([...widgets.values()].map(w=>w.userData.response),questions,time,hold,clocks);
+    const latest=latestPresentation([...widgets.values()].map(w=>w.userData.response),questions,time,hold,clocks,typing);let breathing=false;
     for(const w of widgets.values()){
       const r=w.userData.response,q=questions.find(q=>q.id===r.question_id),t0=q?q.t:r.t;let o;
       const delivery=clocks.get(q?.id);
-      if(q&&hold?.id===q.id)o=responseReady(r,q,hold)?1:0;
-      else if(delivery)o=time>=t0-1e-6&&responseReady(r,q,delivery)&&(!settingsOf(r).autoHide||q.status!=='answered'||delivery.h<(q.latency||0)+(q.live?.read_s??READING.read_s))?1:0;
-      else o=time>=t0-1e-6&&(!settingsOf(r).autoHide||time<=t0+.06)?1:0;
+      if(q&&typing?.id===q.id)o=1;   // the parts it showed then (presentationResponses)
+      else if(q&&hold?.id===q.id)o=responseReady(r,q,hold)?1:0;
+      else if(delivery)o=time>=t0-FRAME_EPS&&responseReady(r,q,delivery)&&(!settingsOf(r).autoHide||q.status!=='answered'||delivery.h<(q.latency||0)+(q.live?.read_s??READING.read_s))?1:0;
+      else o=time>=t0-FRAME_EPS&&(!settingsOf(r).autoHide||time<=t0+.06)?1:0;
       const k=w.userData.replay?Math.min(1,(now-w.userData.replay)/REPLAY_MS):1;
       if(k<1){o*=THREE.MathUtils.smootherstep(k,0,.45);w.scale.setScalar(1+.06*Math.sin(Math.PI*k));}else{w.scale.setScalar(1);w.userData.replay=0;}
       if(r.id!==latest?.id)o=0;
       if(o>0&&!writers.has(r.id)){if(q&&(hold?.id===q.id||delivery))startWriting(r.id);else writers.set(r.id,{n:Infinity});}
-      w.visible=o>0;w.userData.text.material.opacity=o;if(w.userData.bubble){const {fill,line}=w.userData.bubble.userData;fill.material.opacity=BUBBLE_FILL*o;line.material.opacity=BUBBLE_LINE*o;w.userData.bubble.userData.icon?.traverse(c=>{if(c.isMesh)for(const m of [c.material].flat())m.opacity=o;});}w.userData.glass.material.uniforms.opacity.value=o;
+      if(syncWriting(w,o,now))breathing=true;
+      if(r.text_stale)o*=TEXT_STALE;   // it no longer answers what is asked: dimmed, not gone (a new text takes its place)
+      showAt(w,o);
     }
+    if(breathing)onAnimate?.();
+    // a text written anew fades out where it stood while the new one is written there (TEXT_FADE_MS)
+    for(const g of ghosts){const k=(now-g.at)/TEXT_FADE_MS;if(k>=1){group.remove(g.w);dispose(g.w);ghosts.delete(g);continue;}if(g.w.userData.writing)g.w.userData.writing.visible=false;showAt(g.w,g.o*(1-k));}
+    if(ghosts.size)onAnimate?.();
+  }
+  function showAt(w,o){
+    w.visible=o>0;w.userData.text.material.opacity=o;syncMark(w,o);if(w.userData.bubble){const {fill,line}=w.userData.bubble.userData;fill.material.opacity=BUBBLE_FILL*o;line.material.opacity=BUBBLE_LINE*o;w.userData.bubble.userData.icon?.traverse(c=>{if(c.isMesh)for(const m of [c.material].flat())m.opacity=o;});}w.userData.glass.material.uniforms.opacity.value=o;
+  }
+  // The caption sized to the view, at its bottom; draw: render it now (a typed question replayed).
+  function drawCaption(renderer,draw=true){
+    const size=renderer.getDrawingBufferSize(new THREE.Vector2()),img=caption.material.map.image,w=1.84,h=w*img.height/img.width*size.x/size.y;
+    caption.scale.set(w,h,1);caption.position.set(0,-1+.03+h/2,0);
+    if(draw&&showCaption){caption.visible=true;const clear=renderer.autoClear;renderer.autoClear=false;renderer.clearDepth();renderer.render(hudScene,hudCamera);renderer.autoClear=clear;}
+    return {w,h,img};
   }
   const layer={group,widgets,thoughts,
     // Refit the existing placement strategy as the recording moves; never anchor text to the weather patch.
@@ -528,9 +610,23 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     get questions(){return questions;},
     get responses(){return sourceResponses;},
     get caption(){return caption.visible?captionText:null;},
+    /** Whether the user's question shows as a caption in the User's view (Input › Caption). */
+    setCaption(on){showCaption=!!on;if(!on)caption.visible=waitingDot.visible=false;onAnimate?.();},
     get hold(){return hold;},
     /** Whether an answer to this question is still being written (TEXT_BEHAVIOR.writing). */
     writing(questionId){return [...widgets.values()].some(w=>w.visible&&w.userData.response.question_id===questionId&&(writers.get(w.userData.response.id)?.n??Infinity)!==Infinity);},
+    /** A typed question replayed as it was typed (null: none): {id, e}, e seconds after it began. Its caption is the text typed by then
+     *  and its surface what it showed then (src/response-parts.mjs typedReady); the video is not held. */
+    setTyping(t){
+      const key=t?`${t.id}@${t.e.toFixed(2)}`:null;if(key===(typing?`${typing.id}@${typing.e.toFixed(2)}`:null))return;
+      if(!t&&typing){dismissedCaption=typing.id;clearCaption();}
+      typing=t;if(t){dismissedCaption=null;captionOwner=t.id;}
+      void reconcileWidgets().catch(()=>{});apply();onAnimate?.();
+    },
+    get typing(){return typing;},
+    get withdrawn(){return withdrawnParts;},
+    /** A typed question's runs (its trace per revision answered: {rev, at, steps}), for replaying its pipeline. */
+    async runs(id){const u=url('/api/agent/questions/runs');u.searchParams.set('id',id);const r=await fetch(u);const j=await r.json();if(!r.ok)throw Error(j.error);return j.runs;},
     // Hold state from the editor's playback (null when not holding).
     setHold(h,{continueDelivery=false}={}){
       if(continueDelivery&&hold)deliveries.set(hold.id,{...hold,start:performance.now()});
@@ -566,12 +662,18 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     },
     /** The top (the view's -1..1 height) of what stands fixed in view for the latest answer: its Floating Text, else the question's
      *  caption; null when neither shows. The view stack's UI stands above it (src/cluster-placement.mjs). */
+    // Steady: while one question's answer stands, the stack's base only rises (when its text grows past it), never falls back as
+    // the text is written again, withdrawn or re-fitted; so what stands on it does not jump. A new answer (or another view size)
+    // starts it anew.
     viewTop(camera){
-      let top=null;for(const w of widgets.values()){const t=w.userData.text;if(!w.visible||!w.userData.pose?.viewFixed||!t)continue;w.updateMatrixWorld(true);
+      let top=null,id=null;for(const w of widgets.values()){const t=w.userData.text;if(!w.visible||!w.userData.pose?.viewFixed||!t)continue;w.updateMatrixWorld(true);
         // the top of its ink, not of its texture's margin
         t.geometry.computeBoundingBox();const b=t.geometry.boundingBox,ink=t.material.map?.image?.textMetrics?.box,y=b.max.y-(ink?ink.y0:0)*(b.max.y-b.min.y);
-        const p=t.localToWorld(new THREE.Vector3((b.min.x+b.max.x)/2,y,0)).project(camera);if(p.z<1)top=Math.max(top??-1,p.y);}
-      return top??ctx.captionTop?.()??null;
+        const p=t.localToWorld(new THREE.Vector3((b.min.x+b.max.x)/2,y,0)).project(camera);if(p.z<1){top=Math.max(top??-1,p.y);id=w.userData.response.question_id;}}
+      top??=ctx.captionTop?.()??null;if(top==null){stackBase=null;return null;}
+      const key=`${id??typing?.id??captionOwner}@${camera.aspect.toFixed(3)}`;
+      if(stackBase?.key!==key||top>stackBase.top)stackBase={key,top};
+      return stackBase.top;
     },
     update(t){time=t;apply();},
     // Questions change often while the agent works (new steps): re-apply so the streaming thought updates.
@@ -586,6 +688,12 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
       const step=()=>{apply();onAnimate?.();if(w.userData.replay)requestAnimationFrame(step);};requestAnimationFrame(step);},
     // Foremost screen layer: type first, then breathe a bright point at the final letter.
     renderHud(renderer){
+      {const size=renderer.getDrawingBufferSize(new THREE.Vector2());captionBand=-1+.03+(showCaption?1.84*CAPTION_BAND_PX/1600*size.x/size.y:0);}
+      if(typing){const q=questions.find(q=>q.id===typing.id),text=q?typedText(q,typing.e):'';
+        if(!text){clearCaption();return;}
+        const key=JSON.stringify([q.id,'typed',text]);
+        if(key!==captionKey){caption.material.map?.dispose();caption.material.map=captionTexture(text,text,{tail:true});caption.material.needsUpdate=true;captionKey=key;}
+        captionText=text;captionId=q.id;waitingDot.visible=false;return drawCaption(renderer);}
       const delivery=layer.delivery,clock=hold||(delivery?.id===captionOwner?delivery:null);
       const q=captionQuestion(questions,clock,dismissedCaption);
       if(!q){clearCaption();return;}
@@ -596,9 +704,8 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
       const key=JSON.stringify([q.id,state.fullText,state.text]);
       if(key!==captionKey){caption.material.map?.dispose();caption.material.map=captionTexture(state.fullText,state.text);caption.material.needsUpdate=true;captionKey=key;}
       captionText=state.text;waitingDot.material.uniforms.opacity.value=state.dotOpacity;
-      const size=renderer.getDrawingBufferSize(new THREE.Vector2()),img=caption.material.map.image,w=1.84,h=w*img.height/img.width*size.x/size.y;
-      caption.scale.set(w,h,1);caption.position.set(0,-1+.03+h/2,0);
-      caption.visible=!!state.text;
+      const {w,h,img}=drawCaption(renderer,false);
+      caption.visible=!!state.text&&showCaption;
       waitingDot.visible=caption.visible&&state.waiting&&!!img.waitingDot;
       if(waitingDot.visible){const end=img.waitingDot;
         waitingDot.scale.set(w*48/img.width,h*48/img.height,1);
@@ -620,6 +727,11 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     draft:(id,frame,t,text,pause,extra={})=>post('/api/agent/drafts',{id,frame,t,text,pause,...extra}).then(q=>{layer.sync().catch(()=>{});return q;}),
     askDraft:(id,text,live)=>post('/api/agent/drafts/ask',{id,text,live}).then(async q=>{await layer.sync().catch(()=>{});return q;}),
     cancelDraft:id=>post('/api/agent/drafts/cancel',{id}).then(()=>layer.sync()),
+    /** A spoken question's recording (a WAV Blob; started: when it began, epoch ms), kept with it in the space. */
+    async setAudio(id,wav,started,mark=null){const u=url('/api/agent/questions/audio');u.searchParams.set('id',id);u.searchParams.set('started',started);
+      if(mark){u.searchParams.set('t',mark.t);u.searchParams.set('t_at',mark.at);   // the video's time when Space went down, and when
+        if(mark.end){u.searchParams.set('t_end',mark.end.t);u.searchParams.set('t_end_at',mark.end.at);u.searchParams.set('rate',mark.end.rate);}}   // and when it was let go
+      const r=await fetch(u,{method:'POST',body:wav,headers:{'Content-Type':'audio/wav'}});const d=await r.json();if(!r.ok)throw Error(d.error);await layer.sync().catch(()=>{});return d;},
     // The frame the editor shows is the simulated user's state for terminal questions; send it at most every 200 ms.
     report(state){pending=state;if(!reportTimer)reportTimer=setTimeout(()=>{reportTimer=null;post('/api/agent/state',pending).catch(()=>{});},200);}};
   return layer;

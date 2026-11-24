@@ -7,8 +7,11 @@ import {partsToDraw} from './ui-rules.mjs';
 
 const SPEAKERS=/^(layout|comp):/;   // what can speak: furniture, openings and scene objects (modos_twin.boxes), not places
 
-// The facts of the request itself: a thing clearly pointed at (the referent was resolved) and the question put to it in the second person.
-export const requestFacts=(question,referent)=>({'target.pointed':!!referent?.entity,'request.second_person':/\b(you|your|yours|yourself)\b/i.test(String(question||''))});
+// The facts of the request itself: a thing clearly pointed at (the referent was resolved) and the question put to it in the second person
+// ("can I eat you?"); "you" as the assistant ("can you turn on…", "could you tell me…") is not the thing.
+const ADDRESSES_ASSISTANT=/\b(can|could|would|will)\s+you\s+(please\s+)?(tell|show|turn|switch|help|find|send|remind|make|set|open|start|stop|give|play|take|describe|draft|check)\b/i;
+export const requestFacts=(question,referent)=>{const q=String(question||'');
+  return {'target.pointed':!!referent?.entity,'request.second_person':/\b(you|your|yours|yourself)\b/i.test(q)&&!ADDRESSES_ASSISTANT.test(q)};};
 
 // A part carries what its MOD declared it draws (`ui` of the slot, and of the slots drawn with it on the same choice: a highlight's
 // direction and sign) and the facts known when composing; the renderer adds what the view knows and decides (modos/ui-rules.mjs).
@@ -31,8 +34,10 @@ export function partsFor(mod,selection,{referent=null,abouts=[],question=''}={})
       // what goes with the message: the thing itself, a photo taken of it, or nothing (the request says which)
       const [to,what,cap]=(slot.data||[]).map(d=>selection?.[d]),capture=what?.entity?(cap?.id||'thing'):'none';
       // who it goes to: one person (pick-one) or several (pick-many); the Choice shown for it is single or multi-select alike
-      const ids=to?.kind==='contacts'?to.people.map(p=>p.id):to?.id?[to.id]:[];
-      if(ids.length)out.push({part:'ui',action:{kind:'send',to:ids,pick:to.kind==='contacts'?'many':'one',capture,...(capture!=='none'?{attachment:what.entity}:{})},...meta(mod,slot,{...factsFor(null),'attachment.kind':capture})});
+      // nobody the request names is among the contacts (a name misheard, a person not there): the message still shows, with nobody
+      // chosen yet; the user picks in its Choice, and Send waits until someone is
+      const ids=to?.kind==='contacts'?to.people.map(p=>p.id):to?.id?[to.id]:[],many=to?to.kind==='contacts':mod.selectors?.[slot.data?.[0]]?.kind==='pick-many';
+      out.push({part:'ui',action:{kind:'send',to:ids,pick:many?'many':'one',capture,...(capture!=='none'?{attachment:what.entity}:{})},...meta(mod,slot,{...factsFor(null),'attachment.kind':capture})});
       continue;
     }
     const sel=slot.data?selection?.[slot.data]:null;

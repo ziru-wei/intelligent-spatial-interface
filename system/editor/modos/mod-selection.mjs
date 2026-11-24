@@ -1,7 +1,6 @@
 // ModOS stage 3a · MOD selection: which MODs the request needs. Eligibility (scope and data) is a rule; among eligible MODs the
 // model scores each one, and several may be chosen. A MOD scoped to the referent (WorldInfo) needs no judgment once there is one,
 // unless a place MOD (the lab's) already speaks for that referent.
-import {score} from './decision.mjs';
 
 export function eligible(mod,{places,candidate,referent,itemIds,aboutIds}){
   const scope=mod.scope||'global';
@@ -24,6 +23,4 @@ export function modCandidates(view,referent){
   return {auto:usable.filter(m=>m.scope==='referent'&&!speaker),ask:usable.filter(m=>m.scope!=='referent')};
 }
 
-export const modQuestions=ask=>Object.fromEntries(ask.map(m=>[`mod_${m.id}`,score(`Does user_question need the capability "${m.name}": ${m.description} Examples: ${(m.examples||[]).join(' / ')}. Yes only when what it shows is part of what is asked.`)]));
 
-export const resolveMods=({auto,ask},a)=>[...auto.map(m=>({mod:m,score:1})),...ask.filter(m=>a[`mod_${m.id}`]?.score>=.5).map(m=>({mod:m,score:a[`mod_${m.id}`].score}))];

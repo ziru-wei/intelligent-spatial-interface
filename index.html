@@ -106,6 +106,18 @@ body.dark .switch button[aria-pressed="true"]{background:#f1f2f4;color:#111111}
 #demo code{font:400 14px ui-monospace,Menlo,monospace;color:var(--fg)}
 @media (max-width:600px){.tabs{gap:18px}.tabs button{font-size:22px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+/* On the Demo, the switch steps out of ModOS's way: a ball in the bottom-right corner, opening leftward under the pointer; elsewhere
+   it stands centred. The moves are smooth. */
+.bar{width:max-content;transition:left .5s cubic-bezier(.2,.8,.2,1),transform .5s cubic-bezier(.2,.8,.2,1)}
+.switch{transition:max-width .45s cubic-bezier(.2,.8,.2,1),background .3s,box-shadow .3s;position:relative}
+.switch button{transition:background .15s,color .15s,opacity .25s}
+body.dark .bar{left:calc(100% - 18px);transform:translateX(-100%)}
+body.dark .switch{max-width:42px;height:42px;overflow:hidden}
+body.dark .switch button{opacity:0;pointer-events:none}
+body.dark .switch::before{content:"";position:absolute;top:50%;right:16px;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:#f1f2f4;opacity:.8;transition:opacity .25s;pointer-events:none}
+body.dark .bar:hover .switch,body.dark .switch:focus-within{max-width:440px}
+body.dark .bar:hover .switch button,body.dark .switch:focus-within button{opacity:1;pointer-events:auto}
+body.dark .bar:hover .switch::before,body.dark .switch:focus-within::before{opacity:0}
 </style>
 <main>
   <section id="demo" class="pad" aria-label="Demo" hidden></section>
