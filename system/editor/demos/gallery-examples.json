@@ -190,6 +190,608 @@
       "recording": "atlas_rec_1",
       "ask_at": 3.77,
       "question": "what's the weather this weekend? wanna go hiking"
+    },
+    {
+      "name": "answer-while-what-s-the-weather-the",
+      "mod": "Answer while typing",
+      "recording": "atlas_rec_1",
+      "ask_at": 1.2,
+      "question": "What's the weather? The weekend. Draft a message. To Alice. About our hiking plan during the weekend. With the weather information.",
+      "typed": [
+        {
+          "at": 0.0,
+          "t": 1.2,
+          "text": "What's."
+        },
+        {
+          "at": 0.4,
+          "t": 1.4,
+          "text": "What's the weather?"
+        },
+        {
+          "at": 1.52,
+          "t": 1.95,
+          "text": "What's the weather?",
+          "pause": true
+        },
+        {
+          "at": 2.41,
+          "t": 2.4,
+          "text": "What's the weather? The."
+        },
+        {
+          "at": 2.79,
+          "t": 2.58,
+          "text": "What's the weather? The weekend."
+        },
+        {
+          "at": 3.4,
+          "t": 2.9,
+          "text": "What's the weather? The weekend.",
+          "pause": true
+        },
+        {
+          "at": 10.0,
+          "t": 5.45,
+          "text": "What's the weather? The weekend. Draft."
+        },
+        {
+          "at": 10.89,
+          "t": 5.69,
+          "text": "What's the weather? The weekend. Draft a message."
+        },
+        {
+          "at": 11.72,
+          "t": 5.89,
+          "text": "What's the weather? The weekend. Draft a message.",
+          "pause": true
+        },
+        {
+          "at": 14.4,
+          "t": 6.55,
+          "text": "What's the weather? The weekend. Draft a message. To."
+        },
+        {
+          "at": 14.71,
+          "t": 6.64,
+          "text": "What's the weather? The weekend. Draft a message. To Alice."
+        },
+        {
+          "at": 15.13,
+          "t": 6.74,
+          "text": "What's the weather? The weekend. Draft a message. To Alice.",
+          "pause": true
+        },
+        {
+          "at": 20.22,
+          "t": 8.02,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About?"
+        },
+        {
+          "at": 20.83,
+          "t": 8.14,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our."
+        },
+        {
+          "at": 21.51,
+          "t": 8.3,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our hiking."
+        },
+        {
+          "at": 21.82,
+          "t": 8.42,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our hiking plan."
+        },
+        {
+          "at": 22.47,
+          "t": 8.57,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our hiking plan during."
+        },
+        {
+          "at": 22.98,
+          "t": 8.7,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our hiking plan during the."
+        },
+        {
+          "at": 23.29,
+          "t": 8.77,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our hiking plan during the weekend."
+        },
+        {
+          "at": 23.8,
+          "t": 8.9,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our hiking plan during the weekend.",
+          "pause": true
+        },
+        {
+          "at": 24.67,
+          "t": 9.12,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our hiking plan during the weekend. With?"
+        },
+        {
+          "at": 24.98,
+          "t": 9.2,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our hiking plan during the weekend. With the."
+        },
+        {
+          "at": 25.4,
+          "t": 9.3,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our hiking plan during the weekend. With the weather."
+        },
+        {
+          "at": 25.71,
+          "t": 9.39,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our hiking plan during the weekend. With the weather information."
+        },
+        {
+          "at": 26.57,
+          "t": 9.6,
+          "text": "What's the weather? The weekend. Draft a message. To Alice. About our hiking plan during the weekend. With the weather information.",
+          "pause": true
+        }
+      ]
+    },
+    {
+      "name": "answer-while-hey-what-s-the-weather-this",
+      "mod": "Answer while typing",
+      "recording": "atlas_rec_1",
+      "ask_at": 2.17,
+      "question": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice?  Asking about if there's any update on our hiking plan based on the weather condition.",
+      "typed": [
+        {
+          "at": 0.0,
+          "t": 2.17,
+          "text": "Hey."
+        },
+        {
+          "at": 1.23,
+          "t": 2.77,
+          "text": "Hey, what's the weather?",
+          "pause": true
+        },
+        {
+          "at": 2.71,
+          "t": 3.52,
+          "text": "Hey, what's the weather? This."
+        },
+        {
+          "at": 3.12,
+          "t": 3.7,
+          "text": "Hey, what's the weather? This weekend."
+        },
+        {
+          "at": 4.03,
+          "t": 4.14,
+          "text": "Hey, what's the weather?  This weekend.",
+          "pause": true
+        },
+        {
+          "at": 9.74,
+          "t": 7.02,
+          "text": "Hey, what's the weather?  This weekend. Um."
+        },
+        {
+          "at": 10.7,
+          "t": 7.5,
+          "text": "Hey, what's the weather?  This weekend. Um, can you send."
+        },
+        {
+          "at": 11.27,
+          "t": 7.77,
+          "text": "Hey, what's the weather?  This weekend. Um, can you send a message?"
+        },
+        {
+          "at": 11.87,
+          "t": 8.1,
+          "text": "Hey, what's the weather?  This weekend. Um, can you send a message to."
+        },
+        {
+          "at": 13.19,
+          "t": 8.72,
+          "text": "Hey, what's the weather?  This weekend. Um, can you send a message to Alice?"
+        },
+        {
+          "at": 14.24,
+          "t": 9.27,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice?",
+          "pause": true
+        },
+        {
+          "at": 15.28,
+          "t": 9.8,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking."
+        },
+        {
+          "at": 15.73,
+          "t": 10.02,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about."
+        },
+        {
+          "at": 16.33,
+          "t": 10.32,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if."
+        },
+        {
+          "at": 16.77,
+          "t": 10.54,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's."
+        },
+        {
+          "at": 18.33,
+          "t": 11.32,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's any update."
+        },
+        {
+          "at": 18.93,
+          "t": 11.61,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's any update on our."
+        },
+        {
+          "at": 19.95,
+          "t": 12.12,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's any update on our hiking plan, based."
+        },
+        {
+          "at": 20.53,
+          "t": 12.41,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's any update on our hiking plan, based on the weather."
+        },
+        {
+          "at": 21.05,
+          "t": 12.67,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's any update on our hiking plan, based on the weather condition."
+        },
+        {
+          "at": 22.8,
+          "t": 13.54,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice?  Asking about if there's any update on our hiking plan based on the weather condition.",
+          "pause": true
+        }
+      ]
+    },
+    {
+      "name": "answer-while-hey-what-s-the-weather-this-2",
+      "mod": "Answer while typing",
+      "recording": "atlas_rec_1",
+      "ask_at": 2.17,
+      "question": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice?  Asking about if there's any update on our hiking plan based on the weather condition.",
+      "typed": [
+        {
+          "at": 0.0,
+          "t": 2.17,
+          "text": "Hey."
+        },
+        {
+          "at": 1.23,
+          "t": 2.77,
+          "text": "Hey, what's the weather?",
+          "pause": true
+        },
+        {
+          "at": 2.71,
+          "t": 3.52,
+          "text": "Hey, what's the weather? This."
+        },
+        {
+          "at": 3.12,
+          "t": 3.7,
+          "text": "Hey, what's the weather? This weekend."
+        },
+        {
+          "at": 4.03,
+          "t": 4.14,
+          "text": "Hey, what's the weather?  This weekend.",
+          "pause": true
+        },
+        {
+          "at": 9.74,
+          "t": 7.02,
+          "text": "Hey, what's the weather?  This weekend. Um."
+        },
+        {
+          "at": 10.7,
+          "t": 7.5,
+          "text": "Hey, what's the weather?  This weekend. Um, can you send."
+        },
+        {
+          "at": 11.27,
+          "t": 7.77,
+          "text": "Hey, what's the weather?  This weekend. Um, can you send a message?"
+        },
+        {
+          "at": 11.87,
+          "t": 8.1,
+          "text": "Hey, what's the weather?  This weekend. Um, can you send a message to."
+        },
+        {
+          "at": 13.19,
+          "t": 8.72,
+          "text": "Hey, what's the weather?  This weekend. Um, can you send a message to Alice?"
+        },
+        {
+          "at": 14.24,
+          "t": 9.27,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice?",
+          "pause": true
+        },
+        {
+          "at": 15.28,
+          "t": 9.8,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking."
+        },
+        {
+          "at": 15.73,
+          "t": 10.02,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about."
+        },
+        {
+          "at": 16.33,
+          "t": 10.32,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if."
+        },
+        {
+          "at": 16.77,
+          "t": 10.54,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's."
+        },
+        {
+          "at": 18.33,
+          "t": 11.32,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's any update."
+        },
+        {
+          "at": 18.93,
+          "t": 11.61,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's any update on our."
+        },
+        {
+          "at": 19.95,
+          "t": 12.12,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's any update on our hiking plan, based."
+        },
+        {
+          "at": 20.53,
+          "t": 12.41,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's any update on our hiking plan, based on the weather."
+        },
+        {
+          "at": 21.05,
+          "t": 12.67,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice? Asking about if there's any update on our hiking plan, based on the weather condition."
+        },
+        {
+          "at": 22.8,
+          "t": 13.54,
+          "text": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice?  Asking about if there's any update on our hiking plan based on the weather condition.",
+          "pause": true
+        }
+      ]
+    },
+    {
+      "name": "answer-while-hey-what-s-the-weather-this-3",
+      "mod": "Answer while typing",
+      "recording": "atlas_rec_1",
+      "ask_at": 1.38,
+      "question": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend.  Also ask her if there is any update on our hiking plan.",
+      "typed": [
+        {
+          "at": 0.0,
+          "t": 1.38,
+          "text": "Hey."
+        },
+        {
+          "at": 0.59,
+          "t": 1.53,
+          "text": "Hey, what's the."
+        },
+        {
+          "at": 1.01,
+          "t": 1.63,
+          "text": "Hey, what's the weather?"
+        },
+        {
+          "at": 2.55,
+          "t": 2.02,
+          "text": "Hey, what's the weather?",
+          "pause": true
+        },
+        {
+          "at": 4.82,
+          "t": 2.58,
+          "text": "Hey, what's the weather? This."
+        },
+        {
+          "at": 5.25,
+          "t": 2.68,
+          "text": "Hey, what's the weather? This weekend."
+        },
+        {
+          "at": 6.2,
+          "t": 2.93,
+          "text": "Hey, what's the weather?  This weekend.",
+          "pause": true
+        },
+        {
+          "at": 11.75,
+          "t": 4.32,
+          "text": "Hey, what's the weather?  This weekend. 嗯"
+        },
+        {
+          "at": 13.8,
+          "t": 4.84,
+          "text": "Hey, what's the weather?  This weekend. 嗯，am i"
+        },
+        {
+          "at": 14.41,
+          "t": 4.99,
+          "text": "Hey, what's the weather?  This weekend. 嗯，am i supposed to bring"
+        },
+        {
+          "at": 14.97,
+          "t": 5.12,
+          "text": "Hey, what's the weather?  This weekend. 嗯，am i supposed to bring my umbrella"
+        },
+        {
+          "at": 15.41,
+          "t": 5.22,
+          "text": "Hey, what's the weather?  This weekend. 嗯，am i supposed to bring my umbrella with me"
+        },
+        {
+          "at": 16.83,
+          "t": 5.59,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?",
+          "pause": true
+        },
+        {
+          "at": 24.0,
+          "t": 7.39,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me? Should."
+        },
+        {
+          "at": 24.55,
+          "t": 7.52,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me? Should I bring my."
+        },
+        {
+          "at": 25.23,
+          "t": 7.69,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me? Should I bring my umbrella?"
+        },
+        {
+          "at": 26.29,
+          "t": 7.94,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me? Should I bring my umbrella with me?"
+        },
+        {
+          "at": 27.05,
+          "t": 8.14,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?",
+          "pause": true
+        },
+        {
+          "at": 29.71,
+          "t": 8.82,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me? Where is."
+        },
+        {
+          "at": 31.05,
+          "t": 9.14,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?",
+          "pause": true
+        },
+        {
+          "at": 36.72,
+          "t": 10.56,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK."
+        },
+        {
+          "at": 37.45,
+          "t": 10.74,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK. Send."
+        },
+        {
+          "at": 37.77,
+          "t": 10.82,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK. Send this."
+        },
+        {
+          "at": 38.33,
+          "t": 10.96,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK. Send this reminder."
+        },
+        {
+          "at": 38.78,
+          "t": 11.07,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK. Send this reminder also to."
+        },
+        {
+          "at": 39.48,
+          "t": 11.24,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK. Send this reminder also to Al."
+        },
+        {
+          "at": 39.85,
+          "t": 11.34,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK. Send this reminder also to Alice."
+        },
+        {
+          "at": 40.46,
+          "t": 11.49,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK. Send this reminder also to Alice cause we."
+        },
+        {
+          "at": 43.3,
+          "t": 12.21,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK. Send this reminder also to Alice, cause we're gonna do."
+        },
+        {
+          "at": 43.67,
+          "t": 12.29,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK. Send this reminder also to Alice, cause we're gonna do hiking together."
+        },
+        {
+          "at": 44.26,
+          "t": 12.44,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK. Send this reminder also to Alice, cause we're gonna do hiking together during the."
+        },
+        {
+          "at": 44.69,
+          "t": 12.56,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it? OK. Send this reminder also to Alice, cause we're gonna do hiking together during the weekend."
+        },
+        {
+          "at": 46.01,
+          "t": 12.87,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend.",
+          "pause": true
+        },
+        {
+          "at": 46.64,
+          "t": 13.04,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend. And also."
+        },
+        {
+          "at": 47.41,
+          "t": 13.24,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend. And also ask her."
+        },
+        {
+          "at": 48.68,
+          "t": 13.52,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend. And also ask her if."
+        },
+        {
+          "at": 49.06,
+          "t": 13.62,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend. And also ask her if there."
+        },
+        {
+          "at": 49.6,
+          "t": 13.77,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend. And also ask her if there is any."
+        },
+        {
+          "at": 50.19,
+          "t": 13.92,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend. And also ask her if there is any update."
+        },
+        {
+          "at": 50.6,
+          "t": 14.02,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend. And also ask her if there is any update on."
+        },
+        {
+          "at": 51.16,
+          "t": 14.16,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend. And also ask her if there is any update on our hiking."
+        },
+        {
+          "at": 52.87,
+          "t": 14.59,
+          "text": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend.  Also ask her if there is any update on our hiking plan.",
+          "pause": true
+        }
+      ]
     }
   ]
 }

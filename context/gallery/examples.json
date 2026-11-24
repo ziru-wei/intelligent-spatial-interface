@@ -21,7 +21,54 @@
    "latency": 1.47,
    "created": 1794978388.931215,
    "still": "agenda-afternoon.jpg",
-   "still_at": 1794980733
+   "still_at": 1795030848
+  },
+  {
+   "name": "answer-while-hey-what-s-the-weather-this",
+   "mod": "Answer while typing",
+   "question": "Hey, what's the weather?  This weekend. um, Can you send a message to Alice?  Asking about if there's any update on our hiking plan based on the weather condition.",
+   "answer": {
+    "title": "Weekend Weather Forecast",
+    "body": "This weekend features snow, overcast skies, and clear starlit conditions with temperatures ranging from -1.7°C to 19.6°C."
+   },
+   "questions": [
+    "Hey, what's the weather?  This weekend. um, Can you send a message to Alice?  Asking about if there's any update on our hiking plan based on the weather condition."
+   ],
+   "first_question_id": 30,
+   "first_t": 2.167638333994546,
+   "session": "./spaces/atlas/scenarios/atlas_rec_1/session.json",
+   "conversation": "20261119-195940-1795143580815799000",
+   "question_id": 30,
+   "frame": 812,
+   "t": 13.540170541993575,
+   "latency": 1.44,
+   "created": 1795143580.81585,
+   "still": null,
+   "still_at": null
+  },
+  {
+   "name": "answer-while-hey-what-s-the-weather-this-3",
+   "mod": "Answer while typing",
+   "question": "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend.  Also ask her if there is any update on our hiking plan.",
+   "answer": {
+    "title": "Umbrella Location",
+    "body": "Your umbrella is located on shelf 1."
+   },
+   "questions": [
+    "Hey, what's the weather?  This weekend. hmm, Am I supposed to bring my umbrella with me?  Should I bring my umbrella with me?  Where is it?  OK, send this reminder also to Alice, cause we're gonna do hiking together during the weekend.  Also ask her if there is any update on our hiking plan.",
+    "Hey, what's.  What's there?  This weekend.  Should I bring my umbrella?  Where is it?  There are also to Alice.  Do hiking together during the weekend.  Also ask"
+   ],
+   "first_question_id": 36,
+   "first_t": 1.3839706250000745,
+   "session": "./spaces/atlas/scenarios/atlas_rec_1/session.json",
+   "conversation": "20261119-202411-1795145051602667000",
+   "question_id": 55,
+   "frame": 897,
+   "t": 14.957438375000493,
+   "latency": 1.22,
+   "created": 1795145051.6028779,
+   "still": null,
+   "still_at": null
   },
   {
    "name": "bookcompanion-lighthouse",
@@ -44,7 +91,7 @@
    "latency": 1.64,
    "created": 1794978471.1824892,
    "still": "bookcompanion-lighthouse.jpg",
-   "still_at": 1794980826
+   "still_at": 1795031020
   },
   {
    "name": "findmy",
@@ -67,7 +114,7 @@
    "latency": 1.2,
    "created": 1794978363.829141,
    "still": "findmy.jpg",
-   "still_at": 1794980708
+   "still_at": 1795030822
   },
   {
    "name": "iotcontrol-brighter",
@@ -90,7 +137,7 @@
    "latency": 2.7,
    "created": 1794978424.352726,
    "still": "iotcontrol-brighter.jpg",
-   "still_at": 1794980775
+   "still_at": 1795030890
   },
   {
    "name": "iotcontrol-printer",
@@ -137,7 +184,7 @@
    "latency": 1.52,
    "created": 1794978618.7581341,
    "still": "iotcontrol-printer-whose.jpg",
-   "still_at": 1794980813
+   "still_at": 1795031007
   },
   {
    "name": "iotcontrol-tv",
@@ -160,7 +207,7 @@
    "latency": 1.18,
    "created": 1794987314.774658,
    "still": "iotcontrol-tv.jpg",
-   "still_at": 1794987641
+   "still_at": 1795031084
   },
   {
    "name": "labinfo-panorama",
@@ -183,7 +230,7 @@
    "latency": 3.13,
    "created": 1794978401.211406,
    "still": "labinfo-panorama.jpg",
-   "still_at": 1794980748
+   "still_at": 1795030863
   },
   {
    "name": "labinfo-wall",
@@ -206,7 +253,7 @@
    "latency": 1.3,
    "created": 1794978354.710297,
    "still": "labinfo-wall.jpg",
-   "still_at": 1794980695
+   "still_at": 1795030810
   },
   {
    "name": "livecoach-stretch",
@@ -229,7 +276,7 @@
    "latency": 1.38,
    "created": 1794978498.739357,
    "still": "livecoach-stretch.jpg",
-   "still_at": 1794980852
+   "still_at": 1795031047
   },
   {
    "name": "objectstatus-printer",
@@ -252,7 +299,7 @@
    "latency": 1.43,
    "created": 1794978591.769121,
    "still": "objectstatus-printer.jpg",
-   "still_at": 1794980788
+   "still_at": 1795030903
   },
   {
    "name": "reminder-espresso",
@@ -275,99 +322,87 @@
    "latency": 1.68,
    "created": 1794978512.7131,
    "still": "reminder-espresso.jpg",
-   "still_at": 1794980865
+   "still_at": 1795031060
   },
   {
    "name": "send-describe",
    "mod": "Send",
-   "question": "what's this?",
-   "answer": {
-    "title": "Anastasia's Talk Poster",
-    "body": "It is a poster for Anastasia Kouvaras Ostrowski, an Assistant Professor at Purdue University focusing on Human-Robot Interaction and Human-Centered AI."
-   },
+   "question": "describe this for Alice, like a quick message",
+   "answer": null,
    "questions": [
-    "what's this?"
+    "describe this for Alice, like a quick message"
    ],
-   "first_question_id": 57,
-   "first_t": 6.870992999989539,
+   "first_question_id": 88,
+   "first_t": 7.087795999992522,
    "session": "./spaces/atlas/scenarios/atlas_rec_2/session.json",
-   "conversation": "20261118-005021-1794988221066449000",
-   "question_id": 57,
-   "frame": 412,
-   "t": 6.870992999989539,
-   "latency": 2.98,
-   "created": 1794988221.0664709,
+   "conversation": "20261118-144210-1795038130163800000",
+   "question_id": 88,
+   "frame": 425,
+   "t": 7.087795999992522,
+   "latency": 1.51,
+   "created": 1795038130.1638458,
    "still": "send-describe.jpg",
-   "still_at": 1795022610
+   "still_at": 1795038139
   },
   {
    "name": "send-photo",
    "mod": "Send",
    "question": "take a pic of this, send it to Alice",
-   "answer": {
-    "title": "Send Poster Photo",
-    "body": "Here is a photo of the talk poster."
-   },
+   "answer": null,
    "questions": [
     "take a pic of this, send it to Alice"
    ],
-   "first_question_id": 55,
+   "first_question_id": 89,
    "first_t": 7.087795999992522,
    "session": "./spaces/atlas/scenarios/atlas_rec_2/session.json",
-   "conversation": "20261118-005035-1794988235899632000",
-   "question_id": 55,
+   "conversation": "20261118-144219-1795038139387686000",
+   "question_id": 89,
    "frame": 425,
    "t": 7.087795999992522,
-   "latency": 2.99,
-   "created": 1794988235.8996742,
+   "latency": 1.71,
+   "created": 1795038139.387707,
    "still": "send-photo.jpg",
-   "still_at": 1794988247
+   "still_at": 1795038148
   },
   {
    "name": "send-poster",
    "mod": "Send",
    "question": "send this to Alice",
-   "answer": {
-    "title": "Anastasia's Talk Poster",
-    "body": "Here is the poster of Anastasia's talk for you."
-   },
+   "answer": null,
    "questions": [
     "send this to Alice"
    ],
-   "first_question_id": 52,
+   "first_question_id": 86,
    "first_t": 7.087795999992522,
    "session": "./spaces/atlas/scenarios/atlas_rec_2/session.json",
-   "conversation": "20261118-004955-1794988195515574000",
-   "question_id": 52,
+   "conversation": "20261118-144151-1795038111656275000",
+   "question_id": 86,
    "frame": 425,
    "t": 7.087795999992522,
-   "latency": 2.71,
-   "created": 1794988195.515614,
+   "latency": 1.19,
+   "created": 1795038111.656306,
    "still": "send-poster.jpg",
-   "still_at": 1794988207
+   "still_at": 1795038120
   },
   {
    "name": "send-two",
    "mod": "Send",
    "question": "send this to Alice and Ryo",
-   "answer": {
-    "title": "Anastasia's Talk Poster",
-    "body": "Here is the poster file for Anastasia's talk for everyone to review."
-   },
+   "answer": null,
    "questions": [
     "send this to Alice and Ryo"
    ],
-   "first_question_id": 53,
+   "first_question_id": 87,
    "first_t": 7.087795999992522,
    "session": "./spaces/atlas/scenarios/atlas_rec_2/session.json",
-   "conversation": "20261118-005008-1794988208351869000",
-   "question_id": 53,
+   "conversation": "20261118-144200-1795038120976428000",
+   "question_id": 87,
    "frame": 425,
    "t": 7.087795999992522,
-   "latency": 3.19,
-   "created": 1794988208.351896,
+   "latency": 1.58,
+   "created": 1795038120.976452,
    "still": "send-two.jpg",
-   "still_at": 1794988220
+   "still_at": 1795038130
   },
   {
    "name": "stepguide-espresso",
@@ -390,7 +425,7 @@
    "latency": 1.59,
    "created": 1794978484.94221,
    "still": "stepguide-espresso.jpg",
-   "still_at": 1794980839
+   "still_at": 1795031033
   },
   {
    "name": "wayfinding-kitchen",
@@ -413,7 +448,7 @@
    "latency": 1.99,
    "created": 1794978375.288513,
    "still": "wayfinding-kitchen.jpg",
-   "still_at": 1794980721
+   "still_at": 1795030836
   },
   {
    "name": "weather-corridor",
@@ -421,22 +456,22 @@
    "question": "hmm, do I need an umbrella tonight?",
    "answer": {
     "title": "Yes",
-    "body": "Rain showers are forecasted for tonight."
+    "body": "You need an umbrella tonight because rain showers are forecast for this evening."
    },
    "questions": [
     "hmm, do I need an umbrella tonight?"
    ],
-   "first_question_id": 56,
+   "first_question_id": 71,
    "first_t": 0.9839533749909606,
    "session": "./spaces/atlas/scenarios/atlas_rec_2/session.json",
-   "conversation": "20261118-012751-1794990471124520000",
-   "question_id": 56,
+   "conversation": "20261118-125115-1795031475358784000",
+   "question_id": 71,
    "frame": 59,
    "t": 0.9839533749909606,
-   "latency": 1.43,
-   "created": 1794990471.124543,
+   "latency": 1.36,
+   "created": 1795031475.358834,
    "still": "weather-corridor.jpg",
-   "still_at": 1794990481
+   "still_at": 1795031487
   },
   {
    "name": "weather-lab",
@@ -444,22 +479,22 @@
    "question": "is it gonna rain this weekend?",
    "answer": {
     "title": "Yes",
-    "body": "Yes, rain showers and thunder showers are forecasted for this weekend on November 21."
+    "body": "Rain showers are forecast for this weekend, specifically on Saturday morning and evening, and Sunday afternoon."
    },
    "questions": [
     "is it gonna rain this weekend?"
    ],
-   "first_question_id": 130,
+   "first_question_id": 144,
    "first_t": 1.4839859580097254,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261118-091517-1795018517112433000",
-   "question_id": 130,
+   "conversation": "20261118-125128-1795031488426330000",
+   "question_id": 144,
    "frame": 89,
    "t": 1.4839859580097254,
-   "latency": 1.92,
-   "created": 1795018517.1124969,
+   "latency": 1.45,
+   "created": 1795031488.426379,
    "still": "weather-lab.jpg",
-   "still_at": 1795018529
+   "still_at": 1795031501
   },
   {
    "name": "weather-umbrella",
@@ -467,45 +502,22 @@
    "question": "should I bring my umbrella?",
    "answer": {
     "title": "Yes",
-    "body": "Rain showers are forecasted for this evening."
+    "body": "Bring an umbrella because rain showers are expected this evening."
    },
    "questions": [
     "should I bring my umbrella?"
    ],
-   "first_question_id": 128,
+   "first_question_id": 145,
    "first_t": 1.4839859580097254,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261118-012814-1794990494716874000",
-   "question_id": 128,
+   "conversation": "20261118-125141-1795031501046093000",
+   "question_id": 145,
    "frame": 89,
    "t": 1.4839859580097254,
-   "latency": 1.28,
-   "created": 1794990494.716898,
+   "latency": 1.73,
+   "created": 1795031501.0461519,
    "still": "weather-umbrella.jpg",
-   "still_at": 1794990505
-  },
-  {
-   "name": "weather-what-s-the-weather-this",
-   "mod": "Weather",
-   "question": "what's the weather this weekend? wanna go hiking",
-   "answer": {
-    "title": "Weekend Weather Forecast",
-    "body": "This weekend features overcast skies on Saturday morning, clearing up by afternoon with a high of 17°C, and drifting mist in the evening."
-   },
-   "questions": [
-    "what's the weather this weekend? wanna go hiking"
-   ],
-   "first_question_id": 7,
-   "first_t": 3.7683209589886246,
-   "session": "./spaces/atlas/scenarios/atlas_rec_1/session.json",
-   "conversation": "20261118-091502-1795018502126219000",
-   "question_id": 7,
-   "frame": 226,
-   "t": 3.7683209589886246,
-   "latency": 1.66,
-   "created": 1795018502.126267,
-   "still": "weather-what-s-the-weather-this.jpg",
-   "still_at": 1795018515
+   "still_at": 1795031512
   },
   {
    "name": "worldinfo-text",
@@ -528,7 +540,7 @@
    "latency": 2.3,
    "created": 1794978326.452508,
    "still": "worldinfo-text.jpg",
-   "still_at": 1794990519
+   "still_at": 1795030782
   },
   {
    "name": "worldinfo-voice",
@@ -551,8 +563,8 @@
    "latency": 2.7,
    "created": 1794978340.952825,
    "still": "worldinfo-voice.jpg",
-   "still_at": 1794980683
+   "still_at": 1795030796
   }
  ],
- "updated": 1795027870
+ "updated": 1795517680
 }
