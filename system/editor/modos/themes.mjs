@@ -121,10 +121,10 @@ export function resolveGround(a,idx,themes,types){
 
 /** This revision's book: `base` (bookBefore) with question q's sentences placed by their routes (cache[i]: {norm, text, route, newId}).
  *  → {book, touched: the themes q speaks of, in order (not one it stopped), said: the themes its latest sentence went into (not those
- *  it only uses), raw: the themes of its latest sentence that adds, newest: its latest sentence
+ *  it only uses), raw: the themes of its latest sentence that adds, newest: its latest sentence of a theme not stopped
  *  that wants to be told something ({text, yesNo, themes}), rejudge: themes whose words changed (not a theme its one sentence began)}. */
 export function place(base,cache,{q,n,now}){
-  const book=clone(base),byId=new Map(book.themes.map(t=>[t.id,t])),touched=[],rejudge=new Set(),went={};let raw=[],said=[],newest=null;
+  const book=clone(base),byId=new Map(book.themes.map(t=>[t.id,t])),touched=[],rejudge=new Set(),went={};let raw=[],said=[],knows=[];
   book.asked=Math.max(book.asked,n);
   const touch=t=>{t.last_q=n;t.last_at=now;if(!touched.includes(t.id))touched.push(t.id);};
   cache.forEach((c,i)=>{
@@ -141,11 +141,14 @@ export function place(base,cache,{q,n,now}){
     else for(const id of into){const t=byId.get(id);t.sentences.push(s);touch(t);if(normalize(themeText(t))!==t.key)rejudge.add(id);}
     went[i]=into;
     if(r.adds){raw=[...into,...refs];said=[...into];}
-    if(r.know)newest={text:c.text,yesNo:r.yesNo,themes:into};
+    if(r.know)knows.push({text:c.text,yesNo:r.yesNo,themes:into});
   });
   // a theme the user stopped ("no, I mean next week" after "this week") is no longer one of what this question speaks of
   const live=id=>!byId.get(id)?.ended;
-  touched.splice(0,touched.length,...touched.filter(live));raw=raw.filter(live);if(newest)newest={...newest,themes:newest.themes.filter(live)};
+  touched.splice(0,touched.length,...touched.filter(live));raw=raw.filter(live);
+  // the sentence the text answers: the newest that wants to be told something and whose theme the user has not stopped ("what's the
+  // weather? … never mind": not the weather); none, and nothing is written (a text in view stays, dimmed)
+  const k=knows.map(x=>({...x,themes:x.themes.filter(live)})).filter(x=>x.themes.length).at(-1),newest=k||null;
   book.next=Math.max(book.next,...book.themes.map(t=>t.id+1));
   book.themes=book.themes.filter(t=>!t.ended||t.ended.at>now-COOL.ms*10).slice(-40);   // ended ones kept a while, for the record
   return {book,touched,raw,said,went,newest,rejudge:[...rejudge]};

@@ -179,8 +179,8 @@ async function run({question,memory,context,items,decide,answer,publish=async()=
   // modos/request.mjs), briefly: the user cannot take in every answer again each time; a request that only asks for something to be
   // done (send a message, turn something on) has none. While typing it is written once what it answers is clear and its facts known:
   // at once the first time, then on a pause or at the question's end. A revision that changes what it answers but writes nothing new
-  // leaves it in view, dimmed (it never blinks out); a new text takes its place in place. At the question's end, a text with nothing
-  // left to answer is withdrawn.
+  // leaves it in view, dimmed (it never blinks out); a new text takes its place in place. The question's end is its last pause: it
+  // writes what a pause would, and changes nothing only because it ended (a text with nothing left to answer stays dimmed).
   const newest=req.newest,toKnow=newest?[{text:newest.text,about:req.questions.find(x=>newest.themes.includes(x.theme))?.about}]:[];
   const forKnowing=newest?chosen.filter(c=>c.questions.some(k=>newest.themes.includes(req.questions[k].theme))):[];
   const textKey=newest?JSON.stringify([normalize(newest.text),forKnowing.map(c=>c.mod.id).sort(),newest.yesNo]):null;
@@ -194,15 +194,14 @@ async function run({question,memory,context,items,decide,answer,publish=async()=
     await Promise.all(chosen.map(async({mod})=>{
       const selection=await fillOf(mod);if(live?.stale())return;
       const parts=partsFor(mod,selection,{referent,abouts:chosen.find(c=>c.mod===mod)?.abouts||[],question:question.text});
-      // an action part (Send) carries its message, written apart from the answer (text.mjs writeDraft); while typing, on a pause or Enter
-      for(const p of parts)if(p.action&&(!live||live.final||live.pause)){
+      // an action part (Send) carries its message, written apart from the answer (text.mjs writeDraft); while typing, only at the
+      // question's end (the words in a control are written once, when the request is whole; meanwhile its Text Input is empty)
+      for(const p of parts)if(p.action&&(!live||live.final)){
         // the message rests on what is asked of its MOD and what it chose, not on the rest of the utterance
         const k=JSON.stringify([live?ownText(mod):question.text,selection]);if(live?.state.drafts?.[k])trace('view_live',JSON.stringify({kept:{draft:mod.id}}));
-        const d=live?.state.drafts?.[k]||await writeDraft({view,question,picked,items,answer,selection,mod,questions:(m=>m.length?m:req.questions)(serves(mod).map(k=>req.questions[k])),previous:live?.state.lastDraft?.[mod.id]?.body||null,trace}).catch(e=>{trace('modos_error','draft: '+e.message);return null;});
-        if(d?.body){p.action={...p.action,draft:d};if(live){live.state.drafts={[k]:d};(live.state.lastDraft||={})[mod.id]=d;}}
+        const d=live?.state.drafts?.[k]||await writeDraft({view,question,picked,items,answer,selection,mod,questions:(m=>m.length?m:req.questions)(serves(mod).map(k=>req.questions[k])),trace}).catch(e=>{trace('modos_error','draft: '+e.message);return null;});
+        if(d?.body){p.action={...p.action,draft:d};if(live)live.state.drafts={[k]:d};}
         if(live?.stale())return;}
-      // between pauses the message keeps the draft last written for it (written again on the next pause), not back to "writing…"
-      else if(p.action&&live?.state.lastDraft?.[mod.id])p.action={...p.action,draft:live.state.lastDraft[mod.id]};
       // The parts shown, by slot (a highlight also shows the direction arrow and sign on the same choice).
       const shown=parts.flatMap(p=>{const slot=mod.slots.find(x=>x.id===p.mod?.slot);
         const extra=p.highlight?mod.slots.filter(x=>x!==slot&&x.data===slot?.data&&((x.use==='guidance'&&p.highlight.guidance)||(x.use==='label'&&p.highlight.label))):[];
@@ -242,10 +241,9 @@ async function run({question,memory,context,items,decide,answer,publish=async()=
   let language;
   if(!writeNow){
     await notWriting();
-    rec.text(!live?'none':shownText==null?'none':textKey===shownText?'kept':live.final&&!textKey?'withdrawn':'dimmed',ans);
+    rec.text(!live?'none':shownText==null?'none':textKey===shownText?'kept':'dimmed',ans);
     if(live&&shownText!=null){
       if(textKey===shownText)await dimText(false);
-      else if(live.final&&!textKey){await live.retract(['text:']);live.state.textKey=null;live.state.textDim=false;trace('view_live',JSON.stringify({text:'withdrawn: nothing asked to be told'}));}
       else await dimText(true);}
     language=Promise.resolve(live?.state.textKey!=null?{kept:true}:null);}
   else if(live&&!live.final)language=visual.catch(()=>[]).then(async out=>{

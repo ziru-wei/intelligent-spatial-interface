@@ -96,3 +96,11 @@ test('a sentence that only changed its punctuation, case or fillers is not route
   assert.deepEqual(changed(prev,["Um, What's the weather this week.","Put the TV on HDMI 1."]),[]);
   assert.deepEqual(changed(prev,["what's the weather this week","put the TV on HDMI 3"]),[1]);
 });
+
+test('the text answers the newest question whose theme was not stopped ("what\'s the weather? … never mind": not the weather)', ()=>{
+  const stop={ends:1,begins:false,know:false};
+  let p=place(emptyBook(),cache(["what's the weather this weekend",{},1],['never mind',stop,2]),{q:1,n:1,now:0});
+  assert.equal(p.newest,null);                                                    // nothing left to be told: no text is written
+  p=place(emptyBook(),cache(['where are my keys',{},1],["what's the weather this weekend",{},2],['never mind',{...stop,ends:2},3]),{q:1,n:1,now:0});
+  assert.equal(p.newest.text,'where are my keys');assert.deepEqual(p.newest.themes,[1]);   // an earlier one still asked: it is answered
+});

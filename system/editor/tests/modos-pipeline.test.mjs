@@ -316,7 +316,7 @@ test('live: revisions reconcile what shows: parts replaced only when changed, te
   r=await revise('Where did I put',[],{task:true});
   assert.deepEqual(live.retracted.slice(-1),['weather:weather']);assert.equal(live.dimmed.at(-1),true);             // its need gone: its part withdrawn, the text dimmed
   r=await revise('Where did I put',[],{task:true,final:true});
-  assert.equal(r.text.length,0);assert.deepEqual(live.retracted.slice(-1),['text:']);assert.equal(live.state.textKey,null);   // the end, nothing asked to be told: withdrawn
+  assert.equal(r.text.length,0);assert.ok(!live.retracted.includes('text:'));assert.equal(live.state.textDim,true);   // the end alone changes nothing: it stays, dimmed
 });
 
 test('a request that only asks for something to be done gets no text; a question about it does', async()=>{
@@ -339,19 +339,20 @@ test('live: a text that fails while typing is withdrawn and written again with t
   assert.ok(again.length>0);
 });
 
-test('live: the message keeps the draft written at the last pause while the user speaks on', async()=>{
+test('live: the message is written once, at the question\'s end, not on a pause while the user speaks', async()=>{
   const send=mod('send'),people=[{id:'alice',name:'Alice Chen',role:'PhD student',email:'alice@example.edu'}];
   BODIES['user:contacts']={id:'user:contacts',type:'text',data:people};ITEMS.push({id:'user:contacts',about:['user:me'],type:'text',summary:'The user\'s contacts.'});
   try{
     const live={state:{},final:false,pause:false,stale:()=>false};live.retract=async()=>{};live.dim=async()=>{};live.focus=async()=>{};
     const memory=async()=>({time:{date:'2026-10-09'},conversation:{recent_turns:[],referents:[]},selection:null,location:null,mods:[send],entities:ENTITIES,items:ITEMS});
-    let n=0;const revise=async(text,pause)=>{const published=[];Object.assign(live,{pause});
+    let n=0;const revise=async(text,pause,final=false)=>{const published=[];Object.assign(live,{pause,final});
       await runModos({question:{id:1,text},memory,items:async ids=>ids.map(id=>BODIES[id]),decide:createDecisionModule(engine(['reaches other people','Alice','nothing attached'])).decide,
         answer:async()=>({title:'',body:`draft ${++n}`,referenced_item_ids:[]}),publish:async p=>published.push(p),live});
       return published.find(p=>p.action)?.action;};
-    assert.equal((await revise('send a message to Alice',false))?.draft,undefined);                     // not yet: no pause
-    assert.equal((await revise('send a message to Alice.',true)).draft.body,'draft 1');                 // a pause: written
-    assert.equal(await revise('send a message to Alice. About our hiking',false),undefined);   // speaking on: the message as it was (with its draft), not sent again
+    assert.equal((await revise('send a message to Alice',false))?.draft,undefined);                     // speaking: the message, its Text Input empty
+    assert.equal(await revise('send a message to Alice.',true),undefined);                              // a pause: nothing written (the message as it was)
+    assert.equal((await revise('send a message to Alice.',false,true)).draft.body,'draft 1');                // the end: written once
+    assert.equal(n,1);
   }finally{delete BODIES['user:contacts'];ITEMS.pop();}
 });
 
