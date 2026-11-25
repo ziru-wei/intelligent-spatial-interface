@@ -16,14 +16,28 @@ const START=/^(and\s+)?(what|where|when|who|which|how|why|is|are|am|was|were|do|
 
 /** The sentences of a request: split at ? ; and at "and"/"also" that start a new question. No limit: each sentence is routed to its
  *  theme(s) on its own (modos/themes.mjs). */
-export function splitRequest(text){
+export function splitRequest(text){const parts=clauses(text);return parts.length?parts:[String(text).trim()];}
+
+/** A spoken request's sentences: those speech to text cut (its utterances, ended by a pause) are the outer bounds, each split as a typed
+ *  one is (splitRequest: "turn on the lamp and tell Alice I'm late" is two), never across two; a sentence once final keeps the clauses
+ *  it had then (frozen: {start → clauses}, kept by the caller across revisions). Typed text, or utterances that are not the words asked
+ *  (an older question, or words asked after the last revision), are split as typed. */
+export function sentencesOf(question,frozen={}){
+  const u=question.utterances;
+  if(!u?.length||norm(u.map(x=>x.text).join(' '))!==norm(question.text))return splitRequest(question.text);
+  const out=u.flatMap(x=>{const k=x.start??x.text;if(frozen[k])return frozen[k];const c=clauses(x.text);if(x.definite)frozen[k]=c;return c;});
+  return out.length?out:splitRequest(question.text);
+}
+const norm=t=>String(t).toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+
+function clauses(text){
   const parts=[];
   // a question ends at ? or ! whether or not a space follows ("umbrella?where is it"); a full stop only before a space ("3.5")
   for(const sentence of String(text).split(/(?<=[?!])\s*|(?<=\.)\s+|;\s*/).map(s=>s.trim()).filter(Boolean)){
     const pieces=sentence.split(/,?\s+(?:and|also|plus)\s+(?=(?:what|where|when|who|which|how|why|is|are|do|does|can|could|should|will|tell|show|remind|find)\b)/i);
     parts.push(...pieces.map(p=>p.trim()).filter(p=>p.split(/\s+/).length>=2||START.test(p)));
   }
-  return parts.length?parts:[String(text).trim()];
+  return parts;
 }
 
 /** What a question can be about, here: {id: description}. */

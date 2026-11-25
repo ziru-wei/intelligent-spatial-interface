@@ -446,3 +446,21 @@ test('each run logs its decision record: sentences, the themes they went to, the
   assert.ok(r.parts.some(p=>p.mod==='mweather'&&p.change==='new'&&p.because[0]==='fweather'));
   assert.deepEqual(r.text,{answers:'s0',state:'writing',because:['s0'],title:'T',title_form:'a short title'});
 });
+
+test('a spoken request is cut where speech to text cut it (its utterances), each split as typed; a final one keeps its clauses', async()=>{
+  const {sentencesOf}=await import('../modos/request.mjs');
+  const u=(text,start,definite=true)=>({text,start,end:start+1000,definite});
+  // two utterances: the outer bounds; "and" inside one still splits two requests
+  const q={text:"What's the weather?  Turn on the lamp and tell Alice I'm late.",utterances:[u("What's the weather?",0),u("Turn on the lamp and tell Alice I'm late.",2000)]};
+  assert.deepEqual(sentencesOf(q),["What's the weather?",'Turn on the lamp',"tell Alice I'm late."]);
+  // a split never crosses two utterances: no full stop between them, still two
+  assert.deepEqual(sentencesOf({text:'what is the weather where are my keys',utterances:[u('what is the weather',0),u('where are my keys',1500,false)]}),['what is the weather','where are my keys']);
+  // a one-word fragment of an utterance being said is no sentence (as typed)
+  assert.deepEqual(sentencesOf({text:"What's the weather? This.",utterances:[u("What's the weather?",0),u('This.',1500,false)]}),["What's the weather?"]);
+  // final: its clauses kept even if the words came again otherwise
+  const frozen={};sentencesOf(q,frozen);
+  assert.deepEqual(sentencesOf({text:"What's the weather. Turn on the lamp and tell Alice I'm late.",utterances:[u("What's the weather.",0),u("Turn on the lamp and tell Alice I'm late.",2000)]},frozen),["What's the weather?",'Turn on the lamp',"tell Alice I'm late."]);
+  // typed (no utterances), or utterances that are not the words asked: split as typed
+  assert.deepEqual(sentencesOf({text:'turn on the lamp and tell Alice I\'m late'}),['turn on the lamp',"tell Alice I'm late"]);
+  assert.deepEqual(sentencesOf({text:'where are my keys? and my phone',utterances:[u('where are my keys?',0)]}),['where are my keys?','and my phone']);
+});

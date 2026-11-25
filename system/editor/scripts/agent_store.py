@@ -182,10 +182,11 @@ def normalize(text):
     dropped, every other word kept."""
     return ' '.join(w for w in re.sub(r'[^\w]+|_', ' ', str(text).lower()).split() if w not in FILLERS)
 
-def draft(d, cid, qid, frame, t, text, pause=False, selection=None, pose=None, location=None):
+def draft(d, cid, qid, frame, t, text, pause=False, selection=None, pose=None, location=None, utterances=None):
     """Answer while typing (modos-system-design.md 12): the question as typed so far. The first revision makes a question with status
     `drafting`; each later one replaces its text, frame and what the user looks at, and is kept in `revisions` (when, the text, whether
-    the user paused) so a replay can type it again. The bridge answers the newest revision each time it is free."""
+    the user paused) so a replay can type it again. A spoken one also has its sentences as speech to text cut them (`utterances`:
+    text, definite, start, end), the newest only (modos/request.mjs sentencesOf). The bridge answers the newest revision each time it is free."""
     c = read(d, cid); now = time.time(); text = str(text or '')[:500]
     q = next((x for x in c['questions'] if str(x['id']) == str(qid)), None) if qid is not None else None
     if qid is not None and not q: raise ValueError('Unknown question.')
@@ -196,15 +197,20 @@ def draft(d, cid, qid, frame, t, text, pause=False, selection=None, pose=None, l
     # the same words (a second pass that only punctuated them, a filler dropped): shown and kept, nothing computed again, unless it is
     # the first pause since they were computed (a pause writes the text)
     elif normalize(text) == normalize(q['text']) and not (pause and not q['revisions'][-1].get('pause')):
-        q['text'] = text
+        q['text'] = text; _utterances(q, utterances)
         if len(q['revisions']) < 200: q['revisions'].append(dict(rev=q['rev'], text=text, at=round(now-q['created'], 3), t=t, frame=frame, pause=bool(pause), same=True))
         _write(d, c); return dict(q, conversation=cid)
-    q['rev'] += 1; q.update(text=text, frame=frame, t=t)   # the question's moment is its latest revision's; typing began at revisions[0]
+    q['rev'] += 1; q.update(text=text, frame=frame, t=t); _utterances(q, utterances)   # the question's moment is its latest revision's; typing began at revisions[0]
     for k, v in (('selection', selection), ('pose', pose), ('location', location)):
         if v: q[k] = v
         else: q.pop(k, None)
     if len(q['revisions']) < 200: q['revisions'].append(dict(rev=q['rev'], text=text, at=round(now-q['created'], 3), t=t, frame=frame, pause=bool(pause)))
     _write(d, c); lock.notify_all(); return dict(q, conversation=cid)
+
+def _utterances(q, utterances):
+    if isinstance(utterances, list) and utterances:
+        q['utterances'] = [dict(text=str(u.get('text', ''))[:500], definite=bool(u.get('definite')), start=u.get('start'), end=u.get('end')) for u in utterances[:60] if isinstance(u, dict)]
+    else: q.pop('utterances', None)
 
 def finalize(d, cid, qid, text, live=None):
     """Enter on a draft: the question is asked as typed, and answered once more in full (its parts reconciled, its text written)."""

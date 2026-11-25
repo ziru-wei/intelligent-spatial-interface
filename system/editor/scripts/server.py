@@ -195,7 +195,7 @@ def ask(body, drafting=False):
     # A recording asked about in the editor: where the recorded camera stands and looks (a headset sends its own).
     where = location.check(d, body.get('location')) if body.get('location') is not None or sm.get('live') else location.from_camera(d, sm, frame)
     with store.lock:
-        if drafting: return store.draft(d, body.get('conversation'), body.get('id'), frame, float(body.get('t', 0)), text, bool(body.get('pause')), selection, pose, where)
+        if drafting: return store.draft(d, body.get('conversation'), body.get('id'), frame, float(body.get('t', 0)), text, bool(body.get('pause')), selection, pose, where, body.get('utterances'))
         return store.ask(d, body.get('conversation'), frame, float(body.get('t', 0)), text, body.get('live'), selection, pose, where)
 
 def agent_get(path, session, q):

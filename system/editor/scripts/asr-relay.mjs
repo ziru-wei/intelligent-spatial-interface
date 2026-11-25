@@ -5,7 +5,8 @@
 //   POST /asr/open?split=silence|meaning&fillers=kept|removed   → {id}; opens the recognition (its full client request sent), split and
 //                                       fillers as the Input tab's Speech says (src/ui-settings.mjs speechOptions)
 //   POST /asr/audio?id=&last=0|1        body: 16 kHz mono 16-bit PCM, about 200 ms a packet; last=1 ends the audio
-//   GET  /asr/events?id=                server-sent events: {text, utterances: [{text, definite}], final} as the text grows; {error}
+//   GET  /asr/events?id=                server-sent events: {text, utterances: [{text, definite, start, end}], final} as the text grows; {error}
+//                                       (a sentence as Doubao cut it: its words, final or not, and when it was said, in ms of the audio)
 // Started by the editor's server (POST /api/asr/relay), on 127.0.0.1 only. No dependencies (Node's own WebSocket, zlib).
 import http from 'node:http';
 import {readFileSync} from 'node:fs';
@@ -46,7 +47,7 @@ function open(opts={}){
     for(const b of s.queue)ws.send(b);s.queue=[];};
   ws.onmessage=e=>{let m;try{m=parse(Buffer.from(e.data));}catch(err){emit(s,{error:err.message});return;}
     if(m.error){emit(s,{error:m.error});return;}
-    const r=m.json?.result||{};emit(s,{text:r.text||'',utterances:(r.utterances||[]).map(u=>({text:u.text,definite:!!u.definite})),final:m.last});
+    const r=m.json?.result||{};emit(s,{text:r.text||'',utterances:(r.utterances||[]).map(u=>({text:u.text,definite:!!u.definite,start:u.start_time,end:u.end_time})),final:m.last});
     if(m.last){s.done=true;ws.close();}};
   ws.onerror=()=>emit(s,{error:'Could not reach the speech service (check doubaoAsr in agent-config.local.json).'});
   ws.onclose=()=>{s.done=true;for(const res of s.listeners)res.end();setTimeout(()=>sessions.delete(id),30000);};

@@ -294,3 +294,14 @@ class VersionClockTest(unittest.TestCase):
             x = store.read(d, c['id']); x['questions'][0]['status'] = 'answered'; v = dict(x['questions'][0], id=99, replay_of=q['id'], how='replay-text', revisions=[dict(r, t=3.0) for r in x['questions'][0]['revisions']]); x['questions'].append(v); store._write(d, x)
             shown = store.status(d, c['id'])['questions'][0]
             self.assertEqual(shown['id'], 99); self.assertEqual([p['t'] for p in shown['clock']], [1.0, 3.0])
+
+class UtterancesTest(unittest.TestCase):
+    def test_a_spoken_draft_keeps_its_newest_utterances_a_typed_one_none(self):
+        with tempfile.TemporaryDirectory() as tmp, store.lock:
+            d = Path(tmp); c = store.create(d); U = [dict(text='What is the weather?', definite=True, start=0, end=900), dict(text='This week', definite=False, start=1500, end=2100)]
+            q = store.draft(d, c['id'], None, 0, 1.0, 'What is the weather? This week', utterances=U)
+            self.assertEqual([u['text'] for u in q['utterances']], ['What is the weather?', 'This week'])
+            q = store.draft(d, c['id'], q['id'], 0, 1.2, 'What is the weather? This week.', utterances=[U[0], dict(U[1], text='This week.', definite=True)])   # same words: kept, utterances new
+            self.assertTrue(q['utterances'][1]['definite'])
+            q = store.draft(d, c['id'], q['id'], 0, 1.4, 'What is the weather? This week. Thanks')   # typed on: none
+            self.assertNotIn('utterances', q)

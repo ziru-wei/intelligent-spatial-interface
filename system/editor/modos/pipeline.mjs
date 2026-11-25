@@ -15,7 +15,7 @@
 //           retract(keys)}
 import {createView} from './view.mjs';
 import {anchorThemes,referentOf,referenceOf} from './grounding.mjs';
-import {splitRequest} from './request.mjs';
+import {sentencesOf} from './request.mjs';
 import {createRecord} from './decisions.mjs';
 import {bookBefore,liveThemes,changed,typeCall,resolveTypes,groundCall,continuationCall,continuing,resolveGround,place,modCall,judged,steadyFocus,normalize,themeText,GROUNDING} from './themes.mjs';
 import {eligible,placeModFor} from './mod-selection.mjs';
@@ -65,7 +65,7 @@ async function run({question,memory,context,items,decide,answer,publish=async()=
   // which other earlier themes it also uses) and, for information, whether it is answered by yes or no. Rules place it in its theme and
   // set the focus. Call 3: the MODs each theme whose words changed needs, judged once on all its words. While typing, only the sentences
   // new or changed since the last revision are asked about.
-  const sentences=splitRequest(question.text),now=Date.now(),st=live?live.state:{},n=question.n??((themes?.asked||0)+1);
+  const st=live?live.state:{},sentences=sentencesOf(question,st.frozen||={}),now=Date.now(),n=question.n??((themes?.asked||0)+1);
   const settle=!live||!!live.final||!!live.pause,typing=!!live&&!live.final;
   st.routes=(st.routes||[]).slice(0,sentences.length);st.needs||={};
   const base=bookBefore(themes,{q:question.id,n,now});st.nextId=Math.max(st.nextId||0,base.next);

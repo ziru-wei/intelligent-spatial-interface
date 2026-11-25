@@ -1659,10 +1659,11 @@ $('ask').onsubmit=async e=>{e.preventDefault();const text=$('ask-input').value.t
 // drops it. The video stays where it is while typing.
 let liveMode=pref('ask-live','off')==='on';const liveDraft={id:null,chain:null};let said='';   // typed while answered: what was typed so far (said, never taken back)
 // a revision of the draft: typed (src/live-input.mjs) or spoken (below)
-function revise(text,pause){if(!agent||!connected)return;const sel=computeSelection()?.selected||null;
-  liveDraft.chain=(liveDraft.chain||Promise.resolve()).then(()=>agent.draft(liveDraft.id,index,session.frames[index].t,text,pause,{selection:sel,selection_mode:selectionMode}))
+// utterances: a spoken one's sentences as speech to text cut them (modos/request.mjs sentencesOf); a typed one has none
+function revise(text,pause,utterances=null){if(!agent||!connected)return;const sel=computeSelection()?.selected||null;
+  liveDraft.chain=(liveDraft.chain||Promise.resolve()).then(()=>agent.draft(liveDraft.id,index,session.frames[index].t,text,pause,{selection:sel,selection_mode:selectionMode,...(utterances?{utterances}:{})}))
     .then(q=>{liveDraft.id=q.id;}).catch(err=>{$('ask-status').textContent='Error: '+err.message;});}
-const breaks=createBreaks({onRevision:revise});
+const breaks=createBreaks({onRevision:(text,pause)=>revise(text,pause)});
 // Speech to text (the microphone in the ask box; src/speech-input.mjs, Doubao through scripts/asr-relay.mjs): the text fills the box as it
 // is recognised. With Answer while typing on, the spoken words are revisions like typed ones: the text whenever it has grown (at most
 // every SPEECH_GAP ms), a pause each time a sentence becomes final (the speaker stopped), and pressed again it stops and asks it.
@@ -1672,7 +1673,7 @@ const speech=createSpeech({options:()=>speechOptions(uiSettings),
   onText({text,utterances}){$('ask-input').value=text;drawSpeech();if(!liveMode||!text.trim())return;
     const definite=utterances.filter(u=>u.definite).length,now=performance.now(),paused=definite>spoken.definite;
     // a sentence that became final is a pause even when its words did not change (the draft and the text are written on a pause)
-    if(paused||text!==spoken.text&&now-spoken.at>=SPEECH_GAP){spoken={text,at:now,definite};revise(text.trim(),paused);}},
+    if(paused||text!==spoken.text&&now-spoken.at>=SPEECH_GAP){spoken={text,at:now,definite};revise(text.trim(),paused,utterances.filter(u=>u.text?.trim()));}},
   onError(m){$('ask-status').textContent='Speech: '+m;}});
 function showMic(on){$('ask-mic').setAttribute('aria-pressed',String(on));$('ask-mic').title=on?(liveMode?'Stop and ask':'Stop: the words stay in the box'):'Speak the question';}
 $('ask-mic').onclick=async()=>{
