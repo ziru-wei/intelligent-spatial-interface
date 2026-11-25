@@ -50,7 +50,7 @@ POST /api/agent/placement-log {session,question_id,event}  debug: one placement 
 POST /api/agent/responses {session,…}              UI/full text; text streams use {part:'text',stream:{seq,status}} snapshots
 Static files: the repository as it is laid out, its root the main page (index.html: Demo, Gallery, Vocabulary, About), the editor
 under /system/editor/ (framed by the main page; opened on its own it goes to the main page), the Gallery's examples under
-/context/gallery/; nothing else (no dot folders, private/, logs or agent-config.local.json). Started from a terminal, it opens the main
+/context/gallery/, About's text under /context/about/ (scripts/about.py); nothing else (no dot folders, private/, logs or agent-config.local.json). Started from a terminal, it opens the main
 page in the browser (--no-open: not).
 Binds to 127.0.0.1 only (with --lan, also the local network, for the agent API only, with a token: the Vision Pro app, visionos/);
 GET  /api/vision/space?space=&revision=  /colors  /color?file=  /settings?headset=1  /room   POST /api/vision/settings {space, settings}
@@ -67,7 +67,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]   # the editor (system/editor)
 SITE = ROOT.parents[1]                       # the repository, served as the site: the main page at its root
 sys.path.insert(0, str(ROOT/'scripts'))
-import agent_store as store, gallery, spaces, composition, weather, findmy, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts, modos_prompts
+import about, agent_store as store, gallery, spaces, composition, weather, findmy, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts, modos_prompts
 busy = threading.Lock()
 MOCK_CONTEXT = ROOT/'agent'/'mock-context.json'
 
@@ -250,7 +250,7 @@ def served(path):
     if not parts: return True
     if any(x.startswith('.') for x in parts) or parts[-1] == 'agent-config.local.json' or parts[-1].endswith('.log'): return False
     if parts == ['index.html']: return True
-    if parts[:2] == ['context', 'gallery']: return True
+    if parts[:2] in (['context', 'gallery'], ['context', 'about']): return True
     return parts[:2] == ['system', 'editor'] and (len(parts) < 3 or parts[2] != 'private')
 
 class Handler(SimpleHTTPRequestHandler):
@@ -501,6 +501,7 @@ if __name__ == '__main__':
     home = f'http://127.0.0.1:{http.server_port}/'
     print(f'modos-system: {home}'+(' (also on the local network: agent API only, token in agent-config.local.json visionToken)' if lan else ''), flush=True)
     if sys.stdout.isatty() and '--no-open' not in sys.argv[1:] and shutil.which('open'): subprocess.Popen(['open', home])   # the main page
+    about.watch()   # About › ModOS follows the draft's Abstract
     import atexit, signal; atexit.register(stop_bridges)
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))   # stopped (kill): the bridges it started stop with it
     try: http.serve_forever()

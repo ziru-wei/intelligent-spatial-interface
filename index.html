@@ -103,7 +103,13 @@ body.dark .switch button[aria-pressed="true"]{background:#f1f2f4;color:#111111}
 #demo p{margin:40px 24px;color:#9ea3ab}#demo code{color:#e8e8e8}
 #demo p{color:var(--muted)}
 
-#demo code{font:400 14px ui-monospace,Menlo,monospace;color:var(--fg)}
+#demo code,.walk code{font:400 14px ui-monospace,Menlo,monospace;color:var(--fg)}
+/* About: ModOS, the introduction, a column of reading width; Walkthrough, the pipeline page filling the rest of the window */
+.intro{max-width:68ch;margin:28px auto 0;text-align:left;font-size:18px;line-height:1.6}
+.intro p{margin:0 0 1em}
+.walk{height:calc(100vh - 150px);margin-top:8px}
+.walk iframe{display:block;width:100%;height:100%;border:0;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
+.walk p{color:var(--muted);margin-top:40px}
 @media (max-width:600px){.tabs{gap:18px}.tabs button{font-size:22px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 /* On the Demo, the switch steps out of ModOS's way: a ball in the bottom-right corner, opening leftward under the pointer; elsewhere
@@ -138,6 +144,7 @@ import {createVocabulary,openVocabulary,VOCABULARY} from './system/editor/src/vo
 window.VOCAB={view:createVocabulary(),open:openVocabulary,parts:VOCABULARY};dispatchEvent(new Event('vocabulary-ready'));
 </script>
 <script src="context/gallery/examples.js"></script>
+<script src="context/about/abstract.js"></script>
 <script>
 const GAL='context/gallery/';   // the Gallery's examples and their stills (system/editor/scripts/gallery.py writes them)
 const MODS=["Answer while typing", "Weather", "FindMy", "WorldInfo", "LabInfo", "IoTControl", "ObjectStatus", "Wayfinding", "Send", "Agenda", "BookCompanion", "StepGuide", "LiveCoach", "Reminder"];
@@ -171,8 +178,10 @@ addEventListener('vocabulary-ready',()=>{if(tab==='vocabulary')render();});
 const tabsBar=(sec,list,on)=>`<nav class="tabs pad" role="tablist" aria-label="${sec}">${list.map(x=>`<button type="button" role="tab" data-sub="${x.id}" aria-selected="${x.id===on}">${esc(x.name)}</button>`).join('')}</nav>`;
 const SUBS={
   vocabulary:CATS.map(c=>({id:c.id,name:c.name,render:()=>`<div class="cat-${c.id}"><p class="lead pad">${esc(c.def)}</p>${c.rows.map(group).join('')}</div>`})),
-  // About: to be written (left empty on purpose)
-  about:[{id:'memory',name:'Memory',render:()=>''},{id:'decisions',name:'Decisions',render:()=>''},{id:'walkthrough',name:'Walkthrough',render:()=>''}],
+  // About: ModOS, the project's introduction (the paper's Abstract, synced by system/editor/scripts/about.py); Walkthrough, the
+  // pipeline page (every decision of a question), live from the system
+  about:[{id:'modos',name:'ModOS',render:()=>`<div class="intro pad">${(window.ABOUT?.abstract||[]).map(p=>`<p>${esc(p)}</p>`).join('')}</div>`},
+    {id:'walkthrough',name:'Walkthrough',render:()=>'<div class="walk pad"></div>',after:showWalk}],
 };
 const TABS=['demo','gallery','vocabulary','about'];
 let tab='demo';const sub={vocabulary:SUBS.vocabulary[0].id,about:SUBS.about[0].id};
@@ -182,7 +191,7 @@ function render(){
   for(const b of $('nav').children)b.setAttribute('aria-pressed',String(b.dataset.tab===tab));
   for(const t of TABS)$(t).hidden=tab!==t;document.body.classList.toggle('dark',tab==='demo');if(tab==='demo')showDemo();
   if(SUBS[tab]){const el=$(tab),cur=SUBS[tab].find(x=>x.id===sub[tab]);el.innerHTML=tabsBar(tab,SUBS[tab],cur.id)+cur.render();
-    for(const b of el.querySelectorAll('[data-sub]'))b.onclick=()=>go(tab,b.dataset.sub);wireRows(el);try{window.lucide?.createIcons({attrs:{'stroke-width':1.75}});}catch{}}
+    for(const b of el.querySelectorAll('[data-sub]'))b.onclick=()=>go(tab,b.dataset.sub);wireRows(el);cur.after?.(el);try{window.lucide?.createIcons({attrs:{'stroke-width':1.75}});}catch{}}
 }
 for(const b of $('nav').children)b.onclick=()=>go(b.dataset.tab);
 addEventListener('hashchange',()=>{route();scrollTo(0,0);});
@@ -202,6 +211,10 @@ async function showDemo(at=null){
   if(await running())$('demo').innerHTML=`<iframe src="${SYSTEM}?${q}" title="ModOS" allow="autoplay; fullscreen; microphone"></iframe>`;
   else{demoShown=false;$('demo').innerHTML=`<p>ModOS is not running. Start it with <code>cd system/editor && npm start</code>, then open Demo again.</p>`;}
 }
+// Walkthrough: the pipeline page on a question of the lab recordings (it falls back to the newest one with a decision record)
+const WALK=new URLSearchParams({session:'./spaces/atlas/scenarios/atlas_rec_1/session.json',conversation:'20261120-003639-1795160199664955000',q:'104'});
+async function showWalk(el){const w=el.querySelector('.walk');if(!w)return;
+  w.innerHTML=await running()?`<iframe src="${SYSTEM}pipeline.html?${WALK}" title="Walkthrough: the pipeline"></iframe>`:'<p>The walkthrough is the running system\'s pipeline. Start it with <code>cd system/editor && npm start</code>, then open Walkthrough again.</p>';}
 // Gallery: a masonry of MODs (Lucide icon, name, how many; a line on the left to their examples). An example is a question asked in
 // ModOS (system/editor/scripts/gallery.py): its question (or questions, asked one after another) above a still of the camera view at its answer. Opened, ModOS shows it live in
 // its example view (the camera, the player and the pipeline), played only; Try the Demo opens the Demo on its recording at that moment.
