@@ -1,5 +1,8 @@
 """Agent conversations for one scene (the UI calls them sessions): spaces/<space>/scenarios/<take>/agent/<id>.json, each holding its own questions
-and responses, so a new conversation starts with an empty timeline. Question ids are unique across a scene's conversations because
+and responses, so a new conversation starts with an empty timeline. A conversation is named for its first question's first words and its
+time ("What's the weather… · 11-24 17:12"), kept up to date, unless the user named it (`named`). Its time is when it was made, or last
+when a question in it was replaced by one asked again (`updated`). A Gallery example is some of its questions, tagged in place
+(`gallery` = {name, mod}, scripts/gallery.py); the conversation then shows a star. Question ids are unique across a scene's conversations because
 the agent only echoes the number back. All access goes through `lock`; the bridge long-polls on it."""
 import json, re, threading, time
 from pathlib import Path
@@ -19,7 +22,20 @@ def _path(d, cid):
     if not ID.match(str(cid or '')) or not p.is_file(): raise ValueError('Unknown session: '+str(cid))
     return p
 def read(d, cid): return json.loads(_path(d, cid).read_text())
-def _write(d, c): folder(d).mkdir(exist_ok=True); (folder(d)/f"{c['id']}.json").write_text(json.dumps(c, indent=2, ensure_ascii=False))
+def when(c): return c.get('updated') or c['created']
+def auto_name(c):
+    """The first question's first words (about 24 letters, whole words) and the conversation's time."""
+    first = next((q['text'] for q in c['questions'] if str(q.get('text') or '').strip()), '')
+    words, short = [], False
+    for w in first.split():
+        if words and len(' '.join(words+[w])) > 24: short = True; break
+        words.append(w)
+    head = ' '.join(words).rstrip(',.;:?!')+('…' if short else '')
+    stamp = datetime.fromtimestamp(when(c)).strftime('%m-%d %H:%M')
+    return f'{head} · {stamp}' if head else stamp
+def _write(d, c):
+    if not c.get('named'): c['name'] = auto_name(c)
+    folder(d).mkdir(exist_ok=True); (folder(d)/f"{c['id']}.json").write_text(json.dumps(c, indent=2, ensure_ascii=False))
 def _all(d): return [json.loads(p.read_text()) for p in sorted(folder(d).glob('*.json'))] if folder(d).is_dir() else []
 
 def _prepare(d):
@@ -29,7 +45,7 @@ def _prepare(d):
     recovered.add(str(d)); legacy = d/'agent-responses.json'
     if legacy.is_file():
         items = json.loads(legacy.read_text())
-        if items: create(d, 'Earlier answers', responses=items)
+        if items: create(d, responses=items)
         legacy.unlink()
     for c in _all(d):
         stale = [q for q in c['questions'] if q['status'] in ('running', 'queued')]
@@ -55,21 +71,25 @@ def _link_orphans(d, c):
     return bool(orphans)
 
 def create(d, name=None, questions=(), responses=(), gallery_example=None):
-    """A new conversation. gallery_example = {name, mod} (scripts/gallery.py clean_tag): hidden; the conversation is a Gallery example."""
+    """A new conversation, named for its first question unless a name is given (then it is the user's). gallery_example = {name, mod}
+    (scripts/gallery.py clean_tag): a Gallery example being asked again (demos/gallery.mjs); once answered, its questions take the
+    example's place in the conversation that holds it (gallery.replace)."""
     now = datetime.now(); cid = f"{now:%Y%m%d-%H%M%S}-{time.time_ns()}"; n = 1
     while (folder(d)/f'{cid}.json').exists(): cid = f"{now:%Y%m%d-%H%M%S}-{n}"; n += 1
-    c = dict(id=cid, name=(name or '').strip()[:80] or now.strftime('%Y-%m-%d %H:%M:%S'), created=time.time(), questions=list(questions), responses=list(responses))
+    c = dict(id=cid, name='', created=time.time(), questions=list(questions), responses=list(responses))
+    if str(name or '').strip(): c.update(name=str(name).strip()[:80], named=True)
     if gallery_example: c['gallery_example'] = gallery_example
     _write(d, c); return c
 
 def listing(d):
     _prepare(d)
-    return sorted((dict(id=c['id'], name=c['name'], created=c['created'], questions=len(c['questions']), responses=len(c['responses']), **({'gallery_example': c['gallery_example']} if c.get('gallery_example') else {})) for c in _all(d)), key=lambda c: c['created'])
+    return sorted((dict(id=c['id'], name=c['name'], created=when(c), questions=len(c['questions']), responses=len(c['responses']), starred=any(q.get('gallery') for q in c['questions']),
+        **({'gallery_example': c['gallery_example']} if c.get('gallery_example') else {})) for c in _all(d)), key=lambda c: c['created'])
 
 def rename(d, cid, name):
     c = read(d, cid); name = str(name or '').strip()[:80]
     if not name: raise ValueError('Empty name.')
-    c['name'] = name; _write(d, c); return c
+    c.update(name=name, named=True); _write(d, c); return c
 
 def import_conversation(d, data):
     """A new conversation from an exported one; question ids are renumbered for this scene and answers keep their links."""
@@ -80,7 +100,7 @@ def import_conversation(d, data):
         ids[q.get('id')] = first+i
         questions.append(dict(q, id=first+i, label=_label(d, q.get('created') or time.time()), status=q.get('status') if q.get('status') in ('answered', 'failed') else 'failed'))
     responses = [dict(r, id=i+1, question_id=ids.get(r.get('question_id'))) for i, r in enumerate(data.get('responses', []))]
-    return create(d, str(data.get('name') or 'Imported'), questions, responses)
+    return create(d, data.get('name') if data.get('named') else None, questions, responses)
 
 def _label(d, ts):
     """q-MMDD-N: a question's name for people, its number among the questions made that day (local time) in this scene. Never given
@@ -102,7 +122,7 @@ def delete_conversation(d, cid):
     (folder(d)/'.question-high-water').write_text(str(_next_qid(d)-1))
     p.unlink(); _drop_audio(d, recordings)
     remaining = _all(d)
-    next_session = max(remaining, key=lambda c: c['created']) if remaining else create(d)
+    next_session = max(remaining, key=when) if remaining else create(d)
     if editor_state.get(str(d), {}).get('conversation') == cid:
         editor_state[str(d)]['conversation'] = next_session['id']
     lock.notify_all()
@@ -310,6 +330,60 @@ def delete_question(d, cid, qid):
     c['questions'].remove(q); c['responses'] = [r for r in c['responses'] if str(r.get('question_id')) != str(qid)]
     if c.get('themes'): c['themes'] = _book_of(c)
     _write(d, c); _drop_audio(d, [q.get('audio', {}).get('file')]); return dict(ok=True)
+
+def replace_question(d, cid, old, new):
+    """A question asked again (a Rerun, a replay) takes the place of the one it came from, once it is answered: the old one goes, the new
+    one stands where it stood and keeps its Gallery tag; the conversation's time is now."""
+    transplant(d, cid, cid, [new], [old]); return dict(ok=True)
+
+def transplant(d, src, dst, ids, replace=()):
+    """Move questions `ids` (with their answers and themes) of conversation src into dst, in place of dst's questions `replace` (deleted,
+    their Gallery tag passed on), or at its end. Answer and theme ids are given anew in dst. src goes once it has no question left."""
+    a = read(d, src); b = a if dst == src else read(d, dst)
+    moving = [q for q in a['questions'] if q['id'] in ids]
+    if len(moving) != len(ids): raise ValueError('Unknown question.')
+    if any(q['status'] != 'answered' for q in moving): raise ValueError('Only an answered question takes the place of another.')
+    gone = [q for q in b['questions'] if q['id'] in replace]
+    tag = next((q['gallery'] for q in gone if q.get('gallery')), None)
+    # where they go: after the last question before the first replaced one that stays (else first), or at the end
+    if gone:
+        first = b['questions'].index(gone[0])
+        anchor = next((q for q in reversed(b['questions'][:first]) if q not in gone and q not in moving), None)
+    if dst != src:
+        a['questions'] = [q for q in a['questions'] if q['id'] not in ids]
+        answers = [r for r in a['responses'] if r.get('question_id') in ids]; a['responses'] = [r for r in a['responses'] if r.get('question_id') not in ids]
+        book = a.get('themes') if isinstance(a.get('themes'), dict) else {}
+        themes = [t for t in book.get('themes', []) if any(s.get('q') in ids for s in t.get('sentences', []))]
+        if a.get('themes'): a['themes'] = _book_of(a)
+        start = max([r['id'] for r in b['responses']]+[b.get('retired_id', 0)])+1; rid = {}
+        for k, r in enumerate(answers): rid[r['id']] = start+k; r['id'] = start+k
+        for q in moving:
+            if q.get('response') in rid: q['response'] = rid[q['response']]
+        b['responses'] += answers
+        if themes:
+            bb = b['themes'] if isinstance(b.get('themes'), dict) else dict(next=1, asked=0, themes=[])
+            tid = {}
+            for t in themes: tid[t['id']] = bb['next']; bb['next'] += 1
+            bb['themes'] = bb['themes']+[dict(t, id=tid[t['id']], sentences=[x for x in t['sentences'] if x.get('q') in ids]) for t in themes]
+            for r in answers:
+                if isinstance(r.get('theme'), dict): r['theme'] = dict(r['theme'], ids=[tid.get(x, x) for x in r['theme'].get('ids', [])])
+            b['themes'] = bb
+    # the replaced ones go (their ids are never given again)
+    if gone:
+        hw = folder(d)/'.question-high-water'; hw.write_text(str(max([int(hw.read_text()) if hw.is_file() else 0]+[int(q['id']) for q in gone])))
+        b['responses'] = [r for r in b['responses'] if r.get('question_id') not in replace]
+    b['questions'] = [q for q in b['questions'] if q not in gone and q not in moving]
+    if tag:
+        for q in moving: q['gallery'] = tag
+    at = (b['questions'].index(anchor)+1 if anchor else 0) if gone else len(b['questions'])
+    b['questions'][at:at] = moving
+    if b.get('themes'): b['themes'] = _book_of(b)
+    b['updated'] = time.time(); _write(d, b)
+    if dst != src:
+        if a['questions']: _write(d, a)
+        else: _path(d, src).unlink()
+    _drop_audio(d, [q.get('audio', {}).get('file') for q in gone]); lock.notify_all()
+    return b
 
 def _book_of(c):
     """The theme book with only what the conversation's questions said: a deleted question's sentences leave its themes, and a theme

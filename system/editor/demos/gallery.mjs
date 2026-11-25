@@ -5,10 +5,11 @@
 //   --server URL                            the system elsewhere (npm start)
 //   --stills                                only take the stills again, from each example's replay (nothing asked, no model:
 //                                           for a change in how answers are drawn, not in what they are)
-// The examples run as one queue (an example of several questions asks them in order, in one conversation). For each: the agent bridge runs for its recording; a new conversation tagged gallery_example is made;
+// The examples run as one queue (an example of several questions asks them in order, in one conversation). For each: the agent bridge runs for its recording; a conversation of its own is made for asking it again (tagged gallery_example);
 // the editor opens on it in its example view (?example=) and the question is asked through its own ask box at ask_at (so the editor
 // computes what the user looks at, as for any question). Once answered, the editor sends a still of the camera view, and the older
-// conversations of that example are deleted: the new one replaces them. A failed example is reported at the end; its old one stays.
+// the new questions take the example's place in the conversation that holds it (scripts/gallery.py replace; a new example's
+// conversation becomes that one). A failed example is reported at the end; its old one stays.
 // Needs: the system (npm start), a Chromium (Playwright's, or CHROME=/path), and agent-config.local.json.
 import {chromium} from 'playwright';
 import {spawn} from 'node:child_process';
@@ -65,7 +66,7 @@ async function ask(browser,c){
   for(const [id,st] of Object.entries(c.devices||{}))for(const [key,value] of Object.entries(typeof st==='string'?{power:st}:st))
     await api('/api/modos/devices',{space:spec.space,id,key,op:'set',value}).catch(e=>console.log('  device:',e.message));
   for(const [mod,change] of Object.entries(c.setup||{}))await api('/api/modos/mods',{space:spec.space,op:'customize',mod,change});
-  const conv=await api('/api/agent/conversations',{name:`Gallery · ${c.name}`,gallery_example:{name:c.name,mod:c.mod}},s);
+  const conv=await api('/api/agent/conversations',{gallery_example:{name:c.name,mod:c.mod}},s);
   const ctx=await browser.newContext({viewport:{width:W,height:H},deviceScaleFactor:1});
   try{
     const page=await ctx.newPage();page.on('pageerror',e=>console.log('  page error:',e.message));
@@ -134,8 +135,8 @@ try{
     for(let attempt=1;!result;attempt++){   // a model call can fail now and then: ask again
       try{result=await ask(browser,c);}catch(e){if(attempt>=3)throw e;console.log(`  ${e.message}; asking again`);}
     }
-    const {removed}=await api('/api/gallery/replace',{name:c.name,keep:result.conv.id});
-    console.log(`  answered: ${result.example.answer?.title||''} · ${result.example.latency??'?'} s · ${removed} older replaced`);done.push(c.name);
+    const {replaced}=await api('/api/gallery/replace',{name:c.name,keep:result.conv.id});
+    console.log(`  answered: ${result.example.answer?.title||''} · ${result.example.latency??'?'} s · ${replaced?`in place of ${replaced} question${replaced>1?'s':''}`:'a new example'}`);done.push(c.name);
   }catch(e){console.log(`  FAILED: ${e.message}`);failed.push(`${c.name} (${e.message})`);}
 }finally{stopBridge();await browser.close();}
 console.log(`\nasked ${done.length}/${examples.length}${done.length?`: ${done.join(', ')}`:''}`);

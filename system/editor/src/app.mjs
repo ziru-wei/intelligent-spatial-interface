@@ -760,7 +760,8 @@ function hoverResponse(e,cam){const r=agent?.pick(ndcOf(e),cam),tip=$('tooltip')
 // pipeline as it is now, from where it began, as if spoken again there, with Answer while typing on; once it has played, what was
 // recognized is asked, and the new question takes the place of the one it came from (that one is deleted; not replayed meanwhile:
 // `again`). Its line runs over the recording, as the original ran from Space down to Space up. The old question is deleted only once the
-// new one is answered (replacing: new id → old id); if nothing is recognized or the new one fails, the old one stays.
+// new one is answered (replacing: new id → old id; /api/agent/questions/replace, which moves the new one to its place and passes its
+// Gallery tag on); if nothing is recognized or the new one fails, the old one stays.
 let again=null;const replacing=new Map();
 async function rerun(q){
   pause();stillTyped=null;$('tooltip').hidden=true;await at(typedOf(q).t0);
@@ -1329,9 +1330,10 @@ $('text-writing-speed').oninput=()=>changeWriting({writingSpeed:+$('text-writing
 $('text-reset').onclick=()=>changeTextBehavior({...TEXT_BEHAVIOR});
 const agentApi=async(path,body)=>{const u=new URL(path,location.href);u.searchParams.set('session',sessionURL.pathname);const r=await fetch(u,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:sessionURL.pathname,...body})}:{});const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;};
 const userState=()=>({conversation:agent?.conversation,frame:index,t:session.frames[index].t,position:session.frames[index].position,quaternion:session.frames[index].quaternion});
+let convNames=new Map();   // a session's name as stored (the list shows its count and star beside it)
 async function showConversations(select){
-  const list=await agentApi('/api/agent/conversations');$('conv').innerHTML='';
-  for(const c of list.slice().reverse())$('conv').add(new Option(`${c.name}${c.questions?` · ${c.questions}`:''}`,c.id));
+  const list=await agentApi('/api/agent/conversations');$('conv').innerHTML='';convNames=new Map(list.map(c=>[c.id,c.name]));
+  for(const c of list.slice().reverse())$('conv').add(new Option(`${c.name}${c.questions?` · ${c.questions}`:''}${c.starred?' ★':''}`,c.id));   // ★: it holds a Gallery example
   const id=list.some(c=>c.id===select)?select:list.at(-1)?.id;$('conv').value=id;return id;
 }
 async function openConversation(id){if(agent.conversation!==id){pause();replayFrom=null;}store.set(convKey,id);$('conv').value=id;await agent.setConversation(id);agent.report(userState());update();
@@ -1341,11 +1343,13 @@ async function openConversation(id){if(agent.conversation!==id){pause();replayFr
 // ask box and the pipeline, as the recordings looked, but live. It opens on the example's question (its first, when several were asked
 // one after another), replayed from where it was asked;
 // a question asked here and answered sends a still of the camera view to the Gallery (it becomes the example). Delete removes the
-// conversation's latest question.
+// conversation's latest question. Its conversation may hold other questions: they stay on the timeline, to replay.
 async function exampleOpened(){
   for(let i=0;i<40&&!agent.questions.length;i++)await new Promise(r=>setTimeout(r,100));
-  // several questions (asked one after another): replayed from the first; the still is the last one's
-  const answered=agent.questions.filter(x=>x.status==='answered'),q=answered.at(-1);if(q){replayQuestion(answered[0]);if(STILL_ONLY)replayStill={id:q.id,held:false};}
+  // its questions (tagged in their conversation; asked again: all of its own conversation's), several asked one after another
+  // replayed from the first; the still is the last one's
+  const answered=agent.questions.filter(x=>x.status==='answered'&&(!x.gallery||x.gallery.name===EXAMPLE)),mine=answered.filter(x=>x.gallery),q=(mine.length?mine:answered).at(-1);
+  if(mine.length)answered.splice(0,answered.length,...mine);if(q){replayQuestion(answered[0]);if(STILL_ONLY)replayStill={id:q.id,held:false};}
 }
 // The still is taken once the answer is written and its text is in the camera view: when it stands outside the view at the moment it
 // was asked (by a thing the camera turns to later), the recording plays on until it comes into view (at most 12 s), then stops there.
@@ -1366,7 +1370,7 @@ function exampleStill(){
     if(!answerInView(q)&&now<stillWait.get(id)){if(!playing)$('play').click();continue;}
     stillsSent.add(id);if(playing)pause();
     // a moment for the cues to settle where it stopped
-    setTimeout(()=>{paint();agentApi('/api/gallery/still',{conversation:agent.conversation,image:$('stage').toDataURL('image/jpeg',.85)}).catch(fail);},1200);}
+    setTimeout(()=>{paint();agentApi('/api/gallery/still',{conversation:agent.conversation,example:EXAMPLE,image:$('stage').toDataURL('image/jpeg',.85)}).catch(fail);},1200);}
 }
 if(EXAMPLE)setInterval(exampleStill,500);   // also when the page is in the background (no frames drawn then)
 $('ask-delete').onclick=()=>{const q=agent&&[...agent.questions].reverse()[0];if(q)agent.deleteQuestion(q.id).catch(fail);};
@@ -1401,8 +1405,8 @@ async function startAgent(){
   $('conv-import').onchange=async e=>{try{const data=JSON.parse(await e.target.files[0].text());e.target.value='';await openConversation(await showConversations((await agentApi('/api/agent/conversations/import',{data})).id));}catch(err){fail(err);}};
   // Rename in place: the session picker turns into a text field; Enter saves, Escape cancels.
   const endRename=async save=>{const name=$('conv-name').value.trim();$('conv-name').hidden=true;$('conv').hidden=false;
-    if(save&&name){try{await agentApi('/api/agent/conversations/rename',{conversation:agent.conversation,name});await showConversations(agent.conversation);}catch(e){fail(e);}}};
-  $('conv-rename').onclick=()=>{$('conv-name').value=$('conv').selectedOptions[0]?.text.replace(/ · \d+$/,'')||'';$('conv').hidden=true;$('conv-name').hidden=false;$('conv-name').focus();$('conv-name').select();};
+    if(save&&name&&name!==convNames.get(agent.conversation)){try{await agentApi('/api/agent/conversations/rename',{conversation:agent.conversation,name});await showConversations(agent.conversation);}catch(e){fail(e);}}};
+  $('conv-rename').onclick=()=>{$('conv-name').value=convNames.get(agent.conversation)||'';$('conv').hidden=true;$('conv-name').hidden=false;$('conv-name').focus();$('conv-name').select();};
   $('conv-name').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();endRename(true);}else if(e.key==='Escape')endRename(false);};
   $('conv-name').onblur=()=>{if(!$('conv-name').hidden)endRename(true);};
 }
@@ -1414,7 +1418,7 @@ function showAgentStatus({connected:c,questions,responses}){
   connected=c;$('ask-input').disabled=!c;readMarks();
   for(const q of questions)if(q.audio)loadVoice(q.audio).catch(()=>{});
   for(const [nid,oid] of replacing){const nq=questions.find(x=>x.id===nid);if(!nq||nq.status==='failed'){replacing.delete(nid);continue;}
-    if(nq.status==='answered'){replacing.delete(nid);if(questions.some(x=>x.id===oid))agent.deleteQuestion(oid).catch(fail);}}   // ready before playback reaches its line (not fetched only then)
+    if(nq.status==='answered'){replacing.delete(nid);if(questions.some(x=>x.id===oid))agentApi('/api/agent/questions/replace',{conversation:agent.conversation,old:oid,new:nid}).catch(fail);}}   // in its place, keeping its Gallery star   // ready before playback reaches its line (not fetched only then)
   $('ask-input').placeholder=c?'Ask the assistant at this moment…':'Copy the agent command (Agent panel) and run it in a terminal to connect';
   const q=questions.at(-1);
   if(!hold)setAskStatus(q?.status==='queued'?'Waiting for the agent…':q?.status==='running'&&q.parts?.text?.status==='streaming'?'Writing answer…':'');showTrace();
@@ -1433,7 +1437,7 @@ function showAgentStatus({connected:c,questions,responses}){
     m.onclick=e=>{e.stopPropagation();if(EXAMPLE&&!EXAMPLE_ASK){replayQuestion(q);return;}const order=questions.map(x=>x.id);
       if(e.shiftKey&&picked.from!=null&&order.includes(picked.from)){const a=order.indexOf(picked.from),b=order.indexOf(q.id);picked.ids=order.slice(Math.min(a,b),Math.max(a,b)+1);}
       else{picked={from:q.id,ids:[q.id],added:null};if(!isTyped(q))replayQuestion(q);}   // a line (typed or spoken) offers Replay and Rerun
-      picked.added=null;showPicked(questions);};
+      const tags=new Set(picked.ids.map(id=>questions.find(x=>x.id===id)?.gallery?.name));picked.added=tags.size===1?[...tags][0]||null:null;showPicked(questions);};   // already an example: its star is on
     $('markers').append(m);
   }
   picked.ids=picked.ids.filter(id=>questions.some(q=>q.id===id));showPicked(questions);

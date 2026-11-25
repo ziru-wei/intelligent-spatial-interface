@@ -1,9 +1,9 @@
 """The main page's Gallery: examples that are questions asked in the editor, not recordings.
 
-A gallery example is a conversation of a recording's session tagged with a hidden `gallery_example` = {name, mod} (scripts/agent_store.py).
-Its example is the conversation's answered questions (usually one; several asked one after another make one example, under the
-first one's MOD), the latest one's answer and still standing for it: re-asking it (demos/gallery.mjs, a queue) or asking a new one in the
-Gallery's editor view replaces it. Each example has a still of the camera view at its answer, sent by the editor (`?example=`) when a
+A gallery example is answered questions of a conversation, tagged where they are with `gallery` = {name, mod} (scripts/agent_store.py;
+the conversation shows a star): usually one; several asked one after another make one example, under the first one's MOD. Asking it
+again (demos/gallery.mjs, a queue) asks it in a conversation of its own, tagged `gallery_example`; once answered, those questions take
+the example's place in its conversation (replace), as a Rerun takes its question's. Each example has a still of the camera view at its answer, sent by the editor (`?example=`) when a
 question asked there is answered. The examples are written to context/gallery/examples.json (and examples.js, for the page opened as
 a file), with the stills beside them, so the page shows them without the editor running.
 """
@@ -24,24 +24,34 @@ def _text(c, q):
     r = next((r for r in reversed(c['responses']) if r.get('question_id') == q['id'] and r.get('part') == 'text'), None)
     return dict(title=r.get('title') or '', body=r.get('body') or '') if r else None
 
+def _groups(c):
+    """{name: (tag, answered questions, since)}: the examples a conversation holds (a re-ask's conversation: all its answered questions)."""
+    out = {}
+    if c.get('gallery_example'):
+        qs = [q for q in c['questions'] if q.get('status') == 'answered']
+        if qs: out[c['gallery_example']['name']] = (c['gallery_example'], qs, c['created'])
+        return out
+    for q in c['questions']:
+        tag = q.get('gallery')
+        if tag and q.get('status') == 'answered':
+            t, qs, since = out.get(tag['name'], (tag, [], 0)); out[tag['name']] = (t, qs+[q], max(since, q.get('created', 0)))
+    return out
+
 def entries():
-    """The examples now in the store: per name, the newest tagged conversation's answered questions (its still: the latest's answer)."""
+    """The examples now in the store: per name, its answered questions (its still: the latest's answer); a re-ask being answered
+    stands for its example once newer."""
     out = {}
     for scenario in sorted(spaces.SPACES.glob('*/scenarios/*')):
         if not (scenario/'agent').is_dir() or not (scenario/'session.json').is_file(): continue
         for c in store._all(scenario):
-            tag = c.get('gallery_example')
-            if not tag: continue
-            q = next((q for q in reversed(c['questions']) if q.get('status') == 'answered'), None)
-            if not q: continue
-            asked = [x for x in c['questions'] if x.get('status') == 'answered']
-            if tag['name'] in out and out[tag['name']]['created'] > c['created']: continue
-            still = GALLERY/f"{tag['name']}.jpg"
-            out[tag['name']] = dict(name=tag['name'], mod=tag.get('mod', ''), question=asked[0]['text'], answer=_text(c, q),
-                questions=[x['text'] for x in asked], first_question_id=asked[0]['id'], first_t=min([asked[0]['t']]+[r['t'] for r in asked[0].get('revisions', [])[:1]]),   # typed: where typing began
-                session='./'+str(scenario.relative_to(spaces.SPACES.parent)/'session.json'), conversation=c['id'], question_id=q['id'],
-                frame=q['frame'], t=q['t'], latency=q.get('latency'), created=c['created'],
-                still=still.name if still.is_file() else None, still_at=round(still.stat().st_mtime) if still.is_file() else None)
+            for name, (tag, asked, since) in _groups(c).items():
+                if name in out and out[name]['since'] > since: continue
+                q = asked[-1]; still = GALLERY/f"{name}.jpg"
+                out[name] = dict(name=name, mod=tag.get('mod', ''), question=asked[0]['text'], answer=_text(c, q),
+                    questions=[x['text'] for x in asked], first_question_id=asked[0]['id'], first_t=min([asked[0]['t']]+[r['t'] for r in asked[0].get('revisions', [])[:1]]),   # typed: where typing began
+                    session='./'+str(scenario.relative_to(spaces.SPACES.parent)/'session.json'), conversation=c['id'], question_id=q['id'],
+                    question_ids=[x['id'] for x in asked], frame=q['frame'], t=q['t'], latency=q.get('latency'), since=since,
+                    still=still.name if still.is_file() else None, still_at=round(still.stat().st_mtime) if still.is_file() else None)
     return sorted(out.values(), key=lambda e: (e['mod'], e['name']))
 
 def rebuild():
@@ -53,9 +63,11 @@ def rebuild():
     (GALLERY/'examples.js').write_text('window.GALLERY='+json.dumps(data, ensure_ascii=False)+';\n')
     return found
 
-def save_still(session_dir, cid, image):
-    """The camera view at an example's answer (a JPEG data URL from the editor): stored under the example's name."""
-    c = store.read(session_dir, cid); tag = c.get('gallery_example')
+def save_still(session_dir, cid, image, name=None):
+    """The camera view at an example's answer (a JPEG data URL from the editor, its example view ?example=name): stored under the
+    example's name."""
+    held = _groups(store.read(session_dir, cid))
+    tag = held[name][0] if name in held else next(iter(held.values()))[0] if len(held) == 1 else None
     if not tag: raise ValueError('Not a gallery example.')
     m = re.match(r'^data:image/jpeg;base64,([A-Za-z0-9+/=]+)$', str(image or ''))
     if not m: raise ValueError('The still must be a JPEG data URL.')
@@ -65,13 +77,24 @@ def save_still(session_dir, cid, image):
     return next((e for e in rebuild() if e['name'] == tag['name']), None)
 
 def replace(name, keep):
-    """After a new example is answered: delete the other conversations tagged with this name, in every session."""
-    gone = 0
+    """An example asked again (conversation keep, tagged `gallery_example`) and answered: its questions take the example's place in the
+    conversation holding it, and that conversation's time is now; keep is then gone. With no such conversation (the example is new, or
+    its conversation was deleted), keep becomes the example's: its questions tagged, itself an ordinary conversation."""
     for scenario in sorted(spaces.SPACES.glob('*/scenarios/*')):
-        for c in store._all(scenario):
-            if (c.get('gallery_example') or {}).get('name') == name and c['id'] != keep:
-                store.delete_conversation(scenario, c['id']); gone += 1
-    rebuild(); return dict(removed=gone)
+        mine = next((c for c in store._all(scenario) if c['id'] == keep), None)
+        if mine: break
+    else: raise ValueError('Unknown session: '+str(keep))
+    tag = mine.get('gallery_example') or {}
+    if tag.get('name') != name: raise ValueError('Not this example being asked again.')
+    ids = [q['id'] for q in mine['questions'] if q.get('status') == 'answered']
+    home = [(c, [q['id'] for q in qs]) for c in store._all(scenario) if c['id'] != keep for n, (t, qs, since) in _groups(c).items() if n == name]
+    if home:
+        c, old = max(home, key=lambda h: store.when(h[0]))
+        store.transplant(scenario, keep, c['id'], ids, old); out = dict(conversation=c['id'], replaced=len(old))
+    else:
+        mine.pop('gallery_example'); mine['questions'] = [dict(q, gallery=tag) if q['id'] in ids else q for q in mine['questions']]
+        store._write(scenario, mine); out = dict(conversation=keep, replaced=0)
+    rebuild(); return out
 
 SPEC = Path(__file__).resolve().parents[1]/'demos'/'gallery-examples.json'
 MODS = Path(__file__).resolve().parents[1]/'modos'/'mods'
@@ -100,7 +123,7 @@ def _slug(text, n=28):
 
 def add(session_dir, cid, ids):
     """An example made in the editor: one answered question, or several asked one after another (ids, consecutive in the
-    conversation), copied into a new conversation tagged as an example (named after the first one's MOD and words) and added to
+    conversation), tagged where they are as an example (named after the first one's MOD and words) and added to
     demos/gallery-examples.json, so `npm run gallery` asks them again like the others (in order, in one conversation)."""
     c = store.read(session_dir, cid)
     order = [q['id'] for q in c['questions']]
@@ -119,10 +142,8 @@ def add(session_dir, cid, ids):
     base = f"{_slug(mod, 16)}-{_slug(qs[0]['text'])}"; name = base; n = 2
     while name in taken: name = f'{base}-{n}'; n += 1
     tag = clean_tag(dict(name=name, mod=mod))
-    keep = {q['id'] for q in qs}   # copied as an import is: question ids stay unique in the scene
-    data = dict(name=f'Gallery · {name}', questions=qs, responses=[r for r in c['responses'] if r.get('question_id') in keep])
-    copy = store.import_conversation(session_dir, data)
-    copy['gallery_example'] = tag; store._write(session_dir, copy)
+    for q in qs: q['gallery'] = tag
+    store._write(session_dir, c)
     entry = dict(name=name, mod=mod, recording=recording)
     def asked(q):
         one = dict(ask_at=round(q['t'], 2), question=q['text'])
@@ -136,4 +157,4 @@ def add(session_dir, cid, ids):
     spec['examples'].append(entry)
     SPEC.write_text(json.dumps(spec, indent=2, ensure_ascii=False)+'\n')
     rebuild()
-    return dict(example=entry, conversation=copy['id'])
+    return dict(example=entry, conversation=cid)

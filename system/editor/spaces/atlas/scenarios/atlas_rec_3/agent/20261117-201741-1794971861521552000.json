@@ -1,15 +1,15 @@
 {
   "id": "20261117-201741-1794971861521552000",
-  "name": "2026-11-17 20:17:41",
+  "name": "hey, can I eat you · 11-17 22:05",
   "created": 1794971861.5216,
   "questions": [
     {
-      "id": 46,
+      "id": 51,
       "text": "hey, can I eat you?",
       "frame": 542,
       "t": 18.069455040997127,
       "status": "answered",
-      "created": 1794971864.557219,
+      "created": 1794978347.058818,
       "live": {
         "read_s": 5.0
       },
@@ -27,146 +27,150 @@
       "location": {
         "in": "kitchen-2f"
       },
-      "started": 1794971864.5621219,
+      "started": 1794978347.075951,
       "trace": [
         {
           "kind": "tool",
           "tool": "view_context",
           "text": "{\"places\":[\"Kitchen · 2F\"],\"looking\":\"candy\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
-          "at": 21
+          "at": 25
         },
         {
           "kind": "tool",
           "tool": "modos_request",
           "text": "Started",
-          "at": 24
+          "at": 29
         },
         {
           "kind": "tool",
           "tool": "modos_request",
-          "text": "{\"elapsed_ms\":337,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.63},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"referent\",\"confidence\":0.44,\"probabilities\":{\"referent\":0.55,\"here\":0.06,\"user\":0.03,\"world\":0,\"other\":0.36}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.14},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01}},\"usage\":{\"input_tokens\":1609,\"output_tokens\":346}}",
-          "at": 357
+          "text": "{\"elapsed_ms\":293,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.57},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"referent\",\"confidence\":0.35,\"probabilities\":{\"referent\":0.48,\"here\":0.07,\"user\":0.03,\"world\":0,\"other\":0.42}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.14},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01}},\"usage\":{\"input_tokens\":1609,\"output_tokens\":346}}",
+          "at": 317
         },
         {
           "kind": "tool",
           "tool": "decision",
-          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":337}",
-          "at": 367
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":293}",
+          "at": 331
         },
         {
           "kind": "tool",
           "tool": "modos_request",
           "text": "{\"referent\":{\"entity\":\"comp:c3\",\"key\":\"candy\",\"name\":\"candy\",\"kind\":\"object\",\"source\":\"selection\"},\"reference\":\"standalone\",\"questions\":[{\"text\":\"hey, can I eat you?\",\"about\":\"referent\"}]}",
-          "at": 380
+          "at": 344
         },
         {
           "kind": "tool",
           "tool": "view_grounding",
-          "text": "{\"looking\":\"candy\",\"score\":0.63,\"referent\":\"candy\",\"reference\":\"standalone\",\"questions\":[{\"text\":\"hey, can I eat you?\",\"about\":\"candy\"}]}",
-          "at": 384
+          "text": "{\"looking\":\"candy\",\"score\":0.57,\"referent\":\"candy\",\"reference\":\"standalone\",\"questions\":[{\"text\":\"hey, can I eat you?\",\"about\":\"candy\"}]}",
+          "at": 348
         },
         {
           "kind": "tool",
           "tool": "modos_mods",
           "text": "[[\"worldinfo\",1]]",
-          "at": 387
+          "at": 351
         },
         {
           "kind": "tool",
           "tool": "view_mods",
-          "text": "{\"options\":[[\"WorldInfo\",\"auto\"],[\"Agenda\",0.01],[\"BookCompanion\",0.02],[\"Delegate\",0.02],[\"FindMy\",0.02],[\"IoTControl\",0.02],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.14],[\"Reminder\",0.02],[\"StepGuide\",0.03],[\"Wayfinding\",0.02],[\"Weather\",0.01]],\"skipped\":[\"LabInfo\"],\"chosen\":[\"WorldInfo\"]}",
-          "at": 389
+          "text": "{\"options\":[[\"WorldInfo\",\"auto\"],[\"Agenda\",0.01],[\"BookCompanion\",0.02],[\"Delegate\",0.02],[\"FindMy\",0.02],[\"IoTControl\",0.02],[\"LiveCoach\",0.02],[\"ObjectStatus\",0.14],[\"Reminder\",0.02],[\"StepGuide\",0.03],[\"Wayfinding\",0.02],[\"Weather\",0.01]],\"skipped\":[\"LabInfo\"],\"chosen\":[\"WorldInfo\"]}",
+          "at": 354
         },
         {
           "kind": "tool",
           "tool": "view_context_info",
           "text": "[{\"mod\":\"WorldInfo\",\"from\":[\"Kitchen · 2F and the things in it\"],\"items\":[\"candy\",\"directory:2f\"]}]",
-          "at": 392
+          "at": 357
         },
         {
           "kind": "tool",
           "tool": "view_text",
           "text": "{\"mod\":\"WorldInfo\",\"use\":\"dialogue\",\"voice\":\"candy\"}",
-          "at": 395
+          "at": 359
         },
         {
           "kind": "tool",
           "tool": "gemini_answer",
           "text": "Started · gemini-3.5-flash-lite · minimal",
-          "at": 398
+          "at": 362
         },
         {
           "kind": "tool",
           "tool": "show_text",
           "text": "Yes",
-          "at": 2007
+          "at": 2065
         },
         {
           "kind": "tool",
           "tool": "gemini_answer",
-          "text": "{\"elapsed_ms\":1917,\"first_text_ms\":1621,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":906,\"total_input_tokens\":835,\"total_output_tokens\":71,\"total_thought_tokens\":0}}",
-          "at": 2299
+          "text": "{\"elapsed_ms\":2334,\"first_text_ms\":1716,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":915,\"total_input_tokens\":835,\"total_output_tokens\":80,\"total_thought_tokens\":0}}",
+          "at": 2679
         },
         {
           "kind": "tool",
           "tool": "show_text",
           "text": "Text stream complete",
-          "at": 2306
+          "at": 2686
         }
       ],
       "parts": {
         "text": {
           "response": 1,
-          "latency": 2.007,
+          "latency": 2.067,
           "status": "complete"
         }
       },
-      "response": 1,
-      "latency": 2.31,
+      "response": 2,
+      "latency": 2.7,
       "info": {
         "key": "candy",
         "source": "selection",
-        "interaction_id": "v1_ChcyUmo5YXNIWEQ5ZXJxdHNQNTlyb21BRRIXMlJqOWFzSFhEOWVycXRzUDU5cm9tQUU"
+        "interaction_id": "v1_ChdLekw5YW9ydktlRFJ6N0lQb3JTLThRdxIXS3pMOWFvcnZLZURSejdJUG9yUy04UXc"
       },
       "message": "Yes",
-      "finished": 1794971866.875829,
-      "duration": 2.3,
-      "label": "q-1117-21"
+      "finished": 1794978349.77833,
+      "duration": 2.7,
+      "label": "q-1117-23",
+      "gallery": {
+        "name": "worldinfo-voice",
+        "mod": "WorldInfo"
+      }
     }
   ],
   "responses": [
     {
-      "id": 1,
-      "created": 1794971866.569026,
+      "id": 2,
+      "created": 1794978349.142716,
       "frame": 542,
       "t": 18.069455040997127,
       "question": "hey, can I eat you?",
-      "question_id": 46,
+      "question_id": 51,
       "part": "text",
       "layout_slot": 0,
-      "latency": 2.007,
+      "latency": 2.067,
       "stream": {
         "updates": [
           {
             "seq": 1,
             "status": "streaming",
-            "at": 2.007,
-            "created": 1794971866.569026,
+            "at": 2.067,
+            "created": 1794978349.142716,
             "title": "Yes",
-            "body": "",
+            "body": "You can eat me because I am grad tea leftover candy and people may help themselves.",
             "anchor": null,
             "referenced_entities": []
           },
           {
             "seq": 2,
             "status": "complete",
-            "at": 2.302,
-            "created": 1794971866.864577,
+            "at": 2.685,
+            "created": 1794978349.761303,
             "title": "Yes",
             "body": "You can eat me because I am grad tea leftover candy and people may help themselves.",
             "anchor": {
-              "object": "candy",
-              "relation": "in-front"
+              "object": "candy bowl",
+              "relation": "on"
             },
             "referenced_entities": []
           }
@@ -178,8 +182,8 @@
       "body": "You can eat me because I am grad tea leftover candy and people may help themselves.",
       "items": [],
       "anchor": {
-        "object": "candy",
-        "relation": "in-front"
+        "object": "candy bowl",
+        "relation": "on"
       },
       "referenced_entities": [],
       "reserve_text": true,
@@ -218,5 +222,6 @@
         "speaker": "comp:c3"
       }
     }
-  ]
+  ],
+  "updated": 1794978340.952825
 }

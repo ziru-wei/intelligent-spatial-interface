@@ -14,12 +14,15 @@
    "first_question_id": 36,
    "first_t": 2.484371208003722,
    "session": "./spaces/atlas/scenarios/atlas_rec_4/session.json",
-   "conversation": "20261117-220628-1794978388931195000",
+   "conversation": "20261117-202021-1794972021102694000",
    "question_id": 36,
+   "question_ids": [
+    36
+   ],
    "frame": 149,
    "t": 2.484371208003722,
    "latency": 1.47,
-   "created": 1794978388.931215,
+   "since": 1794978394.9403641,
    "still": "agenda-afternoon.jpg",
    "still_at": 1795030848
   },
@@ -37,12 +40,15 @@
    "first_question_id": 30,
    "first_t": 2.167638333994546,
    "session": "./spaces/atlas/scenarios/atlas_rec_1/session.json",
-   "conversation": "20261119-195940-1795143580815799000",
+   "conversation": "20261119-143602-1795124162223880000",
    "question_id": 30,
+   "question_ids": [
+    30
+   ],
    "frame": 812,
    "t": 13.540170541993575,
    "latency": 1.44,
-   "created": 1795143580.81585,
+   "since": 1795127720.716316,
    "still": null,
    "still_at": null
   },
@@ -61,12 +67,16 @@
    "first_question_id": 36,
    "first_t": 1.3839706250000745,
    "session": "./spaces/atlas/scenarios/atlas_rec_1/session.json",
-   "conversation": "20261119-202411-1795145051602667000",
+   "conversation": "20261119-202000-1795144800513903000",
    "question_id": 55,
+   "question_ids": [
+    36,
+    55
+   ],
    "frame": 897,
    "t": 14.957438375000493,
    "latency": 1.22,
-   "created": 1795145051.6028779,
+   "since": 1795156860.561549,
    "still": null,
    "still_at": null
   },
@@ -84,12 +94,15 @@
    "first_question_id": 106,
    "first_t": 4.985579458007123,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261117-220751-1794978471182461000",
+   "conversation": "20261117-203337-1794972817669206000",
    "question_id": 106,
+   "question_ids": [
+    106
+   ],
    "frame": 299,
    "t": 4.985579458007123,
    "latency": 1.64,
-   "created": 1794978471.1824892,
+   "since": 1794978477.460484,
    "still": "bookcompanion-lighthouse.jpg",
    "still_at": 1795031020
   },
@@ -107,12 +120,15 @@
    "first_question_id": 34,
    "first_t": 6.986245499996585,
    "session": "./spaces/atlas/scenarios/atlas_rec_4/session.json",
-   "conversation": "20261117-220603-1794978363829108000",
+   "conversation": "20261117-201858-1794971938191116000",
    "question_id": 34,
+   "question_ids": [
+    34
+   ],
    "frame": 419,
    "t": 6.986245499996585,
    "latency": 1.2,
-   "created": 1794978363.829141,
+   "since": 1794978370.0263019,
    "still": "findmy.jpg",
    "still_at": 1795030822
   },
@@ -130,12 +146,15 @@
    "first_question_id": 102,
    "first_t": 0.983766083008959,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261117-220704-1794978424352700000",
+   "conversation": "20261117-202220-1794972140730090000",
    "question_id": 102,
+   "question_ids": [
+    102
+   ],
    "frame": 59,
    "t": 0.983766083008959,
    "latency": 2.7,
-   "created": 1794978424.352726,
+   "since": 1794978430.704741,
    "still": "iotcontrol-brighter.jpg",
    "still_at": 1795030890
   },
@@ -154,12 +173,16 @@
    "first_question_id": 113,
    "first_t": 0.983766083008959,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261117-221005-1794978605924080000",
+   "conversation": "20261117-202333-1794972213376329000",
    "question_id": 143,
+   "question_ids": [
+    113,
+    143
+   ],
    "frame": 0,
    "t": 0.0,
    "latency": 1.76,
-   "created": 1794978605.924128,
+   "since": 1795027750.658131,
    "still": "iotcontrol-printer.jpg",
    "still_at": 1794980800
   },
@@ -177,12 +200,15 @@
    "first_question_id": 114,
    "first_t": 0.983766083008959,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261117-221018-1794978618758107000",
+   "conversation": "20261117-203051-1794972651519161000",
    "question_id": 114,
+   "question_ids": [
+    114
+   ],
    "frame": 59,
    "t": 0.983766083008959,
    "latency": 1.52,
-   "created": 1794978618.7581341,
+   "since": 1794978625.1680892,
    "still": "iotcontrol-printer-whose.jpg",
    "still_at": 1795031007
   },
@@ -200,12 +226,15 @@
    "first_question_id": 123,
    "first_t": 0.983766083008959,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261118-003514-1794987314774639000",
+   "conversation": "20261117-202722-1794972442312710000",
    "question_id": 123,
+   "question_ids": [
+    123
+   ],
    "frame": 59,
    "t": 0.983766083008959,
    "latency": 1.18,
-   "created": 1794987314.774658,
+   "since": 1794987321.173002,
    "still": "iotcontrol-tv.jpg",
    "still_at": 1795031084
   },
@@ -223,12 +252,15 @@
    "first_question_id": 100,
    "first_t": 0.983766083008959,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261117-220641-1794978401211378000",
+   "conversation": "20261117-202058-1794972058662530000",
    "question_id": 100,
+   "question_ids": [
+    100
+   ],
    "frame": 59,
    "t": 0.983766083008959,
    "latency": 3.13,
-   "created": 1794978401.211406,
+   "since": 1794978407.343744,
    "still": "labinfo-panorama.jpg",
    "still_at": 1795030863
   },
@@ -246,12 +278,15 @@
    "first_question_id": 33,
    "first_t": 0.9837447080062702,
    "session": "./spaces/atlas/scenarios/atlas_rec_4/session.json",
-   "conversation": "20261117-220554-1794978354710278000",
+   "conversation": "20261117-201822-1794971902468080000",
    "question_id": 33,
+   "question_ids": [
+    33
+   ],
    "frame": 59,
    "t": 0.9837447080062702,
    "latency": 1.3,
-   "created": 1794978354.710297,
+   "since": 1794978360.6466188,
    "still": "labinfo-wall.jpg",
    "still_at": 1795030810
   },
@@ -269,12 +304,15 @@
    "first_question_id": 108,
    "first_t": 5.485798749999958,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261117-220818-1794978498739338000",
+   "conversation": "20261117-202528-1794972328843817000",
    "question_id": 108,
+   "question_ids": [
+    108
+   ],
    "frame": 329,
    "t": 5.485798749999958,
    "latency": 1.38,
-   "created": 1794978498.739357,
+   "since": 1794978505.15648,
    "still": "livecoach-stretch.jpg",
    "still_at": 1795031047
   },
@@ -292,12 +330,15 @@
    "first_question_id": 112,
    "first_t": 0.983766083008959,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261117-220951-1794978591769079000",
+   "conversation": "20261117-203301-1794972781244296000",
    "question_id": 112,
+   "question_ids": [
+    112
+   ],
    "frame": 59,
    "t": 0.983766083008959,
    "latency": 1.43,
-   "created": 1794978591.769121,
+   "since": 1794978598.169376,
    "still": "objectstatus-printer.jpg",
    "still_at": 1795030903
   },
@@ -315,12 +356,15 @@
    "first_question_id": 109,
    "first_t": 48.487754500005394,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261117-220832-1794978512713081000",
+   "conversation": "20261117-202607-1794972367339283000",
    "question_id": 109,
+   "question_ids": [
+    109
+   ],
    "frame": 2908,
    "t": 48.487754500005394,
    "latency": 1.68,
-   "created": 1794978512.7131,
+   "since": 1794978518.924639,
    "still": "reminder-espresso.jpg",
    "still_at": 1795031060
   },
@@ -335,12 +379,15 @@
    "first_question_id": 88,
    "first_t": 7.087795999992522,
    "session": "./spaces/atlas/scenarios/atlas_rec_2/session.json",
-   "conversation": "20261118-144210-1795038130163800000",
+   "conversation": "20261117-201536-1794971736941184000",
    "question_id": 88,
+   "question_ids": [
+    88
+   ],
    "frame": 425,
    "t": 7.087795999992522,
    "latency": 1.51,
-   "created": 1795038130.1638458,
+   "since": 1795038136.122719,
    "still": "send-describe.jpg",
    "still_at": 1795038139
   },
@@ -355,12 +402,15 @@
    "first_question_id": 89,
    "first_t": 7.087795999992522,
    "session": "./spaces/atlas/scenarios/atlas_rec_2/session.json",
-   "conversation": "20261118-144219-1795038139387686000",
+   "conversation": "20261117-201618-1794971778715575000",
    "question_id": 89,
+   "question_ids": [
+    89
+   ],
    "frame": 425,
    "t": 7.087795999992522,
    "latency": 1.71,
-   "created": 1795038139.387707,
+   "since": 1795038145.332244,
    "still": "send-photo.jpg",
    "still_at": 1795038148
   },
@@ -375,12 +425,15 @@
    "first_question_id": 86,
    "first_t": 7.087795999992522,
    "session": "./spaces/atlas/scenarios/atlas_rec_2/session.json",
-   "conversation": "20261118-144151-1795038111656275000",
+   "conversation": "20261117-201454-1794971694325420000",
    "question_id": 86,
+   "question_ids": [
+    86
+   ],
    "frame": 425,
    "t": 7.087795999992522,
    "latency": 1.19,
-   "created": 1795038111.656306,
+   "since": 1795038117.7318609,
    "still": "send-poster.jpg",
    "still_at": 1795038120
   },
@@ -397,10 +450,13 @@
    "session": "./spaces/atlas/scenarios/atlas_rec_2/session.json",
    "conversation": "20261118-144200-1795038120976428000",
    "question_id": 87,
+   "question_ids": [
+    87
+   ],
    "frame": 425,
    "t": 7.087795999992522,
    "latency": 1.58,
-   "created": 1795038120.976452,
+   "since": 1795038126.924801,
    "still": "send-two.jpg",
    "still_at": 1795038130
   },
@@ -418,12 +474,15 @@
    "first_question_id": 107,
    "first_t": 46.98711283299781,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261117-220804-1794978484942193000",
+   "conversation": "20261117-202450-1794972290310057000",
    "question_id": 107,
+   "question_ids": [
+    107
+   ],
    "frame": 2818,
    "t": 46.98711283299781,
    "latency": 1.59,
-   "created": 1794978484.94221,
+   "since": 1794978491.2614741,
    "still": "stepguide-espresso.jpg",
    "still_at": 1795031033
   },
@@ -441,12 +500,15 @@
    "first_question_id": 35,
    "first_t": 0.9837447080062702,
    "session": "./spaces/atlas/scenarios/atlas_rec_4/session.json",
-   "conversation": "20261117-220615-1794978375288492000",
+   "conversation": "20261117-201945-1794971985099054000",
    "question_id": 35,
+   "question_ids": [
+    35
+   ],
    "frame": 59,
    "t": 0.9837447080062702,
    "latency": 1.99,
-   "created": 1794978375.288513,
+   "since": 1794978381.470856,
    "still": "wayfinding-kitchen.jpg",
    "still_at": 1795030836
   },
@@ -464,12 +526,15 @@
    "first_question_id": 71,
    "first_t": 0.9839533749909606,
    "session": "./spaces/atlas/scenarios/atlas_rec_2/session.json",
-   "conversation": "20261118-125115-1795031475358784000",
+   "conversation": "20261117-203225-1794972745383798000",
    "question_id": 71,
+   "question_ids": [
+    71
+   ],
    "frame": 59,
    "t": 0.9839533749909606,
    "latency": 1.36,
-   "created": 1795031475.358834,
+   "since": 1795031481.625386,
    "still": "weather-corridor.jpg",
    "still_at": 1795031487
   },
@@ -487,12 +552,15 @@
    "first_question_id": 144,
    "first_t": 1.4839859580097254,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261118-125128-1795031488426330000",
+   "conversation": "20261117-202140-1794972100022107000",
    "question_id": 144,
+   "question_ids": [
+    144
+   ],
    "frame": 89,
    "t": 1.4839859580097254,
    "latency": 1.45,
-   "created": 1795031488.426379,
+   "since": 1795031494.61583,
    "still": "weather-lab.jpg",
    "still_at": 1795031501
   },
@@ -510,12 +578,15 @@
    "first_question_id": 145,
    "first_t": 1.4839859580097254,
    "session": "./spaces/atlas/scenarios/atlas_rec_5/session.json",
-   "conversation": "20261118-125141-1795031501046093000",
+   "conversation": "20261117-202643-1794972403563439000",
    "question_id": 145,
+   "question_ids": [
+    145
+   ],
    "frame": 89,
    "t": 1.4839859580097254,
    "latency": 1.73,
-   "created": 1795031501.0461519,
+   "since": 1795031507.338892,
    "still": "weather-umbrella.jpg",
    "still_at": 1795031512
   },
@@ -533,12 +604,15 @@
    "first_question_id": 50,
    "first_t": 48.59621354099363,
    "session": "./spaces/atlas/scenarios/atlas_rec_3/session.json",
-   "conversation": "20261117-220526-1794978326452478000",
+   "conversation": "20261117-201701-1794971821484352000",
    "question_id": 50,
+   "question_ids": [
+    50
+   ],
    "frame": 2045,
    "t": 48.59621354099363,
    "latency": 2.3,
-   "created": 1794978326.452508,
+   "since": 1794978332.573372,
    "still": "worldinfo-text.jpg",
    "still_at": 1795030782
   },
@@ -556,15 +630,18 @@
    "first_question_id": 51,
    "first_t": 18.069455040997127,
    "session": "./spaces/atlas/scenarios/atlas_rec_3/session.json",
-   "conversation": "20261117-220540-1794978340952810000",
+   "conversation": "20261117-201741-1794971861521552000",
    "question_id": 51,
+   "question_ids": [
+    51
+   ],
    "frame": 542,
    "t": 18.069455040997127,
    "latency": 2.7,
-   "created": 1794978340.952825,
+   "since": 1794978347.058818,
    "still": "worldinfo-voice.jpg",
    "still_at": 1795030796
   }
  ],
- "updated": 1795517680
+ "updated": 1795571139
 }

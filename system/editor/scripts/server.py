@@ -29,11 +29,13 @@ Agent (scripts/agent-bridge.mjs runs the ModOS pipeline for one recording and pu
 Questions and responses live in conversations ("sessions" in the UI), see scripts/agent_store.py:
 GET  /api/agent/command?session=                   pastable shell command that starts the bridge for this scene
 POST /api/agent/bridge {session}                    start that bridge from the editor (a Gallery example), unless one is already polling
-GET  /api/agent/conversations?session=             list; POST /api/agent/conversations {session,name?} creates an empty one
-POST /api/agent/conversations/rename|import         {session,conversation,name} | {session,data}; GET …/export?session=&conversation=
+GET  /api/agent/conversations?session=             list (starred: holds a Gallery example); POST /api/agent/conversations {session} creates an empty one
+POST /api/agent/conversations/rename|import         {session,conversation,name} (the user's name: no longer the first question's) | {session,data}; GET …/export?session=&conversation=
+POST /api/agent/questions/replace {session,conversation,old,new}  an answered question asked again takes the place of the one it came from (Rerun, a replay)
 GET  /api/gallery                                    the Gallery's examples (scripts/gallery.py), written to context/gallery as well
-POST /api/gallery/still {session,conversation,image}  a still of an example's answer; POST /api/gallery/replace {name,keep}: drop older examples of that name
-POST /api/gallery/add {session,conversation,ids}      a new example from answered questions (one, or several in a row)
+POST /api/gallery/still {session,conversation,example,image}  a still of an example's answer; POST /api/gallery/replace {name,keep}: an example asked
+                                                   again (conversation keep) takes the old one's place in its conversation
+POST /api/gallery/add {session,conversation,ids}      a new example: answered questions (one, or several in a row), tagged where they are
 POST /api/asr/relay                                 speech to text: starts scripts/asr-relay.mjs (Doubao) if needed; {url}
 POST /api/agent/drafts {session,conversation,id?,frame,t,text,pause?,selection?}   answer while typing: a draft's revision (…/drafts/ask {id,text}, …/drafts/cancel {id}); POST /api/agent/questions/audio?session=&id=&started= (body: WAV) a spoken question's recording; GET /api/agent/questions/runs?id= (a typed question's trace per revision); GET /api/agent/questions/rev?id=; POST /api/agent/responses/retract {question_id,keys,rev}
 GET  /api/agent/themes?session=&id=   the theme book of a question's conversation (modos/themes.mjs); POST /api/agent/themes {session,question_id,themes}
@@ -215,11 +217,12 @@ def agent_post(path, body):
     with store.lock:
         store._prepare(d)
         if path == '/api/agent/state': store.editor_state[str(d)] = {k: body.get(k) for k in ('conversation', 'frame', 't', 'position', 'quaternion', 'forward')}; return dict(ok=True)
-        if path == '/api/agent/conversations': return store.create(d, body.get('name'), gallery_example=gallery.clean_tag(body['gallery_example']) if body.get('gallery_example') else None)
+        if path == '/api/agent/conversations': return store.create(d, gallery_example=gallery.clean_tag(body['gallery_example']) if body.get('gallery_example') else None)
         if path == '/api/agent/conversations/delete': out = store.delete_conversation(d, cid); gallery.rebuild(); return out
         if path == '/api/agent/conversations/rename': return store.rename(d, cid, body.get('name'))
         if path == '/api/agent/conversations/import': return store.import_conversation(d, body.get('data'))
         if path == '/api/agent/questions/delete': out = store.delete_question(d, cid, body.get('id')); gallery.rebuild(); return out
+        if path == '/api/agent/questions/replace': out = store.replace_question(d, cid, body.get('old'), body.get('new')); gallery.rebuild(); return out
         if path == '/api/agent/questions/trace': store.bridge_seen[str(d)] = time.time(); return store.add_trace(d, body.get('id'), body.get('step'))
         if path == '/api/agent/placement-log': return store.log_placement(d, body.get('question_id'), body.get('event'))
         if path == '/api/agent/questions/info': return store.set_info(d, body.get('id'), body.get('key'), body.get('interaction_id'), body.get('source'))
@@ -378,7 +381,7 @@ class Handler(SimpleHTTPRequestHandler):
             try:
                 with store.lock:
                     if path == '/api/gallery/add': return self.reply(200, gallery.add(session_dir(body.get('session')), body.get('conversation'), body.get('ids')))
-                    if path == '/api/gallery/still': return self.reply(200, dict(example=gallery.save_still(session_dir(body.get('session')), body.get('conversation'), body.get('image'))))
+                    if path == '/api/gallery/still': return self.reply(200, dict(example=gallery.save_still(session_dir(body.get('session')), body.get('conversation'), body.get('image'), body.get('example'))))
                     return self.reply(200, gallery.replace(gallery.clean_tag(dict(name=body.get('name')))['name'], body.get('keep')))
             except (ValueError, OSError, KeyError) as e: return self.reply(400, dict(error=str(e)))
         if path == '/api/modos/entities':

@@ -170,3 +170,41 @@ class DraftTest(unittest.TestCase):
             self.assertEqual(r[-1]['steps'][0]['tool'],'modos_mods');self.assertNotIn('traces',store.status(d,c['id'])['questions'][0])
             with self.assertRaisesRegex(ValueError,'already asked'):store.draft(d,c['id'],q['id'],0,1.5,'x')
             store.delete_conversation(d,c['id']);self.assertFalse((d/a['file']).exists())   # its recording goes with it
+
+class SessionNamesTest(unittest.TestCase):
+    def test_a_session_is_named_for_its_first_question_and_time_until_the_user_names_it(self):
+        import time
+        from datetime import datetime
+        with tempfile.TemporaryDirectory() as tmp, store.lock:
+            d = Path(tmp); c = store.create(d); stamp = datetime.fromtimestamp(c['created']).strftime('%m-%d %H:%M')
+            self.assertEqual(store.read(d, c['id'])['name'], stamp)
+            store.ask(d, c['id'], 0, 0, "What's the weather like this weekend at the lab?")
+            self.assertEqual(store.read(d, c['id'])['name'], f"What's the weather like… · {stamp}")
+            store.ask(d, c['id'], 0, 0, 'And tomorrow?')
+            self.assertTrue(store.read(d, c['id'])['name'].startswith("What's the weather"))
+            store.rename(d, c['id'], 'Lab weather')
+            store.ask(d, c['id'], 0, 0, 'Umbrella?')
+            self.assertEqual(store.read(d, c['id'])['name'], 'Lab weather')   # the user's name stays
+            self.assertEqual(store.auto_name(dict(created=c['created'], questions=[dict(text='Hi?')])), f'Hi · {stamp}')
+
+class ReplaceQuestionTest(unittest.TestCase):
+    def _answered(self, d, cid, text):
+        q = store.ask(d, cid, 0, 0, text); store.take_next(d)
+        c = store.read(d, cid); next(x for x in c['questions'] if x['id'] == q['id'])['status'] = 'answered'
+        c['responses'].append(dict(id=len(c['responses'])+1, question_id=q['id'], part='text', title=text)); store._write(d, c); return q['id']
+
+    def test_a_question_asked_again_takes_the_old_ones_place_and_star_once_answered(self):
+        with tempfile.TemporaryDirectory() as tmp, store.lock:
+            d = Path(tmp); c = store.create(d)
+            a = self._answered(d, c['id'], 'one'); b = self._answered(d, c['id'], 'two'); e = self._answered(d, c['id'], 'three')
+            x = store.read(d, c['id']); x['questions'][1]['gallery'] = dict(name='two', mod='Weather'); store._write(d, x)
+            pending = store.ask(d, c['id'], 0, 0, 'two again')
+            with self.assertRaisesRegex(ValueError, 'answered'): store.replace_question(d, c['id'], b, pending['id'])
+            x = store.read(d, c['id']); next(q for q in x['questions'] if q['id'] == pending['id'])['status'] = 'answered'; store._write(d, x)
+            store.replace_question(d, c['id'], b, pending['id'])
+            x = store.read(d, c['id'])
+            self.assertEqual([q['id'] for q in x['questions']], [a, pending['id'], e])
+            self.assertEqual(x['questions'][1]['gallery']['name'], 'two')
+            self.assertNotIn(b, [r['question_id'] for r in x['responses']])
+            self.assertGreaterEqual(x['updated'], x['created'])
+            self.assertGreater(store.ask(d, c['id'], 0, 0, 'later')['id'], b)   # its id is never given again

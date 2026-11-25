@@ -1,6 +1,6 @@
 {
   "id": "20261118-144200-1795038120976428000",
-  "name": "Gallery · send-two",
+  "name": "send this to Alice and… · 11-18 14:42",
   "created": 1795038120.976452,
   "questions": [
     {
@@ -173,7 +173,11 @@
       "message": "MOD UI only (no text slot).",
       "finished": 1795038128.530245,
       "duration": 1.6,
-      "label": "q-1118-4"
+      "label": "q-1118-4",
+      "gallery": {
+        "name": "send-two",
+        "mod": "Send"
+      }
     }
   ],
   "responses": [
@@ -289,9 +293,5 @@
       "latency": 1.54,
       "key": "action:send"
     }
-  ],
-  "gallery_example": {
-    "name": "send-two",
-    "mod": "Send"
-  }
+  ]
 }

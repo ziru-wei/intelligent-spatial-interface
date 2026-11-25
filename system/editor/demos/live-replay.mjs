@@ -2,11 +2,14 @@
 // Answer while typing, measured (design doc 12): types a question into a recording again, revision by revision, through the editor
 // server and its bridge, and reports when each part shows and goes. A tool around the editor, not part of ModOS.
 //   node demos/live-replay.mjs atlas_rec_1 --text "where is my umbrella"     typed at RATE ms a letter, revisions as the editor sends them
-//   node demos/live-replay.mjs atlas_rec_1 --from <conversation>:<question>  a draft typed earlier, its revisions at their own times
-//   --source <recording>  where the --from conversation is (default: the recording typed into)
+//   node demos/live-replay.mjs atlas_rec_1 --from <conversation>:<question>  a draft typed earlier, its revisions at their own times,
+//                                                                            typed again in its own conversation: asked (--enter) and
+//                                                                            answered, it takes the old question's place (the
+//                                                                            conversation's time is now); not asked, it is dropped
+//   --source <recording>  where the --from conversation is (default: the recording typed into; another recording: typed in a new conversation)
 // Logged: + a part shows, − it goes, ~ another part in its place, ↻ the text written again in its place, ◐ dimmed (it no longer answers
 // what is asked), ● it answers again.
-//   --at <s>  the recording's moment (default: the source question's, else 1 s); --enter  ask it at the end; --keep  keep the conversation
+//   --at <s>  the recording's moment (default: the source question's, else 1 s); --enter  ask it at the end; --keep  keep a new conversation
 // Needs the system (npm start) and agent-config.local.json (the server starts the scene's bridge).
 import {createBreaks} from '../src/live-input.mjs';
 
@@ -29,7 +32,9 @@ if(from){const [cid,qid]=from.split(':'),u=new URL('/api/agent/conversations/exp
   const c=await (await fetch(u)).json();if(!c.questions)throw Error(c.error||'No such conversation.');const q=c.questions.find(x=>String(x.id)===qid);
   if(!q?.revisions)throw Error('That question was not typed live.');revisions=q.revisions.filter(r=>!r.final);if(atFlag==null)at=q.t;}
 await api('/api/agent/bridge',{});
-const conv=await api('/api/agent/conversations',{name:'Live replay'});
+// a question typed again goes in its own conversation (in place, once answered); fresh text, in a new one
+const inPlace=from&&(!source||source===recording),old=inPlace?Number(from.split(':')[1]):null;
+const conv=inPlace?{id:from.split(':')[0]}:await api('/api/agent/conversations',{});
 const t0=Date.now(),log=[],now=()=>((Date.now()-t0)/1000).toFixed(2);
 let id=null,chain=Promise.resolve(),done=false;
 const send=(txt,pause)=>{log.push([now(),`${pause?'⏸':'·'} "${txt}"`]);chain=chain.then(()=>api('/api/agent/drafts',{conversation:conv.id,id,frame:frameAt(at),t:at,text:txt,pause})).then(q=>{id=q.id;});};
@@ -56,4 +61,8 @@ await sleep(6000);await chain;
 if(enter){log.push([now(),'⏎ asked']);await api('/api/agent/drafts/ask',{conversation:conv.id,id,text:revisions?revisions.at(-1).text:text});await sleep(8000);}
 done=true;await watch;
 for(const [t,e] of log)console.log(`${t.padStart(6)} s  ${e}`);
-if(!keepIt)await api('/api/agent/conversations/delete',{conversation:conv.id}).catch(()=>{});
+if(inPlace){
+  let q=null;for(const until=Date.now()+60000;enter&&Date.now()<until;await sleep(1000)){q=(await api(`/api/agent/status?conversation=${conv.id}`)).questions.find(x=>x.id===id);if(['answered','failed'].includes(q?.status))break;}
+  if(q?.status==='answered'){await api('/api/agent/questions/replace',{conversation:conv.id,old,new:id});console.log(`question ${id} took the place of ${old}`);}
+  else{await api('/api/agent/drafts/cancel',{conversation:conv.id,id}).catch(()=>api('/api/agent/questions/delete',{conversation:conv.id,id}).catch(()=>{}));console.log(enter?`not answered: question ${old} stays`:'not asked: dropped');}
+}else if(!keepIt)await api('/api/agent/conversations/delete',{conversation:conv.id}).catch(()=>{});

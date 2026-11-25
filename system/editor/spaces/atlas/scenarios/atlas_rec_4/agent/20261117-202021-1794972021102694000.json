@@ -1,15 +1,15 @@
 {
   "id": "20261117-202021-1794972021102694000",
-  "name": "2026-11-17 20:20:21",
+  "name": "what's on this… · 11-17 22:06",
   "created": 1794972021.102737,
   "questions": [
     {
-      "id": 32,
+      "id": 36,
       "text": "what's on this afternoon?",
       "frame": 149,
       "t": 2.484371208003722,
       "status": "answered",
-      "created": 1794972024.151459,
+      "created": 1794978394.9403641,
       "live": {
         "read_s": 5.0
       },
@@ -27,157 +27,161 @@
       "location": {
         "in": "lab-2f"
       },
-      "started": 1794972024.1586199,
+      "started": 1794978394.946218,
       "trace": [
         {
           "kind": "tool",
           "tool": "modos_fill_labinfo",
           "text": "Started",
-          "at": 21
+          "at": 26
         },
         {
           "kind": "tool",
           "tool": "view_context",
           "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"vision_sean\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
-          "at": 25
+          "at": 31
         },
         {
           "kind": "tool",
           "tool": "modos_request",
           "text": "Started",
-          "at": 28
-        },
-        {
-          "kind": "tool",
-          "tool": "modos_fill_labinfo",
-          "text": "{\"elapsed_ms\":242,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.56,\"probabilities\":{\"labResearchWork\":0.01,\"labResearchLife\":0.28,\"none\":0.71}}},\"usage\":{\"input_tokens\":671,\"output_tokens\":48}}",
-          "at": 263
-        },
-        {
-          "kind": "tool",
-          "tool": "decision",
-          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":242}",
-          "at": 269
-        },
-        {
-          "kind": "tool",
-          "tool": "modos_fill",
-          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
-          "at": 274
-        },
-        {
-          "kind": "tool",
-          "tool": "view_fill",
-          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0.01],[\"labResearchLife\",0.28],[\"none\",0.71]],\"chosen\":\"none\"}]}",
-          "at": 291
+          "at": 34
         },
         {
           "kind": "tool",
           "tool": "modos_request",
-          "text": "{\"elapsed_ms\":252,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.14},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"user\",\"confidence\":0.47,\"probabilities\":{\"referent\":0.04,\"here\":0.23,\"user\":0.58,\"world\":0.05,\"other\":0.1}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.89},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.14},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.11},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.23},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.06},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.09}},\"usage\":{\"input_tokens\":1713,\"output_tokens\":367}}",
-          "at": 295
+          "text": "{\"elapsed_ms\":347,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.12},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"user\",\"confidence\":0.54,\"probabilities\":{\"referent\":0.04,\"here\":0.14,\"user\":0.63,\"world\":0.07,\"other\":0.12}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.89},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.07},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.09},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.23},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.09},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.11}},\"usage\":{\"input_tokens\":1713,\"output_tokens\":367}}",
+          "at": 373
         },
         {
           "kind": "tool",
           "tool": "decision",
-          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":252}",
-          "at": 299
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":347}",
+          "at": 384
         },
         {
           "kind": "tool",
           "tool": "modos_request",
           "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"what's on this afternoon?\",\"about\":\"user\"}]}",
-          "at": 302
+          "at": 391
         },
         {
           "kind": "tool",
           "tool": "view_grounding",
-          "text": "{\"looking\":\"vision_sean\",\"score\":0.14,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"what's on this afternoon?\",\"about\":\"the user\"}]}",
-          "at": 305
+          "text": "{\"looking\":\"vision_sean\",\"score\":0.12,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"what's on this afternoon?\",\"about\":\"the user\"}]}",
+          "at": 396
         },
         {
           "kind": "tool",
           "tool": "modos_mods",
           "text": "[[\"agenda\",0.89]]",
-          "at": 308
+          "at": 403
         },
         {
           "kind": "tool",
           "tool": "view_mods",
-          "text": "{\"options\":[[\"Agenda\",0.89],[\"BookCompanion\",0.03],[\"Delegate\",0.02],[\"FindMy\",0.03],[\"IoTControl\",0.14],[\"LiveCoach\",0.02],[\"ObjectStatus\",0.11],[\"Reminder\",0.23],[\"StepGuide\",0.03],[\"Wayfinding\",0.04],[\"Weather\",0.06],[\"LabInfo\",0.09]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"Agenda\"]}",
-          "at": 311
+          "text": "{\"options\":[[\"Agenda\",0.89],[\"BookCompanion\",0.03],[\"Delegate\",0.02],[\"FindMy\",0.03],[\"IoTControl\",0.07],[\"LiveCoach\",0.02],[\"ObjectStatus\",0.09],[\"Reminder\",0.23],[\"StepGuide\",0.03],[\"Wayfinding\",0.04],[\"Weather\",0.09],[\"LabInfo\",0.11]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"Agenda\"]}",
+          "at": 407
         },
         {
           "kind": "tool",
           "tool": "view_context_info",
           "text": "[{\"mod\":\"Agenda\",\"from\":[\"Lab · 2F and the things in it\",\"user:me\"],\"items\":[\"calendar\"]}]",
-          "at": 314
+          "at": 411
         },
         {
           "kind": "tool",
           "tool": "view_text",
           "text": "{\"mod\":\"Agenda\",\"use\":\"situated-text\",\"voice\":null}",
-          "at": 317
+          "at": 414
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":360,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.7,\"probabilities\":{\"labResearchWork\":0.01,\"labResearchLife\":0.19,\"none\":0.8}}},\"usage\":{\"input_tokens\":671,\"output_tokens\":48}}",
+          "at": 417
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":360}",
+          "at": 420
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 424
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0.01],[\"labResearchLife\",0.19],[\"none\",0.8]],\"chosen\":\"none\"}]}",
+          "at": 427
         },
         {
           "kind": "tool",
           "tool": "gemini_answer",
           "text": "Started · gemini-3.5-flash-lite · minimal",
-          "at": 320
+          "at": 430
         },
         {
           "kind": "tool",
           "tool": "show_text",
-          "text": "Nothing scheduled this afternoon",
-          "at": 1261
+          "text": "Nothing this afternoon",
+          "at": 1449
         },
         {
           "kind": "tool",
           "tool": "gemini_answer",
-          "text": "{\"elapsed_ms\":1067,\"first_text_ms\":963,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":989,\"total_input_tokens\":925,\"total_output_tokens\":64,\"total_thought_tokens\":0}}",
-          "at": 1359
+          "text": "{\"elapsed_ms\":1061,\"first_text_ms\":1056,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":988,\"total_input_tokens\":925,\"total_output_tokens\":63,\"total_thought_tokens\":0}}",
+          "at": 1456
         },
         {
           "kind": "tool",
           "tool": "show_text",
           "text": "Text stream complete",
-          "at": 1369
+          "at": 1462
         }
       ],
       "parts": {
         "text": {
           "response": 1,
-          "latency": 1.261,
+          "latency": 1.448,
           "status": "complete"
         }
       },
-      "response": 1,
-      "latency": 1.38,
-      "message": "Nothing scheduled this afternoon",
-      "finished": 1794972025.534822,
-      "duration": 1.4,
-      "label": "q-1117-18"
+      "response": 2,
+      "latency": 1.47,
+      "message": "Nothing this afternoon",
+      "finished": 1794978396.418071,
+      "duration": 1.5,
+      "label": "q-1117-22",
+      "gallery": {
+        "name": "agenda-afternoon",
+        "mod": "Agenda"
+      }
     }
   ],
   "responses": [
     {
-      "id": 1,
-      "created": 1794972025.419571,
+      "id": 2,
+      "created": 1794978396.3942652,
       "frame": 149,
       "t": 2.484371208003722,
       "question": "what's on this afternoon?",
-      "question_id": 32,
+      "question_id": 36,
       "part": "text",
       "layout_slot": 1,
-      "latency": 1.261,
+      "latency": 1.448,
       "stream": {
         "updates": [
           {
             "seq": 1,
             "status": "streaming",
-            "at": 1.261,
-            "created": 1794972025.419571,
-            "title": "Nothing scheduled this afternoon",
+            "at": 1.448,
+            "created": 1794978396.3942652,
+            "title": "Nothing this afternoon",
             "body": "You have no events scheduled for this afternoon.",
             "anchor": null,
             "referenced_entities": []
@@ -185,9 +189,9 @@
           {
             "seq": 2,
             "status": "complete",
-            "at": 1.368,
-            "created": 1794972025.526592,
-            "title": "Nothing scheduled this afternoon",
+            "at": 1.459,
+            "created": 1794978396.404848,
+            "title": "Nothing this afternoon",
             "body": "You have no events scheduled for this afternoon.",
             "anchor": {
               "object": "calendar",
@@ -199,7 +203,7 @@
         "seq": 2,
         "status": "complete"
       },
-      "title": "Nothing scheduled this afternoon",
+      "title": "Nothing this afternoon",
       "body": "You have no events scheduled for this afternoon.",
       "items": [],
       "anchor": {
@@ -227,5 +231,6 @@
         }
       }
     }
-  ]
+  ],
+  "updated": 1794978388.931215
 }
