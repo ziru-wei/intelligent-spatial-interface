@@ -305,3 +305,17 @@ class UtterancesTest(unittest.TestCase):
             self.assertTrue(q['utterances'][1]['definite'])
             q = store.draft(d, c['id'], q['id'], 0, 1.4, 'What is the weather? This week. Thanks')   # typed on: none
             self.assertNotIn('utterances', q)
+
+class DiscardDraftTest(unittest.TestCase):
+    def test_a_discarded_draft_leaves_no_trace(self):
+        with tempfile.TemporaryDirectory() as tmp, store.lock:
+            d = Path(tmp); c = store.create(d)
+            q = store.draft(d, c['id'], None, 0, 1.0, 'turn on the lamp and')
+            store.add_response(d, dict(question_id=q['id'], title='Lamp', body='preview'))
+            store.log_placement(d, q['id'], {'at': 1})
+            self.assertTrue((d/'agent'/'placement-log'/f"q{q['id']}.jsonl").is_file() or any((d).rglob(f"q{q['id']}.jsonl")))
+            store.delete_question(d, c['id'], q['id'])                                    # ⊘: /api/agent/drafts/cancel
+            x = store.read(d, c['id'])
+            self.assertEqual((x['questions'], x['responses']), ([], []))
+            self.assertFalse(any(d.rglob(f"q{q['id']}.jsonl")))
+            self.assertEqual(store.revision(d, q['id'])['status'], 'gone')               # the bridge's work on it is stale

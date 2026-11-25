@@ -385,6 +385,7 @@ def delete_question(d, cid, qid, whole=False):
     # Never reuse their ids (a recording is named by one, and a bridge may still return an old answer): the high-water mark passes them.
     hw = folder(d)/'.question-high-water'; hw.write_text(str(max([int(hw.read_text()) if hw.is_file() else 0]+[int(x['id']) for x in gone])))
     ids = {str(x['id']) for x in gone}
+    for i in ids: folder(d).joinpath('placement-log', f'q{i}.jsonl').unlink(missing_ok=True)   # its debug record goes with it
     c['questions'] = [x for x in c['questions'] if str(x['id']) not in ids]; c['responses'] = [r for r in c['responses'] if str(r.get('question_id')) not in ids]
     if c.get('themes'): c['themes'] = _book_of(c)
     viewing.get((str(d), cid), {}).pop(root['id'], None)

@@ -1372,3 +1372,9 @@ The five spoken questions of atlas_rec_1 (q27, q32, q55, q65, q90), each sent ag
 - **Conclusion**: splitting by meaning is no faster and cuts more often mid-thought; the default stays 1200 ms, and the switch stays.
 - **Open: Chinese from English speech** ("嗯", "嘿。我在", splitting by meaning more than by silence). Doubao's `audio.language` is documented only for `bigmodel_nostream` ("二遍不支持"), so not with our `bigmodel_async` and `enable_nonstream`; sent anyway (`en-US`, q32 and q55 by meaning), it is ignored without an error: the same "嗯" and "嘿。我在". No parameter turns Chinese off; hotwords (`context`) are not documented for `bigmodel_async`.
 - **Handled: English only** (from the user, 2026-11-25): the relay takes Chinese characters and punctuation out of what Doubao recognized (`scripts/doubao-asr.mjs` englishOnly: the text and each sentence), and a sentence left with nothing is dropped ("嗯", "嘿。我在" are gone; "Hey 嗯 what's" is "Hey what's"). On q32 and q55's responses by meaning, the box and the sentences are then English only.
+
+### 12.39 Typing Stands for Speaking; a Typed Question Discarded (2026-11-25)
+
+From the user: typed with Answer while typing on, a question is said as it is typed, with no second pass.
+- **The box only grows at its end** (`src/live-input.mjs` appendOnly, `src/app.mjs`): deleting, undoing, replacing, selecting and moving the caret back do nothing; what was typed stays. The plain box (the mode off) and spoken words (filled in by speech to text) are as before.
+- **⊘ discards it**: shown in the ask box while a question is typed in the mode; pressed, the draft is deleted (`/api/agent/drafts/cancel`: the question, its revisions, its parts and its placement log; no version is made), the box is emptied, and the bridge, finding the question gone, drops its work. Devices are untouched (they change only when a question is asked). No Esc, no confirmation.
