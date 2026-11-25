@@ -25,3 +25,13 @@ export function requestFor({split='silence',fillers='kept'}={},endWindowMs=1200)
   return {model_name:'bigmodel',enable_nonstream:true,enable_itn:true,enable_punc:true,result_type:'full',show_utterances:true,
     ...(split==='meaning'?{}:{end_window_size:endWindowMs}),...(fillers==='removed'?{enable_ddc:true}:{})};
 }
+
+/** English only (design doc 12.38): Doubao hears some English speech as Chinese ("hmm" as 嗯, "Hey, what's" as 嘿。我在) and no request
+ *  parameter turns Chinese off for two passes, so its Chinese characters and punctuation are taken out of what it recognized; a
+ *  sentence left with nothing is no sentence. */
+const HAN=/[\p{Script=Han}\u3000-\u303f\uff00-\uffef]+/gu;
+export const noChinese=t=>String(t||'').replace(HAN,' ').replace(/\s+([.,?!;:])/g,'$1').replace(/\s{2,}/g,' ').replace(/^\s+|\s+$/g,'');
+export function englishOnly(result){
+  const utterances=(result.utterances||[]).map(u=>({text:noChinese(u.text),definite:!!u.definite,start:u.start_time,end:u.end_time})).filter(u=>/[\p{L}\p{N}]/u.test(u.text));
+  return {text:noChinese(result.text),utterances};
+}

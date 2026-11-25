@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {gzipSync} from 'node:zlib';
-import {FULL,AUDIO,frame,parse,requestFor} from '../scripts/doubao-asr.mjs';
+import {FULL,AUDIO,frame,parse,requestFor,noChinese,englishOnly} from '../scripts/doubao-asr.mjs';
 import {normalize,speechOptions} from '../src/ui-settings.mjs';
 import {pcm16,PACKET} from '../src/speech-input.mjs';
 
@@ -33,4 +33,15 @@ test('speech settings: sentences after 1.2 s of silence and fillers kept by defa
   assert.deepEqual(requestFor(speechOptions(s),1200),{...base,end_window_size:1200});            // as before: nothing else changes
   assert.deepEqual(requestFor(speechOptions(normalize({speech:{meaning:true}})),1200),base);
   assert.deepEqual(requestFor(speechOptions(normalize({speech:{fillers:true}})),1200),{...base,end_window_size:1200,enable_ddc:true});
+});
+
+test('speech: English only: Chinese characters are taken out, and a sentence left with nothing is dropped', ()=>{
+  assert.equal(noChinese('嗯 Am I supposed to bring my umbrella?'),'Am I supposed to bring my umbrella?');
+  assert.equal(noChinese('嘿。我在'),'');
+  assert.equal(noChinese("Hey 嗯 what's"),"Hey what's");
+  assert.equal(noChinese('Send it to Alice，好吗？'),'Send it to Alice');
+  assert.equal(noChinese('Is it 3.5 degrees?'),'Is it 3.5 degrees?');
+  const r=englishOnly({text:'嗯 Am I supposed to bring my umbrella with me?',utterances:[{text:'嗯',definite:true,start_time:13800,end_time:16100},{text:'Am I supposed to bring my umbrella with me?',definite:false,start_time:16100,end_time:19800}]});
+  assert.equal(r.text,'Am I supposed to bring my umbrella with me?');
+  assert.deepEqual(r.utterances,[{text:'Am I supposed to bring my umbrella with me?',definite:false,start:16100,end:19800}]);
 });
