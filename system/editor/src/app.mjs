@@ -49,7 +49,7 @@ import {createCueSet} from './spatial-ui/cue-set.mjs';
 import {createActionCues} from './action-cues.mjs';
 import * as cues from './spatial-ui/cues.mjs';
 import {renderPipeline,whereAt} from './pipeline-view.mjs';
-import {createBreaks} from './live-input.mjs';
+import {createBreaks,appendOnly,adds} from './live-input.mjs';
 import {createSpeech} from './speech-input.mjs';
 import {questionCaption} from './question-caption.mjs';
 import {buildTextTargets,calibrate,applyOffsets} from './layout-surfaces.mjs';
@@ -1657,7 +1657,7 @@ $('ask').onsubmit=async e=>{e.preventDefault();const text=$('ask-input').value.t
 // Answer while typing (the button beside the box; design doc 12): each revision the break detector sends (a finished word, a pause in
 // the user's own rhythm: src/live-input.mjs) is a revision of one draft question, answered as it comes; Enter asks it, clearing the box
 // drops it. The video stays where it is while typing.
-let liveMode=pref('ask-live','off')==='on';const liveDraft={id:null,chain:null};
+let liveMode=pref('ask-live','off')==='on';const liveDraft={id:null,chain:null};let said='';   // typed while answered: what was typed so far (said, never taken back)
 // a revision of the draft: typed (src/live-input.mjs) or spoken (below)
 function revise(text,pause){if(!agent||!connected)return;const sel=computeSelection()?.selected||null;
   liveDraft.chain=(liveDraft.chain||Promise.resolve()).then(()=>agent.draft(liveDraft.id,index,session.frames[index].t,text,pause,{selection:sel,selection_mode:selectionMode}))
@@ -1746,7 +1746,7 @@ function showReplayedWords(){
   drawWords(typedText(q,ty.e),recomputeMarks(runs,(q.revisions||[]).filter(r=>r.at<=ty.e+1e-6)),wordThemes(runs));}
 function readMarks(){if(!speaking||liveDraft.id==null||marksTimer)return;   // at most every 300 ms
   marksTimer=setTimeout(async()=>{marksTimer=null;const q=agent.questions.find(x=>x.id===liveDraft.id);if(!q)return;try{const runs=await agent.runs(q.id);speechMarks=recomputeMarks(runs,q.revisions||[]);speechThemes=wordThemes(runs);drawSpeech();}catch{}},300);}
-function endDraft(){breaks.reset();liveDraft.id=null;liveDraft.chain=null;}
+function endDraft(){breaks.reset();liveDraft.id=null;liveDraft.chain=null;said='';}
 async function dropDraft(){const id=(await liveDraft.chain?.catch(()=>{}),liveDraft.id);endDraft();if(id!=null)agent?.cancelDraft(id).catch(fail);}
 function showLive(){$('ask-live').setAttribute('aria-pressed',String(liveMode));document.body.classList.toggle('live-on',liveMode);fitHalo();}
 // the halo stands behind the recorded camera, its size and place (src/../index.html #live-halo)
@@ -1757,8 +1757,17 @@ new ResizeObserver(fitHalo).observe($('stage'));addEventListener('resize',fitHal
 // leaving the mode with a question typed asks it (kept, as Enter would); with the box empty there is nothing to keep
 $('ask-live').onclick=()=>{liveMode=!liveMode;keep('ask-live',liveMode?'on':'off');showLive();
   if(!liveMode){if((liveDraft.id!=null||liveDraft.chain)&&$('ask-input').value.trim())$('ask').requestSubmit();else dropDraft();}
-  else if($('ask-input').value.trim())breaks.feed($('ask-input').value);$('ask-input').focus();};
-$('ask-input').addEventListener('input',()=>{const v=$('ask-input').value;if(!v.trim())spokenAudio=null;if(!liveMode)return;if(!v.trim()){dropDraft();return;}breaks.feed(v);});
+  else{said=$('ask-input').value;if(said.trim())breaks.feed(said);}$('ask-input').focus();};
+// Typed while answered, the box only grows at its end: what was typed was said (src/live-input.mjs appendOnly). The caret stays at the
+// end; deleting, undoing, replacing and selecting do nothing. Spoken words fill the box on their own (the microphone), so this is typing only.
+const streaming=()=>liveMode&&!speech.active,toEnd=()=>{const el=$('ask-input'),n=el.value.length;if(streaming()&&(el.selectionStart!==n||el.selectionEnd!==n))el.setSelectionRange(n,n);};
+$('ask-input').addEventListener('beforeinput',e=>{if(streaming()&&!adds(e.inputType))e.preventDefault();else toEnd();});
+$('ask-input').addEventListener('keydown',e=>{if(streaming()&&/^(Arrow(Left|Up|Down)|Home|PageUp|PageDown)$/.test(e.key))e.preventDefault();});
+for(const ev of ['select','mouseup','focus','click'])$('ask-input').addEventListener(ev,()=>setTimeout(toEnd));
+document.addEventListener('selectionchange',()=>{if(document.activeElement===$('ask-input'))toEnd();});
+$('ask-input').addEventListener('input',()=>{let v=$('ask-input').value;if(!v.trim())spokenAudio=null;if(!liveMode)return;
+  if(streaming()){const kept=appendOnly(said,v);if(kept!==v){$('ask-input').value=v=kept;toEnd();}said=v;}
+  if(!v.trim()){dropDraft();return;}breaks.feed(v);});
 function fail(e){$('status').textContent='Error: '+e.message;console.error(e);}
 async function sessionLoadError(status){
   if(status!==404)return Error(`Could not load recording (HTTP ${status}). Try reloading the page.`);

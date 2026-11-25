@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBreaks,PAUSE_MIN,PAUSE_MAX} from '../src/live-input.mjs';
+import {appendOnly,adds,createBreaks,PAUSE_MIN,PAUSE_MAX} from '../src/live-input.mjs';
 
 // A fake clock: typing is a list of [ms after the last key, text after it]; timers fire when the clock passes them.
 function typist(){
@@ -25,4 +25,14 @@ test('breaks: the pause threshold follows the rhythm, within bounds; the same wo
   const slow=typist();slow.type([[0,'a'],[900,'ab'],[900,'abc']]);assert.equal(slow.b.pauseAfter(),PAUSE_MAX);
   const fast=typist();fast.type([[0,'a'],[20,'ab'],[20,'abc']]);assert.equal(fast.b.pauseAfter(),PAUSE_MIN);
   const k=typist();k.type([[0,'hi '],[50,'hi  ']]);assert.deepEqual(k.out,[['hi',false]]);
+});
+
+test('typed while answered, the text only grows at its end: what was typed is said', ()=>{
+  assert.equal(appendOnly('turn on the',"turn on the TV"),'turn on the TV');
+  assert.equal(appendOnly('turn on the TV','turn on the T'),'turn on the TV');           // a backspace: nothing taken back
+  assert.equal(appendOnly('put it on HDMI 1','put it on HDMI 3'),'put it on HDMI 1');     // an edit: kept as said
+  assert.equal(appendOnly('send it to Alice','send it to Alex and Bob'),'send it to Alice');   // replaced: kept as said
+  assert.equal(appendOnly('',"what's"),"what's");
+  for(const t of ['insertText','insertCompositionText','insertFromPaste'])assert.ok(adds(t));
+  for(const t of ['deleteContentBackward','deleteWordBackward','deleteContentForward','historyUndo','insertReplacementText','insertFromDrop','deleteByCut','insertLineBreak'])assert.ok(!adds(t),t);
 });

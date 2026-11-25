@@ -26,3 +26,10 @@ export function createBreaks({onRevision,now=()=>performance.now(),setTimer=setT
     reset(){clearTimer(timer);timer=null;last=null;sent=null;sentPause=false;},
   };
 }
+
+// Typing while it is answered stands for speaking (design doc 12): what is typed is said, with no second pass. Only adding at the end
+// is taken; any other change (deleting, editing or replacing what was typed, at its end too) leaves what was said.
+//   appendOnly(said, text) → the box's text
+export const appendOnly=(said,text)=>text.startsWith(said)?text:said;
+/** Input events that only add at the caret (typing, an input method's composing, pasting); deleting, undoing and replacing are not. */
+export const adds=inputType=>/^insert(Text|CompositionText|FromPaste|FromComposition)$/.test(inputType);
