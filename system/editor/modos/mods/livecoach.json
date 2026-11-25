@@ -1,6 +1,7 @@
 {
   "id": "livecoach",
   "name": "LiveCoach",
+  "short": "Coach",
   "description": "Coach a body movement, exercise or stretch: arrows and labels on the user's body showing how to move.",
   "examples": [
     "How do I stretch my shoulders?",

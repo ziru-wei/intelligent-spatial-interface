@@ -1,6 +1,7 @@
 {
   "id": "objectstatus",
   "name": "ObjectStatus",
+  "short": "Status",
   "description": "The current state of things around: whether something is free, in use, full, empty, broken or needs attention.",
   "examples": [
     "Is the printer free?",

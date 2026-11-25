@@ -1,6 +1,7 @@
 {
   "id": "worldinfo",
   "name": "WorldInfo",
+  "short": "Info",
   "description": "Answer about a thing or a place the user is asking about, from the information attached to it.",
   "examples": [
     "Can I eat this?",

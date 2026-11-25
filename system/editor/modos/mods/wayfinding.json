@@ -1,6 +1,7 @@
 {
   "id": "wayfinding",
   "name": "Wayfinding",
+  "short": "Way",
   "description": "How to get to a room or place in the building: which way to go and which door it is.",
   "examples": [
     "How do I get to the kitchen?",

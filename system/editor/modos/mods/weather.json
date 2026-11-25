@@ -1,6 +1,7 @@
 {
   "id": "weather",
   "name": "Weather",
+  "short": "Wea",
   "description": "Weather forecasts: whether it will rain, the temperature, wind, and whether to bring an umbrella or a jacket.",
   "examples": [
     "Will it rain tonight?",

@@ -1,6 +1,7 @@
 {
   "id": "send",
   "name": "Send",
+  "short": "Send",
   "description": "Do something for the user that reaches other people: send, share, email or forward something (a poster, a document, a photo, a note) to someone.",
   "examples": [
     "Send this to Alice",

@@ -1,6 +1,7 @@
 {
   "id": "agenda",
   "name": "Agenda",
+  "short": "Agd",
   "description": "The user's schedule: what is on today or this week, meetings, events and free time.",
   "examples": [
     "What's on my calendar today?",

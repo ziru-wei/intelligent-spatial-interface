@@ -689,6 +689,29 @@ def mark_focus(d, qid, keys, focus, rev=None):
     if hit: _write(d, c); lock.notify_all()
     return dict(changed=len(hit))
 
+_MOD_NAMES = {}
+def mod_names(space):
+    """{MOD id: (name, short)}: each MOD's name and its short name (`short`, else its name) for compact lists (the Answers' capsules)."""
+    files = sorted(list((Path(__file__).resolve().parents[1]/'modos'/'mods').glob('*.json'))+list((Path(space)/'modos'/'mods').glob('*.json')))
+    key = (str(space), tuple((str(f), f.stat().st_mtime) for f in files if f.is_file()))
+    if _MOD_NAMES.get(str(space), (None,))[0] != key:
+        names = {}
+        for f in files:
+            try: m = json.loads(f.read_text())
+            except (OSError, ValueError): continue
+            if m.get('id'): names[m['id']] = (m.get('name') or m['id'], m.get('short') or m.get('name') or m['id'])
+        _MOD_NAMES[str(space)] = (key, names)
+    return _MOD_NAMES[str(space)][1]
+
+def _mods_of(c, qid):
+    """The MODs a version showed, in the order its parts came: each part's MOD, its text's, a merged answer's."""
+    out = []
+    for r in sorted((r for r in c['responses'] if r.get('question_id') == qid), key=lambda r: (r.get('created', 0), r['id'])):
+        for m in [r.get('mod'), r.get('text_mod'), *((r.get('mods') or {}).values())]:
+            mid = m.get('id') if isinstance(m, dict) else m
+            if isinstance(mid, str) and mid not in out: out.append(mid)
+    return out
+
 def status(d, cid):
     c = read(d, cid); busy = running_question(d)[1] is not None
     # A text answer of an info question published without its item (an older bridge) still gets it from the question; a thing's own
@@ -713,21 +736,17 @@ def status(d, cid):
     titles = {}
     for r in c['responses']:
         if r.get('part') == 'text' and (r.get('title') or r.get('body')): titles[r.get('question_id')] = r.get('title') or str(r.get('body'))[:60]
-    mods = {}
-    for r in c['responses']:
-        m = r.get('mod') or r.get('text_mod')
-        if isinstance(m, dict) and m.get('name'): mods.setdefault(r.get('question_id'), []).append(m['name'])
+    names = mod_names(Path(d).parents[1])   # each answer's MODs, by their short names
     for rid, vs in versions.groups(c['questions']).items():
         root = next((x for x in vs if not x.get('replay_of')), vs[0]); q = versions.shown(vs, look.get(rid)); show.add(q['id'])
         out = {k: v for k, v in q.items() if k not in ('withdrawn', 'traces')}
         for k in ('audio', 'gallery'):
             if root.get(k) is not None and out.get(k) is None: out[k] = root[k]
         if out.get('audio'): out['audio'] = audio(out['audio'])
-        if len(vs) > 1 or root.get('pinned'):
-            out['history'] = [dict(id=v['id'], label=v.get('label'), how=versions.how(v), created=v.get('created'), status=v.get('status'),
-                                   title=titles.get(v['id']), mods=list(dict.fromkeys(mods.get(v['id'], []))), asr=(v.get('audio') or {}).get('asr'),
-                                   pinned=root.get('pinned') == v['id'], shown=v is q) for v in vs]
-            out['root'] = rid
+        out['history'] = [dict(id=v['id'], label=v.get('label'), how=versions.how(v), created=v.get('created'), status=v.get('status'),
+                               title=titles.get(v['id']), mods=[dict(id=m, name=names[m][0] if m in names else m, short=names[m][1] if m in names else m) for m in _mods_of(c, v['id'])], asr=(v.get('audio') or {}).get('asr'),
+                               pinned=root.get('pinned') == v['id'], shown=v is q) for v in vs]
+        out['root'] = rid
         questions_out.append(out)
     responses = [r for r in responses if r.get('question_id') in show or r.get('question_id') not in questions]
     gone = [r for r in gone if r['question_id'] in show]

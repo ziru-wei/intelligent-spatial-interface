@@ -2,6 +2,7 @@
   "id": "labinfo",
   "extends": "worldinfo",
   "name": "LabInfo",
+  "short": "Lab",
   "note": "A space-owner MOD for the atlas space (copy to spaces/atlas/modos/mods/labinfo.json, which is not tracked). It extends the foundational WorldInfo: the same answer about the place, plus the lab's prefabricated dioramas on the lab table.",
   "description": "What this lab (the Programmable Reality Lab, PRL) is: what it researches, who is in it, and what lab life and its way of doing research are like.",
   "examples": [

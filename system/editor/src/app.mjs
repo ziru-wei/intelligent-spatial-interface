@@ -1473,8 +1473,35 @@ const STAR='<svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.4.9-4.6 4.5 1.1 
 // the words as recognized, typed again in their rhythm), replay-text-batch (npm run gallery: the Gallery's examples typed again, a queue)
 const HOW={original:'Asked','replay-audio':'Replay audio','replay-text':'Replay text','replay-text-batch':'Replay text (batch)'};
 let viewingRoot=null;   // the question whose version picked in the history is shown meanwhile (none kept once it is no longer picked)
-function showHistory(q){
-  const sec=$('history-sec'),list=$('history');sec.hidden=!q;
+// The question picked on the timeline (the timeline only picks; what can be done with it is here): ↻ (Replay as it happened, Replay
+// text, Replay audio), add to the Gallery (★; several picked in a row: one example), delete it with its answers; then its answers.
+const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RE=[['replay','Replay','Replay: play it back as it happened (nothing computed again)'],
+  ['text','Replay text','Replay text: its words as they came, typed again through the pipeline as it is now, a new answer in its history'],
+  ['audio','Replay audio','Replay audio: its recording through speech to text and the pipeline as they are now, a new answer in its history']];
+document.addEventListener('click',()=>{for(const m of document.querySelectorAll('.re-menu'))m.hidden=true;});   // a press elsewhere closes re's menu
+function questionActions(qs){
+  const bar=$('question-actions');bar.innerHTML='';if(!qs.length)return;
+  const b=(html,label,run,cls='')=>{const x=Object.assign(document.createElement('button'),{type:'button',innerHTML:html,title:label,className:'qa '+cls});x.setAttribute('aria-label',label);x.onclick=e=>{e.stopPropagation();run(x);};bar.append(x);return x;};
+  const one=qs.length===1?qs[0]:null;
+  if(one){
+    const menu=Object.assign(document.createElement('div'),{className:'re-menu',hidden:true});
+    b('↻','Replay options',()=>{menu.hidden=!menu.hidden;},'re');
+    for(const [k,label,tip] of RE){const ok=k==='replay'||(k==='text'?!!one.revisions?.length:!!one.audio);
+      const x=Object.assign(document.createElement('button'),{type:'button',textContent:label,title:ok?tip:k==='audio'?'No recording: it was typed':'No typing kept: it was asked at once',disabled:!ok});
+      x.onclick=e=>{e.stopPropagation();menu.hidden=true;if(k==='replay')replayQuestion(one);else{picked={from:null,ids:[],added:null};showPicked();(k==='text'?replayText(one):rerun(one)).catch(fail);}};menu.append(x);}
+    bar.append(menu);}
+  const ready=qs.every(q=>q.status==='answered');
+  const star=b(STAR,picked.added?`In the Gallery: ${picked.added}`:qs.length>1?`Add these ${qs.length} questions to the Gallery as one example`:'Add to the Gallery',async x=>{
+    if(picked.added||!ready)return;x.disabled=true;
+    try{const r=await agentApi('/api/gallery/add',{conversation:agent.conversation,ids:qs.map(q=>q.id)});picked.added=r.example.name;showPicked();takeStill(r);}
+    catch(e){x.disabled=false;fail(e);}},'star');
+  star.classList.toggle('on',!!picked.added);star.disabled=!ready&&!picked.added;
+  if(one)b('<svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg>','Delete this question and its answers (its replay history too)',()=>{$('tooltip').hidden=true;picked={from:null,ids:[],added:null};agentApi('/api/agent/questions/delete',{conversation:agent.conversation,id:one.id,whole:true}).then(()=>agent.sync()).then(()=>showPicked()).catch(fail);});
+}
+function showHistory(qs){
+  const q=qs.length===1?qs[0]:null,sec=$('history-sec'),list=$('history');sec.hidden=!qs.length;questionActions(qs);
+  $('question-title').textContent=q?(q.history?.find(h=>h.how==='original')?.label||q.label||'Question'):qs.length?`${qs.length} questions`:'';$('history-head').hidden=!q;list.hidden=!q;
   if(viewingRoot!=null&&(q?.root??q?.id)!==viewingRoot){const root=viewingRoot;viewingRoot=null;agentApi('/api/agent/questions/view',{conversation:agent.conversation,root}).then(()=>agent.sync()).catch(()=>{});}
   if(!q)return;
   const vs=(q.history||[{id:q.id,label:q.label,how:'original',created:q.created,status:q.status,pinned:false,shown:true}]).slice().reverse();
@@ -1482,7 +1509,8 @@ function showHistory(q){
   const icon={pin:'<svg viewBox="0 0 16 16"><path d="M6 2h4l-.5 4 2.5 2.5H4L6.5 6zM8 8.5V14"/></svg>',del:'<svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg>'};
   list.className='hist';list.innerHTML='';
   for(const v of vs){const li=document.createElement('li');li.classList.toggle('shown',v.shown);li.dataset.id=v.id;
-    li.innerHTML=`<span class="what">${HOW[v.how]||v.how} · ${when(v.created)}<small>${[v.title,(v.mods||[]).join(', '),v.status!=='answered'?v.status:'',v.asr?`${v.asr.split==='meaning'?'split by meaning':'split on silence'}${v.asr.fillers==='removed'?', fillers removed':''}`:''].filter(Boolean).join(' · ')||'&nbsp;'}</small></span>`;
+    const caps=(v.mods||[]).map(m=>`<span class="cap" title="${esc(m.name)}">${esc(m.short)}</span>`).join('');
+    li.innerHTML=`<span class="what">${HOW[v.how]||v.how} · ${when(v.created)}<small>${[v.title,v.status!=='answered'?v.status:'',v.asr?`${v.asr.split==='meaning'?'split by meaning':'split on silence'}${v.asr.fillers==='removed'?', fillers removed':''}`:''].filter(Boolean).map(esc).join(' · ')||'&nbsp;'}</small>${caps?`<span class="caps">${caps}</span>`:''}</span>`;
     const b=(html,label,run,on=false,disabled=false)=>{const x=Object.assign(document.createElement('button'),{type:'button',innerHTML:html,title:label,disabled});x.classList.toggle('on',on);x.setAttribute('aria-label',label);x.onclick=e=>{e.stopPropagation();run();};li.append(x);};
     b(icon.pin,v.pinned?'Pinned as the best answer: unpin':'Pin as the best answer',()=>agentApi('/api/agent/questions/pin',{conversation:agent.conversation,id:v.id}).then(()=>agent.sync()).then(()=>showPicked()).catch(fail),v.pinned);
     b(icon.del,'Delete this answer',()=>agentApi('/api/agent/questions/delete',{conversation:agent.conversation,id:v.id}).then(()=>agent.sync()).then(()=>showPicked()).catch(fail),false,vs.length<2);
@@ -1493,26 +1521,10 @@ function showPicked(questions=agent?.questions||[]){
   const root=$('markers'),duration=session.frames.at(-1).t||1;root.querySelector('.marker-actions')?.remove();root.querySelector('.marker-range')?.remove();
   for(const m of root.querySelectorAll('.marker'))m.setAttribute('aria-pressed',String(picked.ids.includes(Number(m.dataset.id))));
   const qs=picked.ids.map(id=>questions.find(q=>q.id===id)).filter(Boolean);
-  if(!EXAMPLE){const one=qs.length===1?qs[0]:null,was=$('history-sec').hidden;showHistory(one);if(one&&was)showTab('agent');}
+  if(!EXAMPLE){const was=$('history-sec').hidden;showHistory(qs);if(qs.length&&was)showTab('agent');}
   if(!qs.length)return;
   const x0=spanOf(qs[0])[0]/duration*100,x1=spanOf(qs.at(-1))[1]/duration*100;
   if(qs.length>1||x1-x0>.01)root.append(Object.assign(document.createElement('div'),{className:'marker-range',style:`left:${x0}%;width:${x1-x0}%`}));
-  const box=Object.assign(document.createElement('div'),{className:'marker-actions'});box.style.left=`${(x0+x1)/2}%`;root.append(box);
-  const button=(html,label,run)=>{const b=Object.assign(document.createElement('button'),{type:'button',innerHTML:html,title:label});b.setAttribute('aria-label',label);b.onclick=e=>{e.stopPropagation();run(b);};box.append(b);return b;};
-  // a typed or spoken question's line: Replay it as it happened (nothing computed again); Replay text (its words typed again through the
-  // pipeline as it is now) and, for a spoken one, Replay audio (its recording through speech recognition too): each a new answer in its
-  // replay history once answered
-  if(qs.length===1&&isTyped(qs[0])){
-    button('<svg viewBox="0 0 10 10"><path class="fill" d="M3 2l5 3-5 3z"/></svg>','Replay: play it back as it happened (nothing computed again)',()=>replayQuestion(qs[0]));
-    if(qs[0].revisions?.length)button('<svg viewBox="0 0 10 10"><path d="M2 3h6M2 5h6M2 7h4"/></svg>','Replay text: its words as they came, typed again through the pipeline as it is now, a new answer in its history',()=>{picked={from:null,ids:[],added:null};showPicked();replayText(qs[0]).catch(fail);});
-    if(qs[0].audio)button('<svg viewBox="0 0 10 10"><path d="M8 5a3 3 0 1 1-1-2.2M7.6 1.2l-.5 1.7 1.7.4"/></svg>','Replay audio: its recording through speech to text and the pipeline as they are now, a new answer in its history',()=>{picked={from:null,ids:[],added:null};showPicked();rerun(qs[0]).catch(fail);});}
-  if(qs.length===1)button('<svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg>','Delete this question and its answers (its replay history too)',()=>{$('tooltip').hidden=true;picked={from:null,ids:[],added:null};agentApi('/api/agent/questions/delete',{conversation:agent.conversation,id:qs[0].id,whole:true}).then(()=>agent.sync()).catch(fail);});
-  const ready=qs.every(q=>q.status==='answered');
-  const star=button(STAR,picked.added?`In the Gallery: ${picked.added}`:qs.length>1?`Add these ${qs.length} questions to the Gallery as one example`:'Add to the Gallery',async b=>{
-    if(picked.added||!ready)return;b.disabled=true;
-    try{const r=await agentApi('/api/gallery/add',{conversation:agent.conversation,ids:qs.map(q=>q.id)});picked.added=r.example.name;showPicked();takeStill(r);}
-    catch(e){b.disabled=false;fail(e);}});
-  star.classList.add('star');star.classList.toggle('on',!!picked.added);star.disabled=!ready&&!picked.added;
 }
 // A new example's still: its replay in a hidden example view (?still=1, as `npm run gallery -- --stills`), which sends it.
 function takeStill({example,conversation}){

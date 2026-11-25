@@ -1,6 +1,7 @@
 {
   "id": "iotcontrol",
   "name": "IoTControl",
+  "short": "IoT",
   "description": "Control or follow a connected device nearby: turn lights, displays or appliances on and off, adjust them, or see what it is doing now (a print job, a cycle) and how long it has left.",
   "examples": [
     "Make the light brighter",

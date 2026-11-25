@@ -1,6 +1,7 @@
 {
   "id": "findmy",
   "name": "FindMy",
+  "short": "Find",
   "description": "Where a registered belonging is kept, and pointing to it: when the user asks where it is, or says they will take or bring it (keys, headphones, an umbrella). Not when they only ask whether they should bring it (\"should I bring my umbrella?\", \"am I supposed to bring it?\"): that asks for advice, not for the thing.",
   "examples": [
     "Where are my headphones?",

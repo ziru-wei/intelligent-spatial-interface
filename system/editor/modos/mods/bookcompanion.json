@@ -1,6 +1,7 @@
 {
   "id": "bookcompanion",
   "name": "BookCompanion",
+  "short": "Book",
   "description": "Help with a book the user is reading: its story, chapters, characters or ideas, and where they are in it. Not for posters, flyers, signs or labels on things (those are about the thing).",
   "examples": [
     "What does this chapter say about memory?",

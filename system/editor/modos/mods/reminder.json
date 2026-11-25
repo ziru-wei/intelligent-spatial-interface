@@ -1,6 +1,7 @@
 {
   "id": "reminder",
   "name": "Reminder",
+  "short": "Rem",
   "description": "Reminders tied to a thing at a time: remind the user to do something with an object, or what is due.",
   "examples": [
     "Remind me to water the plant at 5",

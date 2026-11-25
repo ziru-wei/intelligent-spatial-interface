@@ -1,6 +1,7 @@
 {
   "id": "stepguide",
   "name": "StepGuide",
+  "short": "Step",
   "description": "Step-by-step instructions for using a device or doing a task with things (making coffee, printing, fixing), listed once. Not for exercises or moving the body (that is LiveCoach).",
   "examples": [
     "How do I use the espresso machine?",
