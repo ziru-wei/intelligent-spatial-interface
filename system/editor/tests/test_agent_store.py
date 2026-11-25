@@ -139,7 +139,7 @@ class DraftTest(unittest.TestCase):
             a=store.add_response(d,ui(1))
             store.draft(d,c['id'],q['id'],0,1.5,'weather this weekend',pause=True)
             self.assertEqual(store.add_response(d,ui(1))['id'],a['id'])                                        # typed on: rev 1 still finishes (the same, nothing new)
-            store.draft(d,c['id'],q['id'],0,1.5,'weather this weekend',pause=True)
+            store.draft(d,c['id'],q['id'],0,1.5,'weather this weekend please',pause=True)
             self.assertIsNone(store.take_next(d));self.assertGreater(store.next_draft_in(d),1)                 # not before RECOMPUTE_S
             self._age(d,c['id'],q['id'],store.RECOMPUTE_S)
             self.assertEqual(store.take_next(d)['taken_rev'],3)                                                  # the newest text next, rev 2 skipped
@@ -267,3 +267,21 @@ class ReplayStateTest(unittest.TestCase):
             # a question asked before states were kept: answered again from the initial state
             old = store.ask(d, c['id'], 0, 0, 'older'); x = store.read(d, c['id']); next(y for y in x['questions'] if y['id'] == old['id']).pop('state'); store._write(d, x)
             store.start_replay(d, c['id'], old['id']); self.assertEqual(now(), 20); store.end_replay(d); self.assertEqual(now(), 80)
+
+class SameWordsTest(unittest.TestCase):
+    def test_a_revision_with_the_same_words_is_kept_but_computes_nothing(self):
+        self.assertEqual(store.normalize("Um, what's the weather?  This week."), store.normalize("what's the weather this week"))
+        self.assertNotEqual(store.normalize('put the TV on HDMI 1'), store.normalize('put the TV on HDMI 3'))
+        self.assertNotEqual(store.normalize('send it to Alice'), store.normalize('send it to Alex'))
+        with tempfile.TemporaryDirectory() as tmp, store.lock:
+            d = Path(tmp); c = store.create(d)
+            q = store.draft(d, c['id'], None, 0, 1.0, "what's the weather this week")
+            r = store.draft(d, c['id'], q['id'], 0, 1.2, "What's the weather? This week.")          # the second pass: punctuated
+            self.assertEqual((r['rev'], r['text']), (q['rev'], "What's the weather? This week."))   # shown, not computed again
+            r = store.draft(d, c['id'], q['id'], 0, 1.4, "What's the weather? This week.", pause=True)   # its first pause: computed (the text is written)
+            self.assertEqual(r['rev'], q['rev']+1)
+            r2 = store.draft(d, c['id'], q['id'], 0, 1.6, "Um, what's the weather? This week.", pause=True)
+            self.assertEqual(r2['rev'], r['rev'])
+            r3 = store.draft(d, c['id'], q['id'], 0, 1.8, "What's the weather? Next week.")
+            self.assertEqual(r3['rev'], r['rev']+1)
+            self.assertTrue(store.read(d, c['id'])['questions'][0]['revisions'][1]['same'])

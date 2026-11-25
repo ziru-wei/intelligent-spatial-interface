@@ -176,6 +176,12 @@ def ask(d, cid, frame, t, text, live=None, selection=None, pose=None, location=N
     q['state'] = _state(d)
     c['questions'].append(q); _write(d, c); lock.notify_all(); return dict(q, conversation=cid)
 
+FILLERS = {'um', 'umm', 'uh', 'uhh', 'er', 'erm', 'hmm', 'hm', 'mm', 'ah', 'eh'}
+def normalize(text):
+    """A question's words as the pipeline reads them (modos/themes.mjs normalize: the same): case, punctuation, spacing and fillers
+    dropped, every other word kept."""
+    return ' '.join(w for w in re.sub(r'[^\w]+|_', ' ', str(text).lower()).split() if w not in FILLERS)
+
 def draft(d, cid, qid, frame, t, text, pause=False, selection=None, pose=None, location=None):
     """Answer while typing (modos-system-design.md 12): the question as typed so far. The first revision makes a question with status
     `drafting`; each later one replaces its text, frame and what the user looks at, and is kept in `revisions` (when, the text, whether
@@ -187,6 +193,12 @@ def draft(d, cid, qid, frame, t, text, pause=False, selection=None, pose=None, l
         q = dict(id=_next_qid(d), label=_label(d, now), text=text, frame=frame, t=t, status='drafting', created=now, rev=0, revisions=[], state=_state(d))
         c['questions'].append(q)
     elif q['status'] != 'drafting': raise ValueError('That question was already asked.')
+    # the same words (a second pass that only punctuated them, a filler dropped): shown and kept, nothing computed again, unless it is
+    # the first pause since they were computed (a pause writes the text)
+    elif normalize(text) == normalize(q['text']) and not (pause and not q['revisions'][-1].get('pause')):
+        q['text'] = text
+        if len(q['revisions']) < 200: q['revisions'].append(dict(rev=q['rev'], text=text, at=round(now-q['created'], 3), t=t, frame=frame, pause=bool(pause), same=True))
+        _write(d, c); return dict(q, conversation=cid)
     q['rev'] += 1; q.update(text=text, frame=frame, t=t)   # the question's moment is its latest revision's; typing began at revisions[0]
     for k, v in (('selection', selection), ('pose', pose), ('location', location)):
         if v: q[k] = v

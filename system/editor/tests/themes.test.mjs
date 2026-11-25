@@ -90,3 +90,9 @@ test('a sentence may go on with one just said in the same call; what is said now
   assert.deepEqual(p.book.themes.map(t=>t.sentences.map(s=>s.text)),[["what's the weather"],['send a message to Alice','and mention our hiking plan'],['should I bring my umbrella today']]);
   assert.deepEqual(p.said,[4]);assert.deepEqual(p.raw,[4,1]);   // the umbrella is said now; the weather it uses is in focus with it
 });
+
+test('a sentence that only changed its punctuation, case or fillers is not routed again; another word is', ()=>{
+  const prev=cache(["what's the weather this week",'t'],['put the TV on HDMI 1','t']);
+  assert.deepEqual(changed(prev,["Um, What's the weather this week.","Put the TV on HDMI 1."]),[]);
+  assert.deepEqual(changed(prev,["what's the weather this week","put the TV on HDMI 3"]),[1]);
+});

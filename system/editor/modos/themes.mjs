@@ -22,7 +22,10 @@ import {fill,sentenceName} from './prompts.mjs';
 export const COOL={questions:3,ms:120000};
 export const ROUTES=6;   // the live themes a sentence is offered: the most recently spoken of
 const THEME_CHARS=220;
-export const normalize=t=>String(t).toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();   // the words, not how speech to text cut or cased them
+// the words, not how speech to text cut, cased or punctuated them, nor its fillers (a second pass that only adds a full stop, or drops an
+// "um", changes nothing; any other word does: "HDMI 1" and "HDMI 3", "Alice" and "Alex" differ). scripts/agent_store.py normalize: the same.
+export const FILLERS=new Set(['um','umm','uh','uhh','er','erm','hmm','hm','mm','ah','eh']);
+export const normalize=t=>String(t).toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim().split(' ').filter(w=>w&&!FILLERS.has(w)).join(' ');
 export const emptyBook=()=>({next:1,asked:0,themes:[]});
 export const themeText=t=>t.sentences.map(s=>s.text).join(' ');
 const clip=t=>t.length>THEME_CHARS?'…'+t.slice(-THEME_CHARS):t;
