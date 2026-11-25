@@ -1,0 +1,7 @@
+# Submission-sensitive (paper draft, study plans, review images): versioned locally in .git-private, never pushed
+/.git-private/
+/context/write-up/
+/context/docs/fs1-plan.md
+/context/docs/stimuli-dryrun.md
+/context/docs/review-images/
+/context/recordings/
