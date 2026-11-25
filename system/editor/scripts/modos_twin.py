@@ -144,11 +144,13 @@ def _derived(space, session=None):
             out['comp:'+c['id']] = dict(id='comp:'+c['id'], kind='item', category=c.get('component') or 'object', traits=[], parent=None,
                                         place='zone:'+room if room else None, name=c.get('name') or c.get('label') or c.get('component') or c['id'],
                                         info=lib.get('info') or c.get('info'), source='composition')
-    # Belongings still kept in the user context: items whose parent is the box they are in.
+    # Belongings still kept in the user context: items whose parent is the box they are in. The user context may be shared by several
+    # spaces (agent/mock-context.json): a belonging whose box is not in this space's layout is in another space, not here.
     try: stored = user_context.read(session or space, ['storage']).get('stored_items', [])
     except (OSError, ValueError, StopIteration): stored = []
+    boxes = {b.get('id') for b in sem.get('objects', [])}
     for i in stored:
-        if not isinstance(i.get('id'), str): continue
+        if not isinstance(i.get('id'), str) or (i.get('box_id') and i['box_id'] not in boxes): continue
         box = 'layout:'+i['box_id'] if i.get('box_id') else None
         out['item:'+i['id']] = dict(id='item:'+i['id'], kind='item', category='belonging', traits=[], parent=box, place=None,
                                     name=i.get('label') or i['id'], aliases=i.get('aliases', []), owner='user', source='user-context')

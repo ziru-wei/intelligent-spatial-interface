@@ -4,8 +4,9 @@
 // looked at when it began, and the items found for it (FindMy), so a later "is it free?" or "where is it?" that goes on with it refers
 // to them. Here: the referent of the question and the item a pronoun resolves to.
 //   anchorThemes(...)         what each theme is about, from its sentences' context anchors (earlier themes move to a new thing)
-//   referentOf(view, themes)  the thing (or area) the question is about, from its themes (in focus first), or the one the headset
-//                             already scored (selection mode 'score')
+//   referentOf(view, themes)  the thing (or area) the question is about, from its themes (in focus first). How the thing looked at
+//                             is chosen (Jev's judgement, or the headset's score: selection mode 'score') does not decide whether
+//                             the question is about it: a question about the lab while a poster is scored has no referent
 //   referenceOf(themes)       the item an earlier theme found ({status: 'resolved', referent: {item_id}}), else standalone
 const thing=view=>{const zone=String(view.candidate).startsWith('zone:');
   return view.candidate&&view.selection?{entity:view.candidate,key:view.selection.key,name:view.nameOf(view.candidate),kind:zone?'place':'object',source:'selection'}:null;};
@@ -24,7 +25,6 @@ export function anchorThemes(view,book,cache,went,q){
   return [...moved];
 }
 export function referentOf(view,themes){
-  if(view.selection?.mode==='score')return thing(view);
   const ordered=[...themes.filter(t=>t.focus),...themes.filter(t=>!t.focus)];
   return ordered.find(t=>t.referent)?.referent||null;
 }

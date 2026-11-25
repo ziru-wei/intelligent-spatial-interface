@@ -57,3 +57,16 @@ class TwinTest(unittest.TestCase):
             self.assertNotIn('iot', twin.entities(sp)['layout:shelf']['traits'])
 
 if __name__ == '__main__': unittest.main()
+
+class SharedBelongingsTest(unittest.TestCase):
+    def test_a_belonging_whose_box_is_in_another_space_is_not_here(self):
+        import json, tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            sp = Path(tmp); (sp/'scan').mkdir(); (sp/'modos').mkdir()
+            (sp/'space.json').write_text('{}')
+            (sp/'scan'/'semantic.json').write_text(json.dumps({'objects': [{'id': 'shelf-1', 'label': 'shelf', 'center': [0, 1, 0], 'size': [1, 1, 1]}]}))
+            # one user context for several spaces (agent/mock-context.json): the brush is in a cabinet of the home scene
+            (sp/'context.json').write_text(json.dumps({'stored_items': [{'id': 'umbrella', 'label': 'Umbrella', 'box_id': 'shelf-1'},
+                                                                        {'id': 'brush', 'label': 'Brush', 'box_id': 'storage_cabinet_mid1_1'}]}))
+            found = {b['item_id']: b['available'] for b in twin.belongings(sp)}
+            self.assertEqual(found, {'umbrella': True})

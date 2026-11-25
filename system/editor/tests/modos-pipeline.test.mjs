@@ -130,8 +130,12 @@ test('grounding: a theme keeps what it is about (the thing looked at, the item f
   assert.equal(book.themes[0].referent.name,'window');
   assert.deepEqual(referenceOf([{id:3,items:[{item_id:'umbrella'}],focus:true}]),{status:'resolved',referent:{item_id:'umbrella'}});   // "where is it?"
   assert.equal(referenceOf([{id:2}]).status,'standalone');
-  const scored=createView(snap({box_id:'comp:c3',key:'candy',mode:'score'}),{text:'what is this'});
-  assert.equal(referentOf(scored,[]).name,'candy');                                            // the headset already scored it
+  // the headset's score picks the thing looked at; whether the question is about it is still the model's (its context anchor)
+  const scored=createView(snap({box_id:'comp:c3',key:'candy',mode:'score'}),{text:'what is this lab about?'});
+  assert.equal(referentOf(scored,[{id:4,about:'here',abouts:['here'],focus:true}]),null);   // about the lab: not the thing scored
+  const scoredBook={themes:[{id:5,about:'referent',created_q:5,sentences:[{q:5,i:0}]}]};
+  anchorThemes(scored,scoredBook,[route('referent',[])],{0:[5]},5);
+  assert.equal(referentOf(scored,[{...scoredBook.themes[0],focus:true}]).key,'candy');   // "what is this?": the thing scored
 });
 
 test('grounding in one call or two: the second asks how a sentence goes on, only when it goes on with an earlier request', async()=>{
