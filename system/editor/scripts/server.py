@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Editor server: static files plus local processing of spaces and their scenarios (see scripts/spaces.py).
+"""The system's server (modos-system): the project's site plus local processing of spaces and their scenarios (see scripts/spaces.py).
 
 GET  /api/spaces                 spaces with their scan and scenarios, raw recordings in private/<scene>/recordings/, whether the mesh environment exists
 POST /api/spaces {name}          create an empty space
@@ -46,27 +46,34 @@ GET  /api/agent/info?session=&question_id=&key=       one info key's value (scri
                                                    at the question being answered, else at the frame the editor shows (POST /api/agent/state)
 POST /api/agent/placement-log {session,question_id,event}  debug: one placement event of an answer (agent/placement-log/q<id>.jsonl)
 POST /api/agent/responses {session,…}              UI/full text; text streams use {part:'text',stream:{seq,status}} snapshots
+Static files: the repository as it is laid out, its root the main page (index.html: Demo, Gallery, Vocabulary, About), the editor
+under /system/editor/ (framed by the main page; opened on its own it goes to the main page), the Gallery's examples under
+/context/gallery/; nothing else (no dot folders, private/, logs or agent-config.local.json). Started from a terminal, it opens the main
+page in the browser (--no-open: not).
 Binds to 127.0.0.1 only (with --lan, also the local network, for the agent API only, with a token: the Vision Pro app, visionos/);
 GET  /api/vision/space?space=&revision=  /colors  /color?file=  /settings?headset=1  /room   POST /api/vision/settings {space, settings}
      POST /api/vision/room {space, worldFromSpace, points} (the headset)   /alignment {space, worldFromSpace} (the editor's Tune)
-                                                   the Vision Pro app's live data (scripts/vision.py; settings page: /vision.html)
+                                                   the Vision Pro app's live data (scripts/vision.py; settings page: /system/editor/vision.html)
 POST /api/agent/questions in a live session (session.json live: true) carries {pose: {position, quaternion}} instead of a recorded frame;
 recordings must exist in private/<scene>/recordings/; a session is a scenario's spaces/<space>/scenarios/<take>/session.json.
 """
-import hmac, ipaddress, json, math, re, secrets, shlex, shutil, subprocess, sys, threading, time
-from urllib.parse import urlsplit, parse_qs
+import hmac, ipaddress, json, math, posixpath, re, secrets, shlex, shutil, subprocess, sys, threading, time
+from urllib.parse import urlsplit, parse_qs, unquote
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]   # the editor (system/editor)
+SITE = ROOT.parents[1]                       # the repository, served as the site: the main page at its root
 sys.path.insert(0, str(ROOT/'scripts'))
 import agent_store as store, gallery, spaces, composition, weather, findmy, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts, modos_prompts
 busy = threading.Lock()
 MOCK_CONTEXT = ROOT/'agent'/'mock-context.json'
 
 def session_dir(session):
-    """Resolve an editor session URL path (./spaces/<space>/scenarios/<take>/session.json) to its folder, refusing anything else."""
-    path = (ROOT/urlsplit(str(session or '')).path.lstrip('./')).resolve()
+    """Resolve a session's URL path to its folder, refusing anything else: relative to the editor (./spaces/<space>/scenarios/<take>/session.json,
+    as in ?session= and the bridge's --session) or absolute on the site (/system/editor/spaces/…, a URL's pathname)."""
+    p = urlsplit(str(session or '')).path
+    path = (SITE/p.lstrip('/') if p.startswith('/') else ROOT/p).resolve()
     if path.name != 'session.json' or not path.is_file() or path.parent.parent.name != 'scenarios' or path.parent.parent.parent.parent != spaces.SPACES.resolve():
         raise ValueError('Unknown session: '+str(session))
     return path.parent
@@ -234,6 +241,15 @@ class Server(ThreadingHTTPServer):
     request_queue_size = 256
     daemon_threads = True
 
+def served(path):
+    """Whether a static path is part of the site: the main page, the editor (system/editor/) and the Gallery's examples (context/gallery/)."""
+    parts = [x for x in posixpath.normpath('/'+unquote(path)).split('/') if x]   # as the file server reads it (%2e%2e is ..)
+    if not parts: return True
+    if any(x.startswith('.') for x in parts) or parts[-1] == 'agent-config.local.json' or parts[-1].endswith('.log'): return False
+    if parts == ['index.html']: return True
+    if parts[:2] == ['context', 'gallery']: return True
+    return parts[:2] == ['system', 'editor'] and (len(parts) < 3 or parts[2] != 'private')
+
 class Handler(SimpleHTTPRequestHandler):
     server_version = 'modos-system'   # its name (the speech relay beside it is modos-speech, the agent bridge modos-agent)
     sys_version = ''
@@ -241,9 +257,9 @@ class Handler(SimpleHTTPRequestHandler):
     # Keep-alive: one connection carries many requests instead of a new one per frame.
     protocol_version = 'HTTP/1.1'
     def send_head(self):
-        # Local bridge credentials must never be exposed by the editor's static file server.
-        target = Path(self.translate_path(self.path)).resolve()
-        if target.name == 'agent-config.local.json':
+        # Only the site's pages and what they load (the main page, the editor, the Gallery's examples); never dot folders (.git,
+        # .git-private, .venv), private/ (raw exports), logs or the bridge's credentials.
+        if not served(urlsplit(self.path).path):
             self.send_error(404, 'Not found')
             return None
         return super().send_head()
@@ -472,14 +488,16 @@ def lan_token():
     return config['visionToken']
 
 if __name__ == '__main__':
-    # server.py [port] [--lan]: --lan also listens on the local network, for the Vision Pro app (visionos/), which may then use the
-    # agent API only, with the token.
-    args = [a for a in sys.argv[1:] if a != '--lan']; lan = '--lan' in sys.argv[1:]
+    # server.py [port] [--lan] [--no-open]: --lan also listens on the local network, for the Vision Pro app (visionos/), which may then use
+    # the agent API only, with the token; started from a terminal, the main page opens in the browser unless --no-open.
+    args = [a for a in sys.argv[1:] if a not in ('--lan', '--no-open')]; lan = '--lan' in sys.argv[1:]
     port = int(args[0]) if args else 8766
     if lan: LAN_TOKEN = lan_token()
-    http = Server(('0.0.0.0' if lan else '127.0.0.1', port), partial(Handler, directory=str(ROOT)))
+    http = Server(('0.0.0.0' if lan else '127.0.0.1', port), partial(Handler, directory=str(SITE)))
     if sys.stdout.isatty(): sys.stdout.write('\x1b]0;modos-system\x07')   # its terminal's title (the agent bridge's is modos-agent)
-    print(f'modos-system: http://127.0.0.1:{http.server_port}'+(' (also on the local network: agent API only, token in agent-config.local.json visionToken)' if lan else ''), flush=True); 
+    home = f'http://127.0.0.1:{http.server_port}/'
+    print(f'modos-system: {home}'+(' (also on the local network: agent API only, token in agent-config.local.json visionToken)' if lan else ''), flush=True)
+    if sys.stdout.isatty() and '--no-open' not in sys.argv[1:] and shutil.which('open'): subprocess.Popen(['open', home])   # the main page
     import atexit, signal; atexit.register(stop_bridges)
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))   # stopped (kill): the bridges it started stop with it
     try: http.serve_forever()

@@ -2,14 +2,14 @@
 // Ask the Gallery's examples again (demos/gallery-examples.json; scripts/gallery.py). A tool around the editor, not part of ModOS.
 //   npm run gallery                         every example
 //   npm run gallery -- weather findmy-x     these: a name is an example, a MOD, or a name prefix
-//   --server URL                            another editor server
+//   --server URL                            the system elsewhere (npm start)
 //   --stills                                only take the stills again, from each example's replay (nothing asked, no model:
 //                                           for a change in how answers are drawn, not in what they are)
 // The examples run as one queue (an example of several questions asks them in order, in one conversation). For each: the agent bridge runs for its recording; a new conversation tagged gallery_example is made;
 // the editor opens on it in its example view (?example=) and the question is asked through its own ask box at ask_at (so the editor
 // computes what the user looks at, as for any question). Once answered, the editor sends a still of the camera view, and the older
 // conversations of that example are deleted: the new one replaces them. A failed example is reported at the end; its old one stays.
-// Needs: the editor server (npm start), a Chromium (Playwright's, or CHROME=/path), and agent-config.local.json.
+// Needs: the system (npm start), a Chromium (Playwright's, or CHROME=/path), and agent-config.local.json.
 import {chromium} from 'playwright';
 import {spawn} from 'node:child_process';
 import {readFileSync,existsSync,readdirSync} from 'node:fs';
@@ -69,7 +69,7 @@ async function ask(browser,c){
   const ctx=await browser.newContext({viewport:{width:W,height:H},deviceScaleFactor:1});
   try{
     const page=await ctx.newPage();page.on('pageerror',e=>console.log('  page error:',e.message));
-    await page.goto(`${spec.server}/?${new URLSearchParams({session:s,conversation:conv.id,example:c.name,ask:'1'})}`);   // ask=1: the example view's ask box, for this tool
+    await page.goto(`${spec.server}/system/editor/?${new URLSearchParams({session:s,conversation:conv.id,example:c.name,ask:'1'})}`);   // ask=1: the example view's ask box, for this tool
     await page.waitForFunction(()=>!document.getElementById('ask-input').disabled,null,{timeout:60000});await page.waitForTimeout(1500);
     await page.evaluate(()=>{for(const id of ['fovea-zone','show-selection','video-twins','video-objects']){const x=document.getElementById(id);if(x?.checked){x.checked=false;x.dispatchEvent(new Event('change'));}}});
     // its questions in order, each once the one before is answered; the still is the last one's (the editor sends one per answer)
@@ -115,7 +115,7 @@ async function still(browser,c){
   const before=e.still_at||0,ctx=await browser.newContext({viewport:{width:W,height:H},deviceScaleFactor:1});
   try{
     const page=await ctx.newPage();page.on('pageerror',x=>console.log('  page error:',x.message));
-    await page.goto(`${spec.server}/?${new URLSearchParams({session:e.session,conversation:e.conversation,example:c.name,still:'1'})}`);
+    await page.goto(`${spec.server}/system/editor/?${new URLSearchParams({session:e.session,conversation:e.conversation,example:c.name,still:'1'})}`);
     for(const until=Date.now()+90000;Date.now()<until;){await sleep(1000);
       const now=(await api('/api/gallery')).examples.find(x=>x.name===c.name);if(now?.still_at>before)return now;}
     throw Error('no still within 90 s');
@@ -123,7 +123,7 @@ async function still(browser,c){
 }
 
 const health=await fetch(spec.server).catch(()=>null);
-if(!health?.ok){console.error(`The editor server is not running at ${spec.server} (npm start).`);process.exit(1);}
+if(!health?.ok){console.error(`ModOS is not running at ${spec.server} (npm start).`);process.exit(1);}
 const browser=await chromium.launch({executablePath:chromePath(),headless:true,args:['--use-angle=metal','--enable-gpu','--ignore-gpu-blocklist']});
 const done=[],failed=[];
 try{

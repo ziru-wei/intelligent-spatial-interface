@@ -4,7 +4,7 @@
 <title>ModOS</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* The project's main page: Demo (ModOS itself, live: the editor served by system/editor), Gallery (examples asked in ModOS: context/gallery) and Document
+/* The project's main page, and the page the system opens (npm start in system/editor serves it): Demo (ModOS itself, live: the editor, system/editor, framed), Gallery (examples asked in ModOS: context/gallery) and Document
    (Spatial vocabulary; Memory, Walkthrough… to come). Light; neutral greys only (cyan belongs to the spatial UI, not to this page). Helvetica
    light; bold only where the text matters most. Document: centred, one row per group; Gallery: a masonry of MODs. */
 :root{--q-hover:#24707a;--bg:#fbfbfa;--card:#f0f0ee;--card-hi:#e7e7e4;--line:rgba(0,0,0,.08);--fg:#16171a;--muted:#5f636a;--faint:#9a9ea5;--rule:rgba(0,0,0,.16);
@@ -131,7 +131,7 @@ body.dark .bar:hover .switch::before,body.dark .switch:focus-within::before{opac
 <dialog id="example" aria-label="Example"><button class="close try" type="button" id="try-demo">Try the Demo</button><button class="close" type="button" data-close>Close</button></dialog>
 <dialog id="part" aria-label="Part"><div class="view"></div><figcaption></figcaption><button class="close" type="button" data-close>Close</button></dialog>
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
-<!-- the Vocabulary is the system's own spatial UI library, live (system/editor/src/vocabulary.mjs): served with this page (python3 -m http.server) -->
+<!-- the Vocabulary is the system's own spatial UI library, live (system/editor/src/vocabulary.mjs): served with this page (by the system, npm start, or python3 -m http.server) -->
 <script type="importmap">{"imports":{"three":"./system/editor/node_modules/three/build/three.module.js","three/addons/":"./system/editor/node_modules/three/examples/jsm/","three-mesh-bvh":"./system/editor/node_modules/three-mesh-bvh/build/index.module.js","harfbuzzjs":"./system/editor/node_modules/harfbuzzjs/dist/index.mjs"}}</script>
 <script type="module">
 import {createVocabulary,openVocabulary,VOCABULARY} from './system/editor/src/vocabulary.mjs';
@@ -186,17 +186,21 @@ function render(){
 }
 for(const b of $('nav').children)b.onclick=()=>go(b.dataset.tab);
 addEventListener('hashchange',()=>{route();scrollTo(0,0);});
-// Demo: ModOS itself, live (the editor and its API, system/editor: npm start), on the lab recording
-const SYSTEM='http://127.0.0.1:8766/',SESSION='./spaces/atlas/scenarios/atlas_rec_5/session.json';
+// Demo: ModOS itself, live: the editor (system/editor), framed, with its API from the system that serves this page (npm start there),
+// on the lab recording. The page's own query is the Demo's (the editor opened on its own comes here with what it was given).
+const SYSTEM='system/editor/',SESSION='./spaces/atlas/scenarios/atlas_rec_5/session.json',GIVEN=new URLSearchParams(location.search);
+// whether ModOS runs here (served statically, the page has no API: the Demo and the examples need it)
+const running=()=>fetch('api/spaces',{cache:'no-store'}).then(r=>r.ok,()=>false);
 // the Demo's camera in its full window: the page's bottom switch steps aside meanwhile (a message from the editor, src/app.mjs)
-addEventListener('message',e=>{if(e.origin===new URL(SYSTEM).origin&&e.data?.type==='modos-camera-full')document.body.classList.toggle('demo-full',!!e.data.on);});
+addEventListener('message',e=>{if(e.origin===location.origin&&e.data?.type==='modos-camera-full')document.body.classList.toggle('demo-full',!!e.data.on);});
 let demoShown=false,demoAt=null;
 // at: {session, t} to open the Demo on (Try the Demo from a Gallery example: its recording, at its question's moment)
 async function showDemo(at=null){
   if(at){demoAt=at;demoShown=false;}if(demoShown)return;demoShown=true;
-  const q=new URLSearchParams({session:demoAt?.session||SESSION,...(demoAt?.t!=null?{t:String(demoAt.t)}:{})});
-  try{await fetch(SYSTEM,{mode:'no-cors',cache:'no-store'});$('demo').innerHTML=`<iframe src="${SYSTEM}?${q}" title="ModOS" allow="autoplay; fullscreen; microphone"></iframe>`;}
-  catch{demoShown=false;$('demo').innerHTML=`<p>ModOS is not running. Start it with <code>cd system/editor && npm start</code>, then open Demo again.</p>`;}
+  const q=demoAt?new URLSearchParams({session:demoAt.session,...(demoAt.t!=null?{t:String(demoAt.t)}:{})}):new URLSearchParams(GIVEN);
+  if(!q.has('session'))q.set('session',SESSION);
+  if(await running())$('demo').innerHTML=`<iframe src="${SYSTEM}?${q}" title="ModOS" allow="autoplay; fullscreen; microphone"></iframe>`;
+  else{demoShown=false;$('demo').innerHTML=`<p>ModOS is not running. Start it with <code>cd system/editor && npm start</code>, then open Demo again.</p>`;}
 }
 // Gallery: a masonry of MODs (Lucide icon, name, how many; a line on the left to their examples). An example is a question asked in
 // ModOS (system/editor/scripts/gallery.py): its question (or questions, asked one after another) above a still of the camera view at its answer. Opened, ModOS shows it live in
@@ -215,9 +219,8 @@ function renderExamples(){
 }
 async function openExample(c){
   const d=$('example');for(const x of d.querySelectorAll('iframe,p'))x.remove();
-  try{await fetch(SYSTEM,{mode:'no-cors',cache:'no-store'});
-    d.insertAdjacentHTML('afterbegin',`<iframe src="${SYSTEM}?${new URLSearchParams({session:c.session,conversation:c.conversation,example:c.name})}" title="${esc(c.question)}" allow="autoplay; fullscreen; microphone"></iframe>`);}
-  catch{d.insertAdjacentHTML('afterbegin','<p>ModOS is not running. Start it with <code>cd system/editor && npm start</code>, then open the example again.</p>');}
+  if(await running())d.insertAdjacentHTML('afterbegin',`<iframe src="${SYSTEM}?${new URLSearchParams({session:c.session,conversation:c.conversation,example:c.name})}" title="${esc(c.question)}" allow="autoplay; fullscreen; microphone"></iframe>`);
+  else d.insertAdjacentHTML('afterbegin','<p>ModOS is not running. Start it with <code>cd system/editor && npm start</code>, then open the example again.</p>');
   // Try the Demo: ModOS itself on this example's recording, at the moment its (first) question was asked
   $('try-demo').onclick=()=>{d.close();showDemo({session:c.session,t:Math.max(0,(c.first_t??c.t??0)-.5)});location.hash='demo';};
   d.showModal();
@@ -228,4 +231,6 @@ $('example').addEventListener('close',()=>{for(const x of $('example').querySele
 for(const d of document.querySelectorAll('dialog'))d.addEventListener('click',e=>{if(e.target===d||e.target.dataset.close!==undefined)d.close();});
 examples=window.GALLERY?.examples||[];renderExamples();if(!window.GALLERY)reloadExamples();
 route();
+// an example asked for (the editor's example view opened on its own): the Gallery, with it open
+if(GIVEN.has('example')){const c=examples.find(x=>x.name===GIVEN.get('example'));if(c)openExample(c);}
 </script>

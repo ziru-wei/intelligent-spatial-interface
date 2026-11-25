@@ -677,7 +677,7 @@ function saveComposition(immediate=false){
   if(!here[0])return Promise.resolve();clearTimeout(compositionTimer);
   const persist=()=>{
     const pending=compositionSave.catch(()=>{}).then(async()=>{
-      const r=await api('/api/composition',{session:'./'+sessionURL.pathname.replace(/^\//,''),revision:compositionRevision,components:components.specs('recording')});compositionRevision=r.revision;
+      const r=await api('/api/composition',{session:sessionURL.pathname,revision:compositionRevision,components:components.specs('recording')});compositionRevision=r.revision;
       for(const [id,src] of Object.entries(r.srcs||{}))if(components.get(id))components.get(id).spec.src=src;
       keepObjectBaselines();
       if(components.specs('scene').length||sceneRevision)sceneRevision=(await api('/api/composition',{space:here[0],scope:'scene',revision:sceneRevision,components:components.specs('scene')})).revision;

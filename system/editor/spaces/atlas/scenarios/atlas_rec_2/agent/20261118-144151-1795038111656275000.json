@@ -172,7 +172,8 @@
       "latency": 1.19,
       "message": "MOD UI only (no text slot).",
       "finished": 1795038118.943839,
-      "duration": 1.2
+      "duration": 1.2,
+      "label": "q-1118-3"
     }
   ],
   "responses": [

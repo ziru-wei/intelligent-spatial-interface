@@ -46,7 +46,7 @@ Swift code (`SpatialTakeVision/`):
    visionos/tools/mac.sh prepare
    ```
 
-2. **Run the agent.** Stop the editor's own server on 8766 first; this one serves the editor too, at http://127.0.0.1:8766.
+2. **Run the agent.** Stop the system's own server on 8766 first; this one serves the main page and the editor too, at http://127.0.0.1:8766.
    - It starts the server, listening on the local network (agent API only, with the token), and the bridge for the live session.
    - Keep it open. The first time, allow Python's incoming connections when macOS asks.
 
@@ -139,7 +139,7 @@ The window has four pages (a segmented control on top, as in the web editor's si
 
 ### Editing on the Mac
 
-Open http://127.0.0.1:8766/vision.html while `mac.sh run` is running. It is the web editor in Vision Pro mode:
+Open http://127.0.0.1:8766/system/editor/vision.html while `mac.sh run` is running. It opens the main page's Demo, the web editor in Vision Pro mode:
 - the scan and all of atlas's boxes in the 3D view (orbit), without the recorded camera
 - **Scene** tab: the Layout and Scene objects sections, to adjust the boxes. Saves reach the headset within a few seconds.
 - **Vision Pro** tab:

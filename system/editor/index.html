@@ -1,5 +1,10 @@
 <!doctype html><html lang="en"><meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Mansalva&display=swap" rel="stylesheet"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ModOS</title><link rel="stylesheet" href="src/pipeline-view.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Mansalva&display=swap" rel="stylesheet"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ModOS</title>
+<script>
+// The editor is the main page's: its Demo and a Gallery example frame it. Opened on its own, it goes to the main page with what it was
+// given (the Demo; an example, the Gallery's), except the example view's tool modes (demos/gallery.mjs: ask=1, still=1).
+{const p=new URLSearchParams(location.search);if(window.top===window&&!(p.has('example')&&(p.get('ask')==='1'||p.get('still')==='1')))location.replace(`../../${p.size?'?'+p:''}#${p.has('example')?'gallery':'demo'}`);}
+</script><link rel="stylesheet" href="src/pipeline-view.css">
 <style>
 *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#111111;color:#e8e8e8;font:14px system-ui}
 

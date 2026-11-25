@@ -134,7 +134,8 @@
       "latency": 1.42,
       "message": "Eat the Candy",
       "finished": 1794947499.6869812,
-      "duration": 1.4
+      "duration": 1.4,
+      "label": "q-1117-1"
     }
   ],
   "responses": [

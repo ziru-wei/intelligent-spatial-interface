@@ -37,7 +37,8 @@
         "in": "kitchen-2f"
       },
       "started": 1794861700.840325,
-      "message": "Interrupted: the agent stopped before answering."
+      "message": "Interrupted: the agent stopped before answering.",
+      "label": "q-1116-6"
     }
   ],
   "responses": []

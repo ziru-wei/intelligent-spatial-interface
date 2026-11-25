@@ -76,7 +76,8 @@
       "latency": 0.3,
       "message": "Which item do you mean?",
       "finished": 1792106967.3497758,
-      "duration": 0.3
+      "duration": 0.3,
+      "label": "q-1015-6"
     }
   ],
   "responses": [

@@ -13,7 +13,7 @@ cd editor
 npm ci                             # includes harfbuzzjs (pen-stroke writing, below)
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt               # import + LiDAR depth
 python3 -m venv .venv-mesh && .venv-mesh/bin/pip install -r requirements-mesh.txt  # room mesh (open3d 0.18 needs numpy < 2)
-npm start                          # http://localhost:8766
+npm start                          # http://127.0.0.1:8766: opens the main page (its Demo is the editor)
 ```
 
 ## Scene → Scan → Recordings

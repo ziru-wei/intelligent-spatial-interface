@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const recording=process.argv[2];if(!recording)throw Error('Usage: node scripts/prepare-recording-hands.mjs ./spaces/<scene>/scenarios/<take>/session.json');
-const server=spawn(root+'.venv/bin/python',[root+'scripts/server.py','0'],{cwd:root,stdio:['ignore','pipe','pipe']});let browser,watchdog;
+const server=spawn(root+'.venv/bin/python',[root+'scripts/server.py','0','--no-open'],{cwd:root,stdio:['ignore','pipe','pipe']});let browser,watchdog;
 // Drain access logs continuously: an unread pipe fills and blocks HTTP replies.
 let serverErrors='';server.stderr.on('data',chunk=>{serverErrors=(serverErrors+chunk).slice(-8000);});
 try{
@@ -25,9 +25,9 @@ try{
  heartbeat();
  await page.goto(base+'/__prepare_hands');
  const result=await page.evaluate(async recording=>{
-  const {createHandPerception}=await import('/src/hand-perception/index.mjs');
-  const {createRecordingHandCache}=await import('/src/hand-perception/recording-cache.mjs');
-  const session=new URL(recording,location.origin+'/'),manifest=await(await fetch(session)).json();
+  const {createHandPerception}=await import('/system/editor/src/hand-perception/index.mjs');
+  const {createRecordingHandCache}=await import('/system/editor/src/hand-perception/recording-cache.mjs');
+  const session=new URL(recording,location.origin+'/system/editor/'),manifest=await(await fetch(session)).json();
   const cache=createRecordingHandCache({session:session.href}),service=createHandPerception();
   try{
    await cache.ready;if(cache.status.error)throw Error(cache.status.error);

@@ -7,7 +7,7 @@
 // Logged: + a part shows, − it goes, ~ another part in its place, ↻ the text written again in its place, ◐ dimmed (it no longer answers
 // what is asked), ● it answers again.
 //   --at <s>  the recording's moment (default: the source question's, else 1 s); --enter  ask it at the end; --keep  keep the conversation
-// Needs the editor server (npm start) and agent-config.local.json (the server starts the scene's bridge).
+// Needs the system (npm start) and agent-config.local.json (the server starts the scene's bridge).
 import {createBreaks} from '../src/live-input.mjs';
 
 const args=process.argv.slice(2),flag=k=>{const i=args.indexOf(k);return i<0?null:args.splice(i,2)[1];},has=k=>{const i=args.indexOf(k);if(i<0)return false;args.splice(i,1);return true;};
@@ -20,7 +20,7 @@ async function api(p,body){
   const r=await fetch(u,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session,...body})}:{});
   const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;
 }
-const sm=await (await fetch(new URL(session.slice(1),server))).json();
+const sm=await (await fetch(new URL(session,new URL('/system/editor/',server)))).json();   // the session as the editor reads it
 const frameAt=t=>{let i=0;for(let k=0;k<sm.frames.length;k++)if(sm.frames[k].t<=t)i=k;return i;};
 
 // what to type: revisions {at (s), text, pause}
