@@ -7,19 +7,26 @@
 html,body{margin:0;background:#fff;color:var(--ink);font:12px/1.35 system-ui,-apple-system,sans-serif}
 /* the sentences: a wheel at the top of the page, the one picked in the middle */
 .top{position:relative;height:216px;border-bottom:1px solid var(--line)}
-.qpick{position:absolute;left:28px;top:14px;width:250px;font:12px system-ui;color:var(--soft)}
-.qpick select{width:100%;margin-top:4px;font:12px system-ui;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
-.qpick .live{margin-top:8px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute)}
-.qpick .live input{margin:0}
-.qpick .st{margin-top:8px;font-size:11px;color:var(--mute)}
-.picker{position:absolute;left:300px;top:0;bottom:0;right:360px;overflow-y:scroll;scrollbar-width:none;user-select:none}
+.qpick{position:absolute;right:28px;bottom:12px;width:310px;display:flex;align-items:center;justify-content:flex-end;gap:10px;font:12px system-ui;color:var(--soft)}
+.qpick select{flex:1;min-width:0;font:12px system-ui;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
+.qpick.live select{display:none}
+/* live: a toggle; on, the page follows the newest question (no picking); off, the question is picked */
+.qpick .live{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute);cursor:pointer;white-space:nowrap}
+.qpick .live input{appearance:none;-webkit-appearance:none;margin:0;width:26px;height:15px;border-radius:999px;background:#dcdce0;position:relative;cursor:pointer;transition:background .15s}
+.qpick .live input:after{content:"";position:absolute;left:2px;top:2px;width:11px;height:11px;border-radius:50%;background:#fff;transition:transform .15s}
+.qpick .live input:checked{background:var(--ink)}
+.qpick .live input:checked:after{transform:translateX(11px)}
+.picker{position:absolute;left:0;top:0;bottom:0;right:360px;overflow-y:scroll;scrollbar-width:none;user-select:none}
 .picker::-webkit-scrollbar{display:none}
 .picker.moving .row{opacity:max(var(--o),.55)!important}
 .picker .row{transition:opacity .25s,color .15s}
 .picker .pad{height:93px}
 .picker .row{height:30px;line-height:30px;padding:0 28px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transform-origin:28px center;transition:color .15s}
 .top .meta{position:absolute;right:28px;bottom:10px;width:310px;font-size:10.5px;color:var(--mute);pointer-events:none}
-.legend{position:absolute;right:28px;top:14px;width:310px;font-size:11px;color:var(--soft)}
+.legend{position:absolute;left:0;bottom:36px;width:330px;font-size:11px;color:var(--soft);background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.legend[hidden]{display:none}
+.zoom button.qm{width:28px;padding:0;font-weight:600}
+.zoom button.qm[aria-expanded="true"]{color:var(--ink);border-color:#cfcfd4}
 .legend .li{margin:5px 0!important}
 .legend .h{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);margin-bottom:8px}
 .legend .li{display:flex;align-items:center;gap:10px;margin:7px 0}
@@ -32,7 +39,10 @@ body{height:100vh;display:flex;flex-direction:column}
 .zoom{position:absolute;left:18px;bottom:16px;display:flex;gap:4px;z-index:5}
 .zoom button{height:28px;padding:0 12px;border-radius:999px;font-size:11.5px!important;border:1px solid var(--line);background:#fff;color:var(--soft);font:14px system-ui;cursor:pointer}
 .zoom button:hover{color:var(--ink);border-color:#cfcfd4}
-svg.edges{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:3}
+svg.edges .offl{display:none}svg.edges .offl.show{display:inline}
+svg.edges{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:1}
+/* the lines under the boxes (a long one may pass behind one); their ports and the brackets over them */
+svg.edges.ports{z-index:3}
 .lab{position:absolute;top:18px;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);white-space:nowrap}
 .grp{position:absolute;border:1px dashed #dcdce0;border-radius:12px}
 .item{position:absolute;z-index:2}
@@ -51,7 +61,8 @@ svg.edges{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-
 .o.on i{color:var(--soft)}
 .sw{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:5px;vertical-align:0}
 .note{font-size:10.5px;color:var(--mute);margin-top:5px}
-.off{opacity:.35}
+/* a step not run: faint, but its box stays opaque (a line passing behind it does not strike its words) */
+.off>*{opacity:.35}.dec.off,.fill.off,.seen.off{border-color:#f0f0f2}
 .ghost{border:1px dashed #e2e2e6;border-radius:8px;color:var(--faint);font-size:11px;padding:10px;background:#fff}
 /* a rule: no options; its outcome and why, set off by a line at its left */
 .rule{border-left:2px solid #cfcfd4;padding:2px 8px 2px 10px;background:#fff}
@@ -76,12 +87,15 @@ svg.edges{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-
 .shown .s.kept{color:var(--mute)}.shown .s.kept:before{background:var(--faint)}
 .shown{padding-left:6px}
 .dec,.rule,.fill,.heard,.shown .s{cursor:pointer;transition:border-color .15s,box-shadow .15s}
-.dec.lit,.fill.lit{border:1px solid #e0579a;box-shadow:0 0 0 1px #e0579a}
-.grp.lit{border-color:#e0579a}
+/* a node clicked: light pink with the pink border; the nodes its lines join: a light pink border */
+.dec.lit,.fill.lit,.seen.lit{background:#fdeef5;border:1px solid #e0579a;box-shadow:0 0 0 1px #e0579a}
+.dec.near,.fill.near,.seen.near{border-color:#f2b3d0;box-shadow:0 0 0 1px #f2b3d0}
+.grp.lit{border-color:#e0579a}.grp.near{border-color:#f2b3d0}
 .grp{z-index:1}
 .fill{border:1px solid transparent}
-.rule.lit{border-left-color:#e0579a}
-.heard.lit,.shown .s.lit{outline:1.5px solid #e0579a;outline-offset:3px;border-radius:4px}
+.rule.lit{border-left-color:#e0579a;background:#fdeef5}.rule.near{border-left-color:#f2b3d0}
+.heard.lit,.shown .s.lit{outline:1.5px solid #e0579a;outline-offset:3px;border-radius:4px;background:#fdeef5}
+.heard.near,.shown .s.near{outline:1.5px solid #f2b3d0;outline-offset:3px;border-radius:4px}
 .rule .th{display:flex;gap:6px;font-size:12px;color:var(--faint);margin:3px 0;white-space:nowrap}
 .rule .th .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .rule .th.cur{color:var(--ink);font-weight:700}
@@ -104,7 +118,6 @@ svg.edges{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-
 .seen .rl{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
 .seen .row2{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--soft);margin:2px 0}
 .seen .row2 b{color:var(--ink);font-weight:600;text-align:right}
-.seen.lit{border-color:#e0579a}
 .rn{font-size:11px;color:var(--soft);margin-bottom:5px}
 .rule .laws{margin:7px 0 0;padding-left:15px;font-size:10.5px;color:var(--soft);line-height:1.4}
 .rule .laws li{margin:2px 0}
@@ -153,13 +166,12 @@ svg.edges{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-
 .help{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1px solid var(--faint);font-size:9.5px;color:var(--mute);cursor:help;position:relative}
 .help:hover:after{content:attr(data-tip);position:absolute;right:0;top:18px;width:260px;padding:7px 9px;background:#111;color:#fff;font-size:11px;line-height:1.4;border-radius:6px;z-index:30;white-space:normal;text-transform:none;letter-spacing:0}
 </style></head><body>
-<section class="top"><div class="qpick"><div>Question</div><select id="qsel"></select><label class="live"><input type="checkbox" id="live"> follow the newest question, live</label><div class="st" id="qst"></div></div><div class="picker" id="picker"><div class="pad"></div><div id="list"></div><div class="pad"></div></div>
-<div class="legend"><div class="h">lines</div>
+<section class="top"><div class="picker" id="picker"><div class="pad"></div><div id="list"></div><div class="pad"></div></div><div class="qpick" id="qpick"><select id="qsel" aria-label="Question"></select><label class="live" title="Follow the newest question, live"><input type="checkbox" id="live">Live</label></div></section>
+<div class="stage" id="stage"><div class="board" id="board"><svg class="edges"></svg></div><div class="zoom"><button data-z="height">fit height</button><button data-z="all">fit all</button><button data-z="help" class="qm" aria-label="What the lines mean" aria-expanded="false">?</button><div class="legend" id="legend" hidden><div class="h">lines</div>
 <div class="li"><svg width="48" height="10"><path d="M2 5H40" stroke="#111" stroke-width="1.4"/><circle cx="2" cy="5" r="3" fill="#111"/><circle cx="42" cy="5" r="3" fill="#111"/></svg>data: what was decided leads on (from a frame, or from one of its answers)</div>
-<div class="li"><svg width="48" height="10"><path d="M2 5H40" stroke="#c9c9ce" stroke-width="1"/><circle cx="2" cy="5" r="3" fill="#fff" stroke="#c9c9ce"/><circle cx="42" cy="5" r="3" fill="#fff" stroke="#c9c9ce"/></svg>data: where an answer not taken would lead</div>
+<div class="li"><svg width="48" height="10"><path d="M2 5H40" stroke="#c9c9ce" stroke-width="1"/><circle cx="2" cy="5" r="3" fill="#fff" stroke="#c9c9ce"/><circle cx="42" cy="5" r="3" fill="#fff" stroke="#c9c9ce"/></svg>data: where an answer not taken would lead (shown for a node clicked)</div>
 <div class="li"><svg width="48" height="10"><path d="M2 5H40" stroke="#8a8a90" stroke-width="1.4" stroke-dasharray="0.1 4" stroke-linecap="round"/><circle cx="2" cy="5" r="2.6" fill="#8a8a90"/><circle cx="42" cy="5" r="2.6" fill="#8a8a90"/></svg>context: informs a later step (said at the foot of its frame)</div>
-</div></section>
-<div class="stage" id="stage"><div class="board" id="board"><svg class="edges"></svg></div><div class="zoom"><button data-z="height">fit height</button><button data-z="all">fit all</button></div></div>
+</div></div></div>
 <div class="peek" id="peek" hidden></div>
 <script>
 let D={sentences:[],runs:[]};;
@@ -273,10 +285,10 @@ function draw(items,E){E=[...E];
   const board=document.getElementById('board'),svg=board.querySelector('svg');
   const labels=LABELS.map(([c,t])=>`<span class="lab" style="left:${X[c].x}px">${t}${c==='g1'?(calls===2?' · two calls: the continuation second':' · one call'):''}</span>`).join('');
   const grp=`<div class="grp" data-n="call2" style="left:${X.g1.x-12}px;top:40px;width:${X.g2.x+X.g2.w-X.g1.x+24}px;height:${Y.low+180-40}px"></div>`;
-  board.innerHTML=labels+grp+items.join('')+`<svg class="edges"></svg>`;
+  board.innerHTML=labels+grp+items.join('')+`<svg class="edges"></svg><svg class="edges ports"></svg>`;
   board.style.width=X.width+'px';
   const low=Math.max(...[...board.querySelectorAll('.item')].map(el=>el.offsetTop+el.offsetHeight)),bus=low+24;
-  board.style.height=(bus+56)+'px';board.querySelector('svg').setAttribute('width',X.width);board.querySelector('svg').setAttribute('height',bus+56);
+  board.style.height=(bus+56)+'px';board.querySelectorAll('svg').forEach(v=>{v.setAttribute('width',X.width);v.setAttribute('height',bus+56);});
   const B=board.getBoundingClientRect();
   // a line runs from a port on the right of a frame (or of an option, when only that answer leads on) to the port on the left of the
   // frame it sets off; the ports sit PORT below a frame's top
@@ -285,18 +297,43 @@ function draw(items,E){E=[...E];
   const q1y=(()=>{const q=board.querySelector('[data-n="q1"]');return q?box(q).t+PORT:Y.top+PORT;})();
   const src=(n,opt)=>{const el=board.querySelector(`[data-n="${n}"]`);if(!el)return null;const f=frame(el),F=box(f),E=box(el);return {x:F.r,y:opt?E.t+E.h/2:(f.classList.contains('s')?F.t+F.h/2:F.t+PORT),f};};
   const dst=n=>{const el=board.querySelector(`[data-n="${n}"]`);if(!el)return null;const f=frame(el),F=box(f);return {x:F.l,y:f.classList.contains('grp')?q1y:f.classList.contains('s')?F.t+F.h/2:F.t+PORT,f,F};};
+  // Every line is one Bézier curve from its port to its target's, a line that skips columns too.
+  // Several answers of one decision that lead to the same frames (request_type's information, action and stop_prev all set off the
+  // grounding) meet in a bracket at the decision's right edge, and the lines leave from its middle: one line per frame, not one per
+  // answer. A line from an answer not taken shows only for a node clicked.
   const links=[],dots=[],R=22;let lane=0;
   const col=x=>COLS.findLastIndex(([k])=>x>=X[k].x-GAP/2);   // the column a point is in (or leaves: a frame's right edge belongs to its own column)
-  const paths=E.map(([a,b,kind,opt])=>{const A=src(a,opt==='opt'),Bb=dst(b);if(!A||!Bb)return '';links.push([A.f,Bb.f,kind]);const li=links.length-1;
-    const ctx=kind==='ctx',on=kind==='on',ink=kind==='off'?'#c9c9ce':ctx?'#8a8a90':'#111',w=ctx?1.4:on?1.4:1,dash=ctx?' stroke-dasharray="0.1 4.2" stroke-linecap="round"':'';
+  const frameOf=n=>{const el=board.querySelector(`[data-n="${n}"]`);return el?frame(el):null;};
+  // brackets: per decision, the frames two or more of its answers lead to, grouped by which answers lead there
+  const recs=E.map(([a,b,kind,opt])=>({a,b,kind,opt})),brackets=[],byFrame=new Map();
+  for(const e of recs)if(e.opt==='opt'&&e.kind!=='ctx'){const f=frameOf(e.a);if(!f)continue;const m=byFrame.get(f)||byFrame.set(f,new Map()).get(f);(m.get(e.b)||m.set(e.b,[]).get(e.b)).push(e);}
+  for(const [f,targets] of byFrame){const sets=new Map();
+    for(const [b,es] of targets){const opts=[...new Set(es.map(e=>e.a))];if(opts.length<2)continue;const k=opts.sort().join('|');(sets.get(k)||sets.set(k,{f,opts,to:[]}).get(k)).to.push([b,es]);}
+    for(const g of sets.values()){const ports=g.opts.map(a=>({a,...src(a,true)})).filter(x=>x.x!=null);if(ports.length<2)continue;
+      const on=g.to.some(([,es])=>es.some(e=>e.kind==='on')),x=ports[0].x,y1=Math.min(...ports.map(p=>p.y)),y2=Math.max(...ports.map(p=>p.y));
+      // its port: on the border just above its first answer's row (so a line from that answer alone, leaving below it, never crosses
+      // the bracket's), else at its middle
+      const F=box(g.f),out=y1-14>F.t+PORT+8?y1-14:(y1+y2)/2;
+      const br={f:g.f,ports,on,x,y1,y2,out,lis:[],optOn:Object.fromEntries(g.opts.map(a=>[a,g.to.some(([,es])=>es.some(e=>e.a===a&&e.kind==='on'))]))};brackets.push(br);
+      for(const [b,es] of g.to){es.forEach(e=>e.gone=true);recs.push({a:null,b,kind:es.some(e=>e.kind==='on')?'on':'off',opt:'opt',from:{x:x+6,y:out,f:g.f},br});}}}
+  const paths=recs.filter(e=>!e.gone).map(({a,b,kind,opt,from,br})=>{let A=from||src(a,opt==='opt');const Bb=dst(b);if(!A||!Bb)return '';
+    // a frame's own line to a frame columns away leaves from its lower right, clear of the ports and junctions along its top
+    if(!from&&opt!=='opt'&&col(Bb.x)-col(A.x-1)>1&&!A.f.classList.contains('s')){const F=box(A.f);A={...A,y:Math.max(A.y,F.b-PORT)};}links.push([A.f,Bb.f,kind]);const li=links.length-1;if(br)br.lis.push(li);
+    const ctx=kind==='ctx',on=kind==='on',off=kind==='off',ink=off?'#c9c9ce':ctx?'#8a8a90':'#111',w=ctx?1.4:on?1.4:1,dash=ctx?' stroke-dasharray="0.1 4.2" stroke-linecap="round"':'',cls=off?' class="offl"':'';
     if(ctx)dots.unshift(`<circle cx="${A.x}" cy="${A.y}" r="2.6" fill="#8a8a90"/>`,`<circle cx="${Bb.x}" cy="${Bb.y}" r="2.6" fill="#8a8a90"/>`);
-    else dots.push(`<circle cx="${A.x}" cy="${A.y}" r="${opt?2.6:3.2}" fill="${on?'#111':'#fff'}" stroke="${on?'#111':'#c9c9ce'}" stroke-width="1.2"/>`,`<circle cx="${Bb.x}" cy="${Bb.y}" r="3.2" fill="${on?'#111':'#fff'}" stroke="${on?'#111':'#c9c9ce'}" stroke-width="1.2"/>`);
-    if(col(Bb.x)-col(A.x-1)>1){   // it skips columns: along the top above the frames (both ends in the top row), else along the bottom
-      const top=A.y<Y.mid&&Bb.y<Y.mid,y=top?Y.top-10-(lane++%2)*5:bus+(lane++%5)*8,x1=A.x+GAP/2,x2=Bb.x-GAP/2,R2=top?Math.min(R,(A.y-y)/2,(Bb.y-y)/2):R;
-      if(top)return `<path data-l="${li}" d="M${A.x} ${A.y}H${x1-R2}Q${x1} ${A.y} ${x1} ${A.y-R2}V${y+R2}Q${x1} ${y} ${x1+R2} ${y}H${x2-R2}Q${x2} ${y} ${x2} ${y+R2}V${Bb.y-R2}Q${x2} ${Bb.y} ${x2+R2} ${Bb.y}H${Bb.x}" fill="none" stroke="${ink}" stroke-width="${w}"${dash}/>`;
-      return `<path data-l="${li}" d="M${A.x} ${A.y}H${x1-R}Q${x1} ${A.y} ${x1} ${A.y+R}V${y-R}Q${x1} ${y} ${x1+R} ${y}H${x2-R}Q${x2} ${y} ${x2} ${y-R}V${Bb.y+R}Q${x2} ${Bb.y} ${x2+R} ${Bb.y}H${Bb.x}" fill="none" stroke="${ink}" stroke-width="${w}"${dash}/>`;}
-    const m=(A.x+Bb.x)/2;return `<path data-l="${li}" d="M${A.x} ${A.y}C${m} ${A.y} ${m} ${Bb.y} ${Bb.x} ${Bb.y}" fill="none" stroke="${ink}" stroke-width="${w}"${dash}/>`;});
-  board.querySelector('svg').innerHTML=paths.join('')+dots.join('');
+    else dots.push(...(from?[]:[`<circle data-l="${li}"${cls} cx="${A.x}" cy="${A.y}" r="${opt?2.6:3.2}" fill="${on?'#111':'#fff'}" stroke="${on?'#111':'#c9c9ce'}" stroke-width="1.2"/>`]),`<circle data-l="${li}"${cls} cx="${Bb.x}" cy="${Bb.y}" r="3.2" fill="${on?'#111':'#fff'}" stroke="${on?'#111':'#c9c9ce'}" stroke-width="1.2"/>`);
+    // every line one Bézier curve from its port to its target's, leaving and arriving level; its handles grow with the distance
+    // across (and with the height, for a steep one), never past the other end, so a long or steep line is still a smooth S
+    const dx=Bb.x-A.x,c=Math.min(Math.max(dx,1),Math.max(40,dx*.5,Math.abs(Bb.y-A.y)*.35));
+    return `<path data-l="${li}"${cls} d="M${A.x} ${A.y}C${A.x+c} ${A.y} ${Bb.x-c} ${Bb.y} ${Bb.x} ${Bb.y}" fill="none" stroke="${ink}" stroke-width="${w}"${dash}/>`;});
+  // the brackets, inside the decision's box: a line just inside its right border joining the answers' rows (a short tick each), and
+  // the group's one port on the border just above its first row, where the lines leave
+  const marks=brackets.map(br=>{const ls=br.lis.join(' '),cls=br.on?'':' offl',ink=br.on?'#111':'#c9c9ce',bx=br.x-5;
+    return br.ports.map(p=>{const on=br.optOn[p.a];return `<path class="brk${cls}" data-ls="${ls}" d="M${bx-4} ${p.y}H${bx}" fill="none" stroke="${on?'#111':'#c9c9ce'}" stroke-width="${on?1.4:1}"/>`;}).join('')
+      +`<path class="brk${cls}" data-ls="${ls}" d="M${bx} ${Math.min(br.out,br.y1)}V${br.y2}M${bx} ${br.out}H${br.x}" fill="none" stroke="${ink}" stroke-width="1.4"/><path class="brk${cls}" data-ls="${ls}" d="M${br.x-1} ${br.out-4}L${br.x+6} ${br.out}L${br.x-1} ${br.out+4}Z" fill="${ink}"/>`;}).join('');
+  // the lines not taken first, under the others
+  board.querySelector('svg.edges:not(.ports)').innerHTML=paths.filter(x=>x.includes('class="offl"')).join('')+paths.filter(x=>!x.includes('class="offl"')).join('');
+  board.querySelector('svg.ports').innerHTML=marks+dots.join('');
   board._links=links;
 }
 // the flow is a canvas: the wheel pans it, a pinch (or ⌘/Ctrl and the wheel) zooms it around the pointer, a drag on it pans it
@@ -319,14 +356,25 @@ stage.addEventListener('pointerdown',e=>{if(e.target.closest('.zoom,.fill.mod'))
 addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4){dragged=true;stage.classList.add('drag');}
   if(dragged){view.x=drag.vx+dx;view.y=drag.vy+dy;place();}});
 addEventListener('pointerup',()=>{drag=null;stage.classList.remove('drag');});
-stage.querySelector('.zoom').addEventListener('click',e=>{const z=e.target.closest('button')?.dataset.z,R=stage.getBoundingClientRect();if(!z)return;e.stopPropagation();
+// the legend: behind the ? beside fit all, shown on a press, hidden by another, a press elsewhere, or Esc
+const legend=document.getElementById('legend'),qm=stage.querySelector('.qm'),showLegend=on=>{legend.hidden=!on;qm.setAttribute('aria-expanded',String(on));};
+stage.querySelector('.zoom').addEventListener('click',e=>{const z=e.target.closest('button')?.dataset.z;e.stopPropagation();if(!z)return;
+  if(z==='help')return showLegend(legend.hidden);
   if(z==='all'){view.k=fitAll();view.x=M;view.y=M;place();}else fitHeight();});
+addEventListener('pointerdown',e=>{if(!legend.hidden&&!e.target.closest('.zoom'))showLegend(false);});
+addEventListener('keydown',e=>{if(e.key==='Escape')showLegend(false);});
 const PINK='#e0579a',FRAMES='.dec,.rule,.fill,.heard,.seen,.shown .s,.grp';
 document.getElementById('stage').addEventListener('click',e=>{if(dragged){dragged=false;return;}const board=document.getElementById('board'),f=e.target.closest(FRAMES);
-  board.querySelectorAll('.lit').forEach(x=>x.classList.remove('lit'));
-  board.querySelectorAll('path[data-l]').forEach(p=>{p.style.stroke='';p.style.strokeWidth='';});
+  board.querySelectorAll('.lit,.near').forEach(x=>x.classList.remove('lit','near'));
+  board.querySelectorAll('path[data-l],path[data-ls]').forEach(p=>{p.style.stroke='';p.style.strokeWidth='';p.style.fill='';});board.querySelectorAll('.hi').forEach(x=>x.remove());board.querySelectorAll('.offl.show').forEach(x=>x.classList.remove('show'));
   if(!f)return;f.classList.add('lit');
-  (board._links||[]).forEach(([a,b,kind],i)=>{if(a!==f&&b!==f||kind==='off')return;(a===f?b:a).classList.add('lit');const p=board.querySelector(`path[data-l="${i}"]`);if(p){p.style.stroke=PINK;p.style.strokeWidth='2';}});});
+  // its lines not taken show (grey); its taken ones turn pink and the nodes they join get a light pink border
+  (board._links||[]).forEach(([a,b,kind],i)=>{if(a!==f&&b!==f)return;const brk=board.querySelectorAll(`[data-ls~="${i}"]`);
+    if(kind==='off'){board.querySelectorAll(`.offl[data-l="${i}"]`).forEach(x=>x.classList.add('show'));brk.forEach(x=>x.classList.add('show'));return;}
+    brk.forEach(x=>{if(x.tagName!=='path')return;if(x.getAttribute('stroke')==='#111'){x.style.stroke=PINK;x.style.strokeWidth='2';}if(x.getAttribute('fill')==='#111')x.style.fill=PINK;});   // the bracket's taken parts
+    (a===f?b:a).classList.add('near');const p=board.querySelector(`path[data-l="${i}"]`);if(p){p.style.stroke=PINK;p.style.strokeWidth='2';
+      // over the boxes while lit (lines stay under them otherwise): a copy in the top layer, under the ports
+      const c=p.cloneNode();c.classList.add('hi');c.removeAttribute('data-l');const top=board.querySelector('svg.ports');top.insertBefore(c,top.firstChild);}});});
 // the picker scrolls natively; the sentence picked is bold and black, and the further from it, the smaller and fainter
 const picker=document.getElementById('picker'),ROW=30;
 const listSentences=()=>{document.getElementById('list').innerHTML=D.sentences.map((t,i)=>`<div class="row" data-i="${i}">${esc(t)}</div>`).join('');};
@@ -362,13 +410,14 @@ async function loadQuestions(live=null){   // live: the question being asked, fo
   document.getElementById('qsel').value=qid;}
 async function loadRuns(first=false){
   if(qid==null)return;const out=await api('/api/agent/questions/runs',{id:qid}),next=fromRuns(out.runs||[]),s2=JSON.stringify(next.runs.map(r=>r?.run?.rev));
-  const q=qs.find(x=>String(x.id)===String(qid));document.getElementById('qst').textContent=next.runs.length?`${q?.label||''} · ${q?.status||''}`:`${q?.label||''}: no decision record yet`;
   if(s2===sig&&!first)return;sig=s2;const was=D.sentences.length;D=next;listSentences();
   // a new question, or a sentence added: the newest sentence; otherwise the one picked stays
   if(first||D.sentences.length!==was)pick=Math.max(0,D.sentences.length-1);pick=Math.min(pick,Math.max(0,D.sentences.length-1));
   picker.scrollTop=pick*ROW;if(D.runs.length){render();if(first)fitHeight();}else document.getElementById('board').innerHTML='';}
-document.getElementById('qsel').addEventListener('change',e=>{qid=e.target.value;document.getElementById('live').checked=false;loadRuns(true);});
-const liveBox=document.getElementById('live');liveBox.checked=P.get('live')==='1';
+document.getElementById('qsel').addEventListener('change',e=>{qid=e.target.value;loadRuns(true);});
+// live on: the newest question, followed (no picking, so no question menu); off: the menu to pick one
+const liveBox=document.getElementById('live'),showLive=()=>document.getElementById('qpick').classList.toggle('live',liveBox.checked);
+liveBox.checked=P.get('live')==='1';showLive();liveBox.addEventListener('change',showLive);
 // live: the newest question of the conversation, its runs as they come
 setInterval(async()=>{if(!liveBox.checked)return;const newest=(await api('/api/agent/conversations/export',{conversation:cid||qs.find(q=>String(q.id)===String(qid))?.conversation})).questions?.at(-1);
   if(newest&&(String(newest.id)!==String(qid)||!qs.some(q=>String(q.id)===String(newest.id)))){qid=newest.id;await loadQuestions(newest.id);document.getElementById('qsel').value=qid;await loadRuns(true);}else loadRuns(false);},1000);
