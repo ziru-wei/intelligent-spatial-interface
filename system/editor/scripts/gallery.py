@@ -4,14 +4,14 @@ A gallery example is answered questions of a conversation, tagged where they are
 the conversation shows a star): usually one; several asked one after another make one example, under the first one's MOD. Asking it
 again (demos/gallery.mjs, a queue) asks it in a conversation of its own, tagged `gallery_example`; once answered, those questions take
 the example's place in its conversation (replace), as a Rerun takes its question's. Each example has a still of the camera view at its answer, sent by the editor (`?example=`) when a
-question asked there is answered. The examples are written to context/gallery/examples.json (and examples.js, for the page opened as
+question asked there is answered. The examples are written to media/gallery/examples.json (the site's media; and examples.js, for the page opened as
 a file), with the stills beside them, so the page shows them without the editor running.
 """
 import base64, json, re, time
 from pathlib import Path
 import spaces, agent_store as store
 
-GALLERY = Path(__file__).resolve().parents[3]/'context'/'gallery'
+GALLERY = Path(__file__).resolve().parents[3]/'media'/'gallery'
 NAME = re.compile(r'^[a-z0-9][a-z0-9-]{0,63}$')
 
 def clean_tag(value):

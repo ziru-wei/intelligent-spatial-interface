@@ -32,7 +32,7 @@ POST /api/agent/bridge {session}                    start that bridge from the e
 GET  /api/agent/conversations?session=             list (starred: holds a Gallery example); POST /api/agent/conversations {session} creates an empty one
 POST /api/agent/conversations/rename|import         {session,conversation,name} (the user's name: no longer the first question's) | {session,data}; GET …/export?session=&conversation=
 POST /api/agent/questions/replace {session,conversation,old,new}  an answered question asked again takes the place of the one it came from (Rerun, a replay)
-GET  /api/gallery                                    the Gallery's examples (scripts/gallery.py), written to context/gallery as well
+GET  /api/gallery                                    the Gallery's examples (scripts/gallery.py), written to media/gallery as well
 POST /api/gallery/still {session,conversation,example,image}  a still of an example's answer; POST /api/gallery/replace {name,keep}: an example asked
                                                    again (conversation keep) takes the old one's place in its conversation
 POST /api/gallery/add {session,conversation,ids}      a new example: answered questions (one, or several in a row), tagged where they are
@@ -50,7 +50,7 @@ POST /api/agent/placement-log {session,question_id,event}  debug: one placement 
 POST /api/agent/responses {session,…}              UI/full text; text streams use {part:'text',stream:{seq,status}} snapshots
 Static files: the repository as it is laid out, its root the main page (index.html: Demo, Gallery, Vocabulary, About), the editor
 under /system/editor/ (framed by the main page; opened on its own it goes to the main page), the Gallery's examples under
-/context/gallery/, About's text under /context/about/ (scripts/about.py); nothing else (no dot folders, private/, logs or agent-config.local.json). Started from a terminal, it opens the main
+/media/gallery/, About's text under /context/about/ (scripts/about.py); nothing else (no dot folders, private/, logs or agent-config.local.json). Started from a terminal, it opens the main
 page in the browser (--no-open: not).
 Binds to 127.0.0.1 only (with --lan, also the local network, for the agent API only, with a token: the Vision Pro app, visionos/);
 GET  /api/vision/space?space=&revision=  /colors  /color?file=  /settings?headset=1  /room   POST /api/vision/settings {space, settings}
@@ -245,12 +245,12 @@ class Server(ThreadingHTTPServer):
     daemon_threads = True
 
 def served(path):
-    """Whether a static path is part of the site: the main page, the editor (system/editor/) and the Gallery's examples (context/gallery/)."""
+    """Whether a static path is part of the site: the main page, the editor (system/editor/) and the Gallery's examples (media/gallery/)."""
     parts = [x for x in posixpath.normpath('/'+unquote(path)).split('/') if x]   # as the file server reads it (%2e%2e is ..)
     if not parts: return True
     if any(x.startswith('.') for x in parts) or parts[-1] == 'agent-config.local.json' or parts[-1].endswith('.log'): return False
     if parts == ['index.html']: return True
-    if parts[:2] in (['context', 'gallery'], ['context', 'about']): return True
+    if parts[:2] in (['media', 'gallery'], ['context', 'about']): return True
     return parts[:2] == ['system', 'editor'] and (len(parts) < 3 or parts[2] != 'private')
 
 class Handler(SimpleHTTPRequestHandler):

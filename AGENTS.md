@@ -10,12 +10,16 @@ modos/               one git repo (origin github.com/ziru-wei/intelligent-spatia
   system/            the prototype
     editor/          the web editor and ModOS pipeline (everything below is under here)
     visionos/        the Vision Pro app (not yet updated to the spatial UI library)
+  media/gallery/     the site's media: the Gallery's examples (examples.json, examples.js) and a still per example (scripts/gallery.py writes them)
   context/           design doc, study plans, paper draft, recordings
     docs/modos-system-design.md   THE spec: architecture, decisions, library, MOD format, status (§10)
-    docs/system-changes.md, fs1-plan.md, stimuli-dryrun.md
-    write-up/draft.md              paper draft
-    gallery/                       the Gallery's examples (examples.json, examples.js) and a still per example (scripts/gallery.py writes them)
+    docs/fs1-plan.md, stimuli-dryrun.md   study plans (private: kept out of git)
+    write-up/draft.md              paper draft (private)
+    about/                         About › ModOS: the draft's Abstract, the only part of it published (scripts/about.py writes it)
 ```
+
+The repository is published as the project's site (a GitHub Page): only what the page and the system need is in git. Kept on disk only:
+the home scene (`system/editor/spaces/home/`), the private write-up and study plans.
 
 This is the only copy: the old locations (`~/quest-spatial-studio`, `~/Documents/GitHub/isi-backend-context`) no longer exist. The two earlier repos were merged here with their history (the system's as the main line, `context/` imported by `git subtree`).
 
@@ -27,12 +31,12 @@ npm ci && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   #
 npm start                                  # the system on http://127.0.0.1:8766: opens the main page (--no-open: not)
 ```
 
-- **Pages.** The server serves the repository as the site, nothing else of it (`served` in `scripts/server.py`): `/` the main page (`index.html`), `/system/editor/` the editor (only inside the main page: the Demo and a Gallery example frame it; opened on its own, it goes to the main page with its query, except the example view's tool modes `ask=1` and `still=1`, used by `demos/gallery.mjs`), `/system/editor/pipeline.html` the pipeline page, `/context/gallery/` the Gallery's examples. A session is a path relative to the editor (`?session=./spaces/…`, the bridge's `--session`) or a URL's pathname (`/system/editor/spaces/…`).
+- **Pages.** The server serves the repository as the site, nothing else of it (`served` in `scripts/server.py`): `/` the main page (`index.html`), `/system/editor/` the editor (only inside the main page: the Demo and a Gallery example frame it; opened on its own, it goes to the main page with its query, except the example view's tool modes `ask=1` and `still=1`, used by `demos/gallery.mjs`), `/system/editor/pipeline.html` the pipeline page, `/media/gallery/` the Gallery's examples. A session is a path relative to the editor (`?session=./spaces/…`, the bridge's `--session`) or a URL's pathname (`/system/editor/spaces/…`).
 - **Names.** `npm start` runs **modos-system** (the main page, the editor and their API, 8766), which starts **modos-speech** (the speech relay, 8767); the agent bridge is **modos-agent** (no port).
 - **Agent bridge.** One bridge per recording session. Between questions it renews itself when its code (`scripts/`, `modos/`) changed. It runs the ModOS pipeline and calls the decision model (Jev) and Gemini.
   `node scripts/agent-bridge.mjs --url http://127.0.0.1:8766 --session ./spaces/atlas/scenarios/atlas_rec_5/session.json --config agent-config.local.json`
 - **Credentials.** `agent-config.local.json` holds the keys and is git-ignored. Never print or commit it. Copy `agent-config.example.json` to start one. Speech to text reads `doubaoAsr` there: `apiKey` (Volcano Engine's new console) or `appKey` and `accessKey` (old console), and `resourceId` (default `volc.bigasr.sauc.duration`); optional `url`, `endWindowMs` (default 1200). The keys stay in the relay (`scripts/asr-relay.mjs`), never in the browser.
-- **Space data.** `editor/spaces/` (the atlas twin, recordings and mock context) is in git, except its 3D models (`*.glb`: the scans, rooms and components) and the camera frames of recordings the Gallery does not use (only atlas_rec_1 to atlas_rec_5 keep theirs); depth maps, conversations and voice recordings are in it (`system/.gitignore`). The raw exports in `editor/private/` and `.hand-cache/` stay out. A clone needs the `.glb` files copied in to show the twin. Atlas mock data:
+- **Space data.** `editor/spaces/` (the atlas twin, recordings and mock context) is in git, except the home scene (`spaces/home/`, kept here only), its 3D models (`*.glb`: the scans, rooms and components) and the camera frames of recordings the Gallery does not use (only atlas_rec_1 to atlas_rec_5 keep theirs); depth maps, conversations and voice recordings are in it (`system/.gitignore`). The raw exports in `editor/private/` and `.hand-cache/` stay out. A clone needs the `.glb` files copied in to show the twin. Atlas mock data:
   - devices in `spaces/atlas/modos/entities.json`;
   - items in `spaces/atlas/modos/items.json` (a symlink to the tracked `modos/examples/atlas/items.json`: edit that one);
   - layout boxes in `spaces/atlas/scan/semantic.json` (atlas has one scan: `atlas-reassembled`; the Music-Brain flyer `kitchen-upper-fridge_0` is a thin box on the board);
@@ -46,9 +50,10 @@ npm start                                  # the system on http://127.0.0.1:8766
 - **Branch.** `modos-live-input` (Answer while typing and everything since), on origin under the same name; `modos` is the line before it.
 - **Ask before** committing or pushing. Commits are split by who made the change:
   1. the code and docs;
-  2. the Gallery's outputs (`context/gallery/`: stills, `examples.js`, `examples.json`; `system/editor/demos/gallery-examples.json`);
+  2. the Gallery's outputs (`media/gallery/`: stills, `examples.js`, `examples.json`; `system/editor/demos/gallery-examples.json`);
   3. the scene data (`system/editor/spaces/`).
 - **Scene data in git** (`system/.gitignore`). In: everything in `spaces/`, including depth maps, conversations, decision records, voice recordings and placement logs. Out:
+  - the home scene (`spaces/home/`);
   - the 3D models (`*.glb`);
   - the camera frames of recordings the Gallery does not use (only atlas_rec_1 to atlas_rec_5 keep `frames/`; a recording newly used by the Gallery gets its own `!…/frames/` line);
   - `.hand-cache/`, logs, and `editor/private/`.
@@ -75,7 +80,7 @@ npm run gallery -- [examples or MODs]   # e.g. `npm run gallery -- weather wayfi
 ```
 
 - **The Gallery is live, not recorded.** An example is answered questions of a conversation, tagged where they are (`gallery` = {name, mod} on each question; no copy is made), usually one; several asked one after another make one example under the first one's MOD (`scripts/gallery.py`). A conversation holding one shows ★ at the end of its name. `demos/gallery-examples.json` lists them (recording, `ask_at`, question; or `questions: [{ask_at, question}]`). In the editor, a timeline dot clicked shows × (delete) and ★ (add to the Gallery); shift-click picks a run of questions, and ★ adds them as one example (`POST /api/gallery/add`). `npm run gallery` asks them through the editor's own ask box (`demos/gallery.mjs`), each in a conversation of its own (tagged `gallery_example`) until answered; the editor sends a still of the camera view when the answer settles, and the new questions then take the example's place in its conversation (`gallery.replace`, as a Rerun takes its question's: `POST /api/agent/questions/replace`, which also sets the conversation's time to now; a failed example leaves the old one). After a change that affects some examples, queue those, not all. A change in how answers are drawn (placement, cues, text) needs no new answers: the editor draws them anew whenever an example is opened; only the stills are images, taken again with `npm run gallery -- --stills` (replays only, no model). Ask again (`npm run gallery`) only when what the answers are changes (pipeline, MODs, data, prompts). Opened in the main page, an example is the editor's example view (`?example=&conversation=`): the camera, the player and the pipeline, for playing only (its dots replay; no asking, deleting or adding). `npm run gallery` opens it with `ask=1` to ask through its ask box. Try the Demo (beside Close) opens the Demo on the example's recording at its moment (`?t=`). A question typed in Answer while typing goes, with ★, to the Gallery's category **Answer while typing**, with its revisions (`typed`), and `npm run gallery` types it again.
-- `index.html` at the root is the main page, the page the system opens (`npm start` in `system/editor`, `http://127.0.0.1:8766/`). Demo frames the editor (`system/editor/`, atlas_rec_5; the page's own query, such as `?session=…&t=…`, is the Demo's); Gallery reads `context/gallery/examples.js`. Served statically (`python3 -m http.server` in `modos/`), Gallery and Vocabulary work, the Demo and the examples need the system.
+- `index.html` at the root is the main page, the page the system opens (`npm start` in `system/editor`, `http://127.0.0.1:8766/`). Demo frames the editor (`system/editor/`, atlas_rec_5; the page's own query, such as `?session=…&t=…`, is the Demo's); Gallery reads `media/gallery/examples.js`. Served statically (`python3 -m http.server` in `modos/`), Gallery and Vocabulary work, the Demo and the examples need the system.
 
 ## How ModOS works (code map)
 

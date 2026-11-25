@@ -20,7 +20,7 @@ class ContextHTTPTest(unittest.TestCase):
             self.assertEqual(error.exception.code,404)
     def test_site(self):
         # the repository as the site: the main page at its root, the editor and the Gallery's examples; nothing else of it
-        for path in ['/','/system/editor/','/system/editor/pipeline.html','/context/gallery/examples.js']:
+        for path in ['/','/system/editor/','/system/editor/pipeline.html','/media/gallery/examples.js']:
             with urlopen(self.url+path) as r:self.assertEqual(r.status,200)
         with urlopen(self.url+'/') as r:self.assertIn(b"const SYSTEM='system/editor/'",r.read())
         for path in ['/AGENTS.md','/.git/HEAD','/system/editor/%2e%2e/%2e%2e/.git/HEAD','/system/editor/../../AGENTS.md','/context/docs/modos-system-design.md','/system/editor/private/','/system/editor/.venv/']:
