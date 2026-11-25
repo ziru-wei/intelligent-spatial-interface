@@ -35,6 +35,8 @@ await api('/api/agent/bridge',{});
 // a question typed again goes in its own conversation (in place, once answered); fresh text, in a new one
 const inPlace=from&&(!source||source===recording),old=inPlace?Number(from.split(':')[1]):null;
 const conv=inPlace?{id:from.split(':')[0]}:await api('/api/agent/conversations',{});
+// typed again from the space as it was when the question was asked (its state; else the initial state); the live state back after
+if(inPlace)await api('/api/agent/questions/start-replay',{conversation:conv.id,of:old});
 const t0=Date.now(),log=[],now=()=>((Date.now()-t0)/1000).toFixed(2);
 let id=null,chain=Promise.resolve(),done=false;
 const send=(txt,pause)=>{log.push([now(),`${pause?'⏸':'·'} "${txt}"`]);chain=chain.then(()=>api('/api/agent/drafts',{conversation:conv.id,id,frame:frameAt(at),t:at,text:txt,pause})).then(q=>{id=q.id;});};
@@ -64,5 +66,5 @@ for(const [t,e] of log)console.log(`${t.padStart(6)} s  ${e}`);
 if(inPlace){
   let q=null;for(const until=Date.now()+60000;enter&&Date.now()<until;await sleep(1000)){q=(await api(`/api/agent/status?conversation=${conv.id}`)).questions.find(x=>x.id===id);if(['answered','failed'].includes(q?.status))break;}
   if(q?.status==='answered'){await api('/api/agent/questions/replay',{conversation:conv.id,of:old,new:id,how:'replay-text'});console.log(`question ${id} is a new version of ${old} (its replay history)`);}
-  else{await api('/api/agent/drafts/cancel',{conversation:conv.id,id}).catch(()=>api('/api/agent/questions/delete',{conversation:conv.id,id}).catch(()=>{}));console.log(enter?`not answered: question ${old} stays`:'not asked: dropped');}
+  else{await api('/api/agent/drafts/cancel',{conversation:conv.id,id}).catch(()=>api('/api/agent/questions/delete',{conversation:conv.id,id}).catch(()=>{}));await api('/api/agent/questions/end-replay',{});console.log(enter?`not answered: question ${old} stays`:'not asked: dropped');}
 }else if(!keepIt)await api('/api/agent/conversations/delete',{conversation:conv.id}).catch(()=>{});

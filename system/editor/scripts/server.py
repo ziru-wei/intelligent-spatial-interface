@@ -30,8 +30,11 @@ Questions and responses live in conversations ("sessions" in the UI), see script
 GET  /api/agent/command?session=                   pastable shell command that starts the bridge for this scene
 POST /api/agent/bridge {session}                    start that bridge from the editor (a Gallery example), unless one is already polling
 GET  /api/agent/conversations?session=             list (starred: holds a Gallery example); POST /api/agent/conversations {session} creates an empty one
+                                                   (the space reset to its initial state first, unless it is a Gallery example's)
 POST /api/agent/conversations/rename|import         {session,conversation,name} (the user's name: no longer the first question's) | {session,data}; GET …/export?session=&conversation=
-POST /api/agent/questions/replay {session,conversation,of,new,how}  an answered question made again from `of`'s input (Rerun, a replay,
+POST /api/agent/questions/start-replay {session,conversation,of}  before answering `of` again: the space as it was when `of` was asked (its
+                                                   state; else the initial state), the live state kept; …/end-replay: the live state back
+POST /api/agent/questions/replay {session,conversation,of,new,how}  (the live state back, then) an answered question made again from `of`'s input (Rerun, a replay,
                                                    a Gallery re-ask) joins its replay history (scripts/versions.py); …/pin {id}: a version pinned as
                                                    the best (again: unpinned); …/view {id|root}: the version looked at in the history, shown
                                                    meanwhile; …/delete {id, whole?}: a version, or (whole) the question with its history
@@ -70,7 +73,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]   # the editor (system/editor)
 SITE = ROOT.parents[1]                       # the repository, served as the site: the main page at its root
 sys.path.insert(0, str(ROOT/'scripts'))
-import about, agent_store as store, gallery, spaces, composition, weather, findmy, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts, modos_prompts
+import reset_space, about, agent_store as store, gallery, spaces, composition, weather, findmy, hand_cache, info_context, layout, vision, location, modos_context, modos_registry, modos_twin, modos_parts, modos_prompts
 busy = threading.Lock()
 MOCK_CONTEXT = ROOT/'agent'/'mock-context.json'
 
@@ -220,12 +223,18 @@ def agent_post(path, body):
     with store.lock:
         store._prepare(d)
         if path == '/api/agent/state': store.editor_state[str(d)] = {k: body.get(k) for k in ('conversation', 'frame', 't', 'position', 'quaternion', 'forward')}; return dict(ok=True)
-        if path == '/api/agent/conversations': return store.create(d, gallery_example=gallery.clean_tag(body['gallery_example']) if body.get('gallery_example') else None)
+        if path == '/api/agent/conversations':
+            # a new session starts from the space's initial state (scripts/reset_space.py); a Gallery example asked again keeps the
+            # devices demos/gallery.mjs set for it
+            if not body.get('gallery_example') and (d.parents[1]/'modos'/'initial.json').is_file(): reset_space.reset(d.parents[1].name)
+            return store.create(d, gallery_example=gallery.clean_tag(body['gallery_example']) if body.get('gallery_example') else None)
         if path == '/api/agent/conversations/delete': out = store.delete_conversation(d, cid); gallery.rebuild(); return out
         if path == '/api/agent/conversations/rename': return store.rename(d, cid, body.get('name'))
         if path == '/api/agent/conversations/import': return store.import_conversation(d, body.get('data'))
         if path == '/api/agent/questions/delete': out = store.delete_question(d, cid, body.get('id'), whole=bool(body.get('whole'))); gallery.rebuild(); return out
-        if path == '/api/agent/questions/replay': out = store.replay_question(d, cid, body.get('of'), body.get('new'), body.get('how') or 'replay-audio'); gallery.rebuild(); return out
+        if path == '/api/agent/questions/replay': out = store.replay_question(d, cid, body.get('of'), body.get('new'), body.get('how') or 'replay-audio'); store.end_replay(d); gallery.rebuild(); return out
+        if path == '/api/agent/questions/start-replay': return store.start_replay(d, cid, body.get('of'))
+        if path == '/api/agent/questions/end-replay': return store.end_replay(d)
         if path == '/api/agent/questions/pin': out = store.pin(d, cid, body.get('id')); gallery.rebuild(); return out
         if path == '/api/agent/questions/view': return store.view(d, cid, body.get('id'), body.get('root'))
         if path == '/api/agent/questions/trace': store.bridge_seen[str(d)] = time.time(); return store.add_trace(d, body.get('id'), body.get('step'))
@@ -387,7 +396,9 @@ class Handler(SimpleHTTPRequestHandler):
                 with store.lock:
                     if path == '/api/gallery/add': return self.reply(200, gallery.add(session_dir(body.get('session')), body.get('conversation'), body.get('ids')))
                     if path == '/api/gallery/still': return self.reply(200, dict(example=gallery.save_still(session_dir(body.get('session')), body.get('conversation'), body.get('image'), body.get('example'))))
-                    return self.reply(200, gallery.replace(gallery.clean_tag(dict(name=body.get('name')))['name'], body.get('keep')))
+                    out = gallery.replace(gallery.clean_tag(dict(name=body.get('name')))['name'], body.get('keep'))
+                    if body.get('session'): store.end_replay(session_dir(body['session']))   # the space as before the example was asked again
+                    return self.reply(200, out)
             except (ValueError, OSError, KeyError) as e: return self.reply(400, dict(error=str(e)))
         if path == '/api/modos/entities':
             body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
@@ -498,8 +509,11 @@ def lan_token():
 
 if __name__ == '__main__':
     # server.py [port] [--lan] [--no-open]: --lan also listens on the local network, for the Vision Pro app (visionos/), which may then use
-    # the agent API only, with the token; started from a terminal, the main page opens in the browser unless --no-open.
+    # the agent API only, with the token; started from a terminal, the main page opens in the browser unless --no-open; each space with
+    # an initial state is reset to it.
     args = [a for a in sys.argv[1:] if a not in ('--lan', '--no-open')]; lan = '--lan' in sys.argv[1:]
+    # every space with an initial state starts from it (scripts/reset_space.py): the same start for every recording
+    for name, done in reset_space.reset_all().items(): print(f'modos-system: {name} reset to its initial state' + (f': {len(done)} change(s): ' + '; '.join(done) if done else ' (no change)'), flush=True)
     port = int(args[0]) if args else 8766
     if lan: LAN_TOKEN = lan_token()
     http = Server(('0.0.0.0' if lan else '127.0.0.1', port), partial(Handler, directory=str(SITE)))

@@ -8,7 +8,7 @@ shows the rerun icon, and the version shown is the pinned one, else the newest. 
 the agent only echoes the number back. All access goes through `lock`; the bridge long-polls on it."""
 import json, re, threading, time
 from pathlib import Path
-import weather, findmy, conversation_context, modos_parts, versions
+import weather, findmy, conversation_context, modos_parts, versions, reset_space
 
 UI_KINDS = ('weather', 'findmy', 'highlight', 'control', 'action')   # one of them per ui part
 from datetime import datetime
@@ -140,6 +140,27 @@ def running_question(d):
     if not running: return None, None
     _, c, q = max(running, key=lambda x: x[0]); return c, q
 
+def _state(d):
+    """The space's devices and mock outbox as a question is asked (its input, like its recording): a replay starts from it again."""
+    space = Path(d).parent.parent
+    return reset_space.snapshot(space) if (space/'modos').is_dir() else None
+
+replay_live = {}   # {space: its state before a replay began}: put back once the replay is joined to its question, or given up
+def start_replay(d, cid, of):
+    """Before a question is answered again (replay-audio, -text, -text-batch): the space as it was when the question was asked (its
+    `state`; a question asked before states were kept: the initial state), the state it had now kept to be put back after."""
+    space = Path(d).parent.parent; c = read(d, cid) if cid else dict(questions=[])
+    q = next((x for x in c['questions'] if str(x['id']) == str(of)), None) if of is not None else None
+    root = next((x for x in c['questions'] if q and x['id'] == versions.root_id(q)), None)
+    replay_live.setdefault(str(space), reset_space.snapshot(space))
+    reset_space.restore(space, (root or {}).get('state')); lock.notify_all(); return dict(ok=True, state=bool((root or {}).get('state')))
+
+def end_replay(d):
+    """A replay joined or given up: the space as it was before it began."""
+    space = Path(d).parent.parent; live = replay_live.pop(str(space), None)
+    if live is not None: reset_space.restore(space, live)
+    lock.notify_all(); return dict(ok=True)
+
 def ask(d, cid, frame, t, text, live=None, selection=None, pose=None, location=None):
     """live = {read_s}: asked in the editor, which held the video on the question's frame while the agent answered and for `read_s`
     real seconds after the answer appeared; replays hold the same way, using the measured latency."""
@@ -152,6 +173,7 @@ def ask(d, cid, frame, t, text, live=None, selection=None, pose=None, location=N
     if selection: q['selection'] = selection   # an information box the user looked at, pointed at or touched (scripts/info_context.py selection)
     if pose: q['pose'] = pose   # asked live on a headset (a live session, no recording): the user's head pose then, in scene coordinates
     if location: q['location'] = location   # the zone the user is in and one they face (scripts/location.py)
+    q['state'] = _state(d)
     c['questions'].append(q); _write(d, c); lock.notify_all(); return dict(q, conversation=cid)
 
 def draft(d, cid, qid, frame, t, text, pause=False, selection=None, pose=None, location=None):
@@ -162,7 +184,7 @@ def draft(d, cid, qid, frame, t, text, pause=False, selection=None, pose=None, l
     q = next((x for x in c['questions'] if str(x['id']) == str(qid)), None) if qid is not None else None
     if qid is not None and not q: raise ValueError('Unknown question.')
     if q is None:
-        q = dict(id=_next_qid(d), label=_label(d, now), text=text, frame=frame, t=t, status='drafting', created=now, rev=0, revisions=[])
+        q = dict(id=_next_qid(d), label=_label(d, now), text=text, frame=frame, t=t, status='drafting', created=now, rev=0, revisions=[], state=_state(d))
         c['questions'].append(q)
     elif q['status'] != 'drafting': raise ValueError('That question was already asked.')
     q['rev'] += 1; q.update(text=text, frame=frame, t=t)   # the question's moment is its latest revision's; typing began at revisions[0]
@@ -387,7 +409,7 @@ def add_versions(d, src, dst, ids, of, how):
             b['themes'] = bb
         b['questions'] += moving
     for i, q in enumerate(sorted(moving, key=lambda q: ids.index(q['id']))):
-        root = roots[min(i, len(roots)-1)]; q['replay_of'] = root; q['how'] = how; q.pop('gallery', None)
+        root = roots[min(i, len(roots)-1)]; q['replay_of'] = root; q['how'] = how; q.pop('gallery', None); q.pop('state', None)   # the state is the question's input
         viewing.get((str(d), dst), {}).pop(root, None)
     b['updated'] = time.time(); _write(d, b)
     if dst != src:
@@ -739,7 +761,7 @@ def status(d, cid):
     names = mod_names(Path(d).parents[1])   # each answer's MODs, by their short names
     for rid, vs in versions.groups(c['questions']).items():
         root = next((x for x in vs if not x.get('replay_of')), vs[0]); q = versions.shown(vs, look.get(rid)); show.add(q['id'])
-        out = {k: v for k, v in q.items() if k not in ('withdrawn', 'traces')}
+        out = {k: v for k, v in q.items() if k not in ('withdrawn', 'traces', 'state')}   # state: the space when asked, for replays only
         for k in ('audio', 'gallery'):
             if root.get(k) is not None and out.get(k) is None: out[k] = root[k]
         if out.get('audio'): out['audio'] = audio(out['audio'])

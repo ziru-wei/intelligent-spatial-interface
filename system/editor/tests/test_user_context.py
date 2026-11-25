@@ -1,6 +1,6 @@
 import json, sys, tempfile, unittest
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import user_context
@@ -36,7 +36,20 @@ class ContextTest(unittest.TestCase):
         self.assertEqual(next(x for x in fridge['state']['contents'] if x['item']=='eggs')['count'],0)
         events={e['id']:e for e in data['calendar']}
         self.assertEqual(events['badminton']['recurrence']['weekdays'],['Monday','Wednesday','Friday'])
-        self.assertEqual(events['denver-hangout']['date'],'2026-10-10')
+        self.assertEqual(events['denver-hangout']['on'],'this Saturday')   # kept relative to today: its date worked out when read
+        self.assertEqual(date.fromisoformat(events['denver-hangout']['date']).strftime('%A'),'Saturday')
+
+    def test_a_dated_entry_follows_today(self):
+        from datetime import date as d
+        fri,sat=d(2026,11,27),d(2026,11,28)
+        self.assertEqual(user_context.dated({'on':'this Saturday'},fri)['date'],'2026-11-28')
+        self.assertEqual(user_context.dated({'on':'this Saturday'},sat)['date'],'2026-11-28')   # today, when it is that day
+        self.assertEqual(user_context.dated({'on':'next Saturday'},fri)['date'],'2026-12-05')
+        self.assertEqual(user_context.dated({'on':'this Sunday'},sat)['date'],'2026-11-29')
+        self.assertEqual(user_context.dated({'on':'tomorrow'},fri)['date'],'2026-11-28')
+        self.assertEqual(user_context.dated({'on':'in 3 days'},fri)['date'],'2026-11-30')
+        self.assertEqual(user_context.dated({'id':'x','date':'2026-10-10'},fri),{'id':'x','date':'2026-10-10'})
+        with self.assertRaises(ValueError):user_context.dated({'id':'x','on':'someday'},fri)
 
     def test_today_resolves_recurring_and_dated_events(self):
         friday=user_context.read(Path('/tmp/no-user-context-fixture'),['user_events'],datetime(2026,10,9,18,0,tzinfo=timezone.utc))

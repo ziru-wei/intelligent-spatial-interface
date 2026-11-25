@@ -27,13 +27,13 @@
     {
       "id": "denver-hangout",
       "what": "hangout in Denver",
-      "date": "2026-10-10",
-      "location": "Denver"
+      "location": "Denver",
+      "on": "this Saturday"
     },
     {
       "id": "hiking",
       "what": "hiking",
-      "date": "2026-10-11"
+      "on": "this Sunday"
     }
   ]
 }

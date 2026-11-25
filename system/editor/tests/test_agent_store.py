@@ -239,3 +239,31 @@ class ReplayNamesTest(unittest.TestCase):
         self.assertEqual([versions.how(q) for q in [dict(id=1), dict(id=2, replay_of=1, how='rerun'), dict(id=3, replay_of=1, how='live replay'),
                                                     dict(id=4, replay_of=1, how='gallery'), dict(id=5, replay_of=1, how='replay-text')]],
                          ['original', 'replay-audio', 'replay-text', 'replay-text-batch', 'replay-text'])
+
+class ReplayStateTest(unittest.TestCase):
+    def test_a_question_is_answered_again_from_the_space_as_it_was_asked_and_the_live_state_comes_back(self):
+        import json
+        with tempfile.TemporaryDirectory() as tmp, store.lock:
+            space = Path(tmp)/'lab'; d = space/'scenarios'/'rec'; d.mkdir(parents=True); (space/'modos').mkdir()
+            lamp = lambda v: {'inputs': {'brightness': {'type': 'level', 'value': v}}, 'outputs': {}}
+            def set_lamp(v): (space/'modos'/'entities.json').write_text(json.dumps({'version': 1, 'entities': {'layout:lamp': {'device': lamp(v)}}}))
+            def now(): return json.loads((space/'modos'/'entities.json').read_text())['entities']['layout:lamp']['device']['inputs']['brightness']['value']
+            (space/'modos'/'initial.json').write_text(json.dumps({'devices': {'layout:lamp': lamp(20)}}))
+            set_lamp(30); c = store.create(d)
+            q = store.ask(d, c['id'], 0, 0, 'brighter please')
+            self.assertEqual(store.read(d, c['id'])['questions'][0]['state']['devices']['layout:lamp'], lamp(30))   # kept with its input
+            made = []
+            for run in (1, 2):                                   # answered again twice: each from the state it was asked in
+                set_lamp(80)                                      # the live session moved on
+                store.start_replay(d, c['id'], q['id']); self.assertEqual(now(), 30)
+                v = store.ask(d, c['id'], 0, 0, 'brighter please'); x = store.read(d, c['id'])
+                next(y for y in x['questions'] if y['id'] == v['id'])['status'] = 'answered'; store._write(d, x)
+                set_lamp(50)                                      # what answering it did
+                store.replay_question(d, c['id'], q['id'], v['id'], 'replay-text'); store.end_replay(d)
+                self.assertEqual(now(), 80)                       # the live state back
+                made.append(v['id'])
+            x = store.read(d, c['id'])
+            self.assertTrue(all('state' not in y for y in x['questions'] if y['id'] in made))   # versions keep no state of their own
+            # a question asked before states were kept: answered again from the initial state
+            old = store.ask(d, c['id'], 0, 0, 'older'); x = store.read(d, c['id']); next(y for y in x['questions'] if y['id'] == old['id']).pop('state'); store._write(d, x)
+            store.start_replay(d, c['id'], old['id']); self.assertEqual(now(), 20); store.end_replay(d); self.assertEqual(now(), 80)

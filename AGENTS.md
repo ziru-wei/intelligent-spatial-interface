@@ -40,7 +40,10 @@ npm start                                  # the system on http://127.0.0.1:8766
   - devices in `spaces/atlas/modos/entities.json`;
   - items in `spaces/atlas/modos/items.json` (a symlink to the tracked `modos/examples/atlas/items.json`: edit that one);
   - layout boxes in `spaces/atlas/scan/semantic.json` (atlas has one scan: `atlas-reassembled`; the Music-Brain flyer `kitchen-upper-fridge_0` is a thin box on the board);
+  - the user's calendar in `agent/context/user_events.json` (shared by the spaces): weekly entries, and dated ones kept relative to today (`on`: "this Saturday", worked out when read);
   - LabInfo in `spaces/atlas/modos/mods/labinfo.json` (a symlink to the tracked `modos/examples/atlas/mods/labinfo.json`: edit that one).
+
+  - the initial state in `spaces/atlas/modos/initial.json`: the devices as every recording starts from (lamp on 20%, TV on HDMI 2 volume 20, the printer printing Ana's poster 7/12). The system resets every space with one when it starts and when a new session is made (not a Gallery example's re-ask, whose devices `demos/gallery.mjs` sets): the devices back and the mock outbox (Send's messages and photos) emptied; MOD settings and conversations stay (`scripts/reset_space.py`). Each question keeps the space as it was when asked (`state`: devices and mock outbox, with its input, never on a version); a replay (replay-audio, -text, -text-batch) starts from it (`POST /api/agent/questions/start-replay`; a question from before: the initial state) and the live state comes back once the new answer is joined or the replay ends (`…/end-replay`).
 
   Back these up before experimenting.
 - **Restart the server after editing Python.** `scripts/server.py` keeps `modos_registry.py`, `agent_store.py` and the other modules loaded. A stale registry rejects new MOD declarations, so questions fail with messages like "unknown UI floatingText".

@@ -34,7 +34,9 @@ def read(d, groups=None, now=None):
             section = json.loads(path.read_text())
         else: section = {k:raw[k] for k in meta['keys'] if k in raw}
         result.update(section)
-    if isinstance(result.get('calendar'), list): result['today'] = _today(result['calendar'], current.date())
+    if isinstance(result.get('calendar'), list):
+        result['calendar'] = [dated(e, current.date()) for e in result['calendar']]
+        result['today'] = _today(result['calendar'], current.date())
     if 'weather' in result:
         weather = result['weather']; weather['reference_date'] = current.date().isoformat()
         weather['forecast'] = sorted(weather.get('forecast', []), key=lambda e:(e['date'],e.get('time','')))
@@ -51,6 +53,22 @@ def relabel(forecast, today):
             e['day_label'] = 'Today' if offset == 0 else 'Tomorrow' if offset == 1 else 'Yesterday' if offset == -1 else day.strftime('%A, %b %d')
             e['label'] = f"{e['date']} {e['local_time']}" if e.get('parent_id') and e.get('local_time') else f"{day:%A, %b %d} · {e.get('period') or e.get('time', '')}"
     return forecast
+
+WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+def dated(e, today):
+    """A calendar entry kept relative to today (`on`: "this Saturday", "next Friday", "tomorrow", "in 3 days", "today") with its
+    date worked out now, so the mock data never goes stale (as the weather's dates follow today). "this <weekday>": its next
+    occurrence from today on (today, if it is that day); "next <weekday>": a week after that. Other entries as they are."""
+    rule = str(e.get('on') or '').strip().lower()
+    if not rule: return e
+    words = rule.split()
+    if rule == 'today': day = today
+    elif rule == 'tomorrow': day = today+timedelta(days=1)
+    elif len(words) == 3 and words[0] == 'in' and words[1].isdigit() and words[2] in ('day', 'days'): day = today+timedelta(days=int(words[1]))
+    elif len(words) == 2 and words[0] in ('this', 'next') and words[1].capitalize() in WEEKDAYS:
+        day = today+timedelta(days=(WEEKDAYS.index(words[1].capitalize())-today.weekday()) % 7+(7 if words[0] == 'next' else 0))
+    else: raise ValueError(f'Calendar entry {e.get("id")}: cannot read the day {e["on"]!r}.')
+    return dict(e, date=day.isoformat())
 
 def _occurs(e, day):
     """Whether a calendar entry happens on a day: weekly recurrence (weekdays), a date, or a 'when' that starts with its weekday and date."""

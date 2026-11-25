@@ -64,6 +64,9 @@ function stopBridge(){if(bridge){bridge.kill();bridge=null;bridgeFor=null;}}
 
 async function ask(browser,c){
   const s=session(c);
+  // the space as it was when the example was first asked (its question's state; else the initial state), then the devices it needs
+  const was=(await api('/api/gallery')).examples.find(x=>x.name===c.name);
+  await api('/api/agent/questions/start-replay',{conversation:was?.conversation||null,of:was?.first_question_id??null},s);
   for(const [id,st] of Object.entries(c.devices||{}))for(const [key,value] of Object.entries(typeof st==='string'?{power:st}:st))
     await api('/api/modos/devices',{space:spec.space,id,key,op:'set',value}).catch(e=>console.log('  device:',e.message));
   for(const [mod,change] of Object.entries(c.setup||{}))await api('/api/modos/mods',{space:spec.space,op:'customize',mod,change});
@@ -107,7 +110,7 @@ async function ask(browser,c){
         if(e?.still_at&&e.still_at>=askedAt-1&&(e.questions||[e.question]).length===qs.length)return {conv,example:e};
       }
     }
-  }catch(e){await api('/api/agent/conversations/delete',{conversation:conv.id},s).catch(()=>{});throw e;}
+  }catch(e){await api('/api/agent/conversations/delete',{conversation:conv.id},s).catch(()=>{});await api('/api/agent/questions/end-replay',{},s).catch(()=>{});throw e;}
   finally{await ctx.close();for(const mod of Object.keys(c.setup||{}))await api('/api/modos/mods',{space:spec.space,op:'reset',mod}).catch(()=>{});}
 }
 
@@ -136,7 +139,7 @@ try{
     for(let attempt=1;!result;attempt++){   // a model call can fail now and then: ask again
       try{result=await ask(browser,c);}catch(e){if(attempt>=3)throw e;console.log(`  ${e.message}; asking again`);}
     }
-    const {replaced:joined}=await api('/api/gallery/replace',{name:c.name,keep:result.conv.id});
+    const {replaced:joined}=await api('/api/gallery/replace',{name:c.name,keep:result.conv.id,session:session(c)});
     console.log(`  answered: ${result.example.answer?.title||''} · ${result.example.latency??'?'} s · ${joined?`a new version of ${joined} question${joined>1?"s":""}`:"a new example"}`);done.push(c.name);
   }catch(e){console.log(`  FAILED: ${e.message}`);failed.push(`${c.name} (${e.message})`);}
 }finally{stopBridge();await browser.close();}

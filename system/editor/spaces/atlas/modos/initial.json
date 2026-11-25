@@ -1,0 +1,113 @@
+{
+  "note": "The space's initial state (scripts/reset_space.py, npm run reset-atlas, the Space tab's ↺): its devices as a recording starts from, and no messages sent. Edit here to change where every benchmark starts.",
+  "devices": {
+    "layout:lab-desk-lamp": {
+      "protocol": "mock",
+      "class": "light",
+      "inputs": {
+        "power": {
+          "type": "toggle",
+          "value": "on"
+        },
+        "brightness": {
+          "type": "level",
+          "value": 20,
+          "min": 0,
+          "max": 100,
+          "step": 20,
+          "unit": "%"
+        }
+      },
+      "outputs": {}
+    },
+    "layout:lab-central-tv": {
+      "protocol": "mock",
+      "class": "television",
+      "inputs": {
+        "power": {
+          "type": "toggle",
+          "value": "on"
+        },
+        "input": {
+          "type": "choice",
+          "value": "HDMI 2",
+          "options": [
+            "HDMI 1",
+            "HDMI 2",
+            "HDMI 3"
+          ]
+        },
+        "volume": {
+          "type": "level",
+          "value": 20,
+          "min": 0,
+          "max": 100,
+          "step": 10
+        }
+      },
+      "outputs": {}
+    },
+    "layout:lab-printer": {
+      "protocol": "mock",
+      "class": "printer",
+      "inputs": {
+        "power": {
+          "type": "toggle",
+          "value": "on"
+        },
+        "job": {
+          "type": "command",
+          "commands": [
+            "pause",
+            "cancel"
+          ],
+          "for": "current_job",
+          "confirm": [
+            "cancel"
+          ]
+        }
+      },
+      "outputs": {
+        "current_job": {
+          "type": "task",
+          "title": "Ana's CHI poster",
+          "total": 12,
+          "unit": "pages",
+          "done": 7,
+          "owner": "Ana Ruiz"
+        },
+        "queue": {
+          "type": "queue",
+          "items": [
+            {
+              "title": "Lab meeting slides",
+              "total": 3,
+              "unit": "pages",
+              "owner": "Alice Chen"
+            },
+            {
+              "title": "Consent forms",
+              "total": 8,
+              "unit": "pages",
+              "owner": "Ryo Suzuki"
+            }
+          ]
+        },
+        "paper": {
+          "type": "level",
+          "value": 60,
+          "min": 0,
+          "max": 250,
+          "unit": "sheets"
+        },
+        "toner": {
+          "type": "level",
+          "value": 35,
+          "min": 0,
+          "max": 100,
+          "unit": "%"
+        }
+      }
+    }
+  }
+}

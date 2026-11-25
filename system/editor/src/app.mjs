@@ -764,15 +764,18 @@ function hoverResponse(e,cam){const r=agent?.pick(ndcOf(e),cam),tip=$('tooltip')
 // new one is answered (replacing: new id → old id; /api/agent/questions/replay: it joins the question's replay history as its newest
 // version, shown unless another is pinned); if nothing is recognized or the new one fails, nothing changes.
 let again=null;const replacing=new Map();
+// A replay starts from the space as it was when the question was asked (its devices and outbox: its state, else the initial state;
+// /api/agent/questions/start-replay) and the space goes back to how it was once the new answer joins the question, or the replay ends.
+const startReplay=q=>agentApi('/api/agent/questions/start-replay',{conversation:agent.conversation,of:q.root??q.id}),endReplay=()=>agentApi('/api/agent/questions/end-replay',{}).catch(()=>{});
 async function rerun(q){
-  pause();stillTyped=null;$('tooltip').hidden=true;await at(typedOf(q).t0);
+  pause();stillTyped=null;$('tooltip').hidden=true;await startReplay(q);await at(typedOf(q).t0);
   again={id:q.id,wasLive:liveMode,mark:{t:session.frames[index].t,at:Date.now()}};liveMode=true;showLive();spoken={text:'',at:0,definite:0};$('ask-input').value='';showMic(true);$('play').click();
   const done=async()=>{if(!again)return;const was=again;again=null;was.mark.end={t:session.frames[index].t,at:Date.now(),rate:playing?speed:0};showMic(false);
     const text=(await speech.stop()).trim(),recording=speech.recording;liveMode=was.wasLive;showLive();$('ask-input').value='';
-    if(!text){dropDraft();return;}
-    const nq=await askSpoken(text,recording,was.mark);if(nq)replacing.set(nq.id,{of:was.id,how:'replay-audio'});};   // the old one goes once the new one is answered
+    if(!text){dropDraft();endReplay();return;}
+    const nq=await askSpoken(text,recording,was.mark);if(nq)replacing.set(nq.id,{of:was.id,how:'replay-audio'});else endReplay();};   // the old one goes once the new one is answered
   try{await speech.start({from:new URL(q.audio.file,sessionURL).href,onEnded:done});}
-  catch(e){const was=again;again=null;showMic(false);if(was){liveMode=was.wasLive;showLive();}$('ask-status').textContent='Speech: '+e.message;}
+  catch(e){const was=again;again=null;showMic(false);endReplay();if(was){liveMode=was.wasLive;showLive();}$('ask-status').textContent='Speech: '+e.message;}
 }
 // The keyboard button (left of play) opens the typing row (the ask box and Answer while typing); closed, only the words said show.
 function showTyping(on){document.body.classList.toggle('typing-open',on);$('ask-open').setAttribute('aria-pressed',String(on));keep('typing-open',on?'on':'off');if(on)setTimeout(()=>$('ask-input').focus(),0);dispatchEvent(new Event('resize'));}
@@ -784,11 +787,11 @@ $('show-caption').checked=pref('show-caption','on')==='on';$('show-caption').onc
 async function replayText(q){
   const revs=(q.revisions||[]).filter(r=>!r.final);if(!revs.length)return;
   pause();$('tooltip').hidden=true;$('ask-status').textContent='Replaying the text…';
-  const at=t=>Math.max(0,session.frames.findIndex(f=>f.t>=t-.001)),t0=performance.now();let id=null;
-  try{for(const r of revs){const wait=r.at*1000-(performance.now()-t0);if(wait>0)await new Promise(ok=>setTimeout(ok,wait));
+  const at=t=>Math.max(0,session.frames.findIndex(f=>f.t>=t-.001));let id=null;
+  try{await startReplay(q);const t0=performance.now();for(const r of revs){const wait=r.at*1000-(performance.now()-t0);if(wait>0)await new Promise(ok=>setTimeout(ok,wait));
       id=(await agent.draft(id,at(r.t),r.t,r.text,!!r.pause)).id;}
     await agent.askDraft(id,q.text,null);replacing.set(id,{of:q.root??q.id,how:'replay-text'});$('ask-status').textContent='';}
-  catch(e){if(id!=null)agent.cancelDraft(id).catch(()=>{});fail(e);}
+  catch(e){if(id!=null)agent.cancelDraft(id).catch(()=>{});endReplay();fail(e);}
 }
 function replayQuestion(q){q=agent?.questions.find(x=>x.id===q.id)||q;   // as it is now (the marker may hold it from before its recording came)
   pause();stillTyped=null;$('tooltip').hidden=true;Promise.all([isTyped(q)?at(typedOf(q).t0):setFrame(q.frame),q.audio&&loadVoice(q.audio).catch(()=>{})]).then(()=>{replayFrom=q.id;$('play').click();}).catch(fail);}   // its voice loaded first   // a typed one from its line's head
@@ -1432,7 +1435,7 @@ function showAgentStatus({connected:c,questions,responses}){
   if(c&&!connected){speech.warm();speech.prime();}   // the relay and the microphone ready before the first Space
   connected=c;$('ask-input').disabled=!c;readMarks();
   for(const q of questions)if(q.audio)loadVoice(q.audio).catch(()=>{});
-  for(const [nid,{of,how}] of replacing){const nq=questions.find(x=>x.id===nid);if(!nq||nq.status==='failed'){replacing.delete(nid);continue;}
+  for(const [nid,{of,how}] of replacing){const nq=questions.find(x=>x.id===nid);if(!nq||nq.status==='failed'){replacing.delete(nid);endReplay();continue;}
     if(nq.status==='answered'){replacing.delete(nid);agentApi('/api/agent/questions/replay',{conversation:agent.conversation,of,new:nid,how}).catch(fail);}}   // a new version in its replay history   // ready before playback reaches its line (not fetched only then)
   $('ask-input').placeholder=c?'Ask the assistant at this moment…':'Copy the agent command (Agent panel) and run it in a terminal to connect';
   const q=questions.at(-1);
