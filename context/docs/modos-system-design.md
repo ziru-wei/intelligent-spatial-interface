@@ -1135,6 +1135,7 @@ Not yet: more cues with `set` (Playback steps, Choice values, Progress Rail, Gau
 - **Two passes** (`bigmodel_async`, `enable_nonstream`, `scripts/asr-relay.mjs`): the words stream as they are said (the live revisions follow them), and each sentence, once said, is recognized again by Doubao's non-streaming model and only then is final (`definite`: the pause revision, when the text and the draft are written).
 - **A sentence ends after 1.2 s of silence** (`end_window_size`, `doubaoAsr.endWindowMs`). Measured on synthetic speech with pauses of 0.6, 1.0 and 1.4 s: at 800 ms (before) a one-second hesitation made "Um." a sentence of its own (three sentences); at 1200 ms two (the real break at 1.4 s); at 1600 ms one; with no window (semantic segmentation) three.
 - **No language is set**: Doubao's `language` (`en-US`) did not keep the text English: Chinese speech still came out in Chinese, with the 1.0 and 2.0 models (`volc.seedasr.sauc.duration`, open to this account) and every endpoint, so the option is removed. English speech comes out English either way. No hotwords.
+- **Measured again on real recordings** (2026-11-25): §12.38.
 
 ### 12.15 Hold Space to Speak; a Spoken Question Keeps Its Voice (2026-11-19)
 
@@ -1353,3 +1354,20 @@ Measured on q90's recording sent again to Doubao with the relay's request (every
 - **A final utterance keeps its clauses** (frozen in the bridge's live state by its start).
 - **Typed text** has no utterances and is split as before; so is a question whose utterances are not its words (an older one, or words asked after the last revision).
 - Not kept: Doubao's per-word times (`words`), not needed by any step.
+
+### 12.38 Splitting by Silence or by Meaning, Measured on the Recordings (2026-11-25)
+
+The five spoken questions of atlas_rec_1 (q27, q32, q55, q65, q90), each sent again to Doubao in real time (200 ms packets) with the relay's request, once with the 1200 ms window and once splitting by meaning (no `end_window_size`, as Input › Speech sends it); every response kept raw (`~/modos-asr-debug/q<id>-silence1200.jsonl`, `-semantic.jsonl`; not in the repository).
+- **The same in both**: each sentence (utterance) became final 0.3 to 0.9 s after it ended; no final sentence changed afterwards; never were two sentences unfinished at once. q90 and q27 were cut the same way.
+- **No late second pass**: an earlier sentence never changed once the next had begun. What looked like one finalized 12 s late (q90's "Am I supposed to bring my umbrella", "head out") was a sampling error of ours (every third revision read); it was final 1.8 s after its words, before the next sentence.
+- **Where they differ**:
+
+| Recording | 1200 ms | By meaning |
+|---|---|---|
+| q32 | 7 sentences | 9: one cut mid-thought ("…cause we're gonna." / "Do hiking together during the weekend?", made a question), and "hmm" heard as Chinese "嗯", a sentence of its own |
+| q65 | 7 | 8: cut mid-thought after a pause of about 0.9 s ("Oh, I just" / "Realize that I need to print…") |
+| q55 (broken speech) | "Hey, what's." / "What's there?" | "嘿。" / "我在" (Chinese), dropped as fragments by sentencesOf |
+
+- **Times disagree**: an utterance's `start_time`/`end_time` and its words' times do not agree (the gap between two sentences is 0.3 to 0.7 s by the first, over 2 s by the second), so how short a pause splitting by meaning cuts at could not be measured.
+- **Conclusion**: splitting by meaning is no faster and cuts more often mid-thought; the default stays 1200 ms, and the switch stays.
+- **Open: Chinese from English speech** ("嗯", "嘿。我在", splitting by meaning more than by silence). Doubao's `audio.language` is documented only for `bigmodel_nostream` ("二遍不支持"), so not with our `bigmodel_async` and `enable_nonstream`; sent anyway (`en-US`, q32 and q55 by meaning), it is ignored without an error: the same "嗯" and "嘿。我在". No parameter turns Chinese off; hotwords (`context`) are not documented for `bigmodel_async`.
