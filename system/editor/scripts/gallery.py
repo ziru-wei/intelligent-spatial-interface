@@ -2,14 +2,15 @@
 
 A gallery example is answered questions of a conversation, tagged where they are with `gallery` = {name, mod} (scripts/agent_store.py;
 the conversation shows a star): usually one; several asked one after another make one example, under the first one's MOD. Asking it
-again (demos/gallery.mjs, a queue) asks it in a conversation of its own, tagged `gallery_example`; once answered, those questions take
-the example's place in its conversation (replace), as a Rerun takes its question's. Each example has a still of the camera view at its answer, sent by the editor (`?example=`) when a
+again (demos/gallery.mjs, a queue) asks it in a conversation of its own, tagged `gallery_example`; once answered, those questions join
+the example's questions' replay histories (replace, as a Rerun does; scripts/versions.py). The example shows each question's version
+shown: the pinned one, else the newest. Each example has a still of the camera view at its answer, sent by the editor (`?example=`) when a
 question asked there is answered. The examples are written to media/gallery/examples.json (the site's media; and examples.js, for the page opened as
 a file), with the stills beside them, so the page shows them without the editor running.
 """
 import base64, json, re, time
 from pathlib import Path
-import spaces, agent_store as store
+import spaces, agent_store as store, versions
 
 GALLERY = Path(__file__).resolve().parents[3]/'media'/'gallery'
 NAME = re.compile(r'^[a-z0-9][a-z0-9-]{0,63}$')
@@ -31,10 +32,10 @@ def _groups(c):
         qs = [q for q in c['questions'] if q.get('status') == 'answered']
         if qs: out[c['gallery_example']['name']] = (c['gallery_example'], qs, c['created'])
         return out
-    for q in c['questions']:
-        tag = q.get('gallery')
+    for vs in versions.groups(c['questions']).values():
+        root = next((x for x in vs if not x.get('replay_of')), vs[0]); tag = root.get('gallery'); q = versions.shown(vs)
         if tag and q.get('status') == 'answered':
-            t, qs, since = out.get(tag['name'], (tag, [], 0)); out[tag['name']] = (t, qs+[q], max(since, q.get('created', 0)))
+            t, qs, since = out.get(tag['name'], (tag, [], 0)); out[tag['name']] = (t, qs+[dict(q, t=root['t'], text=root['text'])], max(since, q.get('created', 0)))
     return out
 
 def entries():
@@ -77,9 +78,9 @@ def save_still(session_dir, cid, image, name=None):
     return next((e for e in rebuild() if e['name'] == tag['name']), None)
 
 def replace(name, keep):
-    """An example asked again (conversation keep, tagged `gallery_example`) and answered: its questions take the example's place in the
-    conversation holding it, and that conversation's time is now; keep is then gone. With no such conversation (the example is new, or
-    its conversation was deleted), keep becomes the example's: its questions tagged, itself an ordinary conversation."""
+    """An example asked again (conversation keep, tagged `gallery_example`) and answered: its questions join the example's questions'
+    replay histories as their newest versions, and that conversation's time is now; keep is then gone. With no such conversation (the
+    example is new, or its conversation was deleted), keep becomes the example's: its questions tagged, itself an ordinary conversation."""
     for scenario in sorted(spaces.SPACES.glob('*/scenarios/*')):
         mine = next((c for c in store._all(scenario) if c['id'] == keep), None)
         if mine: break
@@ -87,10 +88,10 @@ def replace(name, keep):
     tag = mine.get('gallery_example') or {}
     if tag.get('name') != name: raise ValueError('Not this example being asked again.')
     ids = [q['id'] for q in mine['questions'] if q.get('status') == 'answered']
-    home = [(c, [q['id'] for q in qs]) for c in store._all(scenario) if c['id'] != keep for n, (t, qs, since) in _groups(c).items() if n == name]
+    home = [(c, [versions.root_id(q) for q in qs]) for c in store._all(scenario) if c['id'] != keep for n, (t, qs, since) in _groups(c).items() if n == name]
     if home:
         c, old = max(home, key=lambda h: store.when(h[0]))
-        store.transplant(scenario, keep, c['id'], ids, old); out = dict(conversation=c['id'], replaced=len(old))
+        store.add_versions(scenario, keep, c['id'], ids, old, 'replay-text-batch'); out = dict(conversation=c['id'], replaced=len(old))
     else:
         mine.pop('gallery_example'); mine['questions'] = [dict(q, gallery=tag) if q['id'] in ids else q for q in mine['questions']]
         store._write(scenario, mine); out = dict(conversation=keep, replaced=0)
@@ -126,18 +127,20 @@ def add(session_dir, cid, ids):
     conversation), tagged where they are as an example (named after the first one's MOD and words) and added to
     demos/gallery-examples.json, so `npm run gallery` asks them again like the others (in order, in one conversation)."""
     c = store.read(session_dir, cid)
-    order = [q['id'] for q in c['questions']]
-    ids = sorted({int(i) for i in ids or []}, key=lambda i: order.index(i) if i in order else -1)
-    if not ids or any(i not in order for i in ids): raise ValueError('Pick questions of this conversation.')
+    # the questions (a version picked stands for its question: the tag goes on the question, its replay history's root)
+    by = {q['id']: q for q in c['questions']}; hist = versions.groups(c['questions']); order = list(hist)
+    picked = [int(i) for i in ids or []]
+    if not picked or any(i not in by for i in picked): raise ValueError('Pick questions of this conversation.')
+    ids = sorted({versions.root_id(by[i]) for i in picked}, key=order.index)
     at = [order.index(i) for i in ids]
     if at != list(range(at[0], at[0]+len(at))): raise ValueError('The questions must follow one another.')
-    qs = [c['questions'][i] for i in at]
-    if any(q.get('status') != 'answered' for q in qs): raise ValueError('Every question must be answered.')
+    qs = [by[i] for i in ids]
+    if any(versions.shown(hist[q['id']]).get('status') != 'answered' for q in qs): raise ValueError('Every question must be answered.')
     space, recording = session_dir.parents[1].name, session_dir.name
     spec = json.loads(SPEC.read_text())
     # a question typed in Answer while typing (its revisions kept) is an example of that mode: its own category, typed again on re-asking
     typed = any(q.get('revisions') for q in qs)
-    mod = TYPED if typed else _mod_of(c, qs[0], space)
+    mod = TYPED if typed else _mod_of(c, versions.shown(hist[qs[0]['id']]), space)
     taken = {e['name'] for e in spec['examples']} | {e['name'] for e in entries()}
     base = f"{_slug(mod, 16)}-{_slug(qs[0]['text'])}"; name = base; n = 2
     while name in taken: name = f'{base}-{n}'; n += 1

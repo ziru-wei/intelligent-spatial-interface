@@ -2,7 +2,8 @@
 // Speech to text for the ask box (design doc 12.8): a relay between the editor and Doubao's streaming speech recognition (Volcano
 // Engine, wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async). The editor cannot set the keys a WebSocket needs, and the keys stay
 // here: read from agent-config.local.json (`doubaoAsr`), never sent to the browser. One recognition per microphone press:
-//   POST /asr/open                      → {id}; opens the recognition (its full client request sent)
+//   POST /asr/open?split=silence|meaning&fillers=kept|removed   → {id}; opens the recognition (its full client request sent), split and
+//                                       fillers as the Input tab's Speech says (src/ui-settings.mjs speechOptions)
 //   POST /asr/audio?id=&last=0|1        body: 16 kHz mono 16-bit PCM, about 200 ms a packet; last=1 ends the audio
 //   GET  /asr/events?id=                server-sent events: {text, utterances: [{text, definite}], final} as the text grows; {error}
 // Started by the editor's server (POST /api/asr/relay), on 127.0.0.1 only. No dependencies (Node's own WebSocket, zlib).
@@ -27,18 +28,21 @@ function settings(){
   return {url:c.url||URL_DEFAULT,resourceId:c.resourceId||'volc.bigasr.sauc.duration',apiKey:c.apiKey,appKey:c.appKey,accessKey:c.accessKey,endWindowMs:Number(c.endWindowMs)||END_WINDOW_MS};
 }
 
-import {FULL,AUDIO,frame,parse} from './doubao-asr.mjs';
+import {FULL,AUDIO,frame,parse,requestFor} from './doubao-asr.mjs';
 
 const sessions=new Map();   // id → {ws, listeners: Set(res), last, done}
 function emit(s,data){s.last=data;for(const res of s.listeners)res.write(`data: ${JSON.stringify(data)}\n\n`);}
-function open(){
+// opts (from /asr/open): split 'silence' (a sentence ends after endWindowMs of silence: end_window_size) or 'meaning' (Doubao's semantic
+// segmentation: no end_window_size); fillers 'kept' or 'removed' (enable_ddc, Doubao's smoothing). Nothing else of the request changes.
+function open(opts={}){
   const cfg=settings(),id=randomUUID(),headers={'X-Api-Resource-Id':cfg.resourceId,'X-Api-Request-Id':randomUUID(),'X-Api-Connect-Id':id,'X-Api-Sequence':'-1',
     ...(cfg.apiKey?{'X-Api-Key':cfg.apiKey}:{'X-Api-App-Key':cfg.appKey,'X-Api-Access-Key':cfg.accessKey})};
   const ws=new WebSocket(cfg.url,{headers});ws.binaryType='arraybuffer';
   const s={ws,listeners:new Set(),last:null,done:false,queue:[],open:false};sessions.set(id,s);
   ws.onopen=()=>{s.open=true;
-    ws.send(frame(FULL,0,Buffer.from(JSON.stringify({user:{uid:'modos-editor'},audio:{format:'pcm',codec:'raw',rate:16000,bits:16,channel:1},
-      request:{model_name:'bigmodel',enable_nonstream:true,enable_itn:true,enable_punc:true,result_type:'full',show_utterances:true,end_window_size:cfg.endWindowMs}})),{json:true}));
+    const request=requestFor(opts,cfg.endWindowMs);
+    console.log(`modos-speech: recognition ${id}: ${JSON.stringify(request)}`);   // what it was asked with (no keys)
+    ws.send(frame(FULL,0,Buffer.from(JSON.stringify({user:{uid:'modos-editor'},audio:{format:'pcm',codec:'raw',rate:16000,bits:16,channel:1},request})),{json:true}));
     for(const b of s.queue)ws.send(b);s.queue=[];};
   ws.onmessage=e=>{let m;try{m=parse(Buffer.from(e.data));}catch(err){emit(s,{error:err.message});return;}
     if(m.error){emit(s,{error:m.error});return;}
@@ -62,7 +66,7 @@ http.createServer((req,res)=>{
   const reply=(code,data)=>{res.writeHead(code,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};
   if(req.method==='GET'&&u.pathname==='/')return reply(200,{name:'modos-speech',about:'speech to text for the ModOS editor (modos-system)'});
   try{
-    if(req.method==='POST'&&u.pathname==='/asr/open')return reply(200,{id:open()});
+    if(req.method==='POST'&&u.pathname==='/asr/open')return reply(200,{id:open({split:u.searchParams.get('split'),fillers:u.searchParams.get('fillers')})});
     const s=sessions.get(u.searchParams.get('id'));if(!s)return reply(404,{error:'No such recognition.'});
     if(req.method==='POST'&&u.pathname==='/asr/audio'){const parts=[];req.on('data',d=>parts.push(d));req.on('end',()=>{audio(s,Buffer.concat(parts),u.searchParams.get('last')==='1');reply(200,{ok:true});});return;}
     if(req.method==='GET'&&u.pathname==='/asr/events'){res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-store',Connection:'keep-alive'});

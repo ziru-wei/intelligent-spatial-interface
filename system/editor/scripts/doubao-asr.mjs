@@ -17,3 +17,11 @@ export function parse(buf){
   return {type,last:(flags&0b0010)!==0,json:ser===1&&p.length?JSON.parse(p.toString('utf8')):null};
 }
 
+
+/** The recognition's request (its `request` object): two passes, punctuation, inverse text normalization, sentences with `definite`;
+ *  split 'silence' ends a sentence after endWindowMs of silence (end_window_size), 'meaning' leaves it to Doubao's semantic
+ *  segmentation; fillers 'removed' turns on Doubao's smoothing (enable_ddc). Nothing else is set. */
+export function requestFor({split='silence',fillers='kept'}={},endWindowMs=1200){
+  return {model_name:'bigmodel',enable_nonstream:true,enable_itn:true,enable_punc:true,result_type:'full',show_utterances:true,
+    ...(split==='meaning'?{}:{end_window_size:endWindowMs}),...(fillers==='removed'?{enable_ddc:true}:{})};
+}

@@ -2,17 +2,19 @@
 and responses, so a new conversation starts with an empty timeline. A conversation is named for its first question's first words and its
 time ("What's the weather… · 11-24 17:12"), kept up to date, unless the user named it (`named`). Its time is when it was made, or last
 when a question in it was replaced by one asked again (`updated`). A Gallery example is some of its questions, tagged in place
-(`gallery` = {name, mod}, scripts/gallery.py); the conversation then shows a star. Question ids are unique across a scene's conversations because
+(`gallery` = {name, mod}, scripts/gallery.py); the conversation then shows a star. A question answered again from the same input (a
+Rerun, a replay, a Gallery example asked again) keeps every answer as its replay history (scripts/versions.py): the conversation then
+shows the rerun icon, and the version shown is the pinned one, else the newest. Question ids are unique across a scene's conversations because
 the agent only echoes the number back. All access goes through `lock`; the bridge long-polls on it."""
 import json, re, threading, time
 from pathlib import Path
-import weather, findmy, conversation_context, modos_parts
+import weather, findmy, conversation_context, modos_parts, versions
 
 UI_KINDS = ('weather', 'findmy', 'highlight', 'control', 'action')   # one of them per ui part
 from datetime import datetime
 
 lock = threading.Condition()
-editor_state, bridge_seen, recovered = {}, {}, set()
+editor_state, bridge_seen, recovered, viewing = {}, {}, set(), {}   # viewing: {(scene, conversation): {root: version looked at in the history}}
 ID = re.compile(r'^\d{8}-\d{6}(-\d+)?$')
 STUCK_S = 300
 
@@ -83,7 +85,7 @@ def create(d, name=None, questions=(), responses=(), gallery_example=None):
 
 def listing(d):
     _prepare(d)
-    return sorted((dict(id=c['id'], name=c['name'], created=when(c), questions=len(c['questions']), responses=len(c['responses']), starred=any(q.get('gallery') for q in c['questions']),
+    return sorted((dict(id=c['id'], name=c['name'], created=when(c), questions=len(c['questions']), responses=len(c['responses']), starred=any(q.get('gallery') for q in c['questions']), rerun=any(q.get('replay_of') for q in c['questions']),
         **({'gallery_example': c['gallery_example']} if c.get('gallery_example') else {})) for c in _all(d)), key=lambda c: c['created'])
 
 def rename(d, cid, name):
@@ -274,12 +276,13 @@ def add_trace(d, qid, step):
         _write(d, c)
     return dict(ok=True)
 
-def set_audio(d, qid, data, started_ms, video_t=None, video_at_ms=None, video_end_t=None, video_end_at_ms=None, video_rate=None):
+def set_audio(d, qid, data, started_ms, video_t=None, video_at_ms=None, video_end_t=None, video_end_at_ms=None, video_rate=None, asr=None):
     """A spoken question's recording (what the microphone heard, a 16 kHz WAV), kept beside its conversations (agent/audio/<id>.wav,
     in the space: local, never committed) with when it began against the question (`at`, s since the question began), so a replay
     plays it in step and can recognize it again. video_t, video_at_ms: the video's time when Space went down, and when that was (a
     replay moves the video from there instead of waiting on the first revision); video_end_*: the same when Space was let go, and video_rate:
-    how the video went on from there (its playback speed; 0 paused). The question's line on the timeline runs from the one to the other."""
+    how the video went on from there (its playback speed; 0 paused). The question's line on the timeline runs from the one to the other.
+    asr: how speech to text heard it ({split: silence|meaning, fillers: kept|removed}, src/ui-settings.mjs speechOptions)."""
     c, q = _find_question(d, qid)
     if not q: raise ValueError('Unknown question.')
     if not (data[:4] == b'RIFF' and data[8:12] == b'WAVE') or len(data) > 40_000_000: raise ValueError('The recording must be a WAV.')
@@ -288,7 +291,8 @@ def set_audio(d, qid, data, started_ms, video_t=None, video_at_ms=None, video_en
     q['audio'] = dict(file='agent/'+name, at=round(started_ms/1000-q['created'], 3), duration=round(max(0, len(data)-44)/rate, 3),
                       **(dict(video=dict(t=round(float(video_t), 3), at=round(float(video_at_ms)/1000-q['created'], 3),
                           **(dict(t_end=round(float(video_end_t), 3), at_end=round(float(video_end_at_ms)/1000-q['created'], 3), rate=float(video_rate or 0)) if video_end_t is not None and video_end_at_ms is not None else {})))
-                         if video_t is not None and video_at_ms is not None else {}))
+                         if video_t is not None and video_at_ms is not None else {}),
+                      **({'asr': {k: str(v) for k, v in asr.items() if k in ('split', 'fillers')}} if asr else {}))
     _write(d, c); lock.notify_all()
     return dict(q['audio'])
 
@@ -321,39 +325,52 @@ def _drop_audio(d, gone):
     for f in gone:
         if f and f not in used: (Path(d)/f).unlink(missing_ok=True)
 
-def delete_question(d, cid, qid):
+def delete_question(d, cid, qid, whole=False):
+    """A question deleted (whole: with every version of its replay history), or one version of its history: the original's goes and the
+    oldest version left takes its place as the question (its recording, its Gallery tag and the version pinned passed on)."""
     c = read(d, cid); q = next((q for q in c['questions'] if str(q['id']) == str(qid)), None)
     if not q: raise ValueError('Unknown question.')
-    if q['status'] == 'running': raise ValueError('The agent is answering this question right now.')
-    # Never reuse its id (a recording is named by it, and a bridge may still return an old answer): the high-water mark passes it.
-    hw = folder(d)/'.question-high-water'; hw.write_text(str(max(int(hw.read_text()) if hw.is_file() else 0, int(q['id']))))
-    c['questions'].remove(q); c['responses'] = [r for r in c['responses'] if str(r.get('question_id')) != str(qid)]
+    group = versions.groups(c['questions']).get(versions.root_id(q), [q])
+    gone = group if whole else [q]
+    if any(x['status'] == 'running' for x in gone): raise ValueError('The agent is answering this question right now.')
+    root = next((x for x in group if not x.get('replay_of')), q)
+    left = [x for x in group if x not in gone]
+    if left and q is root:   # the original goes: the oldest version left is the question now
+        heir = left[0]; heir.pop('replay_of', None)
+        for k in ('audio', 'gallery', 'pinned'):
+            if root.get(k) is not None and heir.get(k) is None: heir[k] = root[k]
+        for x in left[1:]: x['replay_of'] = heir['id']
+    for x in left:
+        if x.get('pinned') in {g['id'] for g in gone}: x.pop('pinned')
+    # Never reuse their ids (a recording is named by one, and a bridge may still return an old answer): the high-water mark passes them.
+    hw = folder(d)/'.question-high-water'; hw.write_text(str(max([int(hw.read_text()) if hw.is_file() else 0]+[int(x['id']) for x in gone])))
+    ids = {str(x['id']) for x in gone}
+    c['questions'] = [x for x in c['questions'] if str(x['id']) not in ids]; c['responses'] = [r for r in c['responses'] if str(r.get('question_id')) not in ids]
     if c.get('themes'): c['themes'] = _book_of(c)
-    _write(d, c); _drop_audio(d, [q.get('audio', {}).get('file')]); return dict(ok=True)
+    viewing.get((str(d), cid), {}).pop(root['id'], None)
+    _write(d, c); _drop_audio(d, [x.get('audio', {}).get('file') for x in gone]); lock.notify_all(); return dict(ok=True)
 
-def replace_question(d, cid, old, new):
-    """A question asked again (a Rerun, a replay) takes the place of the one it came from, once it is answered: the old one goes, the new
-    one stands where it stood and keeps its Gallery tag; the conversation's time is now."""
-    transplant(d, cid, cid, [new], [old]); return dict(ok=True)
+def replay_question(d, cid, of, new, how='replay-audio'):
+    """An answered question made again from the question `of`'s input (how: 'replay-audio', 'replay-text', 'replay-text-batch';
+    scripts/versions.py) joins its replay history as
+    its newest version (shown unless another is pinned); the conversation's time is now."""
+    add_versions(d, cid, cid, [new], [of], how); return dict(ok=True)
 
-def transplant(d, src, dst, ids, replace=()):
-    """Move questions `ids` (with their answers and themes) of conversation src into dst, in place of dst's questions `replace` (deleted,
-    their Gallery tag passed on), or at its end. Answer and theme ids are given anew in dst. src goes once it has no question left."""
+def add_versions(d, src, dst, ids, of, how):
+    """Questions `ids` of conversation src (answered) become versions of dst's questions `of` (ids[i] of of[i], the rest of the last),
+    with their answers and themes; answer and theme ids are given anew in dst. src goes once it has no question left."""
     a = read(d, src); b = a if dst == src else read(d, dst)
     moving = [q for q in a['questions'] if q['id'] in ids]
     if len(moving) != len(ids): raise ValueError('Unknown question.')
-    if any(q['status'] != 'answered' for q in moving): raise ValueError('Only an answered question takes the place of another.')
-    gone = [q for q in b['questions'] if q['id'] in replace]
-    tag = next((q['gallery'] for q in gone if q.get('gallery')), None)
-    # where they go: after the last question before the first replaced one that stays (else first), or at the end
-    if gone:
-        first = b['questions'].index(gone[0])
-        anchor = next((q for q in reversed(b['questions'][:first]) if q not in gone and q not in moving), None)
+    if any(q['status'] != 'answered' for q in moving): raise ValueError('Only an answered question joins a replay history.')
+    by = {q['id']: q for q in b['questions']}
+    roots = [versions.root_id(by[o]) if o in by else None for o in of]
+    if not roots or None in roots: raise ValueError('Unknown question.')
     if dst != src:
         a['questions'] = [q for q in a['questions'] if q['id'] not in ids]
         answers = [r for r in a['responses'] if r.get('question_id') in ids]; a['responses'] = [r for r in a['responses'] if r.get('question_id') not in ids]
         book = a.get('themes') if isinstance(a.get('themes'), dict) else {}
-        themes = [t for t in book.get('themes', []) if any(s.get('q') in ids for s in t.get('sentences', []))]
+        themes = [t for t in book.get('themes', []) if any(x.get('q') in ids for x in t.get('sentences', []))]
         if a.get('themes'): a['themes'] = _book_of(a)
         start = max([r['id'] for r in b['responses']]+[b.get('retired_id', 0)])+1; rid = {}
         for k, r in enumerate(answers): rid[r['id']] = start+k; r['id'] = start+k
@@ -368,22 +385,36 @@ def transplant(d, src, dst, ids, replace=()):
             for r in answers:
                 if isinstance(r.get('theme'), dict): r['theme'] = dict(r['theme'], ids=[tid.get(x, x) for x in r['theme'].get('ids', [])])
             b['themes'] = bb
-    # the replaced ones go (their ids are never given again)
-    if gone:
-        hw = folder(d)/'.question-high-water'; hw.write_text(str(max([int(hw.read_text()) if hw.is_file() else 0]+[int(q['id']) for q in gone])))
-        b['responses'] = [r for r in b['responses'] if r.get('question_id') not in replace]
-    b['questions'] = [q for q in b['questions'] if q not in gone and q not in moving]
-    if tag:
-        for q in moving: q['gallery'] = tag
-    at = (b['questions'].index(anchor)+1 if anchor else 0) if gone else len(b['questions'])
-    b['questions'][at:at] = moving
-    if b.get('themes'): b['themes'] = _book_of(b)
+        b['questions'] += moving
+    for i, q in enumerate(sorted(moving, key=lambda q: ids.index(q['id']))):
+        root = roots[min(i, len(roots)-1)]; q['replay_of'] = root; q['how'] = how; q.pop('gallery', None)
+        viewing.get((str(d), dst), {}).pop(root, None)
     b['updated'] = time.time(); _write(d, b)
     if dst != src:
         if a['questions']: _write(d, a)
         else: _path(d, src).unlink()
-    _drop_audio(d, [q.get('audio', {}).get('file') for q in gone]); lock.notify_all()
+    lock.notify_all()
     return b
+
+def pin(d, cid, qid):
+    """A version pinned as its question's best answer (shown, and in the Gallery), or unpinned when it was (the newest is shown again)."""
+    c = read(d, cid); q = next((x for x in c['questions'] if str(x['id']) == str(qid)), None)
+    if not q: raise ValueError('Unknown question.')
+    root = next(x for x in c['questions'] if x['id'] == versions.root_id(q))
+    if root.get('pinned') == q['id']: root.pop('pinned')
+    else: root['pinned'] = q['id']
+    _write(d, c); lock.notify_all(); return dict(pinned=root.get('pinned'))
+
+def view(d, cid, qid=None, root=None):
+    """The version looked at in the history panel, shown meanwhile (not kept: no version is pinned by looking); qid None: none."""
+    v = viewing.setdefault((str(d), cid), {})
+    if qid is None and root is None: v.clear()   # none looked at (the editor opening the conversation)
+    elif qid is None: v.pop(root, None)
+    else:
+        c = read(d, cid); q = next((x for x in c['questions'] if str(x['id']) == str(qid)), None)
+        if not q: raise ValueError('Unknown question.')
+        v[versions.root_id(q)] = q['id']
+    lock.notify_all(); return dict(ok=True)
 
 def _book_of(c):
     """The theme book with only what the conversation's questions said: a deleted question's sentences leave its themes, and a theme
@@ -676,5 +707,28 @@ def status(d, cid):
     def audio(a):   # recordings kept before their length was: their length from the file (16 kHz mono 16-bit)
         f = Path(d)/a.get('file', '')
         return a if 'duration' in a or not f.is_file() else dict(a, duration=round(max(0, f.stat().st_size-44)/32000, 3))
-    questions_out = [{**{k: v for k, v in q.items() if k not in ('withdrawn', 'traces')}, **({'audio': audio(q['audio'])} if q.get('audio') else {})} for q in c['questions']]   # traces: on request (runs)
+    # one question per replay history: its version shown (pinned, else newest; the one looked at in the history meanwhile), with the
+    # question's input (its recording) when the version has none of its own, its Gallery tag, and its history
+    look = viewing.get((str(d), cid), {}); questions_out = []; show = set()
+    titles = {}
+    for r in c['responses']:
+        if r.get('part') == 'text' and (r.get('title') or r.get('body')): titles[r.get('question_id')] = r.get('title') or str(r.get('body'))[:60]
+    mods = {}
+    for r in c['responses']:
+        m = r.get('mod') or r.get('text_mod')
+        if isinstance(m, dict) and m.get('name'): mods.setdefault(r.get('question_id'), []).append(m['name'])
+    for rid, vs in versions.groups(c['questions']).items():
+        root = next((x for x in vs if not x.get('replay_of')), vs[0]); q = versions.shown(vs, look.get(rid)); show.add(q['id'])
+        out = {k: v for k, v in q.items() if k not in ('withdrawn', 'traces')}
+        for k in ('audio', 'gallery'):
+            if root.get(k) is not None and out.get(k) is None: out[k] = root[k]
+        if out.get('audio'): out['audio'] = audio(out['audio'])
+        if len(vs) > 1 or root.get('pinned'):
+            out['history'] = [dict(id=v['id'], label=v.get('label'), how=versions.how(v), created=v.get('created'), status=v.get('status'),
+                                   title=titles.get(v['id']), mods=list(dict.fromkeys(mods.get(v['id'], []))), asr=(v.get('audio') or {}).get('asr'),
+                                   pinned=root.get('pinned') == v['id'], shown=v is q) for v in vs]
+            out['root'] = rid
+        questions_out.append(out)
+    responses = [r for r in responses if r.get('question_id') in show or r.get('question_id') not in questions]
+    gone = [r for r in gone if r['question_id'] in show]
     return dict(connected=busy or time.time()-bridge_seen.get(str(d), 0) < 40, questions=questions_out, responses=responses, withdrawn=gone)

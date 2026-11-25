@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Ask the Gallery's examples again (demos/gallery-examples.json; scripts/gallery.py). A tool around the editor, not part of ModOS.
+// Ask the Gallery's examples again: replay-text-batch (demos/gallery-examples.json; scripts/gallery.py; each answer a new version in its
+// question's replay history, scripts/versions.py). A tool around the editor, not part of ModOS.
 //   npm run gallery                         every example
 //   npm run gallery -- weather findmy-x     these: a name is an example, a MOD, or a name prefix
 //   --server URL                            the system elsewhere (npm start)
@@ -135,8 +136,8 @@ try{
     for(let attempt=1;!result;attempt++){   // a model call can fail now and then: ask again
       try{result=await ask(browser,c);}catch(e){if(attempt>=3)throw e;console.log(`  ${e.message}; asking again`);}
     }
-    const {replaced}=await api('/api/gallery/replace',{name:c.name,keep:result.conv.id});
-    console.log(`  answered: ${result.example.answer?.title||''} · ${result.example.latency??'?'} s · ${replaced?`in place of ${replaced} question${replaced>1?'s':''}`:'a new example'}`);done.push(c.name);
+    const {replaced:joined}=await api('/api/gallery/replace',{name:c.name,keep:result.conv.id});
+    console.log(`  answered: ${result.example.answer?.title||''} · ${result.example.latency??'?'} s · ${joined?`a new version of ${joined} question${joined>1?"s":""}`:"a new example"}`);done.push(c.name);
   }catch(e){console.log(`  FAILED: ${e.message}`);failed.push(`${c.name} (${e.message})`);}
 }finally{stopBridge();await browser.close();}
 console.log(`\nasked ${done.length}/${examples.length}${done.length?`: ${done.join(', ')}`:''}`);

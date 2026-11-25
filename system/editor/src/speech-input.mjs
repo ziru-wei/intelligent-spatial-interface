@@ -24,14 +24,14 @@ export function pcm16(samples){
   return out.buffer;
 }
 
-export function createSpeech({onText=()=>{},onError=()=>{}}={}){
+export function createSpeech({onText=()=>{},onError=()=>{},options=()=>({})}={}){
   // The microphone, once opened, stays open (until released: the page hidden) and keeps the last PREROLL seconds, so a question begins
   // where the user began, a little before the key went down, and no time is lost opening it again. What is heard while listening waits
   // in a buffer until the recognition is open (`opened`).
   const PREROLL=.6;
   // source: what is being heard, the microphone or a recording played (a Rerun): the microphone stays open meanwhile and keeps only
   // its pre-roll; its samples never join a recording's (both at once would be one stream of the two interleaved, twice as long)
-  let relay=null,id=null,events=null,mic=null,play=null,buf=[],ring=[],sent=Promise.resolve(),opened=null,last={text:''},finished=null,heard=[],started=0,running=false,listening=false,source='mic';
+  let used=null,relay=null,id=null,events=null,mic=null,play=null,buf=[],ring=[],sent=Promise.resolve(),opened=null,last={text:''},finished=null,heard=[],started=0,running=false,listening=false,source='mic';
   const relayURL=async()=>{if(relay)return relay;const r=await fetch(new URL('/api/asr/relay',location.href),{method:'POST'});const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return relay=d.url;};
   const post=(path,body)=>fetch(relay+path,{method:'POST',...(body?{body,headers:{'Content-Type':'application/octet-stream'}}:{})}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||r.statusText);return d;});
   function flush(lastPacket=false){
@@ -52,7 +52,7 @@ export function createSpeech({onText=()=>{},onError=()=>{}}={}){
   }
   // the recognition: relay, session, events (in parallel with the microphone; nothing heard is lost meanwhile)
   async function open(){
-    await relayURL();({id}=await post('/asr/open'));last={text:''};
+    await relayURL();used=options();({id}=await post(`/asr/open?${new URLSearchParams(used)}`));last={text:''};
     finished=new Promise(done=>{events=new EventSource(`${relay}/asr/events?id=${id}`);
       events.onmessage=e=>{const m=JSON.parse(e.data);if(m.error){onError(m.error);return;}last=m;onText(m);if(m.final){events.close();done(m.text);}};
       events.onerror=()=>{events.close();done(last.text);};});
@@ -67,7 +67,7 @@ export function createSpeech({onText=()=>{},onError=()=>{}}={}){
     release(){if(running||!mic)return;for(const t of mic.stream.getTracks())t.stop();mic.ctx.close().catch(()=>{});mic=null;ring=[];},
     /** What was heard since start (the microphone or the recording), as a WAV, and when it began. */
     get recording(){const n=heard.reduce((a,b)=>a+b.length,0);if(!n)return null;const all=new Float32Array(n);let o=0;for(const b of heard){all.set(b,o);o+=b.length;}
-      return {wav:wavOf(pcm16(all)),started};},
+      return {wav:wavOf(pcm16(all)),started,asr:used};},
     async start({from=null,onEnded=()=>{}}={}){
       running=true;heard=[];buf=[];id=null;sent=Promise.resolve();
       opened=open();opened.catch(e=>onError(e.message));

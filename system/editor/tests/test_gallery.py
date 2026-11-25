@@ -35,8 +35,9 @@ class GalleryTest(unittest.TestCase):
                   self.assertEqual(next(e for e in gallery.entries() if e['name'] == name)['conversation'], work['id'])   # the newer stands meanwhile
                   self.assertEqual(gallery.replace(name, work['id']), dict(conversation=c['id'], replaced=1))
                   c2 = store.read(d, c['id'])
-                  self.assertEqual([q['id'] for q in c2['questions']], [before, new, after])
-                  self.assertEqual(c2['questions'][1]['gallery']['name'], name)
+                  # the answer asked again joins the question's replay history (the first answer kept), shown as the newest
+                  self.assertEqual([q['id'] for q in c2['questions']], [before, first, after, new])
+                  self.assertEqual((c2['questions'][1]['gallery']['name'], c2['questions'][3]['replay_of'], c2['questions'][3]['how']), (name, first, 'replay-text-batch'))
                   self.assertEqual([r['title'] for r in c2['responses'] if r['question_id'] == new], ['b'])
                   self.assertEqual(len({r['id'] for r in c2['responses']}), len(c2['responses']))   # answer ids given anew
                   self.assertNotIn(work['id'], [x['id'] for x in store.listing(d)])

@@ -728,7 +728,8 @@ export function createAgentLayer({scene,frames,sessionPath,onChange,onStatus,onA
     askDraft:(id,text,live)=>post('/api/agent/drafts/ask',{id,text,live}).then(async q=>{await layer.sync().catch(()=>{});return q;}),
     cancelDraft:id=>post('/api/agent/drafts/cancel',{id}).then(()=>layer.sync()),
     /** A spoken question's recording (a WAV Blob; started: when it began, epoch ms), kept with it in the space. */
-    async setAudio(id,wav,started,mark=null){const u=url('/api/agent/questions/audio');u.searchParams.set('id',id);u.searchParams.set('started',started);
+    async setAudio(id,wav,started,mark=null,asr=null){const u=url('/api/agent/questions/audio');u.searchParams.set('id',id);u.searchParams.set('started',started);
+      if(asr)for(const [k,v] of Object.entries(asr))u.searchParams.set('asr_'+k,v);   // how speech to text heard it
       if(mark){u.searchParams.set('t',mark.t);u.searchParams.set('t_at',mark.at);   // the video's time when Space went down, and when
         if(mark.end){u.searchParams.set('t_end',mark.end.t);u.searchParams.set('t_end_at',mark.end.at);u.searchParams.set('rate',mark.end.rate);}}   // and when it was let go
       const r=await fetch(u,{method:'POST',body:wav,headers:{'Content-Type':'audio/wav'}});const d=await r.json();if(!r.ok)throw Error(d.error);await layer.sync().catch(()=>{});return d;},

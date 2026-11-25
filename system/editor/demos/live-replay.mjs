@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// Answer while typing, measured (design doc 12): types a question into a recording again, revision by revision, through the editor
+// Answer while typing, measured (design doc 12), replay-text: types a question into a recording again, revision by revision, through the editor
 // server and its bridge, and reports when each part shows and goes. A tool around the editor, not part of ModOS.
 //   node demos/live-replay.mjs atlas_rec_1 --text "where is my umbrella"     typed at RATE ms a letter, revisions as the editor sends them
 //   node demos/live-replay.mjs atlas_rec_1 --from <conversation>:<question>  a draft typed earlier, its revisions at their own times,
 //                                                                            typed again in its own conversation: asked (--enter) and
-//                                                                            answered, it takes the old question's place (the
-//                                                                            conversation's time is now); not asked, it is dropped
+//                                                                            answered, it joins that question's replay history as
+//                                                                            its newest version; not asked, it is dropped
 //   --source <recording>  where the --from conversation is (default: the recording typed into; another recording: typed in a new conversation)
 // Logged: + a part shows, − it goes, ~ another part in its place, ↻ the text written again in its place, ◐ dimmed (it no longer answers
 // what is asked), ● it answers again.
@@ -63,6 +63,6 @@ done=true;await watch;
 for(const [t,e] of log)console.log(`${t.padStart(6)} s  ${e}`);
 if(inPlace){
   let q=null;for(const until=Date.now()+60000;enter&&Date.now()<until;await sleep(1000)){q=(await api(`/api/agent/status?conversation=${conv.id}`)).questions.find(x=>x.id===id);if(['answered','failed'].includes(q?.status))break;}
-  if(q?.status==='answered'){await api('/api/agent/questions/replace',{conversation:conv.id,old,new:id});console.log(`question ${id} took the place of ${old}`);}
+  if(q?.status==='answered'){await api('/api/agent/questions/replay',{conversation:conv.id,of:old,new:id,how:'replay-text'});console.log(`question ${id} is a new version of ${old} (its replay history)`);}
   else{await api('/api/agent/drafts/cancel',{conversation:conv.id,id}).catch(()=>api('/api/agent/questions/delete',{conversation:conv.id,id}).catch(()=>{}));console.log(enter?`not answered: question ${old} stays`:'not asked: dropped');}
 }else if(!keepIt)await api('/api/agent/conversations/delete',{conversation:conv.id}).catch(()=>{});

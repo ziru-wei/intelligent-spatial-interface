@@ -187,24 +187,55 @@ class SessionNamesTest(unittest.TestCase):
             self.assertEqual(store.read(d, c['id'])['name'], 'Lab weather')   # the user's name stays
             self.assertEqual(store.auto_name(dict(created=c['created'], questions=[dict(text='Hi?')])), f'Hi · {stamp}')
 
-class ReplaceQuestionTest(unittest.TestCase):
+class ReplayHistoryTest(unittest.TestCase):
     def _answered(self, d, cid, text):
         q = store.ask(d, cid, 0, 0, text); store.take_next(d)
         c = store.read(d, cid); next(x for x in c['questions'] if x['id'] == q['id'])['status'] = 'answered'
         c['responses'].append(dict(id=len(c['responses'])+1, question_id=q['id'], part='text', title=text)); store._write(d, c); return q['id']
 
-    def test_a_question_asked_again_takes_the_old_ones_place_and_star_once_answered(self):
+    def test_a_question_answered_again_keeps_every_answer_and_shows_the_pinned_else_the_newest(self):
         with tempfile.TemporaryDirectory() as tmp, store.lock:
             d = Path(tmp); c = store.create(d)
             a = self._answered(d, c['id'], 'one'); b = self._answered(d, c['id'], 'two'); e = self._answered(d, c['id'], 'three')
-            x = store.read(d, c['id']); x['questions'][1]['gallery'] = dict(name='two', mod='Weather'); store._write(d, x)
+            x = store.read(d, c['id']); x['questions'][1].update(gallery=dict(name='two', mod='Weather'), audio=dict(file='agent/audio/2.wav', at=0)); store._write(d, x)
             pending = store.ask(d, c['id'], 0, 0, 'two again')
-            with self.assertRaisesRegex(ValueError, 'answered'): store.replace_question(d, c['id'], b, pending['id'])
-            x = store.read(d, c['id']); next(q for q in x['questions'] if q['id'] == pending['id'])['status'] = 'answered'; store._write(d, x)
-            store.replace_question(d, c['id'], b, pending['id'])
+            with self.assertRaisesRegex(ValueError, 'answered'): store.replay_question(d, c['id'], b, pending['id'])
+            x = store.read(d, c['id']); next(q for q in x['questions'] if q['id'] == pending['id'])['status'] = 'answered'
+            x['responses'].append(dict(id=9, question_id=pending['id'], part='text', title='two, again')); store._write(d, x)
+            store.replay_question(d, c['id'], b, pending['id'])
             x = store.read(d, c['id'])
-            self.assertEqual([q['id'] for q in x['questions']], [a, pending['id'], e])
-            self.assertEqual(x['questions'][1]['gallery']['name'], 'two')
-            self.assertNotIn(b, [r['question_id'] for r in x['responses']])
-            self.assertGreaterEqual(x['updated'], x['created'])
+            self.assertEqual(next(q for q in x['questions'] if q['id'] == pending['id'])['replay_of'], b)   # the answer as first given is kept
+            self.assertIn(b, [r['question_id'] for r in x['responses']])
+            self.assertTrue(store.listing(d)[0]['rerun'])
+            st = store.status(d, c['id'])
+            self.assertEqual([q['id'] for q in st['questions']], [a, pending['id'], e])                    # one per question: the newest
+            two = st['questions'][1]
+            self.assertEqual((two['root'], two['gallery']['name'], two['audio']['file']), (b, 'two', 'agent/audio/2.wav'))   # the question's input and tag
+            self.assertEqual([(h['id'], h['how'], h['shown']) for h in two['history']], [(b, 'original', False), (pending['id'], 'replay-audio', True)])
+            self.assertEqual(sorted(r['title'] for r in st['responses']), ['one', 'three', 'two, again'])
+            store.pin(d, c['id'], b)                                                                    # pinned: the first answer shown
+            self.assertEqual(store.status(d, c['id'])['questions'][1]['id'], b)
+            store.pin(d, c['id'], b); self.assertEqual(store.status(d, c['id'])['questions'][1]['id'], pending['id'])
+            store.view(d, c['id'], b); self.assertEqual(store.status(d, c['id'])['questions'][1]['id'], b)   # looked at in the history
+            store.view(d, c['id'], None, b); self.assertEqual(store.status(d, c['id'])['questions'][1]['id'], pending['id'])
+            store.delete_question(d, c['id'], b)                                                       # the original goes: the other is the question
+            x = store.read(d, c['id']); heir = next(q for q in x['questions'] if q['id'] == pending['id'])
+            self.assertNotIn('replay_of', heir); self.assertEqual((heir['gallery']['name'], heir['audio']['file']), ('two', 'agent/audio/2.wav'))
+            self.assertFalse(store.listing(d)[0]['rerun'])
             self.assertGreater(store.ask(d, c['id'], 0, 0, 'later')['id'], b)   # its id is never given again
+            store.delete_question(d, c['id'], pending['id'], whole=True)
+            self.assertNotIn(pending['id'], [q['id'] for q in store.read(d, c['id'])['questions']])
+
+    def test_a_spoken_question_keeps_how_speech_to_text_heard_it(self):
+        with tempfile.TemporaryDirectory() as tmp, store.lock:
+            d = Path(tmp); c = store.create(d); q = store.ask(d, c['id'], 0, 0, 'hi')
+            wav = b'RIFF'+b'\0'*4+b'WAVE'+b'\0'*16+(32000).to_bytes(4, 'little')+b'\0'*20
+            a = store.set_audio(d, q['id'], wav, q['created']*1000, asr=dict(split='meaning', fillers='removed', other='x'))
+            self.assertEqual(a['asr'], dict(split='meaning', fillers='removed'))
+
+class ReplayNamesTest(unittest.TestCase):
+    def test_how_a_version_was_made_is_named_replay_audio_text_or_text_batch_and_the_earlier_names_still_read(self):
+        import versions
+        self.assertEqual([versions.how(q) for q in [dict(id=1), dict(id=2, replay_of=1, how='rerun'), dict(id=3, replay_of=1, how='live replay'),
+                                                    dict(id=4, replay_of=1, how='gallery'), dict(id=5, replay_of=1, how='replay-text')]],
+                         ['original', 'replay-audio', 'replay-text', 'replay-text-batch', 'replay-text'])

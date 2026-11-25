@@ -30,7 +30,11 @@ def snapshot(conversation, current):
     questions=conversation.get('questions',[])
     index=next((i for i,q in enumerate(questions) if q['id']==current['id']),0)
     turns=[]
+    # one turn per question: the version of its replay history that is shown (scripts/versions.py), not every version made
+    import versions
+    show=versions.shown_ids(questions[:index])
     for q in questions[:index]:
+        if q['id'] not in show:continue
         # Future/late responses were not visible when the new question was asked.
         responses=[r for r in conversation.get('responses',[]) if r.get('question_id')==q['id'] and r.get('created',0)<=current.get('created',float('inf'))]
         if not responses:continue

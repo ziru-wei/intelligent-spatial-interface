@@ -4,6 +4,166 @@
   "created": 1794972367.3393228,
   "questions": [
     {
+      "id": 91,
+      "text": "remind me tomorrow morning, refill the water tank",
+      "frame": 2908,
+      "t": 48.487754500005394,
+      "status": "answered",
+      "created": 1794972370.406697,
+      "live": {
+        "read_s": 5.0
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794972370.426326,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 41
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 51
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 61
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":380,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.07},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"here\",\"confidence\":0.47,\"probabilities\":{\"referent\":0.04,\"here\":0.58,\"user\":0.31,\"world\":0,\"other\":0.07}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.11},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.07},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.09},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.98},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.02}},\"usage\":{\"input_tokens\":1707,\"output_tokens\":367}}",
+          "at": 421
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":380}",
+          "at": 439
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"remind me tomorrow morning, refill the water tank\",\"about\":\"here\"}]}",
+          "at": 453
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.07,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"remind me tomorrow morning, refill the water tank\",\"about\":\"Lab · 2F\"}]}",
+          "at": 466
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"reminder\",0.98]]",
+          "at": 476
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.11],[\"BookCompanion\",0.01],[\"Delegate\",0.02],[\"FindMy\",0.02],[\"IoTControl\",0.07],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.09],[\"Reminder\",0.98],[\"StepGuide\",0.03],[\"Wayfinding\",0.02],[\"Weather\",0.01],[\"LabInfo\",0.02]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"Reminder\"]}",
+          "at": 485
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"Reminder\",\"from\":[\"Lab · 2F and the things in it\"],\"items\":[]}]",
+          "at": 494
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"Reminder\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 504
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 521
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":385,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":1,\"probabilities\":{\"labResearchWork\":0,\"labResearchLife\":0,\"none\":1}}},\"usage\":{\"input_tokens\":675,\"output_tokens\":48}}",
+          "at": 529
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":385}",
+          "at": 543
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 553
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0],[\"labResearchLife\",0],[\"none\",1]],\"chosen\":\"none\"}]}",
+          "at": 561
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Water Tank Reminder",
+          "at": 1419
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1060,\"first_text_ms\":980,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":630,\"total_input_tokens\":562,\"total_output_tokens\":68,\"total_thought_tokens\":0}}",
+          "at": 1482
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1521
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.418,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.54,
+      "message": "Water Tank Reminder",
+      "finished": 1794972371.968571,
+      "duration": 1.5,
+      "label": "q-1117-54",
+      "gallery": {
+        "name": "reminder-espresso",
+        "mod": "Reminder"
+      }
+    },
+    {
       "id": 109,
       "text": "remind me tomorrow morning, refill the water tank",
       "frame": 2908,
@@ -158,10 +318,8 @@
       "finished": 1794978520.643609,
       "duration": 1.7,
       "label": "q-1117-68",
-      "gallery": {
-        "name": "reminder-espresso",
-        "mod": "Reminder"
-      }
+      "replay_of": 91,
+      "how": "replay-text-batch"
     }
   ],
   "responses": [
@@ -206,6 +364,73 @@
       },
       "title": "Water Tank Reminder",
       "body": "I will remind you to refill the water tank tomorrow morning.",
+      "items": [],
+      "anchor": {
+        "object": "water tank",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "text_ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      },
+      "text_mod": {
+        "id": "reminder",
+        "settings": {
+          "duration": "stay"
+        }
+      }
+    },
+    {
+      "id": 1,
+      "created": 1794972371.8444228,
+      "frame": 2908,
+      "t": 48.487754500005394,
+      "question": "remind me tomorrow morning, refill the water tank",
+      "question_id": 91,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 1.418,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.418,
+            "created": 1794972371.8444228,
+            "title": "Water Tank Reminder",
+            "body": "I will remind you tomorrow morning to refill the water tank.",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.511,
+            "created": 1794972371.9368289,
+            "title": "Water Tank Reminder",
+            "body": "I will remind you tomorrow morning to refill the water tank.",
+            "anchor": {
+              "object": "water tank",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Water Tank Reminder",
+      "body": "I will remind you tomorrow morning to refill the water tank.",
       "items": [],
       "anchor": {
         "object": "water tank",

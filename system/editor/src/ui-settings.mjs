@@ -5,6 +5,9 @@
 //           answer is Floating Text (the default); Stability: how long text stays put before it moves to a better spot; Anchor dialogue
 //           bubble: the bubble fixed above its thing, turned to the user, instead of moving to where it fits
 //   replay  Resume on first response: the replay goes on as soon as the first part of an answer shows
+//   speech  How speech to text cuts and cleans what is said (Doubao, scripts/asr-relay.mjs): sentences by meaning instead of after
+//           1.2 s of silence; fillers (um, uh) removed. Each recognition uses them as they are when it opens; a spoken question keeps
+//           the ones it was heard with (audio.asr)
 // Text's lettering and writing stay in their own store (src/app.mjs textBehavior). No dependencies.
 
 export const SETTINGS={
@@ -14,6 +17,9 @@ export const SETTINGS={
     help:'How long text stays where it is before moving to a better spot when it is hidden or hard to read.'},
     bubbleAnchored:{label:'Anchor dialogue bubble',kind:'bool',default:false,
       help:'On: an Object-centric Dialogue bubble stays just above the thing that speaks and keeps turning to the user. Off: it moves to where it fits in view (onto the thing\'s side, or held at the view\'s edge).'}},
+  speech:{meaning:{label:'Split sentences by meaning',kind:'bool',default:false,
+      help:'On: speech to text ends a sentence where its meaning does (Doubao\'s semantic segmentation). Off: a sentence ends after 1.2 s of silence.'},
+    fillers:{label:'Remove fillers',kind:'bool',default:false,help:'On: speech to text leaves out fillers and repeats (um, uh, I I mean), Doubao\'s smoothing.'}},
   replay:{resumeOnResponse:{label:'Resume on first part',kind:'bool',default:false,
     help:'In a replay, go on as soon as the first part of an answer shows, without waiting for the text and the reading pause.'}},
 };
@@ -44,6 +50,9 @@ export const answerSettings=(settings,r)=>({embed:settings.text.embed,stability:
 
 /** Whether the replay goes on at an answer's first part. */
 export const resumeOnFirstResponse=settings=>!!settings.replay.resumeOnResponse;
+
+/** What a recognition is opened with (scripts/asr-relay.mjs /asr/open): {split: 'silence'|'meaning', fillers: kept|removed}. */
+export const speechOptions=settings=>({split:settings.speech.meaning?'meaning':'silence',fillers:settings.speech.fillers?'removed':'kept'});
 
 /** Controls for one group (text, replay) in root (before `before`, if given): a switch per bool, a slider per range, each with
  *  its explanation behind a "?" (data-tip, shown by the editor's tooltip). onChange(settings, key). */

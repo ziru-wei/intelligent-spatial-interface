@@ -4,6 +4,166 @@
   "created": 1794972290.3101041,
   "questions": [
     {
+      "id": 89,
+      "text": "how do I even use this… for an espresso?",
+      "frame": 2818,
+      "t": 46.98711283299781,
+      "status": "answered",
+      "created": 1794972293.379416,
+      "live": {
+        "read_s": 5.0
+      },
+      "selection": {
+        "box_id": "zone:lab-2f",
+        "key": "Programmable Reality Lab",
+        "score": 0.4,
+        "cues": {
+          "gaze": 0.0,
+          "point": 0.0,
+          "touch": 0.0,
+          "zone": 1.0
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "lab-2f"
+      },
+      "started": 1794972293.3985631,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "Started",
+          "at": 37
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"Lab · 2F\"],\"looking\":\"Lab · 2F\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 47
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 59
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":624,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.09},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"other\",\"confidence\":0.45,\"probabilities\":{\"referent\":0.15,\"here\":0.28,\"user\":0.01,\"world\":0,\"other\":0.56}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.45},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.1},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.95},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_labinfo__q0\":{\"type\":\"noul\",\"noul\":0.06}},\"usage\":{\"input_tokens\":1708,\"output_tokens\":367}}",
+          "at": 661
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":624}",
+          "at": 688
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"how do I even use this… for an espresso?\",\"about\":\"other\"}]}",
+          "at": 707
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Lab · 2F\",\"score\":0.09,\"referent\":null,\"reference\":\"standalone\",\"questions\":[{\"text\":\"how do I even use this… for an espresso?\",\"about\":\"something else\"}]}",
+          "at": 716
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"stepguide\",0.95]]",
+          "at": 726
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.02],[\"BookCompanion\",0.02],[\"Delegate\",0.02],[\"FindMy\",0.04],[\"IoTControl\",0.45],[\"LiveCoach\",0.03],[\"ObjectStatus\",0.1],[\"Reminder\",0.03],[\"StepGuide\",0.95],[\"Wayfinding\",0.04],[\"Weather\",0.01],[\"LabInfo\",0.06]],\"skipped\":[\"WorldInfo\"],\"chosen\":[\"StepGuide\"]}",
+          "at": 734
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"StepGuide\",\"from\":[\"Lab · 2F and the things in it\"],\"items\":[\"steps:espresso\"]}]",
+          "at": 743
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"StepGuide\",\"use\":\"situated-text\",\"voice\":null}",
+          "at": 752
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 765
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_labinfo",
+          "text": "{\"elapsed_ms\":1239,\"answers\":{\"asset\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.94,\"probabilities\":{\"labResearchWork\":0.01,\"labResearchLife\":0.03,\"none\":0.96}}},\"usage\":{\"input_tokens\":676,\"output_tokens\":48}}",
+          "at": 1276
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_labinfo\",\"elapsed_ms\":1239}",
+          "at": 1290
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"labinfo\",\"selection\":{\"asset\":{\"kind\":\"allowed\",\"id\":\"none\"}}}",
+          "at": 1302
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"LabInfo\",\"selectors\":[{\"name\":\"asset\",\"options\":[[\"labResearchWork\",0.01],[\"labResearchLife\",0.03],[\"none\",0.96]],\"chosen\":\"none\"}]}",
+          "at": 1313
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Breville Espresso Instructions",
+          "at": 1851
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":1179,\"first_text_ms\":1149,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":782,\"total_input_tokens\":695,\"total_output_tokens\":87,\"total_thought_tokens\":0}}",
+          "at": 1864
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 1884
+        }
+      ],
+      "parts": {
+        "text": {
+          "response": 1,
+          "latency": 1.851,
+          "status": "complete"
+        }
+      },
+      "response": 1,
+      "latency": 1.91,
+      "message": "Breville Espresso Instructions",
+      "finished": 1794972295.312621,
+      "duration": 1.9,
+      "label": "q-1117-52",
+      "gallery": {
+        "name": "stepguide-espresso",
+        "mod": "StepGuide"
+      }
+    },
+    {
       "id": 107,
       "text": "how do I even use this… for an espresso?",
       "frame": 2818,
@@ -158,10 +318,8 @@
       "finished": 1794978492.878623,
       "duration": 1.6,
       "label": "q-1117-66",
-      "gallery": {
-        "name": "stepguide-espresso",
-        "mod": "StepGuide"
-      }
+      "replay_of": 89,
+      "how": "replay-text-batch"
     }
   ],
   "responses": [
@@ -210,6 +368,73 @@
       "anchor": {
         "object": "espresso machine",
         "relation": "in-front"
+      },
+      "referenced_entities": [],
+      "reserve_text": true,
+      "text_ui": {
+        "fixed": [
+          "floatingText"
+        ],
+        "flexible": [
+          {
+            "cue": "embeddedText",
+            "when": "surface.score>=0.5",
+            "instead_of": "floatingText"
+          }
+        ]
+      },
+      "text_mod": {
+        "id": "stepguide",
+        "settings": {
+          "duration": "stay"
+        }
+      }
+    },
+    {
+      "id": 1,
+      "created": 1794972295.249132,
+      "frame": 2818,
+      "t": 46.98711283299781,
+      "question": "how do I even use this… for an espresso?",
+      "question_id": 89,
+      "part": "text",
+      "layout_slot": 1,
+      "latency": 1.851,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 1.851,
+            "created": 1794972295.249132,
+            "title": "Breville Espresso Instructions",
+            "body": "Fill the water tank, grind 18g of beans, tamp firmly, lock ",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 1.874,
+            "created": 1794972295.272854,
+            "title": "Breville Espresso Instructions",
+            "body": "Fill the water tank, grind 18g of beans, tamp firmly, lock in the portafilter, and press the double-cup button.",
+            "anchor": {
+              "object": "espresso machine",
+              "relation": "on"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Breville Espresso Instructions",
+      "body": "Fill the water tank, grind 18g of beans, tamp firmly, lock in the portafilter, and press the double-cup button.",
+      "items": [],
+      "anchor": {
+        "object": "espresso machine",
+        "relation": "on"
       },
       "referenced_entities": [],
       "reserve_text": true,

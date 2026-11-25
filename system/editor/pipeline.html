@@ -10,6 +10,7 @@ html,body{margin:0;background:#fff;color:var(--ink);font:12px/1.35 system-ui,-ap
 .qpick{position:absolute;right:28px;bottom:12px;width:310px;display:flex;align-items:center;justify-content:flex-end;gap:10px;font:12px system-ui;color:var(--soft)}
 .qpick select{flex:1;min-width:0;font:12px system-ui;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
 .qpick.live select{display:none}
+.qpick #vsel{flex:0 0 auto;max-width:150px}
 /* live: a toggle; on, the page follows the newest question (no picking); off, the question is picked */
 .qpick .live{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute);cursor:pointer;white-space:nowrap}
 .qpick .live input{appearance:none;-webkit-appearance:none;margin:0;width:26px;height:15px;border-radius:999px;background:#dcdce0;position:relative;cursor:pointer;transition:background .15s}
@@ -166,7 +167,7 @@ svg.edges.ports{z-index:3}
 .help{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1px solid var(--faint);font-size:9.5px;color:var(--mute);cursor:help;position:relative}
 .help:hover:after{content:attr(data-tip);position:absolute;right:0;top:18px;width:260px;padding:7px 9px;background:#111;color:#fff;font-size:11px;line-height:1.4;border-radius:6px;z-index:30;white-space:normal;text-transform:none;letter-spacing:0}
 </style></head><body>
-<section class="top"><div class="picker" id="picker"><div class="pad"></div><div id="list"></div><div class="pad"></div></div><div class="qpick" id="qpick"><select id="qsel" aria-label="Question"></select><label class="live" title="Follow the newest question, live"><input type="checkbox" id="live">Live</label></div></section>
+<section class="top"><div class="picker" id="picker"><div class="pad"></div><div id="list"></div><div class="pad"></div></div><div class="qpick" id="qpick"><select id="qsel" aria-label="Question"></select><select id="vsel" aria-label="Answer" hidden></select><label class="live" title="Follow the newest question, live"><input type="checkbox" id="live">Live</label></div></section>
 <div class="stage" id="stage"><div class="board" id="board"><svg class="edges"></svg></div><div class="zoom"><button data-z="height">fit height</button><button data-z="all">fit all</button><button data-z="help" class="qm" aria-label="What the lines mean" aria-expanded="false">?</button><div class="legend" id="legend" hidden><div class="h">lines</div>
 <div class="li"><svg width="48" height="10"><path d="M2 5H40" stroke="#111" stroke-width="1.4"/><circle cx="2" cy="5" r="3" fill="#111"/><circle cx="42" cy="5" r="3" fill="#111"/></svg>data: what was decided leads on (from a frame, or from one of its answers)</div>
 <div class="li"><svg width="48" height="10"><path d="M2 5H40" stroke="#c9c9ce" stroke-width="1"/><circle cx="2" cy="5" r="3" fill="#fff" stroke="#c9c9ce"/><circle cx="42" cy="5" r="3" fill="#fff" stroke="#c9c9ce"/></svg>data: where an answer not taken would lead (shown for a node clicked)</div>
@@ -403,18 +404,30 @@ const current=x=>{const r=parse(x.text);return !!r?.sentences?.some(s=>s.judged?
 const recorded=q=>{const t=q.trace||[],d=t.filter(x=>x.tool==='decisions');return d.length?current(d.at(-1)):!t.length&&!['answered','failed'].includes(q.status);};
 async function loadQuestions(live=null){   // live: the question being asked, followed live, listed whatever its record
   const list=await api('/api/agent/conversations');const convs=Array.isArray(list)?list:list.conversations||[];
-  qs=[];for(const c of convs.filter(c=>!c.gallery_example)){const full=await api('/api/agent/conversations/export',{conversation:c.id});for(const q of full.questions||[])if(recorded(q)||String(q.id)===String(live))qs.push({...q,conversation:c.id,cname:c.name});}
-  qs.sort((a,b)=>(b.created||0)-(a.created||0));
-  document.getElementById('qsel').innerHTML=qs.map(q=>`<option value="${q.id}">${esc(q.label||'q'+q.id)} · ${esc(String(q.text).slice(0,40))}</option>`).join('');
-  if(!qid||!qs.some(q=>String(q.id)===String(qid)))qid=(cid?qs.find(q=>q.conversation===cid):qs[0])?.id;
-  document.getElementById('qsel').value=qid;}
+  // a question and its replay history (scripts/versions.py): listed once, by the question; its version shown (pinned, else the
+  // newest) is the one drawn, another picked in the second menu
+  qs=[];hist=new Map();for(const c of convs.filter(c=>!c.gallery_example)){const full=await api('/api/agent/conversations/export',{conversation:c.id});const all=full.questions||[];
+    for(const q of all){const r=q.replay_of||q.id,root=all.find(x=>x.id===r)||q;(hist.get(r)||hist.set(r,{root:{...root,conversation:c.id},vs:[]}).get(r)).vs.push(q);
+      if(recorded(q)||String(q.id)===String(live))qs.push({...q,conversation:c.id,cname:c.name});}}
+  for(const h of hist.values())h.vs.sort((a,b)=>(a.created||0)-(b.created||0));
+  const ok=new Set(qs.map(q=>q.id)),groups=[...hist.values()].filter(h=>h.vs.some(v=>ok.has(v.id))).sort((a,b)=>(b.vs.at(-1).created||0)-(a.vs.at(-1).created||0));
+  const shownOf=h=>{const vs=h.vs.filter(v=>ok.has(v.id));return vs.find(v=>v.id===h.root.pinned)||vs.at(-1);};
+  document.getElementById('qsel').innerHTML=groups.map(h=>`<option value="${h.root.id}">${esc(h.root.label||'q'+h.root.id)} · ${esc(String(h.root.text).slice(0,40))}${h.vs.length>1?` (${h.vs.length} answers)`:''}</option>`).join('');
+  let g=qid!=null&&groups.find(h=>h.vs.some(v=>String(v.id)===String(qid))&&ok.has(+qid));
+  if(!g){g=(cid?groups.find(h=>h.root.conversation===cid):null)||groups[0];qid=g?shownOf(g).id:null;}
+  document.getElementById('qsel').value=g?.root.id??'';showVersions(g);}
+const MADE={original:'asked','replay-audio':'replay audio','replay-text':'replay text','replay-text-batch':'replay text (batch)',rerun:'replay audio','live replay':'replay text',gallery:'replay text (batch)'};
+let hist=new Map();
+function showVersions(g){const v=document.getElementById('vsel');v.hidden=!g||g.vs.length<2;if(v.hidden)return;
+  v.innerHTML=g.vs.slice().reverse().map(x=>`<option value="${x.id}"${qs.some(q=>q.id===x.id)?'':' disabled'}>${MADE[x.how||'original']||x.how} · ${new Date((x.created||0)*1000).toLocaleString([], {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}${x.id===g.root.pinned?' · pinned':''}</option>`).join('');v.value=qid;}
 async function loadRuns(first=false){
   if(qid==null)return;const out=await api('/api/agent/questions/runs',{id:qid}),next=fromRuns(out.runs||[]),s2=JSON.stringify(next.runs.map(r=>r?.run?.rev));
   if(s2===sig&&!first)return;sig=s2;const was=D.sentences.length;D=next;listSentences();
   // a new question, or a sentence added: the newest sentence; otherwise the one picked stays
   if(first||D.sentences.length!==was)pick=Math.max(0,D.sentences.length-1);pick=Math.min(pick,Math.max(0,D.sentences.length-1));
   picker.scrollTop=pick*ROW;if(D.runs.length){render();if(first)fitHeight();}else document.getElementById('board').innerHTML='';}
-document.getElementById('qsel').addEventListener('change',e=>{qid=e.target.value;loadRuns(true);});
+document.getElementById('qsel').addEventListener('change',e=>{const h=hist.get(+e.target.value);const vs=h.vs.filter(v=>qs.some(q=>q.id===v.id));qid=(vs.find(v=>v.id===h.root.pinned)||vs.at(-1)).id;showVersions(h);loadRuns(true);});
+document.getElementById('vsel').addEventListener('change',e=>{qid=e.target.value;loadRuns(true);});
 // live on: the newest question, followed (no picking, so no question menu); off: the menu to pick one
 const liveBox=document.getElementById('live'),showLive=()=>document.getElementById('qpick').classList.toggle('live',liveBox.checked);
 liveBox.checked=P.get('live')==='1';showLive();liveBox.addEventListener('change',showLive);

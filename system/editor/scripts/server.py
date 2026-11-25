@@ -31,7 +31,10 @@ GET  /api/agent/command?session=                   pastable shell command that s
 POST /api/agent/bridge {session}                    start that bridge from the editor (a Gallery example), unless one is already polling
 GET  /api/agent/conversations?session=             list (starred: holds a Gallery example); POST /api/agent/conversations {session} creates an empty one
 POST /api/agent/conversations/rename|import         {session,conversation,name} (the user's name: no longer the first question's) | {session,data}; GET …/export?session=&conversation=
-POST /api/agent/questions/replace {session,conversation,old,new}  an answered question asked again takes the place of the one it came from (Rerun, a replay)
+POST /api/agent/questions/replay {session,conversation,of,new,how}  an answered question made again from `of`'s input (Rerun, a replay,
+                                                   a Gallery re-ask) joins its replay history (scripts/versions.py); …/pin {id}: a version pinned as
+                                                   the best (again: unpinned); …/view {id|root}: the version looked at in the history, shown
+                                                   meanwhile; …/delete {id, whole?}: a version, or (whole) the question with its history
 GET  /api/gallery                                    the Gallery's examples (scripts/gallery.py), written to media/gallery as well
 POST /api/gallery/still {session,conversation,example,image}  a still of an example's answer; POST /api/gallery/replace {name,keep}: an example asked
                                                    again (conversation keep) takes the old one's place in its conversation
@@ -221,8 +224,10 @@ def agent_post(path, body):
         if path == '/api/agent/conversations/delete': out = store.delete_conversation(d, cid); gallery.rebuild(); return out
         if path == '/api/agent/conversations/rename': return store.rename(d, cid, body.get('name'))
         if path == '/api/agent/conversations/import': return store.import_conversation(d, body.get('data'))
-        if path == '/api/agent/questions/delete': out = store.delete_question(d, cid, body.get('id')); gallery.rebuild(); return out
-        if path == '/api/agent/questions/replace': out = store.replace_question(d, cid, body.get('old'), body.get('new')); gallery.rebuild(); return out
+        if path == '/api/agent/questions/delete': out = store.delete_question(d, cid, body.get('id'), whole=bool(body.get('whole'))); gallery.rebuild(); return out
+        if path == '/api/agent/questions/replay': out = store.replay_question(d, cid, body.get('of'), body.get('new'), body.get('how') or 'replay-audio'); gallery.rebuild(); return out
+        if path == '/api/agent/questions/pin': out = store.pin(d, cid, body.get('id')); gallery.rebuild(); return out
+        if path == '/api/agent/questions/view': return store.view(d, cid, body.get('id'), body.get('root'))
         if path == '/api/agent/questions/trace': store.bridge_seen[str(d)] = time.time(); return store.add_trace(d, body.get('id'), body.get('step'))
         if path == '/api/agent/placement-log': return store.log_placement(d, body.get('question_id'), body.get('event'))
         if path == '/api/agent/questions/info': return store.set_info(d, body.get('id'), body.get('key'), body.get('interaction_id'), body.get('source'))
@@ -440,7 +445,8 @@ class Handler(SimpleHTTPRequestHandler):
             q = parse_qs(urlsplit(self.path).query); data = self.rfile.read(int(self.headers.get('Content-Length', 0)))
             v = lambda k: float(q[k][0]) if q.get(k, [''])[0] not in ('', None) else None
             try:
-                with store.lock: kept = store.set_audio(session_dir(q.get('session', [''])[0]), q.get('id', [''])[0], data, float(q.get('started', ['0'])[0]), v('t'), v('t_at'), v('t_end'), v('t_end_at'), v('rate'))
+                with store.lock: kept = store.set_audio(session_dir(q.get('session', [''])[0]), q.get('id', [''])[0], data, float(q.get('started', ['0'])[0]), v('t'), v('t_at'), v('t_end'), v('t_end_at'), v('rate'),
+                    {k[4:]: q[k][0] for k in q if k in ('asr_split', 'asr_fillers')} or None)
                 return self.reply(200, kept)
             except (ValueError, OSError) as e: return self.reply(400, dict(error=str(e)))
         if path.startswith('/api/agent/'):

@@ -9,7 +9,7 @@ test('ui settings: library and replay values, clamped; the earlier Agent panel c
   assert.equal(s.text.stability,1);assert.equal(s.cues,undefined);   // a group that is gone is dropped
   assert.equal(s.replay.resumeOnResponse,false);assert.equal(s.text.embed,false);   // Floating Text unless Write on surfaces is on
   const old=load(store({'spatial-take:response-settings':JSON.stringify({global:{stability:.4,resumeOnResponse:true,fixedText:true},mods:{findmy:{options:{handApproachDistance:.3}}}})}));
-  assert.deepEqual(old,{text:{embed:false,stability:.4,bubbleAnchored:false},replay:{resumeOnResponse:true}});
+  assert.deepEqual(old,{text:{embed:false,stability:.4,bubbleAnchored:false},speech:{meaning:false,fillers:false},replay:{resumeOnResponse:true}});
   assert.equal(resumeOnFirstResponse(old),true);
 });
 

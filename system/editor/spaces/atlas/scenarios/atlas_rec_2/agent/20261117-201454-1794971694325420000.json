@@ -4,6 +4,192 @@
   "created": 1794971694.3254569,
   "questions": [
     {
+      "id": 27,
+      "text": "send this to Alice",
+      "frame": 425,
+      "t": 7.087795999992522,
+      "status": "answered",
+      "created": 1794971697.379371,
+      "live": {
+        "read_s": 5.0
+      },
+      "selection": {
+        "box_id": "layout:custom_0",
+        "key": "Poster of Anastasia's Talk",
+        "score": 0.964,
+        "cues": {
+          "gaze": 1.0,
+          "point": 1.0,
+          "touch": 0.044
+        },
+        "mode": "jev"
+      },
+      "location": {
+        "in": "north-hall-2f"
+      },
+      "started": 1794971697.38803,
+      "trace": [
+        {
+          "kind": "tool",
+          "tool": "view_context",
+          "text": "{\"places\":[\"North corridor · 2F\"],\"looking\":\"Poster of Anastasia's Talk\",\"mods\":[\"Agenda\",\"BookCompanion\",\"Delegate\",\"FindMy\",\"IoTControl\",\"LiveCoach\",\"ObjectStatus\",\"Reminder\",\"StepGuide\",\"Wayfinding\",\"Weather\",\"WorldInfo\",\"LabInfo\"]}",
+          "at": 24
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "Started",
+          "at": 27
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"elapsed_ms\":309,\"answers\":{\"grounding__referent\":{\"type\":\"noul\",\"noul\":0.74},\"request__about_0\":{\"type\":\"choice\",\"choice\":\"referent\",\"confidence\":0.56,\"probabilities\":{\"referent\":0.65,\"here\":0.01,\"user\":0.01,\"world\":0,\"other\":0.33}},\"request__mod_agenda__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_bookcompanion__q0\":{\"type\":\"noul\",\"noul\":0.02},\"request__mod_delegate__q0\":{\"type\":\"noul\",\"noul\":0.98},\"request__mod_findmy__q0\":{\"type\":\"noul\",\"noul\":0.03},\"request__mod_iotcontrol__q0\":{\"type\":\"noul\",\"noul\":0.09},\"request__mod_livecoach__q0\":{\"type\":\"noul\",\"noul\":0.01},\"request__mod_objectstatus__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_reminder__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_stepguide__q0\":{\"type\":\"noul\",\"noul\":0.11},\"request__mod_wayfinding__q0\":{\"type\":\"noul\",\"noul\":0.04},\"request__mod_weather__q0\":{\"type\":\"noul\",\"noul\":0.01}},\"usage\":{\"input_tokens\":1633,\"output_tokens\":346}}",
+          "at": 332
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_request\",\"elapsed_ms\":309}",
+          "at": 352
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_request",
+          "text": "{\"referent\":{\"entity\":\"layout:custom_0\",\"key\":\"Poster of Anastasia's Talk\",\"name\":\"Poster of Anastasia's Talk\",\"kind\":\"object\",\"source\":\"selection\"},\"reference\":\"standalone\",\"questions\":[{\"text\":\"send this to Alice\",\"about\":\"referent\"}]}",
+          "at": 371
+        },
+        {
+          "kind": "tool",
+          "tool": "view_grounding",
+          "text": "{\"looking\":\"Poster of Anastasia's Talk\",\"score\":0.74,\"referent\":\"Poster of Anastasia's Talk\",\"reference\":\"standalone\",\"questions\":[{\"text\":\"send this to Alice\",\"about\":\"Poster of Anastasia's Talk\"}]}",
+          "at": 381
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_mods",
+          "text": "[[\"delegate\",0.98]]",
+          "at": 391
+        },
+        {
+          "kind": "tool",
+          "tool": "view_mods",
+          "text": "{\"options\":[[\"Agenda\",0.03],[\"BookCompanion\",0.02],[\"Delegate\",0.98],[\"FindMy\",0.03],[\"IoTControl\",0.09],[\"LiveCoach\",0.01],[\"ObjectStatus\",0.04],[\"Reminder\",0.04],[\"StepGuide\",0.11],[\"Wayfinding\",0.04],[\"Weather\",0.01]],\"skipped\":[\"WorldInfo\",\"LabInfo\"],\"chosen\":[\"Delegate\"]}",
+          "at": 394
+        },
+        {
+          "kind": "tool",
+          "tool": "view_context_info",
+          "text": "[{\"mod\":\"Delegate\",\"from\":[\"North corridor · 2F and the things in it\",\"user:me\"],\"items\":[\"contacts\",\"Poster of Anastasia's Talk\",\"directory:2f\",\"ATLAS labs booklet\"]}]",
+          "at": 397
+        },
+        {
+          "kind": "tool",
+          "tool": "view_text",
+          "text": "{\"mod\":\"Delegate\",\"use\":\"action-card\",\"voice\":null}",
+          "at": 400
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_delegate",
+          "text": "Started",
+          "at": 403
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill_delegate",
+          "text": "{\"elapsed_ms\":108,\"answers\":{\"recipient\":{\"type\":\"choice\",\"choice\":\"c0\",\"confidence\":0.99,\"probabilities\":{\"nobody\":0.01,\"c0\":0.99,\"c1\":0,\"c2\":0,\"c3\":0}},\"attachment\":{\"type\":\"choice\",\"choice\":\"none\",\"confidence\":0.56,\"probabilities\":{\"none\":0.71,\"t0\":0.25,\"t1\":0.04}},\"capture\":{\"type\":\"choice\",\"choice\":\"thing\",\"confidence\":0.86,\"probabilities\":{\"thing\":0.91,\"photo\":0,\"none\":0.09}}},\"usage\":{\"input_tokens\":953,\"output_tokens\":130}}",
+          "at": 476
+        },
+        {
+          "kind": "tool",
+          "tool": "decision",
+          "text": "{\"engine\":\"jev\",\"stage\":\"modos_fill_delegate\",\"elapsed_ms\":108}",
+          "at": 481
+        },
+        {
+          "kind": "tool",
+          "tool": "modos_fill",
+          "text": "{\"mod\":\"delegate\",\"selection\":{\"recipient\":{\"kind\":\"contact\",\"id\":\"alice\",\"name\":\"Alice Chen\",\"email\":\"alice.chen@example.edu\"},\"attachment\":null,\"capture\":{\"kind\":\"allowed\",\"id\":\"thing\"}}}",
+          "at": 487
+        },
+        {
+          "kind": "tool",
+          "tool": "view_fill",
+          "text": "{\"mod\":\"Delegate\",\"selectors\":[{\"name\":\"recipient\",\"options\":[[\"nobody\",0.01],[\"Alice Chen\",0.99],[\"Ryo Suzuki\",0],[\"Ana Ruiz\",0],[\"PRL lab list\",0]],\"chosen\":\"Alice Chen\"},{\"name\":\"attachment\",\"options\":[[\"none\",0.71],[\"Poster of Anastasia's Talk\",0.25],[\"ATLAS labs booklet\",0.04]],\"chosen\":\"none\"},{\"name\":\"capture\",\"options\":[[\"thing\",0.91],[\"photo\",0],[\"none\",0.09]],\"chosen\":\"thing\"}]}",
+          "at": 490
+        },
+        {
+          "kind": "tool",
+          "tool": "view_compose",
+          "text": "{\"mod\":\"Delegate\",\"parts\":[{\"slot\":\"card\",\"use\":\"action-card\",\"kind\":\"action\"}]}",
+          "at": 493
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "Started · gemini-3.5-flash-lite · minimal",
+          "at": 496
+        },
+        {
+          "kind": "tool",
+          "tool": "show_ui",
+          "text": "UI ready",
+          "at": 499
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Draft for Alice",
+          "at": 2373
+        },
+        {
+          "kind": "tool",
+          "tool": "gemini_answer",
+          "text": "{\"elapsed_ms\":2379,\"first_text_ms\":1890,\"streaming\":true,\"model\":\"gemini-3.5-flash-lite\",\"usage\":{\"total_tokens\":1367,\"total_input_tokens\":1320,\"total_output_tokens\":47,\"total_thought_tokens\":0}}",
+          "at": 2856
+        },
+        {
+          "kind": "tool",
+          "tool": "show_text",
+          "text": "Text stream complete",
+          "at": 2924
+        }
+      ],
+      "parts": {
+        "ui": {
+          "response": 1,
+          "latency": 0.48
+        },
+        "text": {
+          "response": 2,
+          "latency": 2.373,
+          "status": "complete"
+        }
+      },
+      "mod_parts": {
+        "action": {
+          "response": 1,
+          "latency": 0.48
+        }
+      },
+      "response": 2,
+      "latency": 2.99,
+      "info": {
+        "key": "Poster of Anastasia's Talk",
+        "source": "selection",
+        "interaction_id": "v1_ChdNaGo5YXZMWURNdUp6N0lQLXZyWTJRcxIXTWhqOWF2TFlETXVKejdJUC12clkyUXM"
+      },
+      "message": "Draft for Alice",
+      "finished": 1794971700.38182,
+      "duration": 3.0,
+      "label": "q-1117-17",
+      "gallery": {
+        "name": "send-poster",
+        "mod": "Send"
+      }
+    },
+    {
       "id": 86,
       "text": "send this to Alice",
       "frame": 425,
@@ -174,10 +360,8 @@
       "finished": 1795038118.943839,
       "duration": 1.2,
       "label": "q-1118-3",
-      "gallery": {
-        "name": "send-poster",
-        "mod": "Send"
-      }
+      "replay_of": 27,
+      "how": "replay-text-batch"
     }
   ],
   "responses": [
@@ -287,6 +471,117 @@
       "layout_slot": 0,
       "latency": 1.15,
       "key": "action:send"
+    },
+    {
+      "id": 1,
+      "created": 1794971697.872076,
+      "frame": 425,
+      "t": 7.087795999992522,
+      "question": "send this to Alice",
+      "question_id": 27,
+      "title": "",
+      "body": "",
+      "items": [],
+      "anchor": null,
+      "reserve_text": true,
+      "mod": {
+        "id": "delegate",
+        "variant": "confirm",
+        "slot": "card",
+        "settings": {},
+        "ui": {
+          "card": {
+            "use": "action-card",
+            "ui": {
+              "fixed": [
+                "contactChip",
+                "textInput",
+                "iconButton:send"
+              ],
+              "flexible": [
+                {
+                  "cue": "tetherSend",
+                  "when": "attachment.kind=thing|photo"
+                },
+                {
+                  "cue": "photoCapture",
+                  "when": "attachment.kind=photo"
+                }
+              ]
+            }
+          }
+        },
+        "facts": {
+          "target.pointed": true,
+          "request.second_person": false,
+          "question.about": "referent",
+          "attachment.kind": "none"
+        }
+      },
+      "action": {
+        "version": 1,
+        "kind": "send",
+        "to": {
+          "id": "alice",
+          "name": "Alice Chen",
+          "email": "alice.chen@example.edu"
+        },
+        "status": "draft",
+        "capture": "none"
+      },
+      "referenced_entities": [],
+      "part": "ui",
+      "layout_slot": 0,
+      "latency": 0.48
+    },
+    {
+      "id": 2,
+      "created": 1794971699.76117,
+      "frame": 425,
+      "t": 7.087795999992522,
+      "question": "send this to Alice",
+      "question_id": 27,
+      "part": "text",
+      "layout_slot": 0,
+      "latency": 2.373,
+      "stream": {
+        "updates": [
+          {
+            "seq": 1,
+            "status": "streaming",
+            "at": 2.373,
+            "created": 1794971699.76117,
+            "title": "Draft for Alice",
+            "body": "",
+            "anchor": null,
+            "referenced_entities": []
+          },
+          {
+            "seq": 2,
+            "status": "complete",
+            "at": 2.891,
+            "created": 1794971700.278729,
+            "title": "Draft for Alice",
+            "body": "Hi Alice, here is a photo of the poster for Anastasia's talk for you.",
+            "anchor": {
+              "object": "poster",
+              "relation": "beside"
+            },
+            "referenced_entities": []
+          }
+        ],
+        "seq": 2,
+        "status": "complete"
+      },
+      "title": "Draft for Alice",
+      "body": "Hi Alice, here is a photo of the poster for Anastasia's talk for you.",
+      "items": [],
+      "anchor": {
+        "object": "poster",
+        "relation": "beside"
+      },
+      "referenced_entities": [],
+      "reserve_text": true
     }
   ],
   "updated": 1795038111.656306
