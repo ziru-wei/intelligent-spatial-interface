@@ -776,6 +776,9 @@ def status(d, cid):
         out = {k: v for k, v in q.items() if k not in ('withdrawn', 'traces', 'state')}   # state: the space when asked, for replays only
         for k in ('audio', 'gallery'):
             if root.get(k) is not None and out.get(k) is None: out[k] = root[k]
+        # a version answered again from the question's input plays on the input's clock: where the video was as the words came is the
+        # question's (a version typed again names only where it was asked); its parts are its own
+        if q is not root and root.get('revisions'): out['clock'] = [dict(at=r['at'], t=r['t']) for r in root['revisions']]
         if out.get('audio'): out['audio'] = audio(out['audio'])
         out['history'] = [dict(id=v['id'], label=v.get('label'), how=versions.how(v), created=v.get('created'), status=v.get('status'),
                                title=titles.get(v['id']), mods=[dict(id=m, name=names[m][0] if m in names else m, short=names[m][1] if m in names else m) for m in _mods_of(c, v['id'])], asr=(v.get('audio') or {}).get('asr'),

@@ -77,3 +77,10 @@ test('a text being written shows it (text_writing): now while its window is open
   assert.equal(presentationResponses([weather,t],[q],null)[0].text_writing,false);                              // written
   assert.equal(presentationResponses([weather,{...text,writing:{from:1007.5}}],[q],null)[0].text_writing,true);  // still writing
 });
+
+test('a version answered again from the question plays on the question\'s clock, not where it was typed again', ()=>{
+  const again={...q,revisions:q.revisions.map(r=>({...r,t:9})),clock:q.revisions.map(r=>({at:r.at,t:r.t}))};
+  const a=typedReplay(again),o=typedReplay(q);
+  for(const e of [0,1,2,3,4])assert.equal(a.tAt(e),o.tAt(e));   // the video moves as it moved when asked
+  assert.equal(typedReplay({...again,clock:undefined}).tAt(1),9);  // without it: stuck where it was typed again
+});

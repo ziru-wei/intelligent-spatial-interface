@@ -16,7 +16,7 @@ export function typedReplay(q,parts=[],{read_s=q.live?.read_s??5,duration=Infini
   // its speed, 0 paused); between, each revision says where it was. Revisions after the release (the final words) are later than the
   // video they name, so the release stands for them.
   const v=q.audio?.video,end=v?.at_end!=null?{e:v.at_end,t:v.t_end}:null;
-  const revs=[...(v?[{e:v.at,t:v.t}]:[]),...q.revisions.map(r=>({e:r.at,t:r.t})).filter(r=>!end||r.e<end.e),...(end?[end]:[])].sort((a,b)=>a.e-b.e),since=at=>at-(q.created??0);
+  const revs=[...(v?[{e:v.at,t:v.t}]:[]),...(q.clock||q.revisions).map(r=>({e:r.at,t:r.t})).filter(r=>!end||r.e<end.e),...(end?[end]:[])].sort((a,b)=>a.e-b.e),since=at=>at-(q.created??0);
   const rate=end?v.rate||0:0,lastPoint=revs.at(-1);
   const shown=parts.filter(r=>r.question_id===q.id).flatMap(r=>[r.created,r.updated_at,r.withdrawn_at,...(r.stream?.updates||[]).map(u=>u.created)]).filter(Number.isFinite).map(since);
   // a spoken question's recording (q.audio: when it began against the question, how long) is heard whole: the line runs from its

@@ -285,3 +285,12 @@ class SameWordsTest(unittest.TestCase):
             r3 = store.draft(d, c['id'], q['id'], 0, 1.8, "What's the weather? Next week.")
             self.assertEqual(r3['rev'], r['rev']+1)
             self.assertTrue(store.read(d, c['id'])['questions'][0]['revisions'][1]['same'])
+
+class VersionClockTest(unittest.TestCase):
+    def test_a_version_plays_on_its_questions_clock(self):
+        with tempfile.TemporaryDirectory() as tmp, store.lock:
+            d = Path(tmp); c = store.create(d)
+            q = store.draft(d, c['id'], None, 0, 1.0, 'what'); store.draft(d, c['id'], q['id'], 0, 3.0, 'what is it')
+            x = store.read(d, c['id']); x['questions'][0]['status'] = 'answered'; v = dict(x['questions'][0], id=99, replay_of=q['id'], how='replay-text', revisions=[dict(r, t=3.0) for r in x['questions'][0]['revisions']]); x['questions'].append(v); store._write(d, x)
+            shown = store.status(d, c['id'])['questions'][0]
+            self.assertEqual(shown['id'], 99); self.assertEqual([p['t'] for p in shown['clock']], [1.0, 3.0])
